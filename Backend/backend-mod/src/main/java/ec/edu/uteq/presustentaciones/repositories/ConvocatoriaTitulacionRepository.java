@@ -11,4 +11,7 @@ import java.util.Optional;
 public interface ConvocatoriaTitulacionRepository extends JpaRepository<ConvocatoriaTitulacion, Integer> {
     Optional<ConvocatoriaTitulacion> findByCodigo(String codigo);
     List<ConvocatoriaTitulacion> findByPeriodoAcademicoId(Integer periodoId);
+    /** Devuelve la convocatoria activa (activa = true) */
+    Optional<ConvocatoriaTitulacion> findFirstByActivaTrue();
+    List<ConvocatoriaTitulacion> findByActivaTrue();
 }

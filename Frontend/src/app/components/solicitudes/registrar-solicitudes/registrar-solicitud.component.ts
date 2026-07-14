@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { SolicitudService } from '../../../services/solicitud.service';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
+import { CatalogoService, ModalidadTitulacion } from '../../../services/catalogo.service';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
@@ -17,36 +18,60 @@ import { AuthService } from '../../../services/auth.service';
 export class RegistrarSolicitudComponent implements OnInit {
     solicitudForm!: FormGroup;
     enviando = false;
+    cargandoModalidades = true;
+    modalidades: ModalidadTitulacion[] = [];
+    errorModalidades = false;
 
     constructor(
         private fb: FormBuilder,
         private solicitudService: SolicitudService,
         private authService: AuthService,
         private router: Router,
-        private notification: NotificationService
+        private notification: NotificationService,
+        private catalogoService: CatalogoService
     ) {}
 
     ngOnInit(): void {
         this.solicitudForm = this.fb.group({
             tituloTema: ['', [Validators.required, Validators.minLength(10)]],
-            modalidad: ['', Validators.required]
+            modalidadTitulacion: [null, Validators.required]
+        });
+
+        this.catalogoService.listarModalidades().subscribe({
+            next: (data) => {
+                this.modalidades = data;
+                this.cargandoModalidades = false;
+            },
+            error: () => {
+                this.errorModalidades = true;
+                this.cargandoModalidades = false;
+                this.notification.error('No se pudieron cargar las modalidades. Verifica la conexión.', 'Error');
+            }
         });
     }
 
     enviarFormulario(): void {
         if (this.solicitudForm.valid) {
             this.enviando = true;
-            const estudianteId = this.authService.getUserId();
+            const usuarioId = this.authService.getUserId();
+            const rawValue = this.solicitudForm.value;
 
-            this.solicitudService.registrarSolicitud(estudianteId, this.solicitudForm.value).subscribe({
+            // Send the modalidad as { id: <number> } so the backend can resolve the entity
+            const payload = {
+                tituloTema: rawValue.tituloTema,
+                modalidadTitulacion: { id: Number(rawValue.modalidadTitulacion) }
+            };
+
+            this.solicitudService.registrarSolicitud(usuarioId, payload).subscribe({
                 next: () => {
                     this.enviando = false;
                     this.notification.success('Tu tema de tesis ha sido registrado con éxito.', 'Registro Completado');
                     this.router.navigate(['/dashboard/solicitudes/mis-tramites']);
                 },
-                error: () => {
+                error: (err) => {
                     this.enviando = false;
-                    this.notification.error('No se pudo guardar la solicitud. Verifica que Spring Boot esté activo.', 'Error de Conexión');
+                    const msg = err?.error?.error ?? 'No se pudo guardar la solicitud. Verifica que Spring Boot esté activo.';
+                    this.notification.error(msg, 'Error de Conexión');
                 }
             });
         } else {

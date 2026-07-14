@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/tutorias/fases/*/pdf").permitAll()
+                        .requestMatchers("/api/catalogos/**").authenticated()
                         .requestMatchers("/api/solicitudes/**").authenticated()
                         .requestMatchers("/api/anteproyectos/**").authenticated()
                         .requestMatchers("/api/cronogramas/**").authenticated()

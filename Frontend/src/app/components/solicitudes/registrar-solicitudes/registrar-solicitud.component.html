@@ -26,11 +26,26 @@
         <div class="form-section-card">
           <label class="label-style"><i class="bi bi-mortarboard-fill"></i> Modalidad de Titulación</label>
           <div class="input-wrapper">
-            <select formControlName="modalidad" class="input-premium">
-              <option value="" disabled selected>Seleccione una modalidad...</option>
-              <option value="PROYECTO_INVESTIGACION">Proyecto de Investigación</option>
-              <option value="ARTICULO_CIENTIFICO">Artículo Científico</option>
-              <option value="EXAMEN_COMPLEXIVO">Examen de Grado (Complexivo)</option>
+            <!-- Cargando modalidades -->
+            <div *ngIf="cargandoModalidades" class="d-flex align-items-center gap-2 text-muted py-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              <small>Cargando modalidades...</small>
+            </div>
+
+            <!-- Error cargando -->
+            <div *ngIf="!cargandoModalidades && errorModalidades" class="alert alert-warning py-2 mb-0">
+              <i class="bi bi-exclamation-triangle"></i>
+              No se pudieron cargar las modalidades. Verifica la conexión al servidor.
+            </div>
+
+            <!-- Dropdown con datos reales -->
+            <select
+              *ngIf="!cargandoModalidades && !errorModalidades"
+              formControlName="modalidadTitulacion"
+              class="input-premium"
+              id="selectModalidad">
+              <option [ngValue]="null" disabled selected>Seleccione una modalidad...</option>
+              <option *ngFor="let m of modalidades" [value]="m.id">{{ m.nombre }}</option>
             </select>
           </div>
         </div>
@@ -41,7 +56,7 @@
         <button type="button" class="btn btn-cancel" routerLink="/dashboard">
           <i class="bi bi-arrow-left me-2"></i>Cancelar y Volver
         </button>
-        <button type="submit" [disabled]="solicitudForm.invalid || enviando" class="btn btn-submit-premium">
+        <button type="submit" [disabled]="solicitudForm.invalid || enviando || cargandoModalidades" class="btn btn-submit-premium">
           <span *ngIf="!enviando">Enviar a Revisión <i class="bi bi-send-check ms-2"></i></span>
           <span *ngIf="enviando"><i class="bi bi-hourglass-split ms-2"></i> Enviando...</span>
         </button>

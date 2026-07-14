@@ -1,10 +1,14 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
+import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
+import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
+import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+    private final ModalidadTitulacionRepository modalidadTitulacionRepository;
+    private final ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -58,10 +64,32 @@ public class SolicitudServiceImpl implements SolicitudService {
     public Solicitud crearSolicitud(Long estudianteId, Solicitud datos) {
         Estudiante estudiante = estudianteRepository.findById(estudianteId)
                 .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + estudianteId));
-        
+
+        // Resolver estado inicial
         ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCreada = estadoSolicitudRepository.findByCodigo("CREADA")
                 .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
                         .codigo("CREADA").nombre("Creada").build()));
+
+        // Resolver modalidad: si el objeto ya viene completo (con id) úsalo; si no, error
+        if (datos.getModalidadTitulacion() == null || datos.getModalidadTitulacion().getId() == null) {
+            throw new RuntimeException("Debe seleccionar una modalidad de titulación válida");
+        }
+        ModalidadTitulacion modalidad = modalidadTitulacionRepository
+                .findById(datos.getModalidadTitulacion().getId())
+                .orElseThrow(() -> new RuntimeException("Modalidad no encontrada con ID: " + datos.getModalidadTitulacion().getId()));
+        datos.setModalidadTitulacion(modalidad);
+
+        // Resolver convocatoria: si viene en el body úsala, si no buscar la activa
+        if (datos.getConvocatoria() == null || datos.getConvocatoria().getId() == null) {
+            ConvocatoriaTitulacion convActiva = convocatoriaTitulacionRepository.findFirstByActivaTrue()
+                    .orElseThrow(() -> new RuntimeException("No hay convocatoria activa. Contacte al coordinador."));
+            datos.setConvocatoria(convActiva);
+        } else {
+            ConvocatoriaTitulacion convocatoria = convocatoriaTitulacionRepository
+                    .findById(datos.getConvocatoria().getId())
+                    .orElseThrow(() -> new RuntimeException("Convocatoria no encontrada con ID: " + datos.getConvocatoria().getId()));
+            datos.setConvocatoria(convocatoria);
+        }
 
         datos.setEstado(estadoCreada);
         datos.setEstudiante(estudiante);
