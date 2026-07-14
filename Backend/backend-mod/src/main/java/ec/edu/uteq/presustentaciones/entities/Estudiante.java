@@ -39,6 +39,19 @@ public class Estudiante {
     @Column(name = "expediente_codigo", unique = true, length = 60)
     private String expedienteCodigo;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "carrera_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Carrera carreraEntidad;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "periodo_ingreso_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private PeriodoAcademico periodoIngreso;
+
+    @Column(name = "semestre_actual", nullable = false)
+    private Short semestreActual;
+
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
 

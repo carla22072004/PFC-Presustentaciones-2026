@@ -1,10 +1,9 @@
 package ec.edu.uteq.presustentaciones.services;
 
-import ec.edu.uteq.presustentaciones.entities.Evaluacion;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.entities.Rubrica;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
-import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.RubricaRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,14 +19,16 @@ import java.util.Optional;
 @Slf4j
 public class EvaluacionServiceImpl implements EvaluacionService {
 
-    private final EvaluacionRepository evaluacionRepository;
+    private final EvaluacionFinalRepository evaluacionRepository;
     private final SolicitudRepository solicitudRepository;
     private final RubricaRepository rubricaRepository;
     private final NotificacionService notificacionService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.ResultadoEvaluacionRepository resultadoEvaluacionRepository;
 
     @Override
     @Transactional
-    public Evaluacion evaluarSolicitud(Long solicitudId, Long rubricaId,
+    public EvaluacionFinal evaluarSolicitud(Long solicitudId, Long rubricaId,
                                        Double notaInstructor, Double notaJurado,
                                        String observaciones,
                                        Double pesoInstructor, Double pesoJurado) {
@@ -46,22 +47,32 @@ public class EvaluacionServiceImpl implements EvaluacionService {
             throw new RuntimeException("Las notas deben estar entre 0 y 10.");
         }
 
-        Evaluacion e = Evaluacion.builder()
+        EvaluacionFinal e = EvaluacionFinal.builder()
                 .solicitud(solicitud)
                 .rubrica(rubrica)
                 .notaInstructor(notaInstructor)
-                .notaJurado(notaJurado)
-                .pesoInstructor(pesoInstructor != null ? pesoInstructor : 60.0)
-                .pesoJurado(pesoJurado != null ? pesoJurado : 40.0)
+                .notaJuradoPromedio(notaJurado)
+                .pesoInstructor((pesoInstructor != null ? pesoInstructor : 60.0) / 100.0)
+                .pesoJurado((pesoJurado != null ? pesoJurado : 40.0) / 100.0)
                 .observaciones(observaciones)
                 .build();
 
         e.calcularNotaFinal();
+        
+        String resCod = e.getNotaFinal() >= 7.0 ? "APROBADO" : "REPROBADO";
+        ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion res = resultadoEvaluacionRepository.findByCodigo(resCod)
+                .orElseGet(() -> resultadoEvaluacionRepository.save(ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion.builder()
+                        .codigo(resCod).nombre(resCod.substring(0,1) + resCod.substring(1).toLowerCase()).build()));
+        
+        e.setResultado(res);
         e.setComentarioPreestablecido(generarComentarioPorRango(e.getNotaFinal()));
-        Evaluacion guardada = evaluacionRepository.save(e);
+        EvaluacionFinal guardada = evaluacionRepository.save(e);
 
         // Cambiar estado a CALIFICADA
-        solicitud.setEstado(EstadoSolicitud.CALIFICADA);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCalificada = estadoSolicitudRepository.findByCodigo("CALIFICADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("CALIFICADA").nombre("Calificada").build()));
+        solicitud.setEstado(estadoCalificada);
         solicitudRepository.save(solicitud);
 
         notificarNotaFinal(solicitud, guardada);
@@ -71,24 +82,32 @@ public class EvaluacionServiceImpl implements EvaluacionService {
 
     @Override
     @Transactional
-    public Evaluacion evaluarSolicitud(Long solicitudId, Long rubricaId,
+    public EvaluacionFinal evaluarSolicitud(Long solicitudId, Long rubricaId,
                                        Double notaFinal, String observaciones) {
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
         Rubrica rubrica = rubricaRepository.findById(rubricaId)
                 .orElseThrow(() -> new RuntimeException("Rúbrica no encontrada"));
 
-        Evaluacion e = Evaluacion.builder()
+        String resCod = notaFinal >= 7 ? "APROBADO" : "REPROBADO";
+        ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion res = resultadoEvaluacionRepository.findByCodigo(resCod)
+                .orElseGet(() -> resultadoEvaluacionRepository.save(ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion.builder()
+                        .codigo(resCod).nombre(resCod.substring(0,1) + resCod.substring(1).toLowerCase()).build()));
+
+        EvaluacionFinal e = EvaluacionFinal.builder()
                 .solicitud(solicitud).rubrica(rubrica)
                 .notaFinal(notaFinal).observaciones(observaciones)
-                .pesoInstructor(60.0).pesoJurado(40.0)
-                .resultado(notaFinal >= 7 ? "APROBADO" : "REPROBADO")
+                .pesoInstructor(0.6).pesoJurado(0.4)
+                .resultado(res)
                 .build();
         e.setComentarioPreestablecido(generarComentarioPorRango(notaFinal));
-        Evaluacion guardada = evaluacionRepository.save(e);
+        EvaluacionFinal guardada = evaluacionRepository.save(e);
 
         // Cambiar estado a CALIFICADA
-        solicitud.setEstado(EstadoSolicitud.CALIFICADA);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCalificada = estadoSolicitudRepository.findByCodigo("CALIFICADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("CALIFICADA").nombre("Calificada").build()));
+        solicitud.setEstado(estadoCalificada);
         solicitudRepository.save(solicitud);
 
         notificarNotaFinal(solicitud, guardada);
@@ -97,25 +116,24 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     }
 
     @Override
-    public List<Evaluacion> listarEvaluaciones() {
+    public List<EvaluacionFinal> listarEvaluaciones() {
         return evaluacionRepository.findAll();
     }
 
     @Override
-    public List<Evaluacion> listarPorEstudiante(Long estudianteId) {
+    public List<EvaluacionFinal> listarPorEstudiante(Long estudianteId) {
         return evaluacionRepository.findByEstudianteId(estudianteId);
     }
 
     @Override
-    public List<Evaluacion> listarPorUsuario(Long usuarioId) {
+    public List<EvaluacionFinal> listarPorUsuario(Long usuarioId) {
         return evaluacionRepository.findByUsuarioId(usuarioId);
     }
 
     @Override
-    public Optional<Evaluacion> buscarPorSolicitud(Long solicitudId) {
+    public Optional<EvaluacionFinal> buscarPorSolicitud(Long solicitudId) {
         return evaluacionRepository.findBySolicitudId(solicitudId);
     }
-
 
     public String generarComentarioPorRango(Double notaFinal) {
         if (notaFinal == null) return "";
@@ -130,26 +148,31 @@ public class EvaluacionServiceImpl implements EvaluacionService {
 
     // ── Notificación nota final ───────────────────────────────────────────────
 
-    private void notificarNotaFinal(Solicitud solicitud, Evaluacion evaluacion) {
+    private void notificarNotaFinal(Solicitud solicitud, EvaluacionFinal evaluacion) {
         try {
             Long usuarioId = solicitud.getEstudiante().getUsuario().getId();
             String titulo  = solicitud.getTituloTema();
             Double nota    = evaluacion.getNotaFinal();
-            String resultado = evaluacion.getResultado() != null ? evaluacion.getResultado()
-                    : (nota != null && nota >= 7 ? "APROBADO" : "REPROBADO");
+            
+            String resNombre = evaluacion.getResultado() != null ? evaluacion.getResultado().getNombre() : "";
+            String resCodigo = evaluacion.getResultado() != null ? evaluacion.getResultado().getCodigo() : "";
+            if (resCodigo.isEmpty()) {
+                resCodigo = nota != null && nota >= 7 ? "APROBADO" : "REPROBADO";
+                resNombre = "APROBADO".equals(resCodigo) ? "Aprobado" : "Reprobado";
+            }
 
-            String emoji = "APROBADO".equals(resultado) ? "🎉" : "😔";
+            String emoji = "APROBADO".equals(resCodigo) ? "🎉" : "😔";
             String msg;
 
             if (nota != null) {
                 msg = String.format(
                         "%s Tu pre-sustentación \"%s\" ha sido evaluada. " +
                                 "Nota final: %.2f / 10 — Resultado: %s. Tu solicitud ahora está en fase de calificación.",
-                        emoji, titulo, nota, resultado);
+                        emoji, titulo, nota, resNombre);
             } else {
                 msg = String.format(
                         "%s Tu pre-sustentación \"%s\" ha sido evaluada. Resultado: %s. Tu solicitud ahora está en fase de calificación.",
-                        emoji, titulo, resultado);
+                        emoji, titulo, resNombre);
             }
 
             if (evaluacion.getObservaciones() != null && !evaluacion.getObservaciones().isBlank()) {

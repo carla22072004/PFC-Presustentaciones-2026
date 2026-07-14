@@ -25,5 +25,5 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
     @Query("SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE s.id = :id")
     Optional<Solicitud> findByIdWithEstudiante(@Param("id") Long id);
 
-    long countByEstado(String estado);
+    long countByEstadoCodigo(String codigo);
 }

@@ -24,7 +24,7 @@ public interface CronogramaRepository extends JpaRepository<Cronograma, Long> {
     @Query("""
         SELECT c FROM Cronograma c
         WHERE c.sala.id = :salaId
-          AND c.estado = 'ACTIVO'
+          AND c.estado.codigo = 'PROGRAMADO'
           AND c.fechaInicio < :fin
           AND FUNCTION('TIMESTAMPADD', MINUTE, c.duracionMin, c.fechaInicio) > :inicio
     """)
@@ -33,6 +33,6 @@ public interface CronogramaRepository extends JpaRepository<Cronograma, Long> {
                                     @Param("fin") LocalDateTime fin);
 
     /** Todos los cronogramas activos de una fecha */
-    @Query("SELECT c FROM Cronograma c WHERE c.estado = 'ACTIVO' AND CAST(c.fechaInicio AS date) = CAST(:fecha AS date)")
+    @Query("SELECT c FROM Cronograma c WHERE c.estado.codigo = 'PROGRAMADO' AND CAST(c.fechaInicio AS date) = CAST(:fecha AS date)")
     List<Cronograma> findActivosPorFecha(@Param("fecha") LocalDateTime fecha);
 }

@@ -3,7 +3,6 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
@@ -28,6 +27,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final AnteproyectoRepository anteproyectoRepository;
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -58,7 +58,12 @@ public class SolicitudServiceImpl implements SolicitudService {
     public Solicitud crearSolicitud(Long estudianteId, Solicitud datos) {
         Estudiante estudiante = estudianteRepository.findById(estudianteId)
                 .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + estudianteId));
-        datos.setEstado(EstadoSolicitud.CREADA);
+        
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCreada = estadoSolicitudRepository.findByCodigo("CREADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("CREADA").nombre("Creada").build()));
+
+        datos.setEstado(estadoCreada);
         datos.setEstudiante(estudiante);
         datos.setCreadoPor(estudiante.getUsuario());
         datos.setActualizadoPor(estudiante.getUsuario());
@@ -66,7 +71,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         datos.setActualizadoEn(LocalDateTime.now());
         return solicitudRepository.save(datos);
     }
-
+ 
     @Override
     @Transactional
     public Solicitud crearSolicitudPorUsuario(Long usuarioId, Solicitud datos) {
@@ -74,118 +79,138 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .orElseThrow(() -> new RuntimeException("No existe perfil de estudiante para el usuario ID: " + usuarioId));
         return crearSolicitud(estudiante.getId(), datos);
     }
-
+ 
     @Override
     public List<Solicitud> listarPorUsuario(Long usuarioId) {
         Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new RuntimeException("No existe perfil de estudiante para el usuario ID: " + usuarioId));
         return solicitudRepository.findByEstudianteId(estudiante.getId());
     }
-
+ 
     @Override
     @Transactional
     public Solicitud enviarSolicitud(Long solicitudId) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
+ 
         boolean tienePdf = anteproyectoRepository.findBySolicitudId(solicitudId)
                 .map(a -> a.getArchivoPdf() != null && !a.getArchivoPdf().isBlank())
                 .orElse(false);
-
+ 
         if (!tienePdf) {
             throw new RuntimeException("Debes cargar el PDF del anteproyecto antes de enviar la solicitud a revisión.");
         }
+ 
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEnviada = estadoSolicitudRepository.findByCodigo("ENVIADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("ENVIADA").nombre("Enviada").build()));
 
-        s.setEstado(EstadoSolicitud.ENVIADA);
+        s.setEstado(estadoEnviada);
         Solicitud guardada = solicitudRepository.save(s);
-
+ 
         String nombreEstudiante = s.getEstudiante().getUsuario().getNombre()
                 + " " + s.getEstudiante().getUsuario().getApellido();
-
+ 
         notificarAdmins(String.format(
                 "📋 Nueva solicitud de %s: \"%s\" está pendiente de revisión.",
                 nombreEstudiante, s.getTituloTema()));
-
+ 
         return guardada;
     }
-
+ 
     @Override
     @Transactional
     public Solicitud aprobarSolicitud(Long solicitudId) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-        s.setEstado(EstadoSolicitud.APROBADA);
-        Solicitud guardada = solicitudRepository.save(s);
 
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoAprobada = estadoSolicitudRepository.findByCodigo("APROBADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("APROBADA").nombre("Aprobada").build()));
+
+        s.setEstado(estadoAprobada);
+        Solicitud guardada = solicitudRepository.save(s);
+ 
         notificarEstudiante(s, String.format(
                 "✅ Tu solicitud \"%s\" ha sido APROBADA. Pronto se te asignará fecha y tribunal.",
                 s.getTituloTema()));
-
+ 
         return guardada;
     }
-
+ 
     @Override
     @Transactional
     public Solicitud rechazarSolicitud(Long solicitudId) {
         return rechazarConObservacion(solicitudId, null);
     }
-
+ 
     @Override
     @Transactional
     public Solicitud rechazarConObservacion(Long solicitudId, String observacion) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-        s.setEstado(EstadoSolicitud.RECHAZADA);
+
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoRechazada = estadoSolicitudRepository.findByCodigo("RECHAZADA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("RECHAZADA").nombre("Rechazada").build()));
+
+        s.setEstado(estadoRechazada);
         if (observacion != null && !observacion.isBlank()) {
             s.setObservaciones(observacion);
         }
         Solicitud guardada = solicitudRepository.save(s);
-
+ 
         String obs = (s.getObservaciones() != null && !s.getObservaciones().isBlank())
                 ? " Motivo: " + s.getObservaciones() : "";
         notificarEstudiante(s, String.format(
                 "❌ Tu solicitud \"%s\" ha sido RECHAZADA.%s Revisa las observaciones.",
                 s.getTituloTema(), obs));
-
+ 
         return guardada;
     }
-
+ 
     @Override
     public List<Solicitud> listarSolicitudes() {
         return solicitudRepository.findAllWithEstudiante();
     }
-
+ 
     @Override
     public List<Solicitud> listarPorEstudiante(Long estudianteId) {
         return solicitudRepository.findByEstudianteId(estudianteId);
     }
-
+ 
     @Override
     public Optional<Solicitud> obtenerPorId(Long id) {
         return solicitudRepository.findById(id);
     }
-
+ 
     @Override
     @Transactional
     public Solicitud suspenderSolicitud(Long solicitudId, String motivo) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
-        if (!s.getEstado().esSuspendible()) {
-            throw new RuntimeException("La solicitud no puede ser suspendida en su estado actual: " + s.getEstado());
+ 
+        String codEstado = s.getEstado() != null ? s.getEstado().getCodigo() : "";
+        boolean esSuspendible = !"CREADA".equals(codEstado) && !"RECHAZADA".equals(codEstado) && !"SUSPENDIDA".equals(codEstado);
+        if (!esSuspendible) {
+            throw new RuntimeException("La solicitud no puede ser suspendida en su estado actual: " + codEstado);
         }
-
+ 
         if (motivo == null || motivo.isBlank()) {
             throw new RuntimeException("Debe especificar el motivo de la suspensión");
         }
+ 
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoSuspendida = estadoSolicitudRepository.findByCodigo("SUSPENDIDA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("SUSPENDIDA").nombre("Suspendida").build()));
 
-        s.setEstado(EstadoSolicitud.SUSPENDIDA);
+        s.setEstado(estadoSuspendida);
         s.setMotivoSuspension(motivo);
         s.setSuspendidoEn(LocalDateTime.now());
-
+ 
         Solicitud guardada = solicitudRepository.save(s);
-        log.info("Solicitud {} suspendida desde estado {} por motivo: {}", solicitudId, s.getEstado(), motivo);
-
+        log.info("Solicitud {} suspendida desde estado {} por motivo: {}", solicitudId, codEstado, motivo);
+ 
         notificarEstudiante(s, String.format(
                 "🚫 Tu trabajo \"%s\" ha sido SUSPENDIDO. Motivo: %s. No podrás continuar.",
                 s.getTituloTema(), motivo));

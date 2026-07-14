@@ -13,9 +13,9 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import ec.edu.uteq.presustentaciones.entities.Cronograma;
-import ec.edu.uteq.presustentaciones.entities.Evaluacion;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.repositories.CronogramaRepository;
-import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -36,7 +36,7 @@ import java.util.Map;
 public class ReporteController {
 
     private final CronogramaRepository cronogramaRepo;
-    private final EvaluacionRepository evaluacionRepo;
+    private final EvaluacionFinalRepository evaluacionFinalRepo;
     private final SolicitudRepository solicitudRepo;
 
     // ── Colores — siempre new DeviceRgb para evitar conflicto con Color.WHITE ──
@@ -93,11 +93,11 @@ public class ReporteController {
                     .setBackgroundColor(bg));
             table.addCell(celda(c.getFechaInicio().format(FMT), regular, bg, TextAlignment.CENTER));
             table.addCell(celda(c.getSala() != null ? c.getSala().getNombre() : "—", regular, bg, TextAlignment.CENTER));
-            table.addCell(celda(c.getEstado(), regular, bg, TextAlignment.CENTER));
+            table.addCell(celda(c.getEstado() != null ? c.getEstado().getNombre() : "—", regular, bg, TextAlignment.CENTER));
         }
         doc.add(table);
         doc.add(new Paragraph("Total: " + lista.size() + " pre-sustentación(es) programadas.")
-                .setFont(bold).setFontSize(9).setMarginTop(10));
+                 .setFont(bold).setFontSize(9).setMarginTop(10));
         doc.close();
 
         return pdfResponse(baos, "cronograma_presustentaciones.pdf");
@@ -106,11 +106,11 @@ public class ReporteController {
     /** RF-11: PDF de estadísticas de evaluaciones */
     @GetMapping("/estadisticas/pdf")
     public ResponseEntity<byte[]> reporteEstadisticas() throws Exception {
-        List<Evaluacion> evals = evaluacionRepo.findAll();
+        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAll();
 
         long total      = evals.size();
-        long aprobados  = evals.stream().filter(e -> "APROBADO".equals(e.getResultado())).count();
-        long reprobados = evals.stream().filter(e -> "REPROBADO".equals(e.getResultado())).count();
+        long aprobados  = evals.stream().filter(e -> e.getResultado() != null && "APROBADO".equals(e.getResultado().getCodigo())).count();
+        long reprobados = evals.stream().filter(e -> e.getResultado() != null && "REPROBADO".equals(e.getResultado().getCodigo())).count();
         double promedio = evals.stream()
                 .mapToDouble(e -> e.getNotaFinal() != null ? e.getNotaFinal() : 0)
                 .filter(n -> n > 0).average().orElse(0);
@@ -142,7 +142,7 @@ public class ReporteController {
         }
 
         int idx = 1;
-        for (Evaluacion e : evals) {
+        for (EvaluacionFinal e : evals) {
             DeviceRgb bg = (idx % 2 == 0) ? LIGHT_BG() : WHITE();
             String est = "—", tema = "—";
             if (e.getSolicitud() != null) {
@@ -157,12 +157,13 @@ public class ReporteController {
                     .add(new Paragraph(tema).setFont(regular).setFontSize(7).setFontColor(DARK_TEXT()))
                     .setBackgroundColor(bg));
             tabla.addCell(celda(fmt(e.getNotaInstructor()), regular, bg, TextAlignment.CENTER));
-            tabla.addCell(celda(fmt(e.getNotaJurado()),     regular, bg, TextAlignment.CENTER));
+            tabla.addCell(celda(fmt(e.getNotaJuradoPromedio()), regular, bg, TextAlignment.CENTER));
             tabla.addCell(celda(fmt(e.getNotaFinal()),      bold,    bg, TextAlignment.CENTER));
-            // Color resultado: verde=aprobado, rojo=reprobado
-            DeviceRgb rc = "APROBADO".equals(e.getResultado()) ? GREEN() : RED();
+            
+            String resCod = e.getResultado() != null ? e.getResultado().getCodigo() : "";
+            DeviceRgb rc = "APROBADO".equals(resCod) ? GREEN() : RED();
             tabla.addCell(new Cell()
-                    .add(new Paragraph(e.getResultado() != null ? e.getResultado() : "—")
+                    .add(new Paragraph(e.getResultado() != null ? e.getResultado().getNombre() : "—")
                             .setFont(bold).setFontSize(8).setFontColor(rc))
                     .setBackgroundColor(bg).setTextAlignment(TextAlignment.CENTER));
         }
@@ -175,14 +176,14 @@ public class ReporteController {
     /** RF-11: JSON de estadísticas para gráficas */
     @GetMapping("/estadisticas/json")
     public ResponseEntity<Map<String, Object>> estadisticasJson() {
-        List<Evaluacion> evals = evaluacionRepo.findAll();
+        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAll();
         long total      = evals.size();
-        long aprobados  = evals.stream().filter(e -> "APROBADO".equals(e.getResultado())).count();
-        long reprobados = evals.stream().filter(e -> "REPROBADO".equals(e.getResultado())).count();
+        long aprobados  = evals.stream().filter(e -> e.getResultado() != null && "APROBADO".equals(e.getResultado().getCodigo())).count();
+        long reprobados = evals.stream().filter(e -> e.getResultado() != null && "REPROBADO".equals(e.getResultado().getCodigo())).count();
         double promedio = evals.stream()
                 .mapToDouble(e -> e.getNotaFinal() != null ? e.getNotaFinal() : 0)
                 .filter(n -> n > 0).average().orElse(0);
-        long pendientes = solicitudRepo.countByEstado("APROBADA");
+        long pendientes = solicitudRepo.countByEstadoCodigo("APROBADA");
 
         return ResponseEntity.ok(Map.of(
                 "totalEvaluados",       total,

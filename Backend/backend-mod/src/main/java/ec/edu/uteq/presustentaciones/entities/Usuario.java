@@ -38,4 +38,16 @@ public class Usuario {
     /** Correo donde llegan las notificaciones del sistema (puede ser distinto al de login) */
     @Column(name = "email_notificaciones")
     private String emailNotificaciones;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "rol_id", nullable = false)
+    private RolUsuario rolUsuario;
+
+    @Column(name = "creado_en", nullable = false, updatable = false)
+    private java.time.LocalDateTime creadoEn;
+
+    @PrePersist
+    protected void onCreate() {
+        creadoEn = java.time.LocalDateTime.now();
+    }
 }

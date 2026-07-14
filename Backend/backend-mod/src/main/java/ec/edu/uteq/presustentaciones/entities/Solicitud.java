@@ -2,7 +2,6 @@ package ec.edu.uteq.presustentaciones.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,9 +28,26 @@ public class Solicitud {
     
     @Column(name = "titulo_tema", nullable = false, length = 300)
     private String tituloTema;
-    
-    @Column(name = "modalidad", length = 120)
-    private String modalidad;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "convocatoria_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private ConvocatoriaTitulacion convocatoria;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "modalidad_titulacion_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private ModalidadTitulacion modalidadTitulacion;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "linea_investigacion_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private LineaInvestigacion lineaInvestigacion;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "area_tematica_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AreaTematica areaTematica;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
@@ -53,9 +69,10 @@ public class Solicitud {
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false, length = 30)
-    private EstadoSolicitud estado = EstadoSolicitud.CREADA;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "estado_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private EstadoSolicitud estado;
 
     @Column(name = "motivo_suspension", columnDefinition = "TEXT")
     private String motivoSuspension;

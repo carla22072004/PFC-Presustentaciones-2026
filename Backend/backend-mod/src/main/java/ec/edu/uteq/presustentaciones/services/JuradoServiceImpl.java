@@ -4,7 +4,6 @@ import ec.edu.uteq.presustentaciones.entities.Docente;
 import ec.edu.uteq.presustentaciones.entities.Jurado;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
 import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
@@ -30,6 +29,8 @@ public class JuradoServiceImpl implements JuradoService {
     private final SolicitudRepository solicitudRepository;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
+    private final ec.edu.uteq.presustentaciones.repositories.RolJuradoRepository rolJuradoRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
 
     // ── Jurados ───────────────────────────────────────────────────────────────
 
@@ -56,21 +57,25 @@ public class JuradoServiceImpl implements JuradoService {
             throw new RuntimeException("El docente ya está asignado como jurado en esta solicitud.");
         }
 
-        List<String> rolesValidos = List.of("PRESIDENTE", "VOCAL_1", "VOCAL_2");
+        List<String> rolesValidos = List.of("PRESIDENTE", "VOCAL", "SECRETARIO");
         if (!rolesValidos.contains(rol.toUpperCase())) {
-            throw new RuntimeException("Rol inválido. Use: PRESIDENTE, VOCAL_1 o VOCAL_2");
+            throw new RuntimeException("Rol inválido. Use: PRESIDENTE, VOCAL o SECRETARIO");
         }
-
+ 
         boolean rolOcupado = juradoRepository.findBySolicitudId(solicitudId).stream()
-                .anyMatch(j -> j.getRol().equalsIgnoreCase(rol));
+                .anyMatch(j -> j.getRol() != null && j.getRol().equalsIgnoreCase(rol));
         if (rolOcupado) {
             throw new RuntimeException("El rol '" + rol + "' ya está asignado en esta solicitud.");
         }
-
+ 
         Jurado guardado = crearJuradoSinNotificar(solicitud, docente, rol);
-
+ 
         // Cambiar estado a EVALUACION
-        solicitud.setEstado(EstadoSolicitud.EVALUACION);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEvaluacion = estadoSolicitudRepository.findByCodigo("EVALUACION")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("EVALUACION").nombre("Evaluacion").build()));
+ 
+        solicitud.setEstado(estadoEvaluacion);
         solicitudRepository.save(solicitud);
 
         // Notificar al docente asignado como jurado
@@ -125,7 +130,11 @@ public class JuradoServiceImpl implements JuradoService {
                 .orElseThrow(() -> new RuntimeException("Error al recuperar el tutor guardado"));
 
         // Cambiar estado a TUTORIA
-        solicitud.setEstado(EstadoSolicitud.TUTORIA);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoTutoria = estadoSolicitudRepository.findByCodigo("TUTORIA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("TUTORIA").nombre("Tutoria").build()));
+ 
+        solicitud.setEstado(estadoTutoria);
         solicitudRepository.save(solicitud);
 
         // Notificar al docente asignado como tutor
@@ -189,18 +198,18 @@ public class JuradoServiceImpl implements JuradoService {
 
         List<String> rolesOcupados = juradoRepository.findBySolicitudId(solicitudId)
                 .stream().map(Jurado::getRol).collect(Collectors.toList());
-        List<String> rolesFaltantes = new ArrayList<>(List.of("PRESIDENTE", "VOCAL_1", "VOCAL_2"))
+        List<String> rolesFaltantes = new ArrayList<>(List.of("PRESIDENTE", "VOCAL", "SECRETARIO"))
                 .stream().filter(r -> !rolesOcupados.contains(r)).collect(Collectors.toList());
-
+ 
         if (rolesFaltantes.isEmpty()) return;
-
+ 
         List<Docente> sugeridos = sugerirDocentes(solicitudId, rolesFaltantes.size());
         if (sugeridos.size() < rolesFaltantes.size()) {
             throw new RuntimeException(
                     "No hay suficientes docentes para asignar automáticamente. " +
                             "Disponibles: " + sugeridos.size() + ", requeridos: " + rolesFaltantes.size());
         }
-
+ 
         // Asignar sin notificar al estudiante en cada iteración
         for (int i = 0; i < rolesFaltantes.size(); i++) {
             Docente docente = sugeridos.get(i);
@@ -208,9 +217,13 @@ public class JuradoServiceImpl implements JuradoService {
             crearJuradoSinNotificar(solicitud, docente, rol);
             notificarDocenteJurado(docente, solicitud, rol);  // cada docente es destinatario distinto
         }
-
+ 
         // Cambiar estado a EVALUACION
-        solicitud.setEstado(EstadoSolicitud.EVALUACION);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEvaluacion = estadoSolicitudRepository.findByCodigo("EVALUACION")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("EVALUACION").nombre("Evaluacion").build()));
+ 
+        solicitud.setEstado(estadoEvaluacion);
         solicitudRepository.save(solicitud);
 
         // Una sola notificación + correo agrupado al estudiante
@@ -239,10 +252,24 @@ public class JuradoServiceImpl implements JuradoService {
     private Jurado crearJuradoSinNotificar(Solicitud solicitud, Docente docente, String rol) {
         docente.setCargaHorariaSemanal(docente.getCargaHorariaSemanal() + 1);
         docenteRepository.save(docente);
+        
+        String codigoRol = rol.toUpperCase();
+        if (codigoRol.startsWith("VOCAL")) {
+            codigoRol = "VOCAL";
+        }
+        final String finalCodigoRol = codigoRol;
+        ec.edu.uteq.presustentaciones.entities.RolJurado rolJurado = rolJuradoRepository.findByCodigo(codigoRol)
+                .orElseGet(() -> {
+                    return rolJuradoRepository.save(ec.edu.uteq.presustentaciones.entities.RolJurado.builder()
+                            .codigo(finalCodigoRol)
+                            .nombre(finalCodigoRol.substring(0, 1).toUpperCase() + finalCodigoRol.substring(1).toLowerCase())
+                            .build());
+                });
+
         return juradoRepository.save(Jurado.builder()
                 .solicitud(solicitud)
                 .docente(docente)
-                .rol(rol.toUpperCase())
+                .rolJurado(rolJurado)
                 .confirmado(false)
                 .build());
     }

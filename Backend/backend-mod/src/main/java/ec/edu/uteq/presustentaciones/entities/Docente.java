@@ -26,6 +26,11 @@ public class Docente {
     
     @Column(name = "area_especialidad", length = 180)
     private String areaEspecialidad;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "facultad_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Facultad facultad;
     
     @Column(name = "carga_horaria_semanal", nullable = false)
     private Integer cargaHorariaSemanal = 0;

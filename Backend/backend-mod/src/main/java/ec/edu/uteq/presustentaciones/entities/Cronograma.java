@@ -20,15 +20,29 @@ public class Cronograma {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
     
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "solicitud_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "solicitud_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "creadoPor", "actualizadoPor"})
     private Solicitud solicitud;
     
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "convocatoria_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private ConvocatoriaTitulacion convocatoria;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "sala_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Sala sala;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "bloque_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private BloqueHorario bloque;
+
+    @Column(name = "numero_intento", nullable = false)
+    @Builder.Default
+    private Short numeroIntento = 1;
     
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDateTime fechaInicio;
@@ -36,8 +50,10 @@ public class Cronograma {
     @Column(name = "duracion_min", nullable = false)
     private Integer duracionMin = 45;
     
-    @Column(name = "estado", nullable = false, length = 30)
-    private String estado = "ACTIVO";
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "estado_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private EstadoCronograma estado;
     
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;

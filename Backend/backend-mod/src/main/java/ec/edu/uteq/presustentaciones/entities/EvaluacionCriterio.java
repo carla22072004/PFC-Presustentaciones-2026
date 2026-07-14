@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "evaluaciones_criterio",
        uniqueConstraints = @UniqueConstraint(
-           columnNames = {"solicitud_id", "jurado_id", "criterio_id"}))
+           columnNames = {"evaluador_id", "criterio_id"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class EvaluacionCriterio {
 
@@ -52,9 +52,9 @@ public class EvaluacionCriterio {
     private Solicitud solicitud;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "jurado_id", nullable = false)
+    @JoinColumn(name = "evaluador_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "solicitud"})
-    private Jurado jurado;
+    private Evaluador evaluador;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "criterio_id", nullable = false)

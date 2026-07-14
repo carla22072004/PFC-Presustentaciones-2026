@@ -17,7 +17,7 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
     @Query("SELECT j FROM Jurado j WHERE j.docente.id = :docenteId")
     List<Jurado> findByDocenteId(Long docenteId);
 
-    @Query("SELECT COUNT(j) FROM Jurado j WHERE j.docente.id = :docenteId AND j.solicitud.estado NOT IN ('RECHAZADA')")
+    @Query("SELECT COUNT(j) FROM Jurado j WHERE j.docente.id = :docenteId AND j.solicitud.estado.codigo != 'RECHAZADA'")
     long contarAsignacionesActivasByDocente(Long docenteId);
 
     @Query("SELECT j FROM Jurado j JOIN j.docente d JOIN d.usuario u " +

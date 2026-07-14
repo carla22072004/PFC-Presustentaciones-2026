@@ -7,7 +7,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "jurados")
+@Table(name = "miembros_tribunal", schema = "presus",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"solicitud_id", "docente_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,9 +31,10 @@ public class Jurado {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "jurados", "tutor", "evaluacion", "acta", "anteproyecto", "cronograma", "notificaciones"})
     private Solicitud solicitud;
 
-    /** Roles posibles: PRESIDENTE, VOCAL_1, VOCAL_2 */
-    @Column(name = "rol", nullable = false, length = 30)
-    private String rol;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "rol_jurado_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private RolJurado rolJurado;
 
     @Column(name = "confirmado", nullable = false)
     @Builder.Default
@@ -44,5 +46,9 @@ public class Jurado {
     @PrePersist
     protected void onCreate() {
         asignadoEn = LocalDateTime.now();
+    }
+
+    public String getRol() {
+        return rolJurado != null ? rolJurado.getCodigo() : null;
     }
 }

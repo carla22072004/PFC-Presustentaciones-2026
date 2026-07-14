@@ -1,6 +1,6 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
-import ec.edu.uteq.presustentaciones.entities.Evaluacion;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.services.EvaluacionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +35,7 @@ public class EvaluacionController {
             @RequestParam(defaultValue = "60.0") Double pesoInstructor,
             @RequestParam(defaultValue = "40.0") Double pesoJurado) {
         try {
-            Evaluacion e = evaluacionService.evaluarSolicitud(
+            EvaluacionFinal e = evaluacionService.evaluarSolicitud(
                     solicitudId, rubricaId,
                     notaInstructor, notaJurado,
                     observaciones, pesoInstructor, pesoJurado);
@@ -47,7 +47,7 @@ public class EvaluacionController {
 
     /** Endpoint legado: recibe nota final directa */
     @PostMapping("/evaluar")
-    public Evaluacion evaluar(@RequestParam Long solicitudId,
+    public EvaluacionFinal evaluar(@RequestParam Long solicitudId,
                               @RequestParam Long rubricaId,
                               @RequestParam Double notaFinal,
                               @RequestParam String observaciones) {
@@ -55,22 +55,22 @@ public class EvaluacionController {
     }
 
     @GetMapping
-    public List<Evaluacion> listar() {
+    public List<EvaluacionFinal> listar() {
         return evaluacionService.listarEvaluaciones();
     }
 
     @GetMapping("/estudiante/{estudianteId}")
-    public List<Evaluacion> listarPorEstudiante(@PathVariable Long estudianteId) {
+    public List<EvaluacionFinal> listarPorEstudiante(@PathVariable Long estudianteId) {
         return evaluacionService.listarPorEstudiante(estudianteId);
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public List<Evaluacion> listarPorUsuario(@PathVariable Long usuarioId) {
+    public List<EvaluacionFinal> listarPorUsuario(@PathVariable Long usuarioId) {
         return evaluacionService.listarPorUsuario(usuarioId);
     }
 
     @GetMapping("/solicitud/{solicitudId}")
-    public ResponseEntity<Evaluacion> porSolicitud(@PathVariable Long solicitudId) {
+    public ResponseEntity<EvaluacionFinal> porSolicitud(@PathVariable Long solicitudId) {
         return evaluacionService.buscarPorSolicitud(solicitudId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

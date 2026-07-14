@@ -34,6 +34,7 @@ public class CronogramaServiceImpl implements CronogramaService {
     private final JuradoRepository juradoRepository;
     private final TutorRepository tutorRepository;
     private final NotificacionService notificacionService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoCronogramaRepository estadoCronogramaRepository;
 
     private static final LocalTime HORA_INICIO = LocalTime.of(8, 0);
     private static final LocalTime HORA_FIN    = LocalTime.of(17, 0);
@@ -44,51 +45,56 @@ public class CronogramaServiceImpl implements CronogramaService {
     @Transactional
     public Cronograma crearCronograma(Long solicitudId, Long salaId, LocalDate fecha, LocalTime hora) {
         validarPrerequisitosParaCronograma(solicitudId);
-
+ 
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
         Sala sala = salaRepository.findById(salaId)
                 .orElseThrow(() -> new RuntimeException("Sala no encontrada"));
-
+ 
         LocalDateTime inicio = LocalDateTime.of(fecha, hora);
         LocalDateTime fin = inicio.plusMinutes(DURACION);
-
+ 
         List<Cronograma> conflictos = cronogramaRepository.findConflictos(salaId, inicio, fin);
         if (!conflictos.isEmpty()) {
             throw new RuntimeException(
                     "Conflicto de horario: la sala '" + sala.getNombre() +
                             "' ya tiene una pre-sustentación programada en esa franja.");
         }
+ 
+        ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo("PROGRAMADO")
+                .orElseGet(() -> estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()
+                        .codigo("PROGRAMADO").nombre("Programado").build()));
 
         Cronograma cronograma = cronogramaRepository.save(Cronograma.builder()
                 .solicitud(solicitud).sala(sala)
-                .fechaInicio(inicio).duracionMin(DURACION).estado("ACTIVO").build());
-
+                .convocatoria(solicitud.getConvocatoria())
+                .fechaInicio(inicio).duracionMin(DURACION).estado(estadoProgramado).build());
+ 
         notificarProgramacion(cronograma);
         return cronograma;
     }
-
+ 
     @Override
     @Transactional
     public Cronograma asignarAutomatico(Long solicitudId) {
         validarPrerequisitosParaCronograma(solicitudId);
-
+ 
         solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
+ 
         Optional<Cronograma> existente = cronogramaRepository.findBySolicitudId(solicitudId);
-        if (existente.isPresent() && "ACTIVO".equals(existente.get().getEstado())) {
+        if (existente.isPresent() && existente.get().getEstado() != null && "PROGRAMADO".equals(existente.get().getEstado().getCodigo())) {
             return existente.get();
         }
-
+ 
         List<Sala> salas = salaRepository.findAll().stream()
                 .filter(s -> Boolean.TRUE.equals(s.getDisponible())).toList();
         if (salas.isEmpty()) throw new RuntimeException("No hay salas disponibles.");
-
+ 
         for (int diasAdelantar = 1; diasAdelantar <= 30; diasAdelantar++) {
             LocalDate fecha = LocalDate.now().plusDays(diasAdelantar);
             if (fecha.getDayOfWeek().getValue() >= 6) continue;
-
+ 
             List<LocalDateTime> franjas = franjasDisponibles(fecha, DURACION);
             for (LocalDateTime franja : franjas) {
                 for (Sala sala : salas) {
@@ -96,9 +102,15 @@ public class CronogramaServiceImpl implements CronogramaService {
                             .findConflictos(sala.getId(), franja, franja.plusMinutes(DURACION));
                     if (conflictos.isEmpty()) {
                         Solicitud solicitud = solicitudRepository.findById(solicitudId).get();
+                        
+                        ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo("PROGRAMADO")
+                                .orElseGet(() -> estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()
+                                        .codigo("PROGRAMADO").nombre("Programado").build()));
+
                         Cronograma cronograma = cronogramaRepository.save(Cronograma.builder()
                                 .solicitud(solicitud).sala(sala)
-                                .fechaInicio(franja).duracionMin(DURACION).estado("ACTIVO")
+                                .convocatoria(solicitud.getConvocatoria())
+                                .fechaInicio(franja).duracionMin(DURACION).estado(estadoProgramado)
                                 .build());
                         notificarProgramacion(cronograma);
                         return cronograma;
@@ -109,14 +121,14 @@ public class CronogramaServiceImpl implements CronogramaService {
         throw new RuntimeException(
                 "No se encontró disponibilidad en los próximos 30 días. Verifique las salas o el calendario.");
     }
-
+ 
     private void validarPrerequisitosParaCronograma(Long solicitudId) {
         // 1. Tribunal completo: los 3 roles deben estar asignados
         List<String> rolesAsignados = juradoRepository.findBySolicitudId(solicitudId)
                 .stream().map(Jurado::getRol).toList();
         boolean tribunalCompleto = rolesAsignados.contains("PRESIDENTE")
-                && rolesAsignados.contains("VOCAL_1")
-                && rolesAsignados.contains("VOCAL_2");
+                && rolesAsignados.contains("VOCAL")
+                && rolesAsignados.contains("SECRETARIO");
         if (!tribunalCompleto) {
             throw new RuntimeException(
                     "No se puede programar la presentación: el tribunal no está completo. " +

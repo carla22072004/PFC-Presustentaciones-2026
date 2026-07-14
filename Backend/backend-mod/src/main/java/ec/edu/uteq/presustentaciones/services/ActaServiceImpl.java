@@ -10,23 +10,22 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.*;
-import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.io.font.constants.StandardFonts;
 import ec.edu.uteq.presustentaciones.entities.Acta;
-import ec.edu.uteq.presustentaciones.entities.Evaluacion;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.entities.Jurado;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
 import ec.edu.uteq.presustentaciones.repositories.ActaRepository;
-import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,8 +44,9 @@ public class ActaServiceImpl implements ActaService {
 
     private final ActaRepository actaRepository;
     private final SolicitudRepository solicitudRepository;
-    private final EvaluacionRepository evaluacionRepository;
+    private final EvaluacionFinalRepository evaluacionRepository;
     private final JuradoRepository juradoRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -63,34 +63,36 @@ public class ActaServiceImpl implements ActaService {
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
 
         // Buscar evaluación y jurados
-        Optional<Evaluacion> evalOpt = evaluacionRepository.findBySolicitudId(solicitudId);
+        Optional<EvaluacionFinal> evalOpt = evaluacionRepository.findBySolicitudId(solicitudId);
         List<Jurado> jurados = juradoRepository.findBySolicitudId(solicitudId);
 
-        // Crear directorio si no existe
-        try {
-            Path dir = Paths.get(actasDir);
-            if (!Files.exists(dir)) Files.createDirectories(dir);
-        } catch (IOException e) {
-            throw new RuntimeException("No se pudo crear directorio de actas: " + e.getMessage());
+        // Si ya existe el acta, retornar la misma
+        Optional<Acta> existente = actaRepository.findBySolicitudId(solicitudId);
+        if (existente.isPresent()) {
+            return existente.get();
         }
 
-        String nombreArchivo = "acta_" + solicitudId + "_" + System.currentTimeMillis() + ".pdf";
-        String rutaCompleta = actasDir + "/" + nombreArchivo;
+        String fileName = "acta_" + solicitudId + "_" + System.currentTimeMillis() + ".pdf";
+        Acta acta = Acta.builder()
+                .solicitud(solicitud)
+                .archivoPdf(fileName)
+                .build();
 
-        // Generar PDF con iText
-        generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados);
+        // Crear directorio de subida si no existe
+        try {
+            Files.createDirectories(Paths.get(actasDir));
+        } catch (IOException e) {
+            throw new RuntimeException("No se pudo crear el directorio de actas: " + e.getMessage());
+        }
 
-        Acta acta = actaRepository.findBySolicitudId(solicitudId)
-                .orElse(Acta.builder()
-                        .solicitud(solicitud)
-                        .fechaGeneracion(LocalDate.now())
-                        .build());
-        acta.setArchivoPdf(nombreArchivo);
-        acta.setFechaGeneracion(LocalDate.now());
+        String rutaCompleta = actasDir + "/" + fileName;
+        generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);
+
         return actaRepository.save(acta);
     }
 
     @Override
+    @Transactional
     public Acta firmarActa(Long actaId, String rol) {
         Acta acta = actaRepository.findById(actaId)
                 .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
@@ -109,12 +111,16 @@ public class ActaServiceImpl implements ActaService {
         // Si el acta quedó completamente firmada, cambiar estado a COMPLETADA y regenerar PDF
         if (acta.isFirmada()) {
             Solicitud solicitud = acta.getSolicitud();
-            solicitud.setEstado(EstadoSolicitud.COMPLETADA);
+            
+            ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCompletada = estadoSolicitudRepository.findByCodigo("COMPLETADA")
+                    .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                            .codigo("COMPLETADA").nombre("Completada").build()));
+            solicitud.setEstado(estadoCompletada);
             solicitudRepository.save(solicitud);
             log.info("Solicitud {} completada - todas las firmas del acta han sido aplicadas", solicitud.getId());
 
             if (acta.getArchivoPdf() != null) {
-                Optional<Evaluacion> evalOpt = evaluacionRepository.findBySolicitudId(solicitud.getId());
+                Optional<EvaluacionFinal> evalOpt = evaluacionRepository.findBySolicitudId(solicitud.getId());
                 List<Jurado> jurados = juradoRepository.findBySolicitudId(solicitud.getId());
                 String rutaCompleta = actasDir + "/" + acta.getArchivoPdf();
                 generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);
@@ -151,11 +157,11 @@ public class ActaServiceImpl implements ActaService {
 
     // ── Generación PDF ────────────────────────────────────────────────────────
 
-    private void generarPdf(String ruta, Solicitud solicitud, Evaluacion evaluacion, List<Jurado> jurados) {
+    private void generarPdf(String ruta, Solicitud solicitud, EvaluacionFinal evaluacion, List<Jurado> jurados) {
         generarPdf(ruta, solicitud, evaluacion, jurados, null);
     }
 
-    private void generarPdf(String ruta, Solicitud solicitud, Evaluacion evaluacion,
+    private void generarPdf(String ruta, Solicitud solicitud, EvaluacionFinal evaluacion,
                              List<Jurado> jurados, Acta acta) {
         try {
             PdfFont fontRegular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
@@ -225,7 +231,7 @@ public class ActaServiceImpl implements ActaService {
             addRow(datosEstudiante, "Carrera:", solicitud.getEstudiante() != null
                     ? nvl(solicitud.getEstudiante().getCarrera()) : "—", fontBold, fontRegular);
             addRow(datosEstudiante, "Título del tema:", nvl(solicitud.getTituloTema()), fontBold, fontRegular);
-            addRow(datosEstudiante, "Modalidad:", nvl(solicitud.getModalidad()), fontBold, fontRegular);
+            addRow(datosEstudiante, "Modalidad:", solicitud.getModalidadTitulacion() != null ? nvl(solicitud.getModalidadTitulacion().getNombre()) : "—", fontBold, fontRegular);
             addRow(datosEstudiante, "Fecha de solicitud:",
                     solicitud.getFechaRegistro() != null ? solicitud.getFechaRegistro().format(fmtDt) : "—",
                     fontBold, fontRegular);
@@ -260,15 +266,15 @@ public class ActaServiceImpl implements ActaService {
                         .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);
                 addHeaderRow(evalTable, new String[]{"Concepto", "Peso (%)", "Nota"}, fontBold);
                 evalTable.addCell(dataCell("Instructor del curso (Titulación II)", fontRegular));
-                evalTable.addCell(dataCell(String.format("%.0f%%", evalTable != null ? evaluacion.getPesoInstructor() : 60.0), fontRegular));
+                evalTable.addCell(dataCell(String.format("%.0f%%", (evaluacion.getPesoInstructor() != null ? evaluacion.getPesoInstructor() : 0.6) * 100.0), fontRegular));
                 evalTable.addCell(dataCell(evaluacion.getNotaInstructor() != null
                         ? String.format("%.2f", evaluacion.getNotaInstructor()) : "—", fontRegular));
-
+ 
                 evalTable.addCell(dataCell("Tribunal evaluador", fontRegular));
-                evalTable.addCell(dataCell(String.format("%.0f%%", evaluacion.getPesoJurado()), fontRegular));
-                evalTable.addCell(dataCell(evaluacion.getNotaJurado() != null
-                        ? String.format("%.2f", evaluacion.getNotaJurado()) : "—", fontRegular));
-
+                evalTable.addCell(dataCell(String.format("%.0f%%", (evaluacion.getPesoJurado() != null ? evaluacion.getPesoJurado() : 0.4) * 100.0), fontRegular));
+                evalTable.addCell(dataCell(evaluacion.getNotaJuradoPromedio() != null
+                        ? String.format("%.2f", evaluacion.getNotaJuradoPromedio()) : "—", fontRegular));
+ 
                 // Fila de total
                 Cell totalLabel = new Cell().add(new Paragraph("NOTA FINAL").setFont(fontBold).setFontSize(10))
                         .setBackgroundColor(UTEQ_BLUE).setFontColor(ColorConstants.WHITE)
@@ -284,10 +290,11 @@ public class ActaServiceImpl implements ActaService {
                 evalTable.addCell(totalPeso);
                 evalTable.addCell(totalNota);
                 document.add(evalTable);
-
+ 
                 // Resultado
-                String resultado = nvl(evaluacion.getResultado());
-                DeviceRgb resultColor = "APROBADO".equals(resultado)
+                String resultado = evaluacion.getResultado() != null ? nvl(evaluacion.getResultado().getNombre()) : "—";
+                String resultadoCodigo = evaluacion.getResultado() != null ? evaluacion.getResultado().getCodigo() : "";
+                DeviceRgb resultColor = "APROBADO".equals(resultadoCodigo)
                         ? new DeviceRgb(0, 128, 0) : new DeviceRgb(180, 0, 0);
                 document.add(new Paragraph("RESULTADO: " + resultado)
                         .setFont(fontBold).setFontSize(14).setFontColor(resultColor)

@@ -11,11 +11,11 @@ public interface EvaluacionCriterioRepository extends JpaRepository<EvaluacionCr
 
     List<EvaluacionCriterio> findBySolicitudId(Long solicitudId);
 
-    List<EvaluacionCriterio> findBySolicitudIdAndJuradoId(Long solicitudId, Long juradoId);
+    List<EvaluacionCriterio> findBySolicitudIdAndEvaluadorId(Long solicitudId, Long evaluadorId);
 
-    boolean existsBySolicitudIdAndJuradoId(Long solicitudId, Long juradoId);
+    boolean existsBySolicitudIdAndEvaluadorId(Long solicitudId, Long evaluadorId);
 
-    void deleteBySolicitudIdAndJuradoId(Long solicitudId, Long juradoId);
+    void deleteBySolicitudIdAndEvaluadorId(Long solicitudId, Long evaluadorId);
 
     /** Promedio de notas de todos los jurados para una solicitud por criterio */
     @Query("SELECT ec.criterio.id, AVG(ec.notaObtenida) FROM EvaluacionCriterio ec " +
@@ -23,9 +23,9 @@ public interface EvaluacionCriterioRepository extends JpaRepository<EvaluacionCr
     List<Object[]> promediosPorCriterio(@Param("solicitudId") Long solicitudId);
 
     /** Nota total promedio del tribunal: promedio de (suma por jurado) usando dos pasos en Java */
-    @Query("SELECT ec.jurado.id, SUM(ec.notaObtenida) " +
+    @Query("SELECT ec.evaluador.id, SUM(ec.notaObtenida) " +
            "FROM EvaluacionCriterio ec " +
            "WHERE ec.solicitud.id = :solicitudId " +
-           "GROUP BY ec.jurado.id")
-    List<Object[]> sumaPorJurado(@Param("solicitudId") Long solicitudId);
+           "GROUP BY ec.evaluador.id")
+    List<Object[]> sumaPorEvaluador(@Param("solicitudId") Long solicitudId);
 }

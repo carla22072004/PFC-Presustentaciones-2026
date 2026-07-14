@@ -366,7 +366,7 @@ public class TutoriaServiceImpl implements TutoriaService {
         String nombreTutor = tutor.getDocente().getUsuario().getNombre()
                 + " " + tutor.getDocente().getUsuario().getApellido();
 
-        boolean solicitudSuspendida = solicitud.getEstado() == EstadoSolicitud.SUSPENDIDA;
+        boolean solicitudSuspendida = solicitud.getEstado() != null && "SUSPENDIDA".equals(solicitud.getEstado().getCodigo());
 
         return TutoriaResumenDTO.builder()
                 .tutorId(tutorId)

@@ -3,7 +3,6 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.Docente;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
-import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
 import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
@@ -24,6 +23,7 @@ public class TutorServiceImpl implements TutorService {
     private final SolicitudRepository solicitudRepository;
     private final DocenteRepository docenteRepository;
     private final NotificacionService notificacionService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
 
     @Override
     @Transactional
@@ -42,7 +42,11 @@ public class TutorServiceImpl implements TutorService {
                 .build();
         Tutor guardado = tutorRepository.save(tutor);
 
-        solicitud.setEstado(EstadoSolicitud.TUTORIA);
+        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoTutoria = estadoSolicitudRepository.findByCodigo("TUTORIA")
+                .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
+                        .codigo("TUTORIA").nombre("Tutoria").build()));
+
+        solicitud.setEstado(estadoTutoria);
         solicitudRepository.save(solicitud);
 
         // Notificar al docente asignado

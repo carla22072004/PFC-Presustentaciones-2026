@@ -24,8 +24,10 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
     private final SolicitudRepository solicitudRepo;
     private final RubricaRepository rubricaRepo;
     private final TutorRepository tutorRepo;
-    private final EvaluacionRepository evaluacionRepo;
-    private final EvaluacionJuradoRepository evaluacionJuradoRepo;
+    private final EvaluacionFinalRepository evaluacionFinalRepo;
+    private final EvaluacionJuradoRepository javaEvaluacionJuradoRepo;
+    private final EvaluadorRepository evaluadorRepo;
+    private final TipoEvaluadorRepository tipoEvaluadorRepo;
 
     @Override
     @Transactional
@@ -56,8 +58,24 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
             }
         }
 
+        // Buscar o crear el Evaluador correspondiente para este jurado
+        Evaluador evaluador = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(
+                req.getSolicitudId(), jurado.getDocente().getId(), "JURADO")
+            .orElseGet(() -> {
+                TipoEvaluador tipo = tipoEvaluadorRepo.findByCodigo("JURADO")
+                        .orElseThrow(() -> new RuntimeException("Tipo evaluador JURADO no configurado."));
+                Evaluador ev = Evaluador.builder()
+                        .solicitud(solicitud)
+                        .docente(jurado.getDocente())
+                        .miembroTribunal(jurado)
+                        .tipoEvaluador(tipo)
+                        .peso(1.0)
+                        .build();
+                return evaluadorRepo.save(ev);
+            });
+
         // Permite re-evaluación: eliminar la anterior
-        evalCriterioRepo.deleteBySolicitudIdAndJuradoId(req.getSolicitudId(), req.getJuradoId());
+        evalCriterioRepo.deleteBySolicitudIdAndEvaluadorId(req.getSolicitudId(), evaluador.getId());
 
         List<EvaluacionCriterio> guardadas = new ArrayList<>();
         for (EscalaCriterioDTO cDto : req.getCriterios()) {
@@ -71,7 +89,7 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
 
             EvaluacionCriterio ec = EvaluacionCriterio.builder()
                     .solicitud(solicitud)
-                    .jurado(jurado)
+                    .evaluador(evaluador)
                     .criterio(criterio)
                     .escala(cDto.getEscala())
                     .notaObtenida(notaObtenida)
@@ -82,38 +100,47 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
             guardadas.add(evalCriterioRepo.save(ec));
         }
 
-        return buildResponse(jurado, guardadas, req.getSolicitudId());
+        return buildResponse(jurado, guardadas, req.getSolicitudId(), evaluador.getId());
     }
-
+ 
     @Override
     public EvaluacionRubricaResponse obtenerEvaluacionJurado(Long solicitudId, Long juradoId) {
         Jurado jurado = juradoRepo.findById(juradoId)
                 .orElseThrow(() -> new RuntimeException("Jurado no encontrado: " + juradoId));
-        List<EvaluacionCriterio> evals = evalCriterioRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId);
-        return buildResponse(jurado, evals, solicitudId);
-    }
+        
+        Evaluador evaluador = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(
+                solicitudId, jurado.getDocente().getId(), "JURADO")
+                .orElseThrow(() -> new RuntimeException("Evaluador no registrado para el jurado."));
 
+        List<EvaluacionCriterio> evals = evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evaluador.getId());
+        return buildResponse(jurado, evals, solicitudId, evaluador.getId());
+    }
+ 
     @Override
     public List<EvaluacionRubricaResponse> obtenerEvaluacionesSolicitud(Long solicitudId) {
         List<Jurado> jurados = juradoRepo.findBySolicitudId(solicitudId);
         return jurados.stream()
                 .map(j -> {
-                    List<EvaluacionCriterio> evals = evalCriterioRepo.findBySolicitudIdAndJuradoId(solicitudId, j.getId());
-                    return buildResponse(j, evals, solicitudId);
+                    var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(
+                            solicitudId, j.getDocente().getId(), "JURADO");
+                    List<EvaluacionCriterio> evals = evOpt.isPresent()
+                            ? evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())
+                            : new ArrayList<>();
+                    return buildResponse(j, evals, solicitudId, evOpt.map(Evaluador::getId).orElse(null));
                 })
                 .collect(Collectors.toList());
     }
-
+ 
     @Override
     public Double calcularNotaTribunal(Long solicitudId) {
         return promedioTribunal(solicitudId);
     }
-
+ 
     // ── Helper ──────────────────────────────────────────────────────────────
-
+ 
     /** Calcula el promedio de (suma de notas por jurado) en Java para evitar subqueries en JPQL */
     private Double promedioTribunal(Long solicitudId) {
-        List<Object[]> filas = evalCriterioRepo.sumaPorJurado(solicitudId);
+        List<Object[]> filas = evalCriterioRepo.sumaPorEvaluador(solicitudId);
         if (filas == null || filas.isEmpty()) return null;
         double suma = filas.stream()
                 .mapToDouble(f -> ((Number) f[1]).doubleValue())
@@ -121,14 +148,15 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
         double promedio = suma / filas.size();
         return Math.round(promedio * 100.0) / 100.0;
     }
-
+ 
     private EvaluacionRubricaResponse buildResponse(Jurado jurado,
                                                      List<EvaluacionCriterio> evals,
-                                                     Long solicitudId) {
+                                                     Long solicitudId,
+                                                     Long evaluadorId) {
         String nombre = jurado.getDocente() != null && jurado.getDocente().getUsuario() != null
                 ? jurado.getDocente().getUsuario().getNombre() + " " + jurado.getDocente().getUsuario().getApellido()
                 : "Docente #" + jurado.getId();
-
+ 
         List<EvaluacionRubricaResponse.CriterioResultado> detalles = evals.stream()
                 .map(ec -> EvaluacionRubricaResponse.CriterioResultado.builder()
                         .criterioId(ec.getCriterio().getId())
@@ -142,23 +170,38 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
                         .observaciones(ec.getObservaciones())
                         .build())
                 .collect(Collectors.toList());
-
+ 
         double notaTotal = evals.stream()
                 .mapToDouble(EvaluacionCriterio::getNotaObtenida)
                 .sum();
         notaTotal = Math.round(notaTotal * 100.0) / 100.0;
-
+ 
         Double notaPromedio = promedioTribunal(solicitudId);
-
+ 
         List<Jurado> todosJurados = juradoRepo.findBySolicitudId(solicitudId);
-        boolean completo = !todosJurados.isEmpty() && todosJurados.stream()
-                .allMatch(j -> evalCriterioRepo.existsBySolicitudIdAndJuradoId(solicitudId, j.getId()));
-
+        boolean completo = false;
+        if (!todosJurados.isEmpty()) {
+            completo = true;
+            for (Jurado j : todosJurados) {
+                var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(
+                        solicitudId, j.getDocente().getId(), "JURADO");
+                if (evOpt.isPresent()) {
+                    if (!evalCriterioRepo.existsBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())) {
+                        completo = false;
+                        break;
+                    }
+                } else {
+                    completo = false;
+                    break;
+                }
+            }
+        }
+ 
         return EvaluacionRubricaResponse.builder()
                 .solicitudId(solicitudId)
                 .juradoId(jurado.getId())
                 .nombreJurado(nombre)
-                .rolJurado(jurado.getRol())
+                .rolJurado(jurado.getRolJurado() != null ? jurado.getRolJurado().getNombre() : "")
                 .detalles(detalles)
                 .notaTotalJurado(evals.isEmpty() ? null : notaTotal)
                 .notaPromedioTribunal(notaPromedio)
@@ -198,7 +241,7 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
         List<ObservacionesSolicitudDTO.ObservacionesJuradoDTO> juradosDTO = new ArrayList<>();
         List<Jurado> jurados = juradoRepo.findBySolicitudId(solicitudId);
         
-        List<EvaluacionJurado> evaluacionesJurado = evaluacionJuradoRepo.findBySolicitudId(solicitudId);
+        List<EvaluacionJurado> evaluacionesJurado = javaEvaluacionJuradoRepo.findBySolicitudId(solicitudId);
         
         for (Jurado jurado : jurados) {
             String nombreJurado = jurado.getDocente() != null && jurado.getDocente().getUsuario() != null
@@ -210,7 +253,10 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
                     .findFirst()
                     .orElse(null);
             
-            List<EvaluacionCriterio> criterios = evalCriterioRepo.findBySolicitudIdAndJuradoId(solicitudId, jurado.getId());
+            var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(solicitudId, jurado.getDocente().getId(), "JURADO");
+            List<EvaluacionCriterio> criterios = evOpt.isPresent()
+                    ? evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())
+                    : new ArrayList<>();
             List<ObservacionesSolicitudDTO.CriterioObservacionDTO> criteriosDTO = criterios.stream()
                     .map(ec -> ObservacionesSolicitudDTO.CriterioObservacionDTO.builder()
                             .nombreCriterio(ec.getCriterio().getNombre())
@@ -226,7 +272,7 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
             juradosDTO.add(ObservacionesSolicitudDTO.ObservacionesJuradoDTO.builder()
                     .juradoId(jurado.getId())
                     .nombreJurado(nombreJurado)
-                    .rol(jurado.getRol())
+                    .rol(jurado.getRolJurado() != null ? jurado.getRolJurado().getNombre() : "")
                     .criterios(criteriosDTO)
                     .notaJurado(evalJurado != null ? evalJurado.getNotaJurado() : null)
                     .observaciones(evalJurado != null ? evalJurado.getObservaciones() : null)
@@ -236,14 +282,14 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
         }
 
         ObservacionesSolicitudDTO.ObservacionesCoordinadorDTO coordinadorDTO = null;
-        var evaluacionOpt = evaluacionRepo.findBySolicitudId(solicitudId);
+        var evaluacionOpt = evaluacionFinalRepo.findBySolicitudId(solicitudId);
         if (evaluacionOpt.isPresent()) {
-            Evaluacion ev = evaluacionOpt.get();
+            EvaluacionFinal ev = evaluacionOpt.get();
             coordinadorDTO = ObservacionesSolicitudDTO.ObservacionesCoordinadorDTO.builder()
                     .observaciones(ev.getObservaciones())
                     .notaInstructor(ev.getNotaInstructor())
                     .notaFinal(ev.getNotaFinal())
-                    .resultado(ev.getResultado())
+                    .resultado(ev.getResultado() != null ? ev.getResultado().getNombre() : "")
                     .build();
         }
 
