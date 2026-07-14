@@ -1,0 +1,890 @@
+/* ══════════════════════════════════════════════════════════════════════
+   DETALLE TUTORÍA
+   ══════════════════════════════════════════════════════════════════════ */
+
+.page-wrapper {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Encabezado ──────────────────────────────────────────────────────── */
+.page-header { margin-bottom: 24px; }
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a5c2e;
+  margin: 0 0 4px;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #1a5c2e;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Layout principal ────────────────────────────────────────────────── */
+.detalle-layout {
+  display: grid;
+  grid-template-columns: 30% 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .detalle-layout { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   COLUMNA IZQUIERDA — Fases
+   ══════════════════════════════════════════════════════════════════════ */
+.panel-fases {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+/* Slot de fase */
+.slot-fase {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
+}
+
+.slot-fase:hover:not(.slot-vacio) {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.slot-fase.activa {
+  border-color: #3b82f6 !important;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.slot-vacio {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.slot-icono { font-size: 1.2rem; flex-shrink: 0; }
+
+.slot-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slot-nombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.slot-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.slot-arrow { color: #94a3b8; font-size: 0.75rem; }
+
+/* Estado colors */
+.slot-fase.estado-aprobada   .slot-nombre { color: #15803d; }
+.slot-fase.estado-tutor      .slot-nombre { color: #c2410c; }
+.slot-fase.estado-estudiante .slot-nombre { color: #1d4ed8; }
+
+/* Barra de progreso global */
+.progreso-global {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progreso-segmentos {
+  display: flex;
+  gap: 5px;
+}
+
+.segmento {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  transition: background 0.3s;
+}
+
+.segmento.aprobado { background: #22c55e; }
+
+.progreso-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   COLUMNA DERECHA — Detalle
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Banner celebración */
+.banner-celebracion {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+@keyframes pulse-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.01); }
+}
+.animate-pulse {
+  animation: pulse-anim 1s ease-in-out 3;
+}
+
+/* Panel crear primera fase */
+.panel-crear-fase {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.crear-fase-icono { font-size: 2.5rem; }
+
+.panel-crear-fase h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.crear-fase-desc { font-size: 0.875rem; color: #64748b; margin: 0; }
+
+/* Estado vacío derecha */
+.empty-detalle {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-detalle i { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+
+/* ── Panel de fase seleccionada ────────────────────────────────────── */
+.panel-fase {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header de fase */
+.fase-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fase-titulo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fase-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.badge-fase {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.badge-fase.aprobada   { background: #dcfce7; color: #15803d; }
+.badge-fase.tutor      { background: #ffedd5; color: #c2410c; }
+.badge-fase.estudiante { background: #dbeafe; color: #1d4ed8; }
+
+.fase-fecha { font-size: 0.8rem; color: #64748b; white-space: nowrap; }
+
+/* Indicador revisiones */
+.indicador-revisiones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.rev-label { white-space: nowrap; }
+
+.rev-segmentos {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  max-width: 100px;
+}
+
+.rev-count { font-weight: 700; color: #1e293b; }
+
+/* ── Chat ───────────────────────────────────────────────────────────── */
+.chat-container {
+  height: 320px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+  scroll-behavior: smooth;
+}
+
+.chat-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.chat-vacio i { font-size: 2rem; }
+
+/* Contenedor de mensaje */
+.mensaje-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.mensaje-wrap.msg-propio  { align-items: flex-end; }
+.mensaje-wrap.msg-otro    { align-items: flex-start; }
+.mensaje-wrap.msg-aprobacion { align-items: center; }
+
+/* Burbuja */
+.burbuja {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.msg-propio .burbuja {
+  background: #d1fae5;
+  border-bottom-right-radius: 4px;
+}
+
+.msg-otro .burbuja {
+  background: #dbeafe;
+  border-bottom-left-radius: 4px;
+}
+
+.aprobacion-burbuja {
+  background: #166534;
+  color: #fff;
+  text-align: center;
+  border-radius: 20px !important;
+  padding: 10px 20px;
+  max-width: 85%;
+}
+
+.aprobacion-burbuja strong { color: #fff; }
+.aprobacion-burbuja small  { color: rgba(255,255,255,0.7); font-size: 0.72rem; }
+
+.burbuja-nombre { font-size: 0.75rem; font-weight: 700; color: #374151; }
+.burbuja-texto  { font-size: 0.875rem; color: #1e293b; margin: 0; }
+.burbuja-hora   { font-size: 0.7rem; color: #6b7280; }
+
+/* ── Textareas ──────────────────────────────────────────────────────── */
+.textarea-obs,
+.textarea-msg {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  resize: vertical;
+  font-family: inherit;
+  background: #fff;
+  color: #1e293b;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.textarea-obs:focus,
+.textarea-msg:focus {
+  outline: none;
+  border-color: #1a5c2e;
+  box-shadow: 0 0 0 3px rgba(26, 92, 46, 0.1);
+}
+
+/* ── Botones ────────────────────────────────────────────────────────── */
+.btn-crear-fase {
+  background: #1a5c2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-crear-fase:hover:not(:disabled) { background: #14472a; }
+.btn-crear-fase:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.acciones-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-enviar {
+  background: #1a5c2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-enviar:hover:not(:disabled) { background: #14472a; }
+.btn-enviar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-aprobar {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.btn-aprobar:hover:not(:disabled) { background: #16a34a; }
+.btn-aprobar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-ver-pdf {
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background 0.2s;
+}
+
+.btn-ver-pdf:hover { background: #1e40af; }
+
+/* ── Avisos ─────────────────────────────────────────────────────────── */
+.aviso-pdf {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aviso-espera {
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: #713f12;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Alerta de suspensión ──────────────────────────────────────────────── */
+.alerta-suspension {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #fffbeb;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.alerta-suspension-icon {
+  font-size: 1.75rem;
+  color: #d97706;
+  flex-shrink: 0;
+}
+.alerta-suspension-content {
+  flex: 1;
+}
+.alerta-suspension-content strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+.alerta-suspension-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #78350f;
+  line-height: 1.4;
+}
+.alerta-suspension-motivo {
+  margin-top: 8px !important;
+  padding-top: 8px;
+  border-top: 1px solid #fcd34d;
+}
+
+.nombre-pdf {
+  font-size: 0.8rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Banner fase aprobada ───────────────────────────────────────────── */
+.banner-aprobada {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #15803d;
+  text-align: center;
+}
+
+/* ── Panel crear nueva fase (dentro de fase aprobada) ───────────────── */
+.panel-nueva-fase {
+  background: #f0fdf4;
+  border: 1px dashed #86efac;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nueva-fase-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #15803d;
+  margin: 0;
+}
+
+/* ── Recuadro observación del tutor ─────────────────────────────────── */
+.recuadro-obs {
+  background: #fefce8;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.obs-cabecera {
+  font-size: 0.8rem;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+}
+
+.obs-texto {
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.obs-fecha { font-size: 0.72rem; color: #78716c; }
+
+/* ── Drop Zone ──────────────────────────────────────────────────────── */
+.drop-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  background: #f8fafc;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.drop-zone.dragover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.drop-icon { font-size: 2.5rem; color: #94a3b8; }
+.drop-texto { font-size: 0.875rem; color: #475569; margin: 0; }
+.drop-hint  { font-size: 0.75rem; color: #94a3b8; margin: 0; }
+
+.btn-seleccionar {
+  background: #fff;
+  border: 1px solid #1a5c2e;
+  color: #1a5c2e;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-seleccionar:hover { background: #1a5c2e; color: #fff; }
+
+.file-input-oculto { display: none; }
+
+.archivo-seleccionado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0fdf4;
+  padding: 8px 14px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.pdf-icon { font-size: 1.5rem; color: #dc2626; flex-shrink: 0; }
+
+.archivo-nombre {
+  font-size: 0.85rem;
+  color: #1e293b;
+  flex: 1;
+  word-break: break-all;
+  text-align: left;
+}
+
+.btn-quitar {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.btn-quitar:hover { background: #fee2e2; }
+
+.btn-subir-pdf {
+  background: #1a5c2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.btn-subir-pdf:hover:not(:disabled) { background: #14472a; }
+.btn-subir-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Zona de mensaje ────────────────────────────────────────────────── */
+.zona-mensaje {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODO OSCURO
+   ══════════════════════════════════════════════════════════════════════ */
+
+body.dark-mode .page-title  { color: #4ade80; }
+body.dark-mode .page-subtitle { color: #8b949e; }
+body.dark-mode .spinner { border-color: #30363d; border-top-color: #3fb950; }
+body.dark-mode .loading-state { color: #8b949e; }
+
+/* Panel fases */
+body.dark-mode .panel-fases {
+  background: #161b22;
+  border-color: #30363d;
+}
+body.dark-mode .panel-titulo { color: #e6edf3; }
+body.dark-mode .slot-fase { background: #0d1117; }
+body.dark-mode .slot-fase:hover:not(.slot-vacio) { background: #1a3a28; border-color: #3fb950; }
+body.dark-mode .slot-fase.activa { border-color: #60a5fa !important; background: #1e3a5f; }
+body.dark-mode .slot-nombre { color: #e6edf3; }
+body.dark-mode .slot-sub    { color: #8b949e; }
+body.dark-mode .segmento { background: #30363d; }
+body.dark-mode .segmento.aprobado { background: #3fb950; }
+body.dark-mode .progreso-label { color: #8b949e; }
+body.dark-mode .progreso-global { border-top-color: #30363d; }
+
+/* Panel fase y detalle */
+body.dark-mode .panel-fase  { background: #161b22; border-color: #30363d; }
+body.dark-mode .panel-crear-fase { background: #161b22; border-color: #30363d; }
+body.dark-mode .panel-crear-fase h3 { color: #e6edf3; }
+body.dark-mode .crear-fase-desc { color: #8b949e; }
+body.dark-mode .empty-detalle { background: #161b22; border-color: #30363d; color: #8b949e; }
+body.dark-mode .fase-titulo  { color: #e6edf3; }
+body.dark-mode .fase-fecha   { color: #8b949e; }
+body.dark-mode .badge-fase.aprobada   { background: #1a3a28; color: #4ade80; }
+body.dark-mode .badge-fase.tutor      { background: #431407; color: #fb923c; }
+body.dark-mode .badge-fase.estudiante { background: #1e3a5f; color: #60a5fa; }
+body.dark-mode .indicador-revisiones  { color: #8b949e; }
+body.dark-mode .rev-count { color: #e6edf3; }
+
+/* Chat */
+body.dark-mode .chat-container { background: #0d1117; border-color: #30363d; }
+body.dark-mode .chat-vacio  { color: #8b949e; }
+body.dark-mode .msg-propio .burbuja { background: #1a3a28; }
+body.dark-mode .msg-otro   .burbuja { background: #1e3a5f; }
+body.dark-mode .burbuja-nombre { color: #c9d1d9; }
+body.dark-mode .burbuja-texto  { color: #e6edf3; }
+body.dark-mode .burbuja-hora   { color: #8b949e; }
+
+/* Inputs */
+body.dark-mode .textarea-obs,
+body.dark-mode .textarea-msg {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+body.dark-mode .textarea-obs:focus,
+body.dark-mode .textarea-msg:focus {
+  border-color: #3fb950;
+  box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.15);
+}
+
+/* Botones */
+body.dark-mode .btn-crear-fase,
+body.dark-mode .btn-subir-pdf,
+body.dark-mode .btn-enviar { background: #238636; }
+body.dark-mode .btn-crear-fase:hover:not(:disabled),
+body.dark-mode .btn-subir-pdf:hover:not(:disabled),
+body.dark-mode .btn-enviar:hover:not(:disabled) { background: #2ea043; }
+body.dark-mode .btn-aprobar { background: #22c55e; }
+body.dark-mode .btn-aprobar:hover:not(:disabled) { background: #16a34a; }
+body.dark-mode .btn-seleccionar { background: #161b22; border-color: #3fb950; color: #3fb950; }
+body.dark-mode .btn-seleccionar:hover { background: #3fb950; color: #0d1117; }
+
+/* Avisos */
+body.dark-mode .aviso-pdf      { background: #1e3a5f; border-color: #1d4ed8; color: #93c5fd; }
+body.dark-mode .aviso-espera   { background: #1c1a09; border-color: #854d0e; color: #fbbf24; }
+body.dark-mode .banner-aprobada { background: #1a3a28; border-color: #3fb950; color: #4ade80; }
+body.dark-mode .panel-nueva-fase { background: #1a3a28; border-color: #3fb950; }
+body.dark-mode .nueva-fase-titulo { color: #4ade80; }
+body.dark-mode .recuadro-obs  { background: #1c1a09; border-left-color: #f59e0b; }
+body.dark-mode .obs-cabecera  { color: #fbbf24; }
+body.dark-mode .obs-texto     { color: #e6edf3; }
+body.dark-mode .obs-fecha     { color: #8b949e; }
+body.dark-mode .zona-mensaje  { border-top-color: #30363d; }
+
+/* Drop zone */
+body.dark-mode .drop-zone { border-color: #30363d; background: #0d1117; }
+body.dark-mode .drop-zone.dragover { border-color: #60a5fa; background: #1e3a5f; }
+body.dark-mode .drop-icon  { color: #8b949e; }
+body.dark-mode .drop-texto { color: #8b949e; }
+body.dark-mode .archivo-seleccionado { background: #1a3a28; }
+body.dark-mode .archivo-nombre { color: #e6edf3; }
+body.dark-mode .btn-quitar { color: #f87171; }
+body.dark-mode .btn-quitar:hover { background: #450a0a; }
+body.dark-mode .nombre-pdf { color: #c9d1d9; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   OVERLAY DE SUSPENSIÓN — para estudiante y tutor
+   ══════════════════════════════════════════════════════════════════════ */
+.overlay-suspension {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 12px;
+  margin: 0 0 16px 0;
+}
+
+.overlay-suspension-card {
+  background: #fff;
+  padding: 32px 40px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 2px solid #f59e0b;
+}
+
+.overlay-suspension-icon {
+  font-size: 3.5rem;
+  color: #d97706;
+  margin-bottom: 16px;
+}
+
+.overlay-suspension-card h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 12px;
+}
+
+.overlay-suspension-card p {
+  font-size: 0.95rem;
+  color: #78350f;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.overlay-motivo {
+  background: #fffbeb;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  margin: 12px 0 !important;
+  text-align: left;
+}
+
+.overlay-suspension-card small {
+  font-size: 0.8rem;
+  color: #92400e;
+  display: block;
+  margin-top: 16px;
+  font-style: italic;
+}
+
+/* Drop zone deshabilitado */
+.drop-zone-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Modo oscuro para overlay */
+body.dark-mode .overlay-suspension {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+body.dark-mode .overlay-suspension-card {
+  background: #161b22;
+  border-color: #d97706;
+}
+
+body.dark-mode .overlay-suspension-icon {
+  color: #fbbf24;
+}
+
+body.dark-mode .overlay-suspension-card h3 {
+  color: #fbbf24;
+}
+
+body.dark-mode .overlay-suspension-card p {
+  color: #c9d1d9;
+}
+
+body.dark-mode .overlay-motivo {
+  background: #1c1400;
+  border-color: #854d0e;
+}
+
+body.dark-mode .overlay-suspension-card small {
+  color: #8b949e;
+}
+
+body.dark-mode .drop-zone-disabled {
+  opacity: 0.4;
+}

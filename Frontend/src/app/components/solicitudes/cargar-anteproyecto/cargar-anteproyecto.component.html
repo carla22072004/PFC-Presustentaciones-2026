@@ -1,0 +1,127 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-cloud-upload-fill me-2"></i>Cargar Anteproyecto</h2>
+      <p class="page-subtitle">Sube el documento PDF de tu anteproyecto de titulación</p>
+    </div>
+  </div>
+
+  <!-- Cargando estado -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Verificando estado...</p>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+
+    <div class="solicitud-card">
+      <div class="sc-label">Solicitud #{{ solicitudId }}</div>
+      <h3 class="sc-titulo">Documento de Anteproyecto</h3>
+      <div class="sc-meta">
+        <span><i class="bi bi-file-earmark-pdf me-1"></i>Formato PDF · Máximo 10 MB</span>
+        <span *ngIf="anteproyectoExistente">
+          <span class="badge" [ngClass]="estadoBadge">{{ anteproyectoExistente.estado }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- ── BLOQUEADO: ya tiene PDF y no fue rechazado ─────────────────── -->
+    <div class="bloqueo-card" *ngIf="bloqueado">
+      <div class="bloqueo-icon"><i class="bi bi-lock-fill"></i></div>
+      <div class="bloqueo-body">
+        <h4 class="bloqueo-titulo">PDF ya cargado</h4>
+        <p class="bloqueo-desc">
+          Tu anteproyecto está en estado
+          <strong>{{ anteproyectoExistente.estado }}</strong>.
+          Solo puedes reemplazar el PDF si el coordinador lo rechaza y te solicita una corrección.
+        </p>
+        <div class="bloqueo-info" *ngIf="anteproyectoExistente.observaciones">
+          <i class="bi bi-chat-text me-2"></i>
+          <strong>Observación del coordinador:</strong> {{ anteproyectoExistente.observaciones }}
+        </div>
+      </div>
+      <div class="form-footer">
+        <button type="button" class="btn-cancelar" routerLink="/dashboard/solicitudes/mis-tramites">
+          <i class="bi bi-arrow-left me-1"></i> Volver
+        </button>
+      </div>
+    </div>
+
+    <!-- ── PERMITIDO: sin PDF o fue rechazado ────────────────────────── -->
+    <div class="form-card" *ngIf="!bloqueado">
+
+      <!-- Aviso de suspensión de la solicitud -->
+      <div class="alerta-suspension" *ngIf="solicitudSuspendida">
+        <div class="alerta-suspension-icon">
+          <i class="bi bi-slash-circle-fill"></i>
+        </div>
+        <div class="alerta-suspension-content">
+          <strong>Tu solicitud ha sido suspendida</strong>
+          <p>No puedes subir archivos ni continuar con el proceso hasta que se levante la suspensión.</p>
+          <p *ngIf="solicitudMotivoSuspension" class="alerta-suspension-motivo">
+            <strong>Motivo de suspensión:</strong> {{ solicitudMotivoSuspension }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Aviso si es re-subida por rechazo -->
+      <div class="alerta-rechazo" *ngIf="anteproyectoExistente?.estado === 'RECHAZADO'">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        El coordinador rechazó tu anteproyecto anterior. Puedes subir una versión corregida.
+        <span *ngIf="anteproyectoExistente.observaciones">
+          <strong>Motivo:</strong> {{ anteproyectoExistente.observaciones }}
+        </span>
+      </div>
+
+      <!-- Zona de carga -->
+      <div class="upload-zone" (click)="fileInput.click()"
+           [class.upload-zone--active]="archivoSeleccionado"
+           [class.upload-zone--error]="intentoEnvio && !archivoSeleccionado"
+           [class.upload-zone--disabled]="solicitudSuspendida">
+        <input #fileInput type="file" (change)="onFileSelected($event)" accept="application/pdf" [disabled]="solicitudSuspendida" hidden>
+        <div class="upload-icon-wrap">
+          <i class="bi"
+             [class.bi-file-earmark-pdf-fill]="archivoSeleccionado"
+             [class.bi-cloud-upload]="!archivoSeleccionado"
+             [class.upload-icon-ok]="archivoSeleccionado"
+             [class.upload-icon]="!archivoSeleccionado"></i>
+        </div>
+        <p class="upload-label">
+          {{ archivoSeleccionado ? 'Clic para cambiar el archivo' : 'Haga clic para seleccionar el PDF' }}
+        </p>
+        <span class="upload-hint">Solo archivos PDF · Máx. 10 MB</span>
+      </div>
+
+      <!-- Advertencia sin archivo -->
+      <div class="alerta-sin-pdf" *ngIf="intentoEnvio && !archivoSeleccionado">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Debes seleccionar un archivo PDF antes de enviar.
+      </div>
+
+      <!-- Archivo seleccionado -->
+      <div class="file-preview" *ngIf="archivoSeleccionado">
+        <div class="file-preview-info">
+          <i class="bi bi-check-circle-fill text-success-icon"></i>
+          <div>
+            <strong>{{ archivoSeleccionado.name }}</strong>
+            <span class="file-size">{{ (archivoSeleccionado.size / 1024 / 1024).toFixed(2) }} MB</span>
+          </div>
+        </div>
+        <button class="btn-quitar" (click)="quitarArchivo(); $event.stopPropagation()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-cancelar" routerLink="/dashboard/solicitudes/mis-tramites">
+          <i class="bi bi-arrow-left me-1"></i> Volver
+        </button>
+        <button class="btn-guardar" [disabled]="subiendo || solicitudSuspendida" (click)="subirArchivo()">
+          <span *ngIf="!subiendo && !solicitudSuspendida"><i class="bi bi-cloud-upload me-1"></i> Confirmar y Enviar</span>
+          <span *ngIf="subiendo"><i class="bi bi-hourglass-split me-1"></i> Enviando...</span>
+          <span *ngIf="!subiendo && solicitudSuspendida"><i class="bi bi-slash-circle me-1"></i> Suspendido</span>
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

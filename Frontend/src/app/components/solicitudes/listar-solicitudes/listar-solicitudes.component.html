@@ -1,0 +1,160 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-journal-text me-2"></i>
+        {{ esEstudiante() ? 'Mis Solicitudes' : 'Todas las Solicitudes' }}
+      </h2>
+      <p class="page-subtitle">Gestiona y da seguimiento a los trámites académicos</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="cargar()" title="Recargar">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <button class="btn-nueva" routerLink="/dashboard/solicitudes/registrar" *ngIf="esEstudiante()">
+        <i class="bi bi-plus-lg me-1"></i> Nueva Solicitud
+      </button>
+      <button class="btn-nueva" routerLink="/dashboard/admin/revisar-solicitudes" *ngIf="esAdmin()">
+        <i class="bi bi-clipboard2-check me-1"></i> Panel Completo
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando solicitudes...</p>
+  </div>
+
+  <div class="table-card" *ngIf="!cargando">
+    <table class="tabla">
+      <thead><tr>
+        <th *ngIf="esAdmin()">Estudiante</th>
+        <th>Título del Tema</th>
+        <th>Modalidad</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Observaciones</th>
+        <th class="text-center">Acciones</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngFor="let s of solicitudes">
+          <td *ngIf="esAdmin()">
+            <div class="alumno-info">
+              <div class="avatar-sm">{{ (s.estudiante?.usuario?.nombre || 'E')[0] }}</div>
+              <span>{{ s.estudiante?.usuario?.nombre }} {{ s.estudiante?.usuario?.apellido }}</span>
+            </div>
+          </td>
+          <td class="titulo-cell" [title]="s.tituloTema">{{ s.tituloTema }}</td>
+          <td><span class="mod-chip">{{ s.modalidad }}</span></td>
+          <td>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</td>
+          <td><span class="badge" [ngClass]="getBadge(s.estado)">{{ s.estado }}</span></td>
+          <td>
+            <div class="obs-cell">
+              <span class="obs-empty" *ngIf="!s.observaciones && s.estado!=='SUSPENDIDA'">—</span>
+              <ng-container *ngIf="s.observaciones">
+                <span class="obs-text">{{ s.observaciones | slice:0:30 }}{{ s.observaciones.length > 30 ? '... ' : ' ' }}<button class="btn-ver-mas" (click)="verObservaciones(s.tituloTema, s.observaciones)">Ver más</button></span>
+              </ng-container>
+              <div *ngIf="s.estado==='SUSPENDIDA' && s.motivoSuspension" class="obs-suspension">
+                <strong>Motivo de suspensión:</strong> {{ s.motivoSuspension }}
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="acciones-cell">
+              <!-- Estudiante -->
+              <ng-container *ngIf="esEstudiante()">
+                <!-- PDF: solo cuando la solicitud aún está en CREADA (sin enviar) -->
+                <a class="btn-ac btn-pdf"
+                   *ngIf="s.estado==='CREADA'"
+                   [routerLink]="['/dashboard/solicitudes/cargar-pdf', s.id]"
+                   title="Cargar PDF del anteproyecto">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+                <!-- Enviar: solo habilitado si hay PDF cargado -->
+                <button class="btn-ac btn-enviar"
+                        *ngIf="s.estado==='CREADA'"
+                        (click)="enviar(s.id)"
+                        title="Enviar a revisión (requiere PDF)">
+                  <i class="bi bi-send"></i> Enviar
+                </button>
+                <!-- Ver Observaciones: visible cuando hay tutor o jurados asignados -->
+                <a class="btn-ac btn-observaciones"
+                   *ngIf="mostrarBotonObservaciones(s.estado)"
+                   [routerLink]="['/dashboard/solicitudes/ver-observaciones', s.id]"
+                   title="Ver observaciones de tutores y jurados">
+                  <i class="bi bi-chat-left-text"></i> Obs.
+                </a>
+                <!-- Suspension badge -->
+                <span *ngIf="s.estado==='SUSPENDIDA'" class="badge badge-suspendida" [title]="s.motivoSuspension || 'Suspendido'">🚫 Suspendido</span>
+              </ng-container>
+              <!-- Admin / Docente -->
+              <ng-container *ngIf="esAdmin()">
+                <button class="btn-ac btn-aprobar" *ngIf="s.estado==='ENVIADA'" (click)="aprobar(s.id)">
+                  <i class="bi bi-check-circle-fill"></i> Aprobar
+                </button>
+                <button class="btn-ac btn-rechazar" *ngIf="s.estado==='ENVIADA'" (click)="rechazar(s.id)">
+                  <i class="bi bi-x-circle-fill"></i> Rechazar
+                </button>
+                <button class="btn-ac btn-ver-pdf" *ngIf="s.estado==='ENVIADA'"
+                        [routerLink]="['/dashboard/docente/anteproyecto', s.id]">
+                  <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                </button>
+                <!-- APROBADA -->
+                <button class="btn-ac btn-programar" *ngIf="s.estado==='APROBADA'"
+                        [routerLink]="['/dashboard/admin/cronograma', s.id]">
+                  <i class="bi bi-calendar-plus"></i> Programar
+                </button>
+                <button class="btn-ac btn-evaluar" *ngIf="s.estado==='APROBADA'"
+                        [routerLink]="['/dashboard/admin/evaluar', s.id]">
+                  <i class="bi bi-star-fill"></i> Evaluar
+                </button>
+                <!-- TUTORIA -->
+                <button class="btn-ac btn-ver-pdf" *ngIf="s.estado==='TUTORIA'"
+                        [routerLink]="['/dashboard/docente/anteproyecto', s.id]">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+                </button>
+                <!-- EVALUACION -->
+                <button class="btn-ac btn-evaluar" *ngIf="s.estado==='EVALUACION'"
+                        [routerLink]="['/dashboard/admin/evaluar', s.id]">
+                  <i class="bi bi-star-fill"></i> Evaluar
+                </button>
+                <button class="btn-ac btn-ver-pdf" *ngIf="s.estado==='EVALUACION'"
+                        [routerLink]="['/dashboard/docente/anteproyecto', s.id]">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+                </button>
+                <!-- CALIFICADA -->
+                <button class="btn-ac btn-ver-pdf" *ngIf="s.estado==='CALIFICADA'"
+                        [routerLink]="['/dashboard/docente/anteproyecto', s.id]">
+                  <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                </button>
+              </ng-container>
+              <span *ngIf="(esAdmin() && (s.estado==='RECHAZADA' || s.estado==='SUSPENDIDA' || s.estado==='COMPLETADA' || s.estado==='CREADA')) || (esEstudiante() && (s.estado==='RECHAZADA' || s.estado==='SUSPENDIDA' || s.estado==='COMPLETADA'))" class="sin-accion">—</span>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="solicitudes.length === 0">
+          <td [attr.colspan]="esAdmin() ? 7 : 6" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No hay solicitudes registradas.</p>
+            <button class="btn-nueva-sm" routerLink="/dashboard/solicitudes/registrar" *ngIf="esEstudiante()">
+              Crear tu primera solicitud
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="noti-modal-backdrop" *ngIf="modalObs !== null" (click)="cerrarModal()">
+  <div class="noti-modal" (click)="$event.stopPropagation()">
+    <div class="noti-modal-header">
+      <i class="bi bi-exclamation-triangle-fill noti-icon"></i>
+      <span class="noti-title">Notificación</span>
+    </div>
+    <div class="noti-modal-body">{{ modalObs }}</div>
+    <div class="noti-modal-footer">
+      <button class="btn-cerrar-noti" (click)="cerrarModal()">
+        <i class="bi bi-x me-1"></i>Cerrar
+      </button>
+    </div>
+  </div>
+</div>

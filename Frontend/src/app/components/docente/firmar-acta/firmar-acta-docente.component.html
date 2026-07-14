@@ -1,0 +1,126 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-pen me-2"></i>Firmar Acta</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+        — <em>{{ solicitud.tituloTema }}</em>
+      </p>
+    </div>
+    <button class="btn-back" routerLink="/dashboard/jurado/mis-asignaciones">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando datos...</p>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+
+    <!-- Sin acta -->
+    <div class="alert-info" *ngIf="!acta">
+      <i class="bi bi-clock-history me-2"></i>
+      El acta aún no ha sido generada. El coordinador debe completar la evaluación primero.
+    </div>
+
+    <!-- Sin rol en esta solicitud -->
+    <div class="alert-warning" *ngIf="acta && misRoles.length === 0">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      No tienes un rol asignado en el tribunal de esta solicitud.
+    </div>
+
+    <ng-container *ngIf="acta && misRoles.length > 0">
+
+      <!-- Mis roles y botones de firma -->
+      <div class="mis-roles-section">
+        <h3 class="section-title">
+          <i class="bi bi-person-badge-fill me-2"></i>
+          Tu participación en este tribunal
+        </h3>
+
+        <!-- Tarjeta por cada rol del docente -->
+        <div class="rol-firma-card" *ngFor="let rol of misRoles"
+             [class.firmado]="firmaEstado(rol)"
+             [class.pendiente]="!firmaEstado(rol)">
+          <div class="rfc-left">
+            <div class="rfc-icon">
+              <i class="bi" [class.bi-check-circle-fill]="firmaEstado(rol)"
+                            [class.bi-pen-fill]="!firmaEstado(rol)"></i>
+            </div>
+            <div class="rfc-info">
+              <span class="rfc-rol-label">{{ ROLES_LABEL[rol] }}</span>
+              <span class="rfc-estado" [class.ok]="firmaEstado(rol)">
+                {{ firmaEstado(rol) ? '✓ Ya firmado' : 'Pendiente tu firma' }}
+              </span>
+            </div>
+          </div>
+          <!-- Botón DESHABILITADO si ya firmó -->
+          <button
+            class="btn-firmar-rol"
+            [class.firmado]="firmaEstado(rol)"
+            [disabled]="firmaEstado(rol) || firmando !== null"
+            (click)="firmar(rol)">
+            <i class="bi"
+               [class.bi-check2]="firmaEstado(rol)"
+               [class.bi-pen-fill]="!firmaEstado(rol) && firmando !== rol"
+               [class.bi-arrow-clockwise]="firmando === rol"
+               [class.spin]="firmando === rol"></i>
+            {{ firmaEstado(rol) ? 'Firmado' : (firmando === rol ? 'Firmando...' : 'Firmar') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Estado del acta completo (todos los actores) -->
+      <div class="acta-panel">
+        <div class="acta-header">
+          <h3><i class="bi bi-file-earmark-text me-2"></i>Estado del Acta</h3>
+          <span class="acta-badge" [class.completa]="acta.firmada">
+            {{ acta.firmada ? '✓ Completamente firmada' : 'En proceso de firma' }}
+          </span>
+        </div>
+
+        <div class="firmas-grid">
+          <div class="firma-item" [class.ok]="acta.firmadaPresidente">
+            <i class="bi" [class.bi-check-circle-fill]="acta.firmadaPresidente"
+                          [class.bi-circle]="!acta.firmadaPresidente"></i>
+            <span>Presidente</span>
+            <small>{{ getNombrePorRol('PRESIDENTE') }}</small>
+          </div>
+          <div class="firma-item" [class.ok]="acta.firmadaVocal1">
+            <i class="bi" [class.bi-check-circle-fill]="acta.firmadaVocal1"
+                          [class.bi-circle]="!acta.firmadaVocal1"></i>
+            <span>Vocal 1</span>
+            <small>{{ getNombrePorRol('VOCAL_1') }}</small>
+          </div>
+          <div class="firma-item" [class.ok]="acta.firmadaVocal2">
+            <i class="bi" [class.bi-check-circle-fill]="acta.firmadaVocal2"
+                          [class.bi-circle]="!acta.firmadaVocal2"></i>
+            <span>Vocal 2</span>
+            <small>{{ getNombrePorRol('VOCAL_2') }}</small>
+          </div>
+          <div class="firma-item" [class.ok]="acta.firmadaTutor">
+            <i class="bi" [class.bi-check-circle-fill]="acta.firmadaTutor"
+                          [class.bi-circle]="!acta.firmadaTutor"></i>
+            <span>Tutor</span>
+            <small>{{ getNombrePorRol('TUTOR') }}</small>
+          </div>
+        </div>
+
+        <div class="firmas-resumen" *ngIf="firmasCompletas.length > 0">
+          <strong>{{ firmasCompletas.length }}/4 firmas</strong> registradas: {{ firmasCompletas.join(', ') }}
+        </div>
+      </div>
+
+      <!-- Acta completamente firmada -->
+      <div class="descarga-panel" *ngIf="acta.firmada">
+        <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+        <span>El acta está completamente firmada y disponible para descargar.</span>
+        <button class="btn-descargar" (click)="descargar()">
+          <i class="bi bi-download me-1"></i> Descargar Acta PDF
+        </button>
+      </div>
+
+    </ng-container>
+  </ng-container>
+</div>

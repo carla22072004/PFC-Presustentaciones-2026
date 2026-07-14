@@ -1,0 +1,75 @@
+<div class="page-wrapper">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title"><i class="bi bi-person-circle me-2"></i>Mi Perfil</h2>
+            <p class="page-subtitle">Actualiza tu correo y número de teléfono</p>
+        </div>
+    </div>
+
+    <div class="loading-state" *ngIf="cargando">
+        <div class="spinner"></div><p>Cargando perfil...</p>
+    </div>
+
+    <div class="perfil-card" *ngIf="!cargando && usuario">
+
+        <!-- Info de solo lectura -->
+        <div class="info-section">
+            <div class="avatar-grande">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <div class="info-datos">
+                <h3 class="nombre-completo">{{ usuario.nombre }} {{ usuario.apellido }}</h3>
+                <span class="rol-badge">{{ rolLabel }}</span>
+                <p class="email-login"><i class="bi bi-lock-fill me-1"></i>{{ usuario.email }} <span class="email-login-tag">correo de acceso</span></p>
+            </div>
+        </div>
+
+        <hr class="separador">
+
+        <!-- Campos editables -->
+        <div class="form-section">
+
+            <div class="campo-grupo">
+                <label class="campo-label">
+                    <i class="bi bi-envelope-fill me-1"></i> Correo para notificaciones
+                </label>
+                <input
+                        type="email"
+                        class="campo-input"
+                        [class.error]="emailInvalido"
+                        [(ngModel)]="emailNotificaciones"
+                        (blur)="validarEmail()"
+                        placeholder="ejemplo@correo.com"
+                />
+                <span class="campo-error" *ngIf="emailInvalido">
+          <i class="bi bi-exclamation-circle me-1"></i>Ingresa un correo válido
+        </span>
+                <span class="campo-hint">
+          <i class="bi bi-info-circle me-1"></i>
+          A este correo llegarán los avisos del sistema. Puede ser distinto al correo con el que inicias sesión.
+        </span>
+            </div>
+
+            <div class="campo-grupo">
+                <label class="campo-label">
+                    <i class="bi bi-telephone-fill me-1"></i> Número de teléfono
+                </label>
+                <input
+                        type="tel"
+                        class="campo-input"
+                        [(ngModel)]="telefono"
+                        placeholder="Ej: 0991234567"
+                        maxlength="15"
+                />
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-guardar" (click)="guardar()" [disabled]="guardando">
+                    <span *ngIf="!guardando"><i class="bi bi-floppy me-1"></i> Guardar cambios</span>
+                    <span *ngIf="guardando"><i class="bi bi-arrow-repeat me-1 spin"></i> Guardando...</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>

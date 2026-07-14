@@ -1,0 +1,95 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-people-fill me-2"></i>Evaluaciones del Tribunal — Rúbrica</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+        — <em>{{ solicitud.tituloTema }}</em>
+      </p>
+    </div>
+    <button class="btn-back" [routerLink]="['/dashboard/admin/evaluar', solicitudId]">
+      <i class="bi bi-arrow-left"></i> Volver a evaluación
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando...</p></div>
+
+  <ng-container *ngIf="!cargando">
+
+    <!-- Resumen -->
+    <div class="resumen-bar" [class.completo]="tribunalCompleto">
+      <div class="rb-item">
+        <span class="rb-label">Jurados evaluados</span>
+        <span class="rb-val">{{ evaluadosCount }} / {{ evaluaciones.length }}</span>
+      </div>
+      <div class="rb-sep"></div>
+      <div class="rb-item">
+        <span class="rb-label">Nota promedio tribunal (40%)</span>
+        <span class="rb-val nota" *ngIf="notaPromedio !== null">{{ notaPromedio.toFixed(2) }} / 10</span>
+        <span class="rb-val pending" *ngIf="notaPromedio === null">Pendiente</span>
+      </div>
+      <div class="rb-sep"></div>
+      <div class="rb-item">
+        <span class="rb-label">Estado</span>
+        <span class="rb-estado ok" *ngIf="tribunalCompleto"><i class="bi bi-shield-check me-1"></i>Completo</span>
+        <span class="rb-estado pending" *ngIf="!tribunalCompleto"><i class="bi bi-clock me-1"></i>Incompleto</span>
+      </div>
+    </div>
+
+    <!-- Sin evaluaciones -->
+    <div class="empty-state" *ngIf="evaluaciones.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p>No hay jurados asignados o aún no han evaluado.</p>
+    </div>
+
+    <!-- Tarjeta por cada jurado -->
+    <div class="jurado-card" *ngFor="let ev of evaluaciones">
+      <div class="jc-header">
+        <div class="jc-info">
+          <span class="jc-rol">{{ ev.rolJurado }}</span>
+          <span class="jc-nombre">{{ ev.nombreJurado }}</span>
+        </div>
+        <div class="jc-nota-total" *ngIf="ev.notaTotalJurado !== null"
+             [class.aprobado]="ev.notaTotalJurado >= 7"
+             [class.reprobado]="ev.notaTotalJurado < 7">
+          <span class="jcn-num">{{ ev.notaTotalJurado.toFixed(2) }}</span>
+          <span class="jcn-denom">/ 10</span>
+        </div>
+        <div class="jc-pendiente" *ngIf="ev.notaTotalJurado === null">
+          <i class="bi bi-clock me-1"></i>Pendiente
+        </div>
+      </div>
+
+      <!-- Detalle de criterios -->
+      <div class="criterios-tabla" *ngIf="ev.detalles && ev.detalles.length > 0">
+        <div class="ct-head">
+          <span>Aspecto</span>
+          <span>Nivel</span>
+          <span>Ponderación</span>
+          <span>Puntos obtenidos</span>
+        </div>
+        <div class="ct-row" *ngFor="let d of ev.detalles">
+          <span class="ct-nombre">{{ d.nombreCriterio }}</span>
+          <span class="ct-escala">
+            <span class="escala-chip" [ngClass]="'e' + d.escala">
+              {{ d.escala }}% — {{ getLabelEscala(d.escala) }}
+            </span>
+          </span>
+          <span class="ct-ponderacion">{{ d.ponderacion }} pts</span>
+          <span class="ct-nota">{{ d.notaObtenida.toFixed(2) }} pts</span>
+        </div>
+        <div class="ct-total">
+          <span>TOTAL</span>
+          <span></span>
+          <span>10 pts</span>
+          <span class="ct-total-val">{{ ev.notaTotalJurado?.toFixed(2) }} pts</span>
+        </div>
+      </div>
+
+      <div class="jc-obs" *ngIf="!ev.detalles || ev.detalles.length === 0">
+        <i class="bi bi-hourglass-split me-2"></i>Este jurado aún no ha registrado su evaluación.
+      </div>
+    </div>
+
+  </ng-container>
+</div>

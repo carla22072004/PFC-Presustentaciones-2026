@@ -1,0 +1,178 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-people-fill me-2"></i>Asignar Tribunal y Tutor</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        <strong>{{ solicitud.tituloTema }}</strong> —
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+      </p>
+    </div>
+    <button class="btn-back" routerLink="/dashboard/admin/revisar-solicitudes">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <!-- ── Banner estado tutoría ─────────────────────────────────────────── -->
+  <!-- Caso 1: sin tutor asignado (array vacío o 404) -->
+  <div class="banner-tutoria banner-tutoria-error"
+       *ngIf="tutoriaCompletada === false && !tutoriaTieneAsignacion">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    ⚠ No se puede asignar tribunal. El estudiante no tiene tutor asignado aún.
+  </div>
+  <!-- Caso 2: tutoría existe pero no está completada -->
+  <div class="banner-tutoria banner-tutoria-error"
+       *ngIf="tutoriaCompletada === false && tutoriaTieneAsignacion">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    ⚠ No se puede asignar tribunal. El estudiante debe completar las 3 revisiones de tutoría primero
+    ({{ tutoriaFasesAprobadas }}/3 completadas).
+  </div>
+  <!-- Caso 3: tutoría completada -->
+  <div class="banner-tutoria banner-tutoria-ok" *ngIf="tutoriaCompletada === true">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    ✓ Tutoría completada. Puede proceder con la asignación del tribunal.
+  </div>
+
+  <!-- ── Estado del tribunal ─────────────────────────────────────────── -->
+  <div class="tribunal-status" [class.completo]="tribunalCompleto">
+    <i class="bi" [class.bi-check-circle-fill]="tribunalCompleto" [class.bi-hourglass-split]="!tribunalCompleto"></i>
+    <span *ngIf="!tribunalCompleto">Tribunal incompleto — {{ 3 - jurados.length }} rol(es) pendiente(s)</span>
+    <span *ngIf="tribunalCompleto">✓ Tribunal completo (Presidente + Vocal 1 + Vocal 2)</span>
+    <span class="tutor-badge" [class.asignado]="tutor">
+      <i class="bi bi-person-check-fill"></i>
+      Tutor: {{ tutor ? (tutor.docente?.usuario?.nombre + ' ' + tutor.docente?.usuario?.apellido) : 'No asignado' }}
+    </span>
+  </div>
+
+  <div class="grid-layout">
+
+    <!-- ── Columna izquierda: tribunal actual ────────────────────────── -->
+    <div class="panel">
+      <h3 class="panel-title"><i class="bi bi-person-badge me-1"></i>Tribunal Asignado</h3>
+
+      <div class="jurados-list" *ngIf="jurados.length > 0; else sinJurados">
+        <div class="jurado-card" *ngFor="let j of jurados">
+          <div class="jurado-avatar">{{ getNombreDocente(j)[0] }}</div>
+          <div class="jurado-info">
+            <span class="jurado-nombre">{{ getNombreDocente(j) }}</span>
+            <span class="jurado-rol">{{ getRolLabel(j.rol) }}</span>
+            <span class="jurado-especialidad">{{ j.docente?.areaEspecialidad || 'Sin especialidad registrada' }}</span>
+          </div>
+          <button class="btn-remove" (click)="eliminarJurado(j.id)" title="Eliminar">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+      <ng-template #sinJurados>
+        <div class="empty-panel"><i class="bi bi-people"></i><p>Sin jurados asignados</p></div>
+      </ng-template>
+
+      <!-- Tutor activo -->
+      <div class="tutor-section" *ngIf="tutor">
+        <h4 class="tutor-title"><i class="bi bi-person-check me-1"></i>Tutor Activo</h4>
+        <div class="jurado-card tutor-card">
+          <div class="jurado-avatar tutor-av">{{ (tutor.docente?.usuario?.nombre || 'T')[0] }}</div>
+          <div class="jurado-info">
+            <span class="jurado-nombre">{{ tutor.docente?.usuario?.nombre }} {{ tutor.docente?.usuario?.apellido }}</span>
+            <span class="jurado-rol">Director del proyecto</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asignación automática -->
+      <div class="auto-section">
+        <p class="auto-hint">Asigna automáticamente los 3 jurados según menor carga horaria.</p>
+        <button class="btn-auto" (click)="asignarAutomaticamente()" [disabled]="procesando || tribunalCompleto || !tutoriaCompletada">
+          <i class="bi bi-robot me-1"></i>
+          {{ procesando ? 'Procesando...' : 'Asignación Automática' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Columna derecha: formularios ──────────────────────────────── -->
+    <div class="panel">
+
+      <!-- ── Formulario jurado manual ──────────────────────────────── -->
+      <h3 class="panel-title"><i class="bi bi-person-plus me-1"></i>Asignar Jurado Manual</h3>
+      <form (ngSubmit)="asignarJurado()" [formGroup]="formJurado" class="form-asignar">
+
+        <div class="form-group">
+          <label>Rol en el tribunal</label>
+          <select formControlName="rol" class="form-select" [attr.disabled]="!tutoriaCompletada ? '' : null">
+            <option value="">— Seleccione rol —</option>
+            <option *ngFor="let r of rolesDisponibles" [value]="r.value">{{ r.label }}</option>
+          </select>
+          <small *ngIf="rolesDisponibles.length === 0" class="text-warning">
+            <i class="bi bi-exclamation-triangle"></i> Todos los roles están asignados
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Docente</label>
+          <select formControlName="docenteId" class="form-select" [attr.disabled]="!tutoriaCompletada ? '' : null">
+            <option value="">— Seleccione docente —</option>
+            <option *ngFor="let d of docentesDisponiblesParaJurado" [value]="d.id">
+              {{ getNombreDocente2(d) }}
+              <ng-container *ngIf="d.areaEspecialidad"> — {{ d.areaEspecialidad }}</ng-container>
+              ({{ d.cargaHorariaSemanal }}h)
+            </option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary"
+                [disabled]="formJurado.invalid || procesando || rolesDisponibles.length === 0 || !tutoriaCompletada">
+          <i class="bi bi-plus-circle me-1"></i>Asignar Jurado
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <!-- ── Formulario tutor manual ──────────────────────────────── -->
+      <h3 class="panel-title"><i class="bi bi-person-lines-fill me-1"></i>Asignar Tutor</h3>
+      <form (ngSubmit)="asignarTutor()" [formGroup]="formTutor" class="form-asignar">
+
+        <div class="form-group">
+          <label>Docente tutor</label>
+          <select formControlName="docenteId" class="form-select">
+            <option value="">— Seleccione tutor —</option>
+            <option *ngFor="let d of docentesDisponiblesParaTutor" [value]="d.id">
+              {{ getNombreDocente2(d) }}
+              <ng-container *ngIf="d.areaEspecialidad"> — {{ d.areaEspecialidad }}</ng-container>
+              ({{ d.cargaHorariaSemanal }}h)
+            </option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-secondary"
+                [disabled]="formTutor.invalid || procesando">
+          <i class="bi bi-person-check me-1"></i>
+          {{ tutor ? 'Cambiar Tutor' : 'Asignar Tutor' }}
+        </button>
+      </form>
+
+      <!-- ── Sugeridos (para referencia visual) ──────────────────── -->
+      <div class="sugerencias-section" *ngIf="docentesSugeridos.length > 0">
+        <h4 class="sugerencias-title">
+          <i class="bi bi-lightning-charge me-1"></i>Sugeridos por menor carga
+        </h4>
+        <div class="sugerencias-grid">
+          <div class="sugerencia-card" *ngFor="let d of docentesSugeridos">
+            <div class="s-nombre">{{ d.usuario?.nombre }} {{ d.usuario?.apellido }}</div>
+            <div class="s-info">
+              <span class="s-carga"><i class="bi bi-clock"></i> {{ d.cargaHorariaSemanal }}h</span>
+              <span class="s-esp">{{ d.areaEspecialidad || 'General' }}</span>
+            </div>
+            <div class="s-actions">
+              <button class="btn-sug" (click)="seleccionarParaJurado(d.id)" title="Seleccionar como jurado">
+                <i class="bi bi-person-badge"></i> Jurado
+              </button>
+              <button class="btn-sug btn-sug-tutor" (click)="seleccionarParaTutor(d.id)" title="Seleccionar como tutor">
+                <i class="bi bi-person-check"></i> Tutor
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

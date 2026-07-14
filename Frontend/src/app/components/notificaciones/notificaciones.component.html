@@ -1,0 +1,38 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-bell-fill me-2"></i>Notificaciones
+        <span class="badge-count" *ngIf="noLeidas > 0">{{ noLeidas }}</span>
+      </h2>
+      <p class="page-subtitle">Centro de mensajes y avisos del sistema</p>
+    </div>
+    <button class="btn-marcar-todas" (click)="marcarTodas()" *ngIf="noLeidas > 0">
+      <i class="bi bi-check-all me-1"></i> Marcar todas como leídas
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando notificaciones...</p>
+  </div>
+
+  <div class="noti-list" *ngIf="!cargando">
+    <div class="noti-item" [class.no-leida]="!n.leida" *ngFor="let n of notificaciones" (click)="marcarLeida(n.id)">
+      <div class="noti-icono" [class.leida]="n.leida">
+        <i class="bi bi-bell-fill" *ngIf="!n.leida"></i>
+        <i class="bi bi-bell" *ngIf="n.leida"></i>
+      </div>
+      <div class="noti-body">
+        <p class="noti-mensaje">{{ n.mensaje }}</p>
+        <span class="noti-fecha">{{ n.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <div class="noti-estado" *ngIf="!n.leida">
+        <span class="punto-nuevo"></span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="notificaciones.length === 0">
+      <i class="bi bi-bell-slash"></i>
+      <p>No tienes notificaciones.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,450 @@
+@import 'sweetalert2/dist/sweetalert2.min.css';
+
+.container-fluid {
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    background: transparent !important;
+    min-height: 100vh;
+}
+
+.card.shadow-dubai {
+    width: 100%;
+    max-width: 1000px; /* Ancho ideal para lectura */
+    background: #ffffff;
+    border: none;
+    border-radius: 40px !important;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
+    padding: 60px;
+    overflow: hidden; /* Evita que el contenido se salga por los bordes */
+}
+
+.card-title-main {
+    color: #1a5c2e;
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+    letter-spacing: -1px;
+}
+
+.info-banner {
+    background: #f0fdf4;
+    border-left: 6px solid #1a5c2e;
+    padding: 20px 30px;
+    border-radius: 20px;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #1a5c2e;
+}
+
+/* Espaciado entre los cuadros principales */
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 40px; /* Separación deliciosa entre secciones */
+}
+
+.form-section-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 35px;
+    border-radius: 30px;
+    box-sizing: border-box; /* Asegura que el padding no agrande el cuadro */
+    width: 100%;
+}
+
+.label-style {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+/* Contenedor para asegurar que el input no se salga */
+.input-wrapper {
+    width: 100%;
+    display: block;
+}
+
+.input-premium {
+    width: 100%;
+    max-width: 100%; /* Bloqueo de seguridad para que no se salga */
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 20px;
+    background: #ffffff;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-sizing: border-box; /* Crucial para que no se desborde */
+}
+
+.input-premium:focus {
+    outline: none;
+    border-color: #1a5c2e;
+    box-shadow: 0 10px 30px rgba(26, 92, 46, 0.08);
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 15px 35px;
+    border-radius: 18px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-submit-premium {
+    background: #1a5c2e;
+    color: white;
+    border: none;
+    padding: 18px 50px;
+    border-radius: 18px;
+    font-weight: 700;
+    box-shadow: 0 10px 25px rgba(26, 92, 46, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-submit-premium:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(26, 92, 46, 0.3);
+}
+
+.btn-submit-premium:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODO OSCURO — :host-context para Angular ViewEncapsulation
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Fondos de página y contenedores */
+body.dark-mode .page-wrapper     { color: #c9d1d9; }
+body.dark-mode .page-title       { color: #3fb950 !important; }
+body.dark-mode .page-subtitle    { color: #8b949e !important; }
+
+/* Tarjetas */
+body.dark-mode .form-card,
+body.dark-mode .table-card,
+body.dark-mode .solicitud-card,
+body.dark-mode .card-section,
+body.dark-mode .panel,
+body.dark-mode .seccion,
+body.dark-mode .perfil-card,
+body.dark-mode .acta-panel,
+body.dark-mode .accion-panel,
+body.dark-mode .eval-form-card,
+body.dark-mode .eval-registrada,
+body.dark-mode .tribunal-panel,
+body.dark-mode .cronograma-card,
+body.dark-mode .acciones-card,
+body.dark-mode .pdf-visor-card,
+body.dark-mode .empty-card,
+body.dark-mode .mi-rol-card,
+body.dark-mode .stat-card,
+body.dark-mode .asig-card,
+body.dark-mode .criterio-card,
+body.dark-mode .noti-item,
+body.dark-mode .noti-modal,
+body.dark-mode .card.shadow-dubai {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+    color: #c9d1d9 !important;
+}
+
+/* Inputs y selects */
+body.dark-mode .input-field,
+body.dark-mode .input-premium,
+body.dark-mode .campo-input,
+body.dark-mode .form-control,
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode .form-textarea,
+body.dark-mode .obs-input,
+body.dark-mode .rechazo-textarea,
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder { color: #484f58 !important; }
+
+/* Tablas */
+body.dark-mode .tabla { background: #161b22 !important; }
+body.dark-mode .tabla thead tr,
+body.dark-mode .tabla th {
+    background: #0d1117 !important;
+    color: #8b949e !important;
+    border-color: #30363d !important;
+}
+body.dark-mode .tabla td {
+    border-color: #21262d !important;
+    color: #c9d1d9 !important;
+    background: #161b22 !important;
+}
+body.dark-mode .tabla tbody tr:hover td { background: #1c2128 !important; }
+
+/* Textos */
+body.dark-mode .sc-titulo,
+body.dark-mode .card-title-main,
+body.dark-mode .section-title,
+body.dark-mode .panel-title,
+body.dark-mode .nombre-completo,
+body.dark-mode .ccard-titulo,
+body.dark-mode .cc-nombre,
+body.dark-mode .titulo-tema,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4 { color: #e6edf3 !important; }
+
+body.dark-mode .sc-label,
+body.dark-mode .sc-meta,
+body.dark-mode .campo-label,
+body.dark-mode .form-group label,
+body.dark-mode .label-style,
+body.dark-mode .carrera,
+body.dark-mode .estudiante-nombre,
+body.dark-mode .nombre { color: #8b949e !important; }
+
+/* IDs y links  */
+body.dark-mode .id-cell   { color: #3fb950 !important; }
+body.dark-mode .btn-ver-mas { color: #58a6ff !important; }
+
+/* Nombre estudiante en tabla */
+body.dark-mode .nombre { color: #e6edf3 !important; font-weight: 600; }
+body.dark-mode td .nombre { color: #e6edf3 !important; }
+
+/* Filtros */
+body.dark-mode .filtros-bar {}
+body.dark-mode .filtro-btn {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .filtro-btn.activo {
+    background: #238636 !important;
+    color: #ffffff !important;
+    border-color: #3fb950 !important;
+}
+body.dark-mode .filtro-btn:hover {
+    background: #2d333b !important;
+    color: #c9d1d9 !important;
+}
+
+/* Flujo barra */
+body.dark-mode .flujo-bar {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+}
+body.dark-mode .paso-label { color: #8b949e !important; }
+body.dark-mode .flujo-sep  { color: #484f58 !important; }
+
+/* Botones acción */
+body.dark-mode .btn-back,
+body.dark-mode .btn-cancelar,
+body.dark-mode .btn-cancel,
+body.dark-mode .btn-refresh {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .btn-guardar,
+body.dark-mode .btn-guardar-eval,
+body.dark-mode .btn-submit-premium,
+body.dark-mode .btn-nueva {
+    background: #238636 !important;
+    border-color: #3fb950 !important;
+}
+body.dark-mode .btn-marcar-todas {
+    background: #0d2318 !important;
+    border-color: #238636 !important;
+    color: #3fb950 !important;
+}
+
+/* Badges de estado */
+body.dark-mode .badge-creada,
+body.dark-mode .badge-default  { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d !important; }
+body.dark-mode .badge-enviada  { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .badge-aprobada,
+body.dark-mode .badge-aprobado,
+body.dark-mode .badge-activo   { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .badge-rechazada,
+body.dark-mode .badge-rechazado,
+body.dark-mode .badge-reprobado { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .badge-enviado  { background: #0d1f3a !important; color: #79c0ff !important; }
+
+/* Chips / tags */
+body.dark-mode .mod-chip,
+body.dark-mode .modalidad-tag  {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .rol-badge       { background: #0d1117 !important; border-color: #30363d !important; color: #8b949e !important; }
+body.dark-mode .rol-presidente  { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .rol-vocal1,
+body.dark-mode .rol-vocal2      { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .rol-tutor       { background: #0f2e1a !important; color: #3fb950 !important; }
+
+/* Notificaciones */
+body.dark-mode .noti-item.no-leida {
+    background: #0f2e1a !important;
+    border-color: #238636 !important;
+}
+body.dark-mode .noti-mensaje  { color: #e6edf3 !important; }
+body.dark-mode .noti-fecha    { color: #484f58 !important; }
+body.dark-mode .noti-icono.leida { background: #21262d !important; color: #484f58 !important; }
+body.dark-mode .noti-modal-header,
+body.dark-mode .noti-modal-footer { border-color: #30363d !important; background: #161b22 !important; }
+body.dark-mode .noti-modal-body,
+body.dark-mode .noti-title   { color: #c9d1d9 !important; }
+body.dark-mode .empty-state  { color: #484f58 !important; }
+
+/* Secciones especiales */
+body.dark-mode .form-section-card  { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .pesos-section       { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .flujo-bar           { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .flujo-bar .paso-label { color: #8b949e !important; }
+
+/* Cronograma */
+body.dark-mode .ccard-info  { background: #161b22 !important; }
+body.dark-mode .ccard-titulo { color: #e6edf3 !important; }
+body.dark-mode .detalle     { color: #8b949e !important; }
+body.dark-mode .auto-assign-card { background: #0d1f3a !important; border-color: #30363d !important; }
+body.dark-mode .aa-desc     { color: #8b949e !important; }
+body.dark-mode .divider span { background: #161b22 !important; color: #484f58 !important; }
+
+/* Perfil */
+body.dark-mode .separador   { border-color: #30363d !important; }
+body.dark-mode .campo-label { color: #8b949e !important; }
+body.dark-mode .campo-hint  { color: #484f58 !important; }
+body.dark-mode .campo-input { background: #0d1117 !important; color: #c9d1d9 !important; border-color: #30363d !important; }
+
+/* Botones acciones tabla */
+body.dark-mode .btn-enviar    { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-pdf,
+body.dark-mode .btn-rechazar  { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .btn-aprobar   { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .btn-programar { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-evaluar   { background: #21262d !important; color: #c9d1d9 !important; }
+body.dark-mode .btn-ver-pdf   { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .btn-accion    { opacity: 0.9; }
+body.dark-mode .btn-tribunal  { background: #2a1450 !important; color: #d2a8ff !important; }
+
+/* Alertas */
+body.dark-mode .alert-info     { background: #0d1f3a !important; border-color: #388bfd !important; color: #79c0ff !important; }
+body.dark-mode .alert-warning  { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alert-conflicto { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alerta-existente--warning { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alerta-existente--success { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+
+/* Bloqueo card */
+body.dark-mode .bloqueo-card   { background: #1c1400 !important; border-color: #854d0e !important; }
+body.dark-mode .bloqueo-titulo,
+body.dark-mode .bloqueo-desc   { color: #f0b429 !important; }
+
+/* Upload */
+body.dark-mode .upload-zone   { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .upload-label  { color: #c9d1d9 !important; }
+body.dark-mode .pdf-toolbar   { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .btn-toolbar   { background: #21262d !important; border-color: #30363d !important; color: #8b949e !important; }
+
+/* Jurado/asignaciones */
+body.dark-mode .jurado-item,
+body.dark-mode .sugerido-item { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .sugerido-item:hover { background: #161b22 !important; }
+body.dark-mode .tutor-actual  { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .estado-global.completo  { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .estado-global.pendiente { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+
+/* Firma */
+body.dark-mode .firma-card    { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .firma-item    { background: #0d1117 !important; border-color: #30363d !important; color: #8b949e !important; }
+body.dark-mode .firma-item.ok { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .rol-firma-card { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .rol-firma-card.firmado { background: #0f2e1a !important; border-color: #238636 !important; }
+body.dark-mode .ya-firmado    { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+
+/* Reportes */
+body.dark-mode .stat-valor    { color: #e6edf3 !important; }
+body.dark-mode .stat-label    { color: #8b949e !important; }
+
+/* Tribunal/rubrica */
+body.dark-mode .tj-card       { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .tj-evaluado   { background: #0f2e1a !important; border-color: #238636 !important; }
+body.dark-mode .tj-pendiente  { background: #1c1400 !important; border-color: #d29922 !important; }
+body.dark-mode .nota-promedio-tribunal { background: #0d1f3a !important; }
+body.dark-mode .tcr-row       { background: #161b22 !important; border-color: #21262d !important; }
+body.dark-mode .tcr-row:nth-child(odd) { background: #0d1117 !important; }
+body.dark-mode .tcr-nombre    { color: #c9d1d9 !important; }
+
+/* Modal */
+body.dark-mode .modal-rechazo  { background: #161b22 !important; }
+body.dark-mode .rechazo-header { background: #2d0f0f !important; }
+body.dark-mode .noti-modal-backdrop { background: rgba(0,0,0,0.7) !important; }
+
+/* Footer y separadores */
+body.dark-mode .form-footer   { border-color: #30363d !important; }
+body.dark-mode .obs-text      { color: #8b949e !important; }
+body.dark-mode .obs-box       { background: #0d1117 !important; }
+
+/* Escalas rúbrica */
+body.dark-mode .escala-btn    { background: #161b22 !important; border-color: #21262d !important; }
+body.dark-mode .escala-100    { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .escala-67     { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .escala-33     { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .escala-0      { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .cc-header     { background: #0d1117 !important; }
+
+/* Botones de reporte (PDF) */
+body.dark-mode .btn-reporte   { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-reporte-stats { background: #2a1e04 !important; color: #f0b429 !important; }
+
+/* Nota final preview */
+body.dark-mode .nota-final-preview { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .nf-number     { color: #e6edf3 !important; }
+body.dark-mode .preview-nota-wrapper { background: #0d1117 !important; border-color: #30363d !important; }
+
+/* Horario card */
+body.dark-mode .empty-card h4 { color: #8b949e !important; }
+body.dark-mode .info-banner { background: #0d1f3a !important; border-color: #388bfd !important; color: #79c0ff !important; }
+
+/* ── Registrar solicitud — reglas específicas ───────────────────── */
+body.dark-mode .form-card        { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .form-group label { color: #8b949e !important; }
+body.dark-mode .input-field      { background: #0d1117 !important; color: #c9d1d9 !important; border-color: #30363d !important; }
+body.dark-mode .input-field:focus { border-color: #238636 !important; }
+body.dark-mode .form-footer      { border-color: #30363d !important; }
+
+/* ── Registrar Solicitud — fix específico ───────────────────────── */
+body.dark-mode .card.shadow-dubai    { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .card-title-main      { color: #e6edf3 !important; }
+body.dark-mode .info-banner          { background: #0d1f3a !important; border-color: #388bfd !important; color: #79c0ff !important; }
+body.dark-mode .form-section-card    { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .label-style          { color: #8b949e !important; }
+body.dark-mode .input-premium        { background: #0d1117 !important; color: #c9d1d9 !important; border-color: #30363d !important; }
+body.dark-mode .input-premium::placeholder { color: #484f58 !important; }
+body.dark-mode .input-premium:focus  { border-color: #238636 !important; box-shadow: 0 0 0 3px rgba(63,185,80,0.1) !important; }
+body.dark-mode .text-muted           { color: #484f58 !important; }
+body.dark-mode .form-footer          { border-color: #30363d !important; }
+body.dark-mode .btn.btn-cancel       { background: #21262d !important; color: #8b949e !important; border-color: #30363d !important; }
+body.dark-mode .btn.btn-submit-premium { background: #238636 !important; border-color: #3fb950 !important; color: #fff !important; }

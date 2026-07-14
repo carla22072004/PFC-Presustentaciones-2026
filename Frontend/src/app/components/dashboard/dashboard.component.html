@@ -1,0 +1,112 @@
+<div class="sga-container">
+
+    <!-- ═══ TOPBAR ══════════════════════════════════════════════════ -->
+    <header class="topbar">
+        <div class="header-left">
+            <img src="/img/logoSGA.png" alt="SGA" class="sga-mini-logo">
+            <span class="divider">|</span>
+            <span class="system-title">Sistema de Pre-Sustentaciones</span>
+        </div>
+
+        <div class="header-right">
+            <!-- Botón modo oscuro -->
+            <button class="btn-darkmode" (click)="toggleDarkMode()" [title]="darkMode ? 'Modo claro' : 'Modo oscuro'">
+                <i class="bi" [ngClass]="darkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
+            </button>
+
+            <div class="noti-trigger" [routerLink]="'/dashboard/notificaciones'" title="Notificaciones">
+                <i class="bi bi-bell-fill"></i>
+                <span class="noti-badge" *ngIf="notiBadge > 0">{{ notiBadge }}</span>
+            </div>
+
+            <div class="user-profile-trigger" (click)="toggleMenu($event)">
+                <div class="text-end me-2">
+                    <span class="user-name-top">{{ userName }}</span>
+                    <span class="user-role-tag">{{ rolLabel }}</span>
+                </div>
+                <div class="user-avatar-circle">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+            </div>
+
+            <div class="profile-dropdown" *ngIf="isMenuOpen">
+                <div class="dropdown-item" [routerLink]="'/dashboard/perfil'">
+                    <i class="bi bi-person-circle"></i> Mi Perfil
+                </div>
+                <div class="dropdown-item" [routerLink]="'/dashboard/notificaciones'">
+                    <i class="bi bi-bell"></i> Notificaciones
+                    <span class="dd-badge" *ngIf="notiBadge > 0">{{ notiBadge }}</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item logout-item" (click)="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ ALERTA CORREO NOTIFICACIONES ════════════════════════════ -->
+    <div class="alerta-email" *ngIf="mostrarAlertaEmail">
+        <i class="bi bi-envelope-exclamation-fill alerta-icon"></i>
+        <span>¡Configura tu correo de notificaciones para recibir avisos del sistema!</span>
+        <button class="btn-alerta-perfil" (click)="irAPerfil()">
+            <i class="bi bi-person-gear me-1"></i> Ir a Mi Perfil
+        </button>
+        <button class="btn-alerta-cerrar" (click)="cerrarAlertaEmail()" title="Cerrar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- ═══ BREADCRUMB ════════════════════════════════════════════════ -->
+    <div class="breadcrumb-bar" *ngIf="!esInicio()">
+    <span class="bc-link" (click)="irAInicio()">
+      <i class="bi bi-grid-3x3-gap-fill me-1"></i>Inicio
+    </span>
+        <i class="bi bi-chevron-right bc-sep"></i>
+        <span class="bc-current">{{ tituloPagina() }}</span>
+    </div>
+
+    <!-- ═══ CONTENIDO ════════════════════════════════════════════════ -->
+    <div class="main-content">
+
+        <!-- Pantalla de inicio: solo visible en /dashboard -->
+        <ng-container *ngIf="esInicio()">
+            <div class="welcome-banner">
+                <div>
+                    <h2 class="welcome-title">Bienvenido, {{ userName }} 👋</h2>
+                    <p class="welcome-sub">¿Qué deseas hacer hoy?</p>
+                </div>
+                <span class="role-chip" [ngClass]="rolColor">{{ rolLabel }}</span>
+            </div>
+
+            <div class="role-info-banner" *ngIf="userRole === 'DOCENTE'">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span>Como <strong>Docente / Jurado</strong>, puedes ver las pre-sustentaciones donde fuiste asignado como jurado o tutor, y firmar el acta una vez concluida la evaluación.</span>
+            </div>
+
+            <div class="role-info-banner admin-banner" *ngIf="userRole === 'ADMIN'">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span>Como <strong>Coordinador</strong>, gestionas el ciclo completo: aprueba solicitudes → asigna tribunal → programa cronograma → registra evaluación → genera acta.</span>
+            </div>
+
+            <div class="sga-grid">
+                <div class="sga-card" *ngFor="let item of modulosPermitidos" [routerLink]="item.route">
+                    <div class="card-icon-wrap">
+                        <i class="bi {{ item.icon }}"></i>
+                    </div>
+                    <div class="card-label">
+                        <div class="card-text">
+                            <p class="card-titulo">{{ item.titulo }}</p>
+                            <span class="card-desc" *ngIf="item.desc">{{ item.desc }}</span>
+                        </div>
+                        <i class="bi bi-chevron-right arrow-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- router-outlet SIN ningún wrapper condicional -->
+        <router-outlet></router-outlet>
+
+    </div>
+</div>

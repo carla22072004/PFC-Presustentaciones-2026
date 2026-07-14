@@ -1,0 +1,43 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-mortarboard-fill me-2"></i>Mis Notas</h2>
+      <p class="page-subtitle">Historial de evaluaciones de pre-sustentación</p>
+    </div>
+    <div class="stat-box" *ngIf="evaluaciones.length > 0">
+      <span class="stat-label">Promedio</span>
+      <span class="stat-value">{{ promedio() }}<small>/10</small></span>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando notas...</p>
+  </div>
+
+  <div class="table-card" *ngIf="!cargando">
+    <table class="tabla">
+      <thead><tr>
+        <th>Solicitud</th><th>Nota Final</th><th>Resultado</th><th>Observaciones</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngFor="let e of evaluaciones">
+          <td><strong>#{{ e.solicitud?.id }}</strong><br><small class="text-muted">{{ e.solicitud?.tituloTema }}</small></td>
+          <td>
+            <div class="nota-ring" [class.aprobado]="e.resultado==='APROBADO'" [class.reprobado]="e.resultado!=='APROBADO'">
+              {{ e.notaFinal }}
+            </div>
+          </td>
+          <td><span class="badge" [ngClass]="getBadge(e.resultado)">{{ e.resultado }}</span></td>
+          <td class="obs-cell">{{ e.observaciones || '—' }}</td>
+        </tr>
+        <tr *ngIf="evaluaciones.length === 0">
+          <td colspan="4" class="empty-state">
+            <i class="bi bi-clipboard-x"></i>
+            <p>No hay evaluaciones registradas aún.</p>
+            <small>Las notas aparecerán aquí una vez que el jurado evalúe tu pre-sustentación.</small>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

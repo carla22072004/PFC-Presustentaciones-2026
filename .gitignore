@@ -1,0 +1,21 @@
+# IDE / Editor configurations
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+
+# Frontend (Angular)
+Frontend/node_modules/
+Frontend/.angular/
+Frontend/dist/
+
+# Backend (Spring Boot & Vite demo)
+Backend/backend-mod/target/
+Backend/backend-mod/backend-output/
+Backend/backend-mod/uploads/
+Backend/backend-mod/src/main/resources/application.properties
+Backend/PractiWeb/target/
+Backend/sad/node_modules/
+Backend/sad/dist/

@@ -1,0 +1,1 @@
+ALTER TABLE solicitud ADD COLUMN IF NOT EXISTS motivo_suspension TEXT, ADD COLUMN IF NOT EXISTS suspendido_en TIMESTAMP;

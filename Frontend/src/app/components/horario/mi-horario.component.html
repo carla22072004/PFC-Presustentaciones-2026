@@ -1,0 +1,58 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-calendar3 me-2"></i>Mi Horario</h2>
+      <p class="page-subtitle">Fechas y salas asignadas para tu pre-sustentación</p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando horario...</p>
+  </div>
+
+  <div *ngIf="!cargando">
+    <div class="cronograma-grid" *ngIf="cronogramas.length > 0">
+      <div class="cronograma-card" *ngFor="let c of cronogramas">
+        <div class="ccard-date">
+          <span class="ccard-dia">{{ c.fechaInicio | date:'dd' }}</span>
+          <span class="ccard-mes">{{ c.fechaInicio | date:'MMM' | uppercase }}</span>
+          <span class="ccard-anio">{{ c.fechaInicio | date:'yyyy' }}</span>
+        </div>
+        <div class="ccard-info">
+          <div class="ccard-header">
+            <h4 class="ccard-titulo">{{ c.solicitud?.tituloTema }}</h4>
+            <span class="badge" [ngClass]="getBadge(c.estado)">{{ c.estado }}</span>
+          </div>
+          <div class="ccard-detalles">
+            <div class="detalle">
+              <i class="bi bi-clock-fill"></i>
+              <span>{{ c.fechaInicio | date:'HH:mm' }} – {{ getFechaFin(c) }} hrs</span>
+            </div>
+            <div class="detalle">
+              <i class="bi bi-building-fill"></i>
+              <span>{{ c.sala?.nombre || c.sala?.codigo || 'Sala por asignar' }}</span>
+            </div>
+            <div class="detalle">
+              <i class="bi bi-hourglass-split"></i>
+              <span>Duración: {{ c.duracionMin }} minutos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-card" *ngIf="cronogramas.length === 0">
+      <i class="bi bi-calendar-x"></i>
+      <h4>Sin presentaciones programadas</h4>
+      <p>Cuando el coordinador asigne tu fecha, aparecerá aquí automáticamente.</p>
+      <button class="btn-link" routerLink="/dashboard/solicitudes/mis-tramites">
+        <i class="bi bi-arrow-left me-1"></i> Ver mis solicitudes
+      </button>
+    </div>
+  </div>
+
+  <div class="info-banner mt-4">
+    <i class="bi bi-info-circle-fill"></i>
+    <span>Las fechas son asignadas por el coordinador. Recibirás una notificación cuando seas programado.</span>
+  </div>
+</div>

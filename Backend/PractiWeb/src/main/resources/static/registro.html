@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es-EC">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mi primera página - UTEQ</title>
+    <!-- Aquí puedes pegar el bloque <style> que te pasé antes para que se vea bien -->
+</head>
+<body>
+
+<h1>Hola UTEQ</h1>
+<p>Contenido visible.</p>
+
+<main>
+    <h1>Blog de Aplicaciones Web - UTEQ</h1>
+
+    <article>
+        <header>
+            <h2>Por qué HTML5 cambió el desarrollo web</h2>
+            <p>Por <a href="/autor/jdoe">Juan Doe</a>
+                el <time datetime="2026-05-04">4 mayo 2026</time></p>
+        </header>
+        <p>Introducción al artículo...</p>
+
+        <section>
+            <h3>Elementos semánticos nuevos</h3>
+            <p>HTML5 introdujo header, nav, main...</p>
+        </section>
+    </article>
+
+    <section aria-label="Artículos relacionados">
+        <h2>También te puede interesar</h2>
+        <ul>
+            <li><a href="/post/1">Una guía rápida de Flexbox</a></li>
+        </ul>
+    </section>
+
+    <!-- FORMULARIO CORREGIDO (con el "<" y dentro del body) -->
+    <form action="/api/inscripcion" method="POST">
+        <fieldset>
+            <legend>Datos personales</legend>
+
+            <label for="cedula">Cédula:</label>
+            <input id="cedula" name="cedula" type="text" pattern="[0-9]{10}" required>
+
+            <label for="email">Email:</label>
+            <input id="email" name="email" type="email" pattern=".+@uteq\.edu\.ec" required>
+
+            <label for="fnac">Nacimiento:</label>
+            <input id="fnac" name="fnac" type="date" min="1980-01-01" max="2010-12-31" required>
+
+            <label for="prom">Promedio:</label>
+            <input id="prom" name="prom" type="number" min="6.0" max="10.0" step="0.01">
+        </fieldset>
+        <button type="submit">Inscribirme</button>
+    </form>
+</main>
+
+</body>
+</html>

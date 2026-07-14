@@ -1,0 +1,296 @@
+/* ══════════════════════════════════════════════════════════════════════
+   MIS TUTORÍAS — Listado de tarjetas
+   ══════════════════════════════════════════════════════════════════════ */
+
+.page-wrapper {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Encabezado de página ─────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a5c2e;
+  margin: 0 0 4px;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #1a5c2e;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Estado vacío ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: #94a3b8;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ── Grid de tarjetas ─────────────────────────────────────────── */
+.tutorias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ── Tarjeta individual ───────────────────────────────────────── */
+.tutoria-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.tutoria-card:hover {
+  box-shadow: 0 6px 20px rgba(26, 92, 46, 0.12);
+  transform: translateY(-2px);
+}
+
+/* ── Badge mensajes no leídos ─────────────────────────────────── */
+.badge-unread {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+/* ── Encabezado de tarjeta ────────────────────────────────────── */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ── Badges de estado ─────────────────────────────────────────── */
+.badge-estado {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-activo {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-completa {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-suspendida {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ── Persona ──────────────────────────────────────────────────── */
+.card-persona {
+  font-size: 0.85rem;
+  color: #475569;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-persona {
+  font-weight: 600;
+  color: #334155;
+}
+
+/* ── Barra de progreso ────────────────────────────────────────── */
+.progreso-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progreso-segmentos {
+  display: flex;
+  gap: 5px;
+}
+
+.segmento {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  transition: background 0.3s;
+}
+
+.segmento.aprobado {
+  background: #22c55e;
+}
+
+.progreso-texto {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+/* ── Botón Ver ────────────────────────────────────────────────── */
+.btn-ver {
+  margin-top: auto;
+  background: #1a5c2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-ver:hover {
+  background: #14472a;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODO OSCURO
+   ══════════════════════════════════════════════════════════════════════ */
+
+body.dark-mode .page-title {
+  color: #4ade80;
+}
+
+body.dark-mode .page-subtitle {
+  color: #8b949e;
+}
+
+body.dark-mode .spinner {
+  border-color: #30363d;
+  border-top-color: #3fb950;
+}
+
+body.dark-mode .loading-state,
+body.dark-mode .empty-state {
+  color: #8b949e;
+}
+
+body.dark-mode .tutoria-card {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .tutoria-card:hover {
+  box-shadow: 0 6px 20px rgba(63, 185, 80, 0.15);
+}
+
+body.dark-mode .card-titulo {
+  color: #e6edf3;
+}
+
+body.dark-mode .card-persona {
+  color: #8b949e;
+}
+
+body.dark-mode .label-persona {
+  color: #c9d1d9;
+}
+
+body.dark-mode .badge-activo {
+  background: #1e3a5f;
+  color: #60a5fa;
+}
+
+body.dark-mode .badge-completa {
+  background: #1a3a28;
+  color: #4ade80;
+}
+
+body.dark-mode .segmento {
+  background: #30363d;
+}
+
+body.dark-mode .segmento.aprobado {
+  background: #3fb950;
+}
+
+body.dark-mode .progreso-texto {
+  color: #8b949e;
+}
+
+body.dark-mode .btn-ver {
+  background: #238636;
+}
+
+body.dark-mode .btn-ver:hover {
+  background: #2ea043;
+}

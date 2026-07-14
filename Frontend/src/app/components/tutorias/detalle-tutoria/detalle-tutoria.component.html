@@ -1,0 +1,455 @@
+<div class="page-wrapper">
+
+  <!-- ── Encabezado ────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">
+        <i class="bi bi-journal-bookmark-fill me-2"></i>Detalle de Tutoría
+      </h2>
+      <p class="page-subtitle" *ngIf="resumen">{{ resumen.tituloTema }}</p>
+    </div>
+  </div>
+
+  <!-- ── Spinner inicial ───────────────────────────────────────────────────── -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando tutoría...</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+       LAYOUT PRINCIPAL — dos columnas
+  ══════════════════════════════════════════════════════════════════════════════ -->
+  <div class="detalle-layout" *ngIf="!cargando && resumen">
+
+    <!-- ════════════════════════════════════════
+         OVERLAY DE SUSPENSIÓN — visible para ambos roles
+    ════════════════════════════════════════════ -->
+    <div class="overlay-suspension" *ngIf="solicitudSuspendida">
+      <div class="overlay-suspension-card">
+        <div class="overlay-suspension-icon">
+          <i class="bi bi-slash-circle-fill"></i>
+        </div>
+        <h3>Solicitud Suspendida</h3>
+        <p>Esta solicitud ha sido suspendida por el coordinador.</p>
+        <p *ngIf="solicitudMotivoSuspension" class="overlay-motivo">
+          <strong>Motivo:</strong> {{ solicitudMotivoSuspension }}
+        </p>
+        <small>Espere a que el coordinador levante la suspensión para continuar.</small>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         COLUMNA IZQUIERDA — Progreso de fases
+    ════════════════════════════════════════════ -->
+    <div class="col-fases">
+      <div class="panel-fases">
+        <h3 class="panel-titulo">📋 Progreso de Fases</h3>
+
+        <!-- Slots 1 → 3 -->
+        <ng-container *ngFor="let n of SLOTS">
+          <ng-container *ngIf="getFasePorNumero(n) as fase; else slotVacio">
+            <!-- Fase existente -->
+            <div
+              class="slot-fase"
+              [class.activa]="faseSeleccionada?.id === fase.id"
+              [class.estado-aprobada]="fase.estado === 'APROBADA'"
+              [class.estado-tutor]="fase.estado === 'PENDIENTE_TUTOR'"
+              [class.estado-estudiante]="fase.estado === 'PENDIENTE_ESTUDIANTE'"
+              (click)="seleccionarFase(fase)"
+            >
+              <div class="slot-icono">
+                <span *ngIf="fase.estado === 'APROBADA'">✅</span>
+                <span *ngIf="fase.estado === 'PENDIENTE_TUTOR'">🟠</span>
+                <span *ngIf="fase.estado === 'PENDIENTE_ESTUDIANTE'">🔵</span>
+              </div>
+              <div class="slot-info">
+                <span class="slot-nombre">Fase {{ fase.numeroFase }}</span>
+                <span class="slot-sub" *ngIf="fase.estado === 'APROBADA'">Aprobada</span>
+                <span class="slot-sub" *ngIf="fase.estado === 'PENDIENTE_TUTOR'">Revisando correcciones</span>
+                <span class="slot-sub" *ngIf="fase.estado === 'PENDIENTE_ESTUDIANTE'">Esperando correcciones</span>
+              </div>
+              <i class="bi bi-chevron-right slot-arrow" *ngIf="faseSeleccionada?.id !== fase.id"></i>
+            </div>
+          </ng-container>
+
+          <!-- Slot vacío (fase no iniciada) -->
+          <ng-template #slotVacio>
+            <div class="slot-fase slot-vacio">
+              <div class="slot-icono">⭕</div>
+              <div class="slot-info">
+                <span class="slot-nombre">Fase {{ n }}</span>
+                <span class="slot-sub">No iniciada</span>
+              </div>
+            </div>
+          </ng-template>
+        </ng-container>
+
+        <!-- Barra de progreso global -->
+        <div class="progreso-global">
+          <div class="progreso-segmentos">
+            <div
+              class="segmento"
+              *ngFor="let s of SLOTS"
+              [class.aprobado]="s <= fasesAprobadas"
+            ></div>
+          </div>
+          <span class="progreso-label">{{ fasesAprobadas }} / 3 fases aprobadas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         COLUMNA DERECHA — Detalle / Acciones
+    ════════════════════════════════════════════ -->
+    <div class="col-detalle">
+
+      <!-- Banner celebración tutoría completa -->
+      <div class="banner-celebracion animate-pulse" *ngIf="tutoriaCompleta">
+        🎉 ¡Tutoría completada! Ya puedes continuar con el proceso de sustentación.
+      </div>
+
+      <!-- ── DOCENTE: sin fases → crear Fase 1 ─────────────────────────── -->
+      <div class="panel-crear-fase" *ngIf="rol === 'DOCENTE' && fases.length === 0 && !solicitudSuspendida">
+        <div class="crear-fase-icono">📝</div>
+        <h3>Iniciar proceso de tutoría</h3>
+        <p class="crear-fase-desc">
+          Escribe la primera observación para el estudiante y da inicio a la Fase 1.
+        </p>
+        <textarea
+          class="textarea-obs"
+          [(ngModel)]="observacionNuevaFase"
+          placeholder="Escribe aquí las observaciones para el estudiante..."
+          rows="5"
+        ></textarea>
+        <button
+          class="btn-crear-fase"
+          (click)="crearFase()"
+          [disabled]="creandoFase"
+        >
+          <span *ngIf="!creandoFase"><i class="bi bi-play-circle me-1"></i>Iniciar Fase 1</span>
+          <span *ngIf="creandoFase"><i class="bi bi-hourglass-split me-1"></i>Creando...</span>
+        </button>
+      </div>
+
+      <!-- ── Sin fase seleccionada (estudiante sin fases) ───────────────── -->
+      <div class="empty-detalle" *ngIf="!faseSeleccionada && fases.length === 0 && rol !== 'DOCENTE'">
+        <i class="bi bi-hourglass"></i>
+        <p>Esperando que el tutor inicie la primera fase.</p>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           PANEL DE FASE SELECCIONADA
+      ════════════════════════════════════════════════════════════════════ -->
+      <div class="panel-fase" *ngIf="faseSeleccionada">
+
+        <!-- Header de la fase -->
+        <div class="fase-header">
+          <div class="fase-titulo-wrap">
+            <h3 class="fase-titulo">Fase {{ faseSeleccionada.numeroFase }} de 3</h3>
+            <span class="badge-fase aprobada"   *ngIf="faseSeleccionada.estado === 'APROBADA'">✅ Aprobada</span>
+            <span class="badge-fase tutor"      *ngIf="faseSeleccionada.estado === 'PENDIENTE_TUTOR'">🟠 En revisión</span>
+            <span class="badge-fase estudiante" *ngIf="faseSeleccionada.estado === 'PENDIENTE_ESTUDIANTE'">🔵 Pendiente corrección</span>
+          </div>
+          <span class="fase-fecha">
+            <i class="bi bi-calendar3 me-1"></i>Inicio: {{ formatDate(faseSeleccionada.fechaInicio) }}
+          </span>
+        </div>
+
+        <!-- Alerta de suspensión (visible para ambos: estudiante y tutor) -->
+        <div class="alerta-suspension" *ngIf="solicitudSuspendida">
+          <div class="alerta-suspension-icon">
+            <i class="bi bi-slash-circle-fill"></i>
+          </div>
+          <div class="alerta-suspension-content">
+            <strong>La solicitud ha sido suspendida por el coordinador</strong>
+            <p>No puedes realizar acciones en esta tutoría hasta que se levante la suspensión.</p>
+            <p *ngIf="solicitudMotivoSuspension" class="alerta-suspension-motivo">
+              <strong>Motivo de suspensión:</strong> {{ solicitudMotivoSuspension }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Indicador de revisiones completadas -->
+        <div class="indicador-revisiones">
+          <span class="rev-label">Revisiones completadas:</span>
+          <div class="rev-segmentos">
+            <div
+              class="segmento"
+              *ngFor="let s of SLOTS"
+              [class.aprobado]="s <= fasesAprobadas"
+            ></div>
+          </div>
+          <span class="rev-count">{{ fasesAprobadas }} / 3</span>
+        </div>
+
+        <!-- ── Chat de mensajes ──────────────────────────────────────── -->
+        <div class="chat-container" #chatContainer>
+          <div *ngIf="faseSeleccionada.mensajes.length === 0" class="chat-vacio">
+            <i class="bi bi-chat-dots"></i>
+            <p>No hay mensajes en esta fase aún.</p>
+          </div>
+
+          <div
+            *ngFor="let m of faseSeleccionada.mensajes"
+            class="mensaje-wrap"
+            [class.msg-propio]="esMensajePropio(m) && m.tipo !== 'APROBACION'"
+            [class.msg-otro]="!esMensajePropio(m) && m.tipo !== 'APROBACION'"
+            [class.msg-aprobacion]="m.tipo === 'APROBACION'"
+          >
+            <!-- Burbuja de aprobación (centrada) -->
+            <div class="burbuja aprobacion-burbuja" *ngIf="m.tipo === 'APROBACION'">
+              <strong>✅ {{ m.nombreRemitente }}</strong>
+              <p>{{ m.contenido }}</p>
+              <small>{{ formatDateTime(m.fechaEnvio) }}</small>
+            </div>
+
+            <!-- Burbuja normal -->
+            <div class="burbuja" *ngIf="m.tipo !== 'APROBACION'">
+              <strong class="burbuja-nombre">{{ m.nombreRemitente }}</strong>
+              <p class="burbuja-texto">{{ m.contenido }}</p>
+              <small class="burbuja-hora">{{ formatDateTime(m.fechaEnvio) }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             ZONA DE ACCIONES — condicional por rol + estado
+        ════════════════════════════════════════════════════════════════════ -->
+
+        <!-- ── Estado APROBADA ──────────────────────────────────────────── -->
+        <ng-container *ngIf="faseSeleccionada.estado === 'APROBADA'">
+          <div class="banner-aprobada">
+            ✅ Fase aprobada el {{ formatDate(faseSeleccionada.fechaAprobacion || faseSeleccionada.fechaInicio) }}
+          </div>
+
+          <!-- DOCENTE puede crear siguiente fase (si no se llegó a 3) -->
+          <div
+            class="panel-nueva-fase"
+            *ngIf="rol === 'DOCENTE' && resumen.totalFases < 3 && faseSeleccionada.numeroFase === resumen.totalFases && !tutoriaCompleta && !solicitudSuspendida"
+          >
+            <h4 class="nueva-fase-titulo">
+              <i class="bi bi-plus-circle me-1"></i>Iniciar Fase {{ resumen.totalFases + 1 }}
+            </h4>
+            <textarea
+              class="textarea-obs"
+              [(ngModel)]="observacionNuevaFase"
+              placeholder="Escribe las observaciones para la siguiente fase..."
+              rows="4"
+            ></textarea>
+            <button
+              class="btn-crear-fase"
+              (click)="crearFase()"
+              [disabled]="creandoFase"
+            >
+              <span *ngIf="!creandoFase">
+                <i class="bi bi-play-circle me-1"></i>Iniciar Fase {{ resumen.totalFases + 1 }}
+              </span>
+              <span *ngIf="creandoFase">
+                <i class="bi bi-hourglass-split me-1"></i>Creando...
+              </span>
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- ── Estado PENDIENTE_TUTOR ────────────────────────────────────── -->
+        <ng-container *ngIf="faseSeleccionada.estado === 'PENDIENTE_TUTOR'">
+
+          <!-- Vista DOCENTE -->
+          <ng-container *ngIf="rol === 'DOCENTE'">
+            <div class="aviso-pdf">
+              <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+              📄 El estudiante ha subido correcciones.
+              <button class="btn-ver-pdf" (click)="verPdf(faseSeleccionada.id)">
+                <i class="bi bi-eye me-1"></i>👁 Ver PDF
+              </button>
+            </div>
+
+            <div class="zona-mensaje">
+              <textarea
+                class="textarea-msg"
+                [(ngModel)]="nuevoMensaje"
+                placeholder="Escribe un comentario al estudiante..."
+                rows="3"
+                [disabled]="solicitudSuspendida"
+              ></textarea>
+              <div class="acciones-row">
+              <button
+                class="btn-enviar"
+                (click)="enviarMensaje()"
+                [disabled]="enviandoMensaje || !nuevoMensaje.trim() || solicitudSuspendida"
+              >
+                <i class="bi bi-send me-1"></i>
+                {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+              </button>
+                <button
+                  class="btn-aprobar"
+                  (click)="confirmarAprobar()"
+                  [disabled]="aprobando || solicitudSuspendida"
+                >
+                  <span *ngIf="!aprobando">✅ Aprobar esta Fase</span>
+                  <span *ngIf="aprobando"><i class="bi bi-hourglass-split me-1"></i>Aprobando...</span>
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Vista ESTUDIANTE -->
+          <ng-container *ngIf="rol === 'ESTUDIANTE'">
+            <div class="aviso-espera">
+              <i class="bi bi-hourglass-split me-2"></i>
+              Tu corrección ha sido enviada. Esperando revisión del tutor.
+              <span class="nombre-pdf" *ngIf="faseSeleccionada.archivoPdfEstudiante">
+                <i class="bi bi-file-earmark-pdf me-1"></i>
+                {{ faseSeleccionada.archivoPdfEstudiante }}
+                <small *ngIf="faseSeleccionada.tamanoPdfBytes">({{ formatBytes(faseSeleccionada.tamanoPdfBytes) }})</small>
+              </span>
+            </div>
+            <div class="zona-mensaje">
+              <textarea
+                class="textarea-msg"
+                [(ngModel)]="nuevoMensaje"
+                placeholder="Escribe un mensaje al tutor..."
+                rows="3"
+                [disabled]="solicitudSuspendida"
+              ></textarea>
+              <button
+                class="btn-enviar"
+                (click)="enviarMensaje()"
+                [disabled]="enviandoMensaje || !nuevoMensaje.trim() || solicitudSuspendida"
+              >
+                <i class="bi bi-send me-1"></i>
+                {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+              </button>
+            </div>
+          </ng-container>
+
+        </ng-container>
+
+        <!-- ── Estado PENDIENTE_ESTUDIANTE ──────────────────────────────── -->
+        <ng-container *ngIf="faseSeleccionada.estado === 'PENDIENTE_ESTUDIANTE'">
+
+          <!-- Vista DOCENTE -->
+          <ng-container *ngIf="rol === 'DOCENTE'">
+            <div class="aviso-espera">
+              <i class="bi bi-hourglass me-2"></i>
+              Esperando que el estudiante suba las correcciones.
+            </div>
+            <div class="zona-mensaje">
+              <textarea
+                class="textarea-msg"
+                [(ngModel)]="nuevoMensaje"
+                placeholder="Puedes escribir un mensaje adicional al estudiante..."
+                rows="3"
+                [disabled]="solicitudSuspendida"
+              ></textarea>
+              <button
+                class="btn-enviar"
+                (click)="enviarMensaje()"
+                [disabled]="enviandoMensaje || !nuevoMensaje.trim() || solicitudSuspendida"
+              >
+                <i class="bi bi-send me-1"></i>
+                {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Vista ESTUDIANTE -->
+          <ng-container *ngIf="rol === 'ESTUDIANTE'">
+
+            <!-- Última observación del tutor -->
+            <div class="recuadro-obs" *ngIf="ultimaObservacion">
+              <div class="obs-cabecera">
+                <i class="bi bi-chat-quote-fill me-1"></i>
+                <strong>Observación del tutor:</strong>
+              </div>
+              <p class="obs-texto">{{ ultimaObservacion.contenido }}</p>
+              <small class="obs-fecha">{{ formatDateTime(ultimaObservacion.fechaEnvio) }}</small>
+            </div>
+
+            <!-- Zona de subida drag & drop -->
+            <div
+              class="drop-zone"
+              [class.dragover]="isDragOver"
+              [class.drop-zone-disabled]="solicitudSuspendida"
+              (dragover)="!solicitudSuspendida && onDragOver($event)"
+              (dragleave)="onDragLeave()"
+              (drop)="!solicitudSuspendida && onDrop($event)"
+            >
+              <ng-container *ngIf="!archivoSeleccionado && !solicitudSuspendida">
+                <i class="bi bi-cloud-arrow-up drop-icon"></i>
+                <p class="drop-texto">Arrastra tu PDF aquí o</p>
+                <label class="btn-seleccionar" for="fileInput">
+                  <i class="bi bi-folder2-open me-1"></i>Seleccionar archivo
+                </label>
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept="application/pdf"
+                  class="file-input-oculto"
+                  (change)="onFileSelected($event)"
+                />
+                <p class="drop-hint">Solo PDF, máximo 10 MB</p>
+              </ng-container>
+
+              <ng-container *ngIf="archivoSeleccionado && !solicitudSuspendida">
+                <div class="archivo-seleccionado">
+                  <i class="bi bi-file-earmark-pdf-fill pdf-icon"></i>
+                  <span class="archivo-nombre">📄 {{ archivoSeleccionado.name }}</span>
+                  <button class="btn-quitar" (click)="quitarArchivo()" title="Quitar archivo">✕</button>
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="solicitudSuspendida">
+                <i class="bi bi-lock-fill drop-icon"></i>
+                <p class="drop-texto">Subida de archivos deshabilitada</p>
+                <p class="drop-hint">La solicitud está suspendida</p>
+              </ng-container>
+            </div>
+
+            <!-- Botón enviar corrección -->
+            <button
+              class="btn-subir-pdf"
+              (click)="subirPdf()"
+              [disabled]="subiendoPdf || !archivoSeleccionado || solicitudSuspendida"
+            >
+              <span *ngIf="!subiendoPdf">
+                <i class="bi bi-upload me-1"></i>📤 Enviar corrección
+              </span>
+              <span *ngIf="subiendoPdf">
+                <i class="bi bi-hourglass-split me-1"></i>Subiendo...
+              </span>
+            </button>
+
+            <!-- Zona de mensaje adicional -->
+            <div class="zona-mensaje">
+              <textarea
+                class="textarea-msg"
+                [(ngModel)]="nuevoMensaje"
+                placeholder="Puedes escribir un mensaje al tutor..."
+                rows="3"
+                [disabled]="solicitudSuspendida"
+              ></textarea>
+              <button
+                class="btn-enviar"
+                (click)="enviarMensaje()"
+                [disabled]="enviandoMensaje || !nuevoMensaje.trim() || solicitudSuspendida"
+              >
+                <i class="bi bi-send me-1"></i>
+                {{ enviandoMensaje ? 'Enviando...' : 'Enviar mensaje' }}
+              </button>
+            </div>
+
+          </ng-container>
+        </ng-container>
+        <!-- ── Fin zona de acciones ──────────────────────────────────────── -->
+
+      </div>
+      <!-- Fin panel-fase -->
+
+    </div>
+    <!-- Fin col-detalle -->
+
+  </div>
+  <!-- Fin detalle-layout -->
+
+</div>

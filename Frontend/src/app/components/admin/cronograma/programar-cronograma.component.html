@@ -1,0 +1,105 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-calendar-check me-2"></i>Programar Presentación</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+        — <em>{{ solicitud.tituloTema }}</em>
+      </p>
+    </div>
+    <button class="btn-back" routerLink="/dashboard/admin/revisar-solicitudes">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <!-- Cronograma existente -->
+  <div class="cron-existente" *ngIf="cronogramaExistente">
+    <div class="ce-info">
+      <i class="bi bi-calendar-event-fill me-2"></i>
+      <span>Cronograma actual: <strong>{{ cronogramaExistente.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</strong>
+        — Sala: <strong>{{ cronogramaExistente.sala?.nombre }}</strong></span>
+    </div>
+    <button class="btn-eliminar-cron" (click)="eliminarCronograma()">
+      <i class="bi bi-trash me-1"></i>Eliminar y reprogramar
+    </button>
+  </div>
+
+  <div *ngIf="!cronogramaExistente">
+
+    <!-- ── Banners de validación previa ──────────────────────────────── -->
+    <div class="banner-validacion banner-error" *ngIf="validacionTribunal === 'error'">
+      <i class="bi bi-people-fill me-2"></i>
+      ⚠ {{ mensajeTribunal }}
+    </div>
+    <div class="banner-validacion banner-ok" *ngIf="validacionTribunal === 'ok'">
+      <i class="bi bi-people-fill me-2"></i>
+      ✓ Tribunal completo (Presidente, Vocal 1 y Vocal 2 asignados).
+    </div>
+
+    <div class="banner-validacion banner-error" *ngIf="validacionTutoria === 'error'">
+      <i class="bi bi-journal-bookmark-fill me-2"></i>
+      ⚠ {{ mensajeTutoria }}
+    </div>
+    <div class="banner-validacion banner-ok" *ngIf="validacionTutoria === 'ok'">
+      <i class="bi bi-journal-bookmark-fill me-2"></i>
+      ✓ Tutoría completada. El estudiante ha aprobado las 3 revisiones.
+    </div>
+
+    <!-- RF-04: Botón asignación automática -->
+    <div class="auto-assign-card">
+      <div class="aa-info">
+        <i class="bi bi-magic me-2" style="font-size:1.3rem;color:#003865"></i>
+        <div>
+          <strong>Asignación automática</strong>
+          <p class="aa-desc">El sistema buscará la primera franja disponible sin conflictos de sala, saltando fines de semana.</p>
+        </div>
+      </div>
+      <button class="btn-auto" (click)="asignarAutomatico()" [disabled]="asignandoAuto || formularioBloqueado">
+        <i class="bi" [class.bi-lightning-charge-fill]="!asignandoAuto"
+           [class.bi-arrow-clockwise]="asignandoAuto" [class.spin]="asignandoAuto"></i>
+        {{ asignandoAuto ? 'Buscando...' : 'Asignar automáticamente' }}
+      </button>
+    </div>
+
+    <div class="divider"><span>o asignar manualmente</span></div>
+
+    <!-- Error de conflicto -->
+    <div class="alert-conflicto" *ngIf="errorConflicto">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ errorConflicto }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" formControlName="fecha" class="input-field"
+                 [attr.disabled]="formularioBloqueado ? '' : null">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora</label>
+          <input type="time" formControlName="hora" class="input-field"
+                 [attr.disabled]="formularioBloqueado ? '' : null">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sala</label>
+        <select formControlName="salaId" class="input-field"
+                [attr.disabled]="formularioBloqueado ? '' : null">
+          <option value="">Seleccionar sala...</option>
+          <option *ngFor="let s of salas" [value]="s.id">{{ s.nombre }} (Cap. {{ s.capacidad }})</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancelar" routerLink="/dashboard/admin/revisar-solicitudes">
+          <i class="bi bi-x-circle me-1"></i>Cancelar
+        </button>
+        <button type="submit" class="btn-guardar" [disabled]="form.invalid || enviando || formularioBloqueado">
+          <i class="bi" [class.bi-check-circle]="!enviando"
+             [class.bi-arrow-clockwise]="enviando" [class.spin]="enviando"></i>
+          {{ enviando ? 'Guardando...' : 'Programar manualmente' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,249 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-star-fill me-2"></i>Registrar Evaluación Final</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+        — <em>{{ solicitud.tituloTema }}</em>
+      </p>
+    </div>
+    <button class="btn-back" routerLink="/dashboard/admin/revisar-solicitudes">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <!-- Tribunal info -->
+  <div class="tribunal-info" *ngIf="jurados.length > 0 || tutor">
+    <span class="ti-label"><i class="bi bi-people me-1"></i>Tribunal:</span>
+    <span class="ti-member" *ngFor="let j of jurados">
+      {{ j.docente?.usuario?.nombre }} {{ j.docente?.usuario?.apellido }}
+      <em>({{ j.rol }})</em>
+    </span>
+    <span class="ti-member tutor-mem" *ngIf="tutor">
+      {{ tutor.docente?.usuario?.nombre }} {{ tutor.docente?.usuario?.apellido }}
+      <em>(Tutor)</em>
+    </span>
+  </div>
+
+  <div class="eval-grid">
+
+    <!-- ── Panel: Nota del Tribunal (40%) ──────────────────────── -->
+    <div class="panel tribunal-rubrica-panel">
+      <h3 class="panel-title"><i class="bi bi-people-fill me-2"></i>Nota del Tribunal (40%)</h3>
+
+      <!-- Estado del tribunal -->
+      <div class="estado-tribunal">
+        <div class="tj-row" *ngFor="let j of jurados">
+          <div class="tjr-info">
+            <span class="tjr-rol">{{ formatearRol(j.rol) }}</span>
+            <span class="tjr-nombre">{{ j.docente?.usuario?.nombre }} {{ j.docente?.usuario?.apellido }}</span>
+          </div>
+          <div class="tjr-estado">
+            <ng-container *ngIf="getEvaluacionJuradoPorRol(j.rol) as evalJurado">
+              <span class="tjr-evaluado">
+                <i class="bi bi-check-circle-fill"></i>
+                {{ evalJurado.notaJurado.toFixed(2) }} / 10
+              </span>
+            </ng-container>
+            <span class="tjr-pendiente" *ngIf="!getEvaluacionJuradoPorRol(j.rol)">
+              <i class="bi bi-clock"></i> Pendiente
+            </span>
+          </div>
+        </div>
+        <div class="empty-tribunal" *ngIf="jurados.length === 0">
+          <i class="bi bi-inbox me-2"></i>No hay jurados asignados.
+        </div>
+      </div>
+
+      <!-- Nota promedio tribunal -->
+      <div class="nota-tribunal-box" [class.lista]="tribunalCompleto" [class.incompleta]="!tribunalCompleto">
+        <span class="ntb-label">Nota promedio tribunal</span>
+        <span class="ntb-valor" *ngIf="notaTribunalPromedio !== null">
+          {{ notaTribunalPromedio.toFixed(2) }} / 10
+        </span>
+        <span class="ntb-valor pending" *ngIf="notaTribunalPromedio === null">—</span>
+        <span class="ntb-estado" *ngIf="tribunalCompleto"><i class="bi bi-shield-check"></i> Completo</span>
+        <span class="ntb-estado warning" *ngIf="!tribunalCompleto && jurados.length > 0">
+          <i class="bi bi-exclamation-circle"></i> Faltan evaluaciones
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Panel: Nota del Coordinador (60%) ───────────────────────── -->
+    <div class="panel" *ngIf="!evaluacionExistente">
+      <h3 class="panel-title"><i class="bi bi-person-fill me-2"></i>Nota del Coordinador (60%)</h3>
+
+      <!-- Alerta si tribunal incompleto -->
+      <div class="alerta-tribunal-incompleto" *ngIf="!tribunalCompleto">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Los jurados deben completar su evaluación antes de poder registrar la nota final.
+        <a [routerLink]="['/dashboard/admin/asignar-jurados', solicitudId]" class="link-asignar">Ver tribunal →</a>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="guardar()" *ngIf="tribunalCompleto || true">
+        <div class="form-group">
+          <label>Rúbrica de evaluación</label>
+          <select formControlName="rubricaId" class="form-select">
+            <option value="">— Seleccione rúbrica —</option>
+            <option *ngFor="let r of rubricas" [value]="r.id">{{ r.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Nota instructor -->
+        <div class="form-group">
+          <label>
+            Nota del Instructor — Titulación II
+            <span class="peso-badge">60%</span>
+          </label>
+          <input type="number" formControlName="notaInstructor" class="form-input"
+                 placeholder="0.00 – 10.00" step="0.01" min="0" max="10" />
+          <small class="form-hint">Ingresa la nota que asigna el docente de Titulación II al estudiante.</small>
+        </div>
+
+        <!-- Nota tribunal (read-only, from jury evaluations) -->
+        <div class="nota-tribunal-readonly">
+          <div class="ntr-row">
+            <span class="ntr-label">
+              Nota del Tribunal <span class="peso-badge jury">40%</span>
+            </span>
+            <span class="ntr-valor" *ngIf="notaTribunalPromedio !== null">
+              {{ notaTribunalPromedio.toFixed(2) }}
+              <span class="ntr-fuente">promedio de {{ evaluacionesJurado.length }} evaluaciones</span>
+            </span>
+            <span class="ntr-valor pending" *ngIf="notaTribunalPromedio === null">
+              Pendiente evaluación del tribunal
+            </span>
+          </div>
+        </div>
+
+        <!-- Preview nota final -->
+        <div class="preview-nota">
+          <div class="formula">
+            ({{ notaInstructor.toFixed(2) }} × 60%) + ({{ notaJurado.toFixed(2) }} × 40%) =
+          </div>
+          <div class="nota-final-preview"
+               [class.aprobado]="resultadoPreview === 'APROBADO'"
+               [class.reprobado]="resultadoPreview === 'REPROBADO'">
+            <span class="nf-number">{{ notaFinalPreview.toFixed(2) }}</span>
+            <span class="nf-label">{{ resultadoPreview }}</span>
+          </div>
+        </div>
+
+        <!-- Preview comentario preestablecido -->
+        <div class="preview-comentario" *ngIf="notaInstructor > 0">
+          <div class="pc-header">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Comentario preestablecido:</span>
+          </div>
+          <span class="pc-badge" [ngClass]="'pc-' + getRangoClass(notaFinalPreview)">
+            <i class="bi" [ngClass]="getRangoIcon(notaFinalPreview)"></i>
+            {{ getRangoLabel(notaFinalPreview) }}
+          </span>
+          <p class="pc-texto">{{ getComentarioRango(notaFinalPreview) }}</p>
+        </div>
+
+        <div class="form-group">
+          <label>Observaciones del coordinador</label>
+          <textarea formControlName="observaciones" class="form-textarea" rows="3"
+                    placeholder="Retroalimentación para el estudiante..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit"
+                [disabled]="form.invalid || enviando || !tribunalCompleto">
+          <i class="bi bi-check-circle me-1"></i>
+          {{ enviando ? 'Guardando...' : 'Registrar Nota Final' }}
+        </button>
+
+        <p class="hint-tribunal" *ngIf="!tribunalCompleto">
+          <i class="bi bi-lock me-1"></i>
+          El botón se habilitará cuando todos los jurados completen su evaluación.
+        </p>
+      </form>
+    </div>
+
+    <!-- ── Evaluación ya registrada ───────────────────────────────── -->
+    <div class="panel eval-resultado" *ngIf="evaluacionExistente">
+      <h3 class="panel-title">Evaluación Final Registrada</h3>
+
+      <div class="notas-breakdown">
+        <div class="nota-row">
+          <span class="nota-concepto">Instructor (60%)</span>
+          <span class="nota-valor">{{ evaluacionExistente.notaInstructor?.toFixed(2) || '—' }}</span>
+        </div>
+        <div class="nota-row">
+          <span class="nota-concepto">Tribunal — Rúbrica (40%)</span>
+          <span class="nota-valor">{{ evaluacionExistente.notaJurado?.toFixed(2) || '—' }}</span>
+        </div>
+        <div class="nota-row total">
+          <span class="nota-concepto">NOTA FINAL</span>
+          <span class="nota-valor final">{{ evaluacionExistente.notaFinal?.toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <div class="resultado-badge"
+           [class.aprobado]="evaluacionExistente.resultado === 'APROBADO'"
+           [class.reprobado]="evaluacionExistente.resultado === 'REPROBADO'">
+        {{ evaluacionExistente.resultado }}
+      </div>
+
+      <div class="obs-box" *ngIf="evaluacionExistente.observaciones">
+        <strong>Observaciones del coordinador:</strong>
+        <p class="obs-inline">
+          {{ evaluacionExistente.observaciones | slice:0:120 }}{{ evaluacionExistente.observaciones.length > 120 ? '...' : '' }}
+          <button class="btn-ver-mas" *ngIf="evaluacionExistente.observaciones?.length > 40"
+                  (click)="verObservaciones('Observaciones de evaluación', evaluacionExistente.observaciones)">Ver más</button>
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Panel firma electrónica ────────────────────────────────── -->
+    <div class="panel firma-panel" *ngIf="evaluacionExistente">
+      <h3 class="panel-title"><i class="bi bi-pen-fill me-1"></i>Firma Electrónica del Acta</h3>
+      <div class="firmas-grid">
+        <div class="firma-card" *ngFor="let r of ROLES_FIRMA" [class.firmada]="firmaEstado(r.value)">
+          <div class="firma-icon">
+            <i class="bi" [class.bi-pen-fill]="!firmaEstado(r.value)"
+               [class.bi-check-circle-fill]="firmaEstado(r.value)"></i>
+          </div>
+          <div class="firma-info">
+            <span class="firma-rol">{{ r.label }}</span>
+            <span class="firma-nombre">{{ getNombreJuradoPorRol(r.value) }}</span>
+            <span class="firma-estado" [class.ok]="firmaEstado(r.value)">
+              {{ firmaEstado(r.value) ? '✓ Firmado' : 'Pendiente' }}
+            </span>
+          </div>
+          <button class="btn-firma" (click)="firmarActa(r.value)"
+                  [disabled]="firmaEstado(r.value) || firmandoActa || !acta">
+            {{ firmaEstado(r.value) ? 'Firmado' : 'Firmar' }}
+          </button>
+        </div>
+      </div>
+      <div class="acta-completa" *ngIf="acta?.firmada">
+        <i class="bi bi-shield-check-fill"></i>
+        <span>Acta completamente firmada</span>
+      </div>
+      <button class="btn-download" (click)="descargarActa()" *ngIf="acta" [disabled]="!acta.archivoPdf">
+        <i class="bi bi-file-earmark-pdf-fill me-1"></i>Descargar Acta PDF
+      </button>
+      <button class="btn-generar" (click)="generarActaAutomatica()" *ngIf="evaluacionExistente && !acta">
+        <i class="bi bi-file-earmark-plus me-1"></i>Generar Acta
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="noti-modal-backdrop" *ngIf="modalObs !== null" (click)="cerrarModal()">
+  <div class="noti-modal" (click)="$event.stopPropagation()">
+    <div class="noti-modal-header">
+      <i class="bi bi-exclamation-triangle-fill noti-icon"></i>
+      <span class="noti-title">Notificación</span>
+    </div>
+    <div class="noti-modal-body">{{ modalObs }}</div>
+    <div class="noti-modal-footer">
+      <button class="btn-cerrar-noti" (click)="cerrarModal()">
+        <i class="bi bi-x me-1"></i>Cerrar
+      </button>
+    </div>
+  </div>
+</div>

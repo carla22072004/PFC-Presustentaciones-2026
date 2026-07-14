@@ -1,0 +1,154 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-bar-chart-fill me-2"></i>Reportes y Estadísticas</h2>
+      <p class="page-subtitle">Resumen global del proceso de Pre-Sustentaciones</p>
+    </div>
+    <button class="btn-refresh" (click)="cargarTodo()" title="Actualizar">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+  </div>
+
+  <div *ngIf="cargando" class="loading-state">
+    <div class="spinner"></div><p>Cargando estadísticas...</p>
+  </div>
+
+  <div *ngIf="!cargando">
+
+    <!-- ── Estadísticas rápidas ──────────────────────────── -->
+    <div class="stats-grid">
+      <div class="stat-card azul">
+        <div class="stat-icono"><i class="bi bi-journal-text"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ totalSolicitudes }}</span>
+          <span class="stat-label">Total Solicitudes</span>
+        </div>
+      </div>
+      <div class="stat-card verde">
+        <div class="stat-icono"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ aprobadas }}</span>
+          <span class="stat-label">Aprobadas</span>
+        </div>
+      </div>
+      <div class="stat-card amarillo">
+        <div class="stat-icono"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ pendientes }}</span>
+          <span class="stat-label">Por Revisar</span>
+        </div>
+      </div>
+      <div class="stat-card rojo">
+        <div class="stat-icono"><i class="bi bi-x-circle-fill"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ rechazadas }}</span>
+          <span class="stat-label">Rechazadas</span>
+        </div>
+      </div>
+
+      <div class="stat-card morado">
+        <div class="stat-icono"><i class="bi bi-star-half"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ promedioNotas }}</span>
+          <span class="stat-label">Promedio Notas</span>
+        </div>
+      </div>
+      <div class="stat-card verde">
+        <div class="stat-icono"><i class="bi bi-mortarboard-fill"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ aprobadosEval }}</span>
+          <span class="stat-label">Aprobados en Eval.</span>
+        </div>
+      </div>
+      <div class="stat-card rojo">
+        <div class="stat-icono"><i class="bi bi-emoji-frown"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ reprobadosEval }}</span>
+          <span class="stat-label">Reprobados en Eval.</span>
+        </div>
+      </div>
+      <div class="stat-card azul">
+        <div class="stat-icono"><i class="bi bi-file-earmark-check-fill"></i></div>
+        <div class="stat-info">
+          <span class="stat-valor">{{ actasFirmadas }} / {{ actas.length }}</span>
+          <span class="stat-label">Actas Firmadas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tabla de actas individuales ─────────────────────── -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3 class="table-title"><i class="bi bi-file-earmark-pdf me-2"></i>Actas Individuales (RF-11)</h3>
+      </div>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Estudiante</th>
+            <th>Título</th>
+            <th>Nota Final</th>
+            <th>Resultado</th>
+            <th>Acta</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of solicitudesAprobadas">
+            <td><strong>#{{ s.id }}</strong></td>
+            <td>{{ nombreEstudiante(s) }}</td>
+            <td class="titulo-cell">{{ s.tituloTema }}</td>
+            <td>
+              <span *ngIf="getEval(s.id)">{{ getEval(s.id)?.notaFinal | number:'1.2-2' }}</span>
+              <span *ngIf="!getEval(s.id)" class="text-muted">Sin evaluar</span>
+            </td>
+            <td>
+              <span class="badge-resultado" *ngIf="getEval(s.id)"
+                    [class.aprobado]="getEval(s.id)?.resultado === 'APROBADO'"
+                    [class.reprobado]="getEval(s.id)?.resultado === 'REPROBADO'">
+                {{ getEval(s.id)?.resultado }}
+              </span>
+              <span *ngIf="!getEval(s.id)" class="text-muted">—</span>
+            </td>
+            <td>
+              <span class="acta-badge" *ngIf="tieneActa(s.id)"
+                    [class.firmada]="getActa(s.id)?.firmada">
+                <i class="bi" [class.bi-shield-check]="getActa(s.id)?.firmada"
+                               [class.bi-file-earmark]="!getActa(s.id)?.firmada"></i>
+                {{ getActa(s.id)?.firmada ? 'Firmada' : 'Sin firmar' }}
+              </span>
+              <span class="text-muted" *ngIf="!tieneActa(s.id)">Sin acta</span>
+            </td>
+            <td>
+              <div class="acciones-cell">
+                <button class="btn-accion btn-generar"
+                        *ngIf="!tieneActa(s.id)"
+                        [disabled]="generandoId === s.id"
+                        (click)="generarActa(s.id)">
+                  <i class="bi bi-file-earmark-plus"></i>
+                  {{ generandoId === s.id ? 'Generando...' : 'Generar Acta' }}
+                </button>
+                <button class="btn-accion btn-descargar"
+                        *ngIf="tieneActa(s.id)"
+                        (click)="descargarActa(getActa(s.id)?.id)">
+                  <i class="bi bi-download"></i> Descargar PDF
+                </button>
+                <button class="btn-accion btn-evaluar"
+                        [routerLink]="['/dashboard/admin/evaluar', s.id]">
+                  <i class="bi bi-pencil-square"></i> Ver/Editar
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="solicitudesAprobadas.length === 0">
+            <td colspan="7" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No hay solicitudes aprobadas aún.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

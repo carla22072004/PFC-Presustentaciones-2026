@@ -1,0 +1,600 @@
+.page-wrapper { padding: 40px; max-width: 1400px; margin: 0 auto; }
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 1.8rem; font-weight: 800; color: #1a5c2e; margin: 0 0 4px; }
+.page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
+.filtros-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filtro-btn { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
+.filtro-btn.activo, .filtro-btn:hover { background: #1a5c2e; color: white; border-color: #1a5c2e; }
+.loading-state { display: flex; flex-direction: column; align-items: center; padding: 60px; color: #64748b; gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #1a5c2e; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.table-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.tabla { width: 100%; border-collapse: collapse; }
+.tabla thead tr { background: #f8fafc; border-bottom: 2px solid #e2e8f0; }
+.tabla th { padding: 14px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+.tabla td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; color: #334155; vertical-align: middle; }
+.tabla tbody tr:last-child td { border-bottom: none; }
+.tabla tbody tr:hover { background: #f8fafc; }
+.id-cell { color: #1a5c2e; }
+.estudiante-info { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: #1a5c2e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+.nombre { display: block; font-weight: 600; font-size: 0.88rem; }
+.carrera { display: block; font-size: 0.75rem; color: #94a3b8; }
+.titulo-cell { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.modalidad-tag { background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.badge-creada { background: #fef9c3; color: #854d0e; }
+.badge-enviada { background: #dbeafe; color: #1e40af; }
+.badge-aprobada { background: #dcfce7; color: #166534; }
+.badge-rechazada { background: #fee2e2; color: #991b1b; }
+.badge-suspendida { background: #fef3c7; color: #92400e; }
+.badge-tutoria { background: #e0e7ff; color: #3730a3; }
+.badge-evaluacion { background: #fae8ff; color: #6b21a8; }
+.badge-calificada { background: #dcfce7; color: #15803d; }
+.badge-completada { background: #0d9488; color: #ffffff; }
+.badge-default { background: #f1f5f9; color: #475569; }
+.acciones-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-accion { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn-aprobar { background: #dcfce7; color: #166534; }
+.btn-rechazar { background: #fee2e2; color: #991b1b; }
+.btn-ver-pdf  { background: #fef3c7; color: #92400e; }
+.btn-cronograma { background: #dbeafe; color: #1e40af; }
+.btn-evaluar { background: #fef3c7; color: #92400e; }
+.btn-accion:hover { opacity: 0.75; transform: translateY(-1px); }
+.estado-final { font-size: 0.78rem; color: #94a3b8; font-style: italic; }
+.text-center { text-align: center; }
+.empty-state { text-align: center; padding: 60px 20px !important; color: #94a3b8; }
+.empty-state i { font-size: 2rem; display: block; }
+.empty-state p { margin-top: 10px; }
+
+.btn-tribunal { background: #ede9fe; color: #5b21b6; border: none; }
+.btn-tribunal:hover { background: #5b21b6; color: white; }
+
+/* Flujo del coordinador */
+.flujo-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.flujo-paso {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.paso-num {
+    width: 22px;
+    height: 22px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.paso-label { font-size: 0.82rem; color: #374151; font-weight: 500; }
+.flujo-sep { color: #9ca3af; font-size: 0.75rem; }
+
+/* Botón tribunal */
+.btn-tribunal {
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.btn-tribunal:hover { background: #6d28d9; }
+.btn-reporte {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: #003865; color: white;
+    border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+}
+.btn-reporte:hover { background: #0056a3; }
+.btn-reporte-stats { background: #cc9900; }
+.btn-reporte-stats:hover { background: #a07800; }
+
+/* ════════════════════════════════════════════════════
+   OBSERVACIONES — columna tabla
+   ════════════════════════════════════════════════════ */
+.obs-cell {
+    min-width: 160px;
+    max-width: 220px;
+}
+.obs-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+}
+.obs-text {
+    font-size: 0.82rem;
+    color: #334155;
+    line-height: 1.4;
+}
+.obs-empty {
+    color: #94a3b8;
+    font-size: 0.82rem;
+}
+.btn-ver-mas {
+    display: inline !important;
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    line-height: 1.4;
+}
+.btn-ver-mas:hover {
+    color: #1d4ed8;
+}
+
+/* ════════════════════════════════════════════════════
+   MODAL NOTIFICACIÓN
+   ════════════════════════════════════════════════════ */
+.noti-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+}
+.noti-modal {
+    background: white;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-top: 4px solid #f59e0b;
+    overflow: hidden;
+}
+.noti-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.noti-icon {
+    font-size: 1.2rem;
+    color: #f59e0b;
+}
+.noti-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+}
+.noti-modal-body {
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    color: #374151;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+.noti-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 18px 14px;
+    border-top: 1px solid #f0f0f0;
+}
+.btn-cerrar-noti {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 20px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-cerrar-noti:hover {
+    background: #2563eb;
+}
+
+/* ── Modal Rechazo ─────────────────────────────────── */
+.modal-rechazo { min-width: 420px; max-width: 520px; }
+.rechazo-header { background: #fff1f2; }
+.icon-rechazo { color: #dc2626; }
+.rechazo-label { font-size: .88rem; font-weight: 600; color: #374151; margin: 0 0 .6rem; }
+.req { color: #dc2626; }
+.rechazo-textarea {
+    width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
+    padding: .6rem .8rem; font-size: .9rem; font-family: inherit;
+    resize: vertical; outline: none; transition: border-color .2s;
+}
+.rechazo-textarea:focus { border-color: #dc2626; }
+.char-count { font-size: .75rem; color: #9ca3af; display: block; text-align: right; margin-top: 3px; }
+.rechazo-footer { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-confirmar-rechazo {
+    background: #dc2626; color: white; border: none;
+    border-radius: 8px; padding: 8px 18px; font-size: .85rem;
+    font-weight: 600; cursor: pointer; transition: background .15s;
+    display: flex; align-items: center; gap: 4px;
+}
+.btn-confirmar-rechazo:hover { background: #b91c1c; }
+
+/* ══════════════════════════════════════════════════════════════════════
+    SUSPENSIÓN — Botones, badges y modal
+    ══════════════════════════════════════════════════════════════════════ */
+.btn-suspender {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+.btn-suspender:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+.badge-suspendida {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Modal Suspensión */
+.modal-suspension {
+    min-width: 420px;
+    max-width: 520px;
+}
+.suspension-header {
+    background: #fffbeb;
+}
+.icon-suspension {
+    color: #d97706;
+}
+.btn-confirmar-suspension {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.btn-confirmar-suspension:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODO OSCURO — :host-context para Angular ViewEncapsulation
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Fondos de página y contenedores */
+body.dark-mode .page-wrapper     { color: #c9d1d9; }
+body.dark-mode .page-title       { color: #3fb950 !important; }
+body.dark-mode .page-subtitle    { color: #8b949e !important; }
+
+/* Tarjetas */
+body.dark-mode .form-card,
+body.dark-mode .table-card,
+body.dark-mode .solicitud-card,
+body.dark-mode .card-section,
+body.dark-mode .panel,
+body.dark-mode .seccion,
+body.dark-mode .perfil-card,
+body.dark-mode .acta-panel,
+body.dark-mode .accion-panel,
+body.dark-mode .eval-form-card,
+body.dark-mode .eval-registrada,
+body.dark-mode .tribunal-panel,
+body.dark-mode .cronograma-card,
+body.dark-mode .acciones-card,
+body.dark-mode .pdf-visor-card,
+body.dark-mode .empty-card,
+body.dark-mode .mi-rol-card,
+body.dark-mode .stat-card,
+body.dark-mode .asig-card,
+body.dark-mode .criterio-card,
+body.dark-mode .noti-item,
+body.dark-mode .noti-modal,
+body.dark-mode .card.shadow-dubai {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+    color: #c9d1d9 !important;
+}
+
+/* Inputs y selects */
+body.dark-mode .input-field,
+body.dark-mode .input-premium,
+body.dark-mode .campo-input,
+body.dark-mode .form-control,
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode .form-textarea,
+body.dark-mode .obs-input,
+body.dark-mode .rechazo-textarea,
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder { color: #484f58 !important; }
+
+/* Tablas */
+body.dark-mode .tabla { background: #161b22 !important; }
+body.dark-mode .tabla thead tr,
+body.dark-mode .tabla th {
+    background: #0d1117 !important;
+    color: #8b949e !important;
+    border-color: #30363d !important;
+}
+body.dark-mode .tabla td {
+    border-color: #21262d !important;
+    color: #c9d1d9 !important;
+    background: #161b22 !important;
+}
+body.dark-mode .tabla tbody tr:hover td { background: #1c2128 !important; }
+
+/* Textos */
+body.dark-mode .sc-titulo,
+body.dark-mode .card-title-main,
+body.dark-mode .section-title,
+body.dark-mode .panel-title,
+body.dark-mode .nombre-completo,
+body.dark-mode .ccard-titulo,
+body.dark-mode .cc-nombre,
+body.dark-mode .titulo-tema,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4 { color: #e6edf3 !important; }
+
+body.dark-mode .sc-label,
+body.dark-mode .sc-meta,
+body.dark-mode .campo-label,
+body.dark-mode .form-group label,
+body.dark-mode .label-style,
+body.dark-mode .carrera,
+body.dark-mode .estudiante-nombre,
+body.dark-mode .nombre { color: #8b949e !important; }
+
+/* IDs y links  */
+body.dark-mode .id-cell   { color: #3fb950 !important; }
+body.dark-mode .btn-ver-mas { color: #58a6ff !important; }
+
+/* Nombre estudiante en tabla */
+body.dark-mode .nombre { color: #e6edf3 !important; font-weight: 600; }
+body.dark-mode td .nombre { color: #e6edf3 !important; }
+
+/* Filtros */
+body.dark-mode .filtros-bar {}
+body.dark-mode .filtro-btn {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .filtro-btn.activo {
+    background: #238636 !important;
+    color: #ffffff !important;
+    border-color: #3fb950 !important;
+}
+body.dark-mode .filtro-btn:hover {
+    background: #2d333b !important;
+    color: #c9d1d9 !important;
+}
+
+/* Flujo barra */
+body.dark-mode .flujo-bar {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+}
+body.dark-mode .paso-label { color: #8b949e !important; }
+body.dark-mode .flujo-sep  { color: #484f58 !important; }
+
+/* Botones acción */
+body.dark-mode .btn-back,
+body.dark-mode .btn-cancelar,
+body.dark-mode .btn-cancel,
+body.dark-mode .btn-refresh {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .btn-guardar,
+body.dark-mode .btn-guardar-eval,
+body.dark-mode .btn-submit-premium,
+body.dark-mode .btn-nueva {
+    background: #238636 !important;
+    border-color: #3fb950 !important;
+}
+body.dark-mode .btn-marcar-todas {
+    background: #0d2318 !important;
+    border-color: #238636 !important;
+    color: #3fb950 !important;
+}
+
+/* Badges de estado */
+body.dark-mode .badge-creada,
+body.dark-mode .badge-default  { background: #21262d !important; color: #8b949e !important; border: 1px solid #30363d !important; }
+body.dark-mode .badge-enviada  { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .badge-aprobada,
+body.dark-mode .badge-aprobado,
+body.dark-mode .badge-activo   { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .badge-rechazada,
+body.dark-mode .badge-rechazado,
+body.dark-mode .badge-reprobado { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .badge-enviado  { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .badge-tutoria  { background: #1e1b4b !important; color: #a5b4fc !important; }
+body.dark-mode .badge-evaluacion { background: #2e1065 !important; color: #d8b4fe !important; }
+body.dark-mode .badge-calificada { background: #14532d !important; color: #86efac !important; }
+body.dark-mode .badge-completada { background: #0f766e !important; color: #ffffff !important; }
+
+/* Chips / tags */
+body.dark-mode .mod-chip,
+body.dark-mode .modalidad-tag  {
+    background: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+body.dark-mode .rol-badge       { background: #0d1117 !important; border-color: #30363d !important; color: #8b949e !important; }
+body.dark-mode .rol-presidente  { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .rol-vocal1,
+body.dark-mode .rol-vocal2      { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .rol-tutor       { background: #0f2e1a !important; color: #3fb950 !important; }
+
+/* Notificaciones */
+body.dark-mode .noti-item.no-leida {
+    background: #0f2e1a !important;
+    border-color: #238636 !important;
+}
+body.dark-mode .noti-mensaje  { color: #e6edf3 !important; }
+body.dark-mode .noti-fecha    { color: #484f58 !important; }
+body.dark-mode .noti-icono.leida { background: #21262d !important; color: #484f58 !important; }
+body.dark-mode .noti-modal-header,
+body.dark-mode .noti-modal-footer { border-color: #30363d !important; background: #161b22 !important; }
+body.dark-mode .noti-modal-body,
+body.dark-mode .noti-title   { color: #c9d1d9 !important; }
+body.dark-mode .empty-state  { color: #484f58 !important; }
+
+/* Secciones especiales */
+body.dark-mode .form-section-card  { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .pesos-section       { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .flujo-bar           { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .flujo-bar .paso-label { color: #8b949e !important; }
+
+/* Cronograma */
+body.dark-mode .ccard-info  { background: #161b22 !important; }
+body.dark-mode .ccard-titulo { color: #e6edf3 !important; }
+body.dark-mode .detalle     { color: #8b949e !important; }
+body.dark-mode .auto-assign-card { background: #0d1f3a !important; border-color: #30363d !important; }
+body.dark-mode .aa-desc     { color: #8b949e !important; }
+body.dark-mode .divider span { background: #161b22 !important; color: #484f58 !important; }
+
+/* Perfil */
+body.dark-mode .separador   { border-color: #30363d !important; }
+body.dark-mode .campo-label { color: #8b949e !important; }
+body.dark-mode .campo-hint  { color: #484f58 !important; }
+body.dark-mode .campo-input { background: #0d1117 !important; color: #c9d1d9 !important; border-color: #30363d !important; }
+
+/* Botones acciones tabla */
+body.dark-mode .btn-enviar    { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-pdf,
+body.dark-mode .btn-rechazar  { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .btn-aprobar   { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .btn-programar { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-evaluar   { background: #21262d !important; color: #c9d1d9 !important; }
+body.dark-mode .btn-ver-pdf   { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .btn-accion    { opacity: 0.9; }
+body.dark-mode .btn-tribunal  { background: #2a1450 !important; color: #d2a8ff !important; }
+
+/* Alertas */
+body.dark-mode .alert-info     { background: #0d1f3a !important; border-color: #388bfd !important; color: #79c0ff !important; }
+body.dark-mode .alert-warning  { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alert-conflicto { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alerta-existente--warning { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .alerta-existente--success { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+
+/* Bloqueo card */
+body.dark-mode .bloqueo-card   { background: #1c1400 !important; border-color: #854d0e !important; }
+body.dark-mode .bloqueo-titulo,
+body.dark-mode .bloqueo-desc   { color: #f0b429 !important; }
+
+/* Upload */
+body.dark-mode .upload-zone   { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .upload-label  { color: #c9d1d9 !important; }
+body.dark-mode .pdf-toolbar   { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .btn-toolbar   { background: #21262d !important; border-color: #30363d !important; color: #8b949e !important; }
+
+/* Jurado/asignaciones */
+body.dark-mode .jurado-item,
+body.dark-mode .sugerido-item { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .sugerido-item:hover { background: #161b22 !important; }
+body.dark-mode .tutor-actual  { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .estado-global.completo  { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .estado-global.pendiente { background: #1c1400 !important; border-color: #d29922 !important; color: #f0b429 !important; }
+
+/* Firma */
+body.dark-mode .firma-card    { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .firma-item    { background: #0d1117 !important; border-color: #30363d !important; color: #8b949e !important; }
+body.dark-mode .firma-item.ok { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+body.dark-mode .rol-firma-card { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .rol-firma-card.firmado { background: #0f2e1a !important; border-color: #238636 !important; }
+body.dark-mode .ya-firmado    { background: #0f2e1a !important; border-color: #238636 !important; color: #3fb950 !important; }
+
+/* Reportes */
+body.dark-mode .stat-valor    { color: #e6edf3 !important; }
+body.dark-mode .stat-label    { color: #8b949e !important; }
+
+/* Tribunal/rubrica */
+body.dark-mode .tj-card       { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .tj-evaluado   { background: #0f2e1a !important; border-color: #238636 !important; }
+body.dark-mode .tj-pendiente  { background: #1c1400 !important; border-color: #d29922 !important; }
+body.dark-mode .nota-promedio-tribunal { background: #0d1f3a !important; }
+body.dark-mode .tcr-row       { background: #161b22 !important; border-color: #21262d !important; }
+body.dark-mode .tcr-row:nth-child(odd) { background: #0d1117 !important; }
+body.dark-mode .tcr-nombre    { color: #c9d1d9 !important; }
+
+/* Modal */
+body.dark-mode .modal-rechazo  { background: #161b22 !important; }
+body.dark-mode .rechazo-header { background: #2d0f0f !important; }
+body.dark-mode .noti-modal-backdrop { background: rgba(0,0,0,0.7) !important; }
+
+/* Footer y separadores */
+body.dark-mode .form-footer   { border-color: #30363d !important; }
+body.dark-mode .obs-text      { color: #8b949e !important; }
+body.dark-mode .obs-box       { background: #0d1117 !important; }
+
+/* Escalas rúbrica */
+body.dark-mode .escala-btn    { background: #161b22 !important; border-color: #21262d !important; }
+body.dark-mode .escala-100    { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .escala-67     { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .escala-33     { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .escala-0      { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .cc-header     { background: #0d1117 !important; }
+
+/* Botones de reporte (PDF) */
+body.dark-mode .btn-reporte   { background: #0d1f3a !important; color: #79c0ff !important; }
+body.dark-mode .btn-reporte-stats { background: #2a1e04 !important; color: #f0b429 !important; }
+
+/* Nota final preview */
+body.dark-mode .nota-final-preview { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .nf-number     { color: #e6edf3 !important; }
+body.dark-mode .preview-nota-wrapper { background: #0d1117 !important; border-color: #30363d !important; }
+
+/* Horario card */
+body.dark-mode .empty-card h4 { color: #8b949e !important; }
+body.dark-mode .info-banner { background: #0d1f3a !important; border-color: #388bfd !important; color: #79c0ff !important; }
+
+/* ── Revisar solicitudes — reglas específicas ───────────────────── */
+body.dark-mode .table-card       { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .tabla th         { background: #0d1117 !important; color: #8b949e !important; border-color: #21262d !important; }
+body.dark-mode .tabla td         { background: #161b22 !important; color: #c9d1d9 !important; border-color: #21262d !important; }
+body.dark-mode .tabla tbody tr:hover td { background: #1c2128 !important; }
+body.dark-mode .nombre           { color: #e6edf3 !important; font-weight: 600; }
+body.dark-mode .carrera          { color: #8b949e !important; }
+body.dark-mode .obs-text         { color: #8b949e !important; }
+body.dark-mode .btn-ver-mas      { color: #58a6ff !important; }
+body.dark-mode .modal-overlay    { background: rgba(0,0,0,0.7) !important; }
+body.dark-mode .modal-card       { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .modal-header     { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .modal-body       { color: #c9d1d9 !important; }
+body.dark-mode .modal-body label { color: #8b949e !important; }

@@ -1,0 +1,327 @@
+/* ═══════════════════════════════════════════════════════════
+   VER OBSERVACIONES — Estilos institucionales UTEQ
+   ═══════════════════════════════════════════════════════════ */
+
+.page-wrapper { padding: 24px; max-width: 1000px; margin: 0 auto; }
+
+.page-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.page-title { font-size: 1.4rem; font-weight: 800; color: #003865; margin: 0; }
+.page-subtitle { font-size: 0.88rem; color: #666; margin: 4px 0 0; font-style: italic; }
+.btn-back {
+    display: flex; align-items: center; gap: 6px; padding: 9px 18px;
+    background: #f0f4f8; border: 1px solid #d0d8e4; border-radius: 10px;
+    color: #003865; font-size: 0.85rem; cursor: pointer; text-decoration: none;
+    font-weight: 600; transition: background 0.2s;
+}
+.btn-back:hover { background: #e0eaf5; }
+
+.loading-state { display: flex; flex-direction: column; align-items: center; padding: 60px; gap: 16px; color: #64748b; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e2eaf0; border-top-color: #003865; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.alert-error {
+    padding: 16px 20px; background: #fde8e8; border: 1px solid #f5c6cb;
+    border-radius: 10px; color: #842029; font-weight: 600;
+}
+
+/* Info card */
+.info-card {
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,56,101,.06); border: 1px solid #e8eef4;
+    margin-bottom: 24px;
+}
+.info-row {
+    display: flex; gap: 12px; padding: 8px 0;
+    border-bottom: 1px solid #f0f4f8;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { font-weight: 700; color: #444; min-width: 120px; }
+.info-value { color: #222; }
+.nota-final { font-weight: 900; color: #003865; font-size: 1.1rem; }
+
+.resultado-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-weight: 700; font-size: 0.85rem;
+}
+.resultado-badge.large { padding: 6px 20px; font-size: 1rem; }
+.resultado-aprobado { background: #d1f5d3; color: #145a14; }
+.resultado-reprobado { background: #fde8e8; color: #842029; }
+
+/* Empty state */
+.empty-state {
+    text-align: center; padding: 60px 20px; color: #888;
+}
+.empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+.empty-state h4 { color: #444; margin: 0 0 8px; }
+.empty-state p { margin: 0; font-size: 0.9rem; }
+
+/* Observation sections */
+.obs-section {
+    background: white; border-radius: 14px; margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,56,101,.06); border: 1px solid #e8eef4;
+    overflow: hidden;
+}
+.obs-section-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px;
+}
+.tutor-header { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+.jurado-header-presidente { background: linear-gradient(135deg, #fff8e1, #ffecb3); }
+.jurado-header-vocal-1 { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+.jurado-header-vocal-2 { background: linear-gradient(135deg, #f3e5f5, #e1bee7); }
+.coordinador-header { background: linear-gradient(135deg, #e8eaf6, #c5cae9); }
+
+.obs-section-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+}
+.tutor-header .obs-section-icon { background: #2e7d32; color: white; }
+.jurado-header-presidente .obs-section-icon { background: #f57f17; color: white; }
+.jurado-header-vocal-1 .obs-section-icon { background: #1565c0; color: white; }
+.jurado-header-vocal-2 .obs-section-icon { background: #7b1fa2; color: white; }
+.coordinador-header .obs-section-icon { background: #303f9f; color: white; }
+
+.obs-section-title h3 {
+    font-size: 1rem; font-weight: 800; color: #003865; margin: 0;
+}
+.obs-section-subtitle {
+    font-size: 0.82rem; color: #666; margin: 2px 0 0;
+}
+
+.obs-content { padding: 16px 20px; }
+.obs-text {
+    font-size: 0.9rem; line-height: 1.6; color: #333;
+    padding: 12px 16px; border-radius: 8px;
+}
+.tutor-obs { background: #f1f8e9; border-left: 4px solid #2e7d32; }
+.coordinador-obs { background: #e8eaf6; border-left: 4px solid #303f9f; }
+.obs-manual-text { background: #fff; border: 1px solid #e2eaf0; }
+.sin-observaciones { color: #888; font-style: italic; font-size: 0.88rem; }
+
+/* Criterios */
+.criterios-obs { padding: 0 16px 16px; }
+.criterio-obs-card {
+    border: 1px solid #e8eef4; border-radius: 10px; margin-top: 12px;
+    overflow: hidden;
+}
+.criterio-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; background: #fafbfc;
+    border-bottom: 1px solid #f0f4f8;
+}
+.criterio-nombre { font-weight: 700; color: #003865; font-size: 0.9rem; }
+.criterio-nota {
+    display: flex; align-items: baseline; gap: 2px;
+}
+.nota-value { font-size: 1.1rem; font-weight: 900; color: #003865; }
+.nota-max { font-size: 0.75rem; color: #888; }
+.criterio-escala { padding: 8px 14px; background: #f8fafc; }
+.escala-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+}
+.alto { background: #d1f5d3; color: #145a14; }
+.medio { background: #fff3cd; color: #7a4700; }
+.bajo { background: #fde8e8; color: #842029; }
+
+.criterio-observaciones { padding: 12px 14px; }
+.obs-auto, .obs-manual { margin-bottom: 10px; }
+.obs-auto:last-child, .obs-manual:last-child { margin-bottom: 0; }
+.obs-label {
+    font-size: 0.75rem; font-weight: 700; color: #666;
+    margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+}
+.obs-ALTO { background: #d1f5d3; color: #145a14; border-left: 3px solid #2e7d32; }
+.obs-MEDIO { background: #fff3cd; color: #7a4700; border-left: 3px solid #f57f17; }
+.obs-BAJO { background: #fde8e8; color: #842029; border-left: 3px solid #d32f2f; }
+.sin-observaciones-criterio {
+    font-size: 0.82rem; color: #999; font-style: italic;
+}
+
+/* Nueva sección de evaluación simple del jurado */
+.jurado-nota {
+    margin-left: auto;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    background: rgba(255,255,255,0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+.jn-value { font-size: 1.4rem; font-weight: 900; color: #003865; }
+.jn-max { font-size: 0.85rem; color: #666; }
+
+.jurado-eval-simple {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f4f8;
+}
+.jurado-resultado {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+.jurado-obs-text {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: #333;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid #003865;
+}
+.jurado-obs-text p { margin: 0; white-space: pre-wrap; }
+
+/* Evaluación summary */
+.eval-summary {
+    background: linear-gradient(135deg, #003865, #0056a3);
+    border-radius: 14px; padding: 24px; margin-top: 24px;
+    color: white;
+}
+.eval-summary-title {
+    font-size: 1.1rem; font-weight: 800; margin: 0 0 16px;
+    display: flex; align-items: center;
+}
+.eval-summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+.eval-summary-item {
+    background: rgba(255,255,255,0.1); border-radius: 10px;
+    padding: 14px 16px;
+}
+.eval-summary-item.total { background: rgba(204,153,0,0.3); }
+.esi-label { display: block; font-size: 0.78rem; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+.esi-value { font-size: 1.2rem; font-weight: 700; }
+.nota-total { font-size: 1.5rem; color: #cc9900; }
+
+/* Dark mode */
+body.dark-mode .page-title { color: #3fb950 !important; }
+body.dark-mode .btn-back { background: #21262d !important; border-color: #30363d !important; color: #8b949e !important; }
+body.dark-mode .btn-back:hover { background: #2d333b !important; }
+body.dark-mode .info-card { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .info-label { color: #8b949e !important; }
+body.dark-mode .info-value { color: #c9d1d9 !important; }
+body.dark-mode .nota-final { color: #3fb950 !important; }
+body.dark-mode .obs-section { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .obs-section-title h3 { color: #79c0ff !important; }
+body.dark-mode .obs-section-subtitle { color: #8b949e !important; }
+body.dark-mode .tutor-header { background: linear-gradient(135deg, #0f2e1a, #0d2818) !important; }
+body.dark-mode .jurado-header-presidente { background: linear-gradient(135deg, #2a1e04, #1c1400) !important; }
+body.dark-mode .jurado-header-vocal-1 { background: linear-gradient(135deg, #0d1f3a, #0a1628) !important; }
+body.dark-mode .jurado-header-vocal-2 { background: linear-gradient(135deg, #2a1e30, #1c1428) !important; }
+body.dark-mode .coordinador-header { background: linear-gradient(135deg, #1a1f3a, #121528) !important; }
+body.dark-mode .obs-content { background: #0d1117 !important; }
+body.dark-mode .obs-text { color: #c9d1d9 !important; }
+body.dark-mode .tutor-obs { background: #0f2e1a !important; border-left-color: #238636 !important; }
+body.dark-mode .coordinador-obs { background: #1a1f3a !important; border-left-color: #388bfd !important; }
+body.dark-mode .obs-manual-text { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .sin-observaciones { color: #484f58 !important; }
+body.dark-mode .criterio-obs-card { background: #0d1117 !important; border-color: #30363d !important; }
+body.dark-mode .criterio-header { background: #161b22 !important; border-color: #21262d !important; }
+body.dark-mode .criterio-nombre { color: #79c0ff !important; }
+body.dark-mode .criterio-escala { background: #0d1117 !important; }
+body.dark-mode .escala-badge { color: #c9d1d9 !important; }
+body.dark-mode .alarge { background: #0f2e1a !important; border: 1px solid #238636 !important; }
+body.dark-mode .medio { background: #2a1e04 !important; border: 1px solid #d29922 !important; }
+body.dark-mode .bajo { background: #2d0f0f !important; border: 1px solid #da3633 !important; }
+body.dark-mode .obs-ALTO { background: #0f2e1a !important; color: #3fb950 !important; border-left-color: #238636 !important; }
+body.dark-mode .obs-MEDIO { background: #2a1e04 !important; color: #f0b429 !important; border-left-color: #d29922 !important; }
+body.dark-mode .obs-BAJO { background: #2d0f0f !important; color: #f85149 !important; border-left-color: #da3633 !important; }
+body.dark-mode .sin-observaciones-criterio { color: #484f58 !important; }
+body.dark-mode .eval-summary { background: linear-gradient(135deg, #1a1f3a, #0d1528) !important; }
+body.dark-mode .eval-summary-title { color: #79c0ff !important; }
+body.dark-mode .eval-summary-item { background: rgba(255,255,255,0.05) !important; }
+body.dark-mode .esi-label { color: rgba(255,255,255,0.5) !important; }
+body.dark-mode .esi-value { color: #e6edf3 !important; }
+body.dark-mode .nota-total { color: #f0b429 !important; }
+body.dark-mode .resultado-aprobado { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .resultado-reprobado { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .empty-state { color: #484f58 !important; }
+
+/* Nuevos estilos para evaluación simple */
+body.dark-mode .jurado-nota { background: rgba(0,0,0,0.3) !important; }
+body.dark-mode .jn-value { color: #3fb950 !important; }
+body.dark-mode .jn-max { color: #8b949e !important; }
+body.dark-mode .jurado-eval-simple { background: #0d1117 !important; border-color: #21262d !important; }
+body.dark-mode .jurado-obs-text { background: #161b22 !important; border-left-color: #388bfd !important; color: #c9d1d9 !important; }
+body.dark-mode .jurado-obs-text p { color: #c9d1d9 !important; }
+
+/* Comentario preestablecido del coordinador */
+.coord-comentario-pre {
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #f0f4f8;
+}
+.ccp-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 8px;
+}
+.ccp-badges {
+    margin-bottom: 10px;
+}
+.ccp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.ccp-deficiente { background: #fde8e8; color: #842029; }
+.ccp-regular { background: #fff3cd; color: #7a4700; }
+.ccp-bueno { background: #d1f5d3; color: #145a14; }
+.ccp-texto {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+}
+
+/* Observaciones manuales del coordinador */
+.coord-observaciones {
+    padding: 16px 20px;
+}
+.co-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 8px;
+}
+.co-texto {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #333;
+    background: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2eaf0;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+/* Dark mode para comentario preestablecido */
+body.dark-mode .coord-comentario-pre { background: #0d1117 !important; border-color: #21262d !important; }
+body.dark-mode .ccp-header { color: #8b949e !important; }
+body.dark-mode .ccp-deficiente { background: #2d0f0f !important; color: #f85149 !important; }
+body.dark-mode .ccp-regular { background: #2a1e04 !important; color: #f0b429 !important; }
+body.dark-mode .ccp-bueno { background: #0f2e1a !important; color: #3fb950 !important; }
+body.dark-mode .ccp-texto { color: #c9d1d9 !important; }
+body.dark-mode .coord-observaciones { background: #0d1117 !important; }
+body.dark-mode .co-header { color: #8b949e !important; }
+body.dark-mode .co-texto { background: #161b22 !important; color: #c9d1d9 !important; border-color: #30363d !important; }

@@ -1,0 +1,182 @@
+<div class="page-wrapper">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">
+        <i class="bi bi-star-half me-2"></i>Evaluación del Jurado
+      </h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        {{ solicitud.estudiante?.usuario?.nombre }} {{ solicitud.estudiante?.usuario?.apellido }}
+        — <em>{{ solicitud.tituloTema }}</em>
+      </p>
+    </div>
+    <button class="btn-back" routerLink="/dashboard/jurado/mis-asignaciones">
+      <i class="bi bi-arrow-left"></i> Mis asignaciones
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+
+    <!-- Sin asignación -->
+    <div class="alert-error" *ngIf="!juradoInfo">
+      <i class="bi bi-exclamation-octagon me-2"></i>
+      No estás asignado como jurado en esta pre-sustentación.
+    </div>
+
+    <ng-container *ngIf="juradoInfo">
+
+      <!-- Info del jurado -->
+      <div class="jurado-badge">
+        <span class="jb-rol">{{ juradoInfo.rol }}</span>
+        <span class="jb-sep">·</span>
+        <span class="jb-rubrica">{{ rubrica?.nombre }}</span>
+        <span class="jb-sep" *ngIf="evaluacionPrevia?.notaJurado">·</span>
+        <span class="jb-nota" *ngIf="evaluacionPrevia?.notaJurado">
+          Tu nota: <strong>{{ evaluacionPrevia?.notaJurado?.toFixed(2) }} / 10</strong>
+        </span>
+      </div>
+
+      <!-- ── EVALUACIÓN YA REGISTRADA ───────────────────────────────────── -->
+      <div class="eval-registrada" *ngIf="evaluacionPrevia?.notaJurado">
+        <div class="er-header">
+          <div class="er-title">
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+            Evaluación registrada
+          </div>
+          <button class="btn-editar" (click)="editarEvaluacion()">
+            <i class="bi bi-pencil me-1"></i> Editar
+          </button>
+        </div>
+
+        <div class="eval-resumen">
+          <div class="eval-nota-display">
+            <span class="end-label">Nota asignada:</span>
+            <span class="end-value">{{ evaluacionPrevia?.notaJurado?.toFixed(2) }}</span>
+            <span class="end-max">/ 10</span>
+          </div>
+          <div class="eval-resultado" [ngClass]="evaluacionPrevia?.resultado === 'APROBADO' ? 'resultado-aprobado' : 'resultado-reprobado'">
+            {{ evaluacionPrevia?.resultado }}
+          </div>
+        </div>
+
+        <div class="eval-obs-registrada" *ngIf="evaluacionPrevia?.observaciones">
+          <h4 class="obs-title"><i class="bi bi-chat-left-text me-2"></i>Tus observaciones</h4>
+          <p class="obs-texto">{{ evaluacionPrevia?.observaciones }}</p>
+        </div>
+      </div>
+
+      <!-- ── FORMULARIO DE EVALUACIÓN ───────────────────────────────────── -->
+      <div class="eval-form-card" *ngIf="!evaluacionPrevia?.notaJurado">
+
+        <div class="ef-intro">
+          <strong>Evaluación del Trabajo de Titulación</strong><br>
+          <span>Asigna una nota del 1 al 10 y escribe tus observaciones o comentarios sobre el trabajo presentado.</span>
+        </div>
+
+        <form (ngSubmit)="guardar()">
+          <!-- Nota -->
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-calculator me-1"></i>Nota del Jurado (1 - 10)
+            </label>
+            <div class="nota-input-group">
+              <input
+                type="number"
+                [(ngModel)]="notaJurado"
+                name="notaJurado"
+                min="1"
+                max="10"
+                step="0.01"
+                required
+                class="nota-input"
+                placeholder="Ej: 8.50"
+                [class.error]="notaJurado && (notaJurado < 1 || notaJurado > 10)" />
+              <span class="nota-suffix">/ 10</span>
+            </div>
+            <p class="form-hint" *ngIf="notaJurado && (notaJurado < 1 || notaJurado > 10)">
+              <i class="bi bi-exclamation-triangle me-1"></i>La nota debe estar entre 1 y 10
+            </p>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-chat-left-text me-1"></i>Observaciones / Comentarios
+            </label>
+            <textarea
+              [(ngModel)]="observaciones"
+              name="observaciones"
+              class="obs-textarea"
+              rows="5"
+              placeholder="Escribe tus observaciones, comentarios, sugerencias o retroalimentación para el estudiante..."
+              required></textarea>
+            <p class="form-hint">
+              <i class="bi bi-info-circle me-1"></i>Este comentario será visible para el estudiante en "Mis Trámites"
+            </p>
+          </div>
+
+          <!-- Preview resultado -->
+          <div class="preview-resultado" *ngIf="notaJurado && notaJurado >= 1 && notaJurado <= 10">
+            <span class="pr-label">Resultado:</span>
+            <span class="pr-badge" [ngClass]="notaJurado >= 7 ? 'aprobado' : 'reprobado'">
+              {{ notaJurado >= 7 ? 'APROBADO' : 'REPROBADO' }}
+            </span>
+          </div>
+
+          <!-- Botón guardar -->
+          <button
+            type="submit"
+            class="btn-guardar-eval"
+            [disabled]="!esValido() || enviando">
+            <i class="bi" [class.bi-check-circle]="!enviando"
+               [class.bi-arrow-clockwise]="enviando" [class.spin]="enviando"></i>
+            {{ enviando ? 'Guardando...' : 'Registrar Evaluación' }}
+          </button>
+
+          <p class="hint-incompleto" *ngIf="!esValido()">
+            <i class="bi bi-info-circle me-1"></i>
+            Completa la nota y las observaciones para poder guardar.
+          </p>
+        </form>
+      </div>
+
+      <!-- ── PANEL TRIBUNAL ─────────────────────────────────────────────── -->
+      <div class="tribunal-panel" *ngIf="evaluacionesTribunal.length > 0">
+        <h3 class="tp-title">
+          <i class="bi bi-people-fill me-2"></i>Estado del Tribunal
+        </h3>
+        <div class="tribunal-grid">
+          <div class="tj-card"
+               *ngFor="let ev of evaluacionesTribunal"
+               [class.tj-evaluado]="ev.notaJurado"
+               [class.tj-pendiente]="!ev.notaJurado">
+            <div class="tj-header">
+              <span class="tj-rol">{{ ev.rolJurado }}</span>
+              <span class="tj-estado" [class.ok]="ev.notaJurado">
+                {{ ev.notaJurado ? '✓ Evaluado' : 'Pendiente' }}
+              </span>
+            </div>
+            <p class="tj-nombre">{{ ev.nombreJurado }}</p>
+            <div class="tj-nota" *ngIf="ev.notaJurado">
+              {{ ev.notaJurado.toFixed(2) }} / 10
+            </div>
+          </div>
+        </div>
+
+        <div class="nota-promedio-tribunal"
+             *ngIf="promedioTribunal">
+          <span class="npt-label">Promedio del Tribunal (40%)</span>
+          <span class="npt-valor">{{ promedioTribunal.toFixed(2) }} / 10</span>
+        </div>
+      </div>
+
+    </ng-container>
+  </ng-container>
+</div>

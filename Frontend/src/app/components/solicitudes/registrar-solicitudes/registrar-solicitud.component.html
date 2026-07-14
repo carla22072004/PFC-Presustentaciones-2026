@@ -1,0 +1,51 @@
+<div class="container-fluid">
+  <div class="card shadow-dubai">
+    <h2 class="card-title-main">Registro de Solicitud de Tema</h2>
+
+    <div class="info-banner">
+      <i class="bi bi-info-circle-fill fs-4"></i>
+      <span>Formulario de registro oficial para el proceso de titulación. Ingrese los datos requeridos por la coordinación.</span>
+    </div>
+
+    <form [formGroup]="solicitudForm" (ngSubmit)="enviarFormulario()">
+      <div class="form-stack">
+
+        <div class="form-section-card">
+          <label class="label-style"><i class="bi bi-fonts"></i> Título del Proyecto de Titulación</label>
+          <div class="input-wrapper">
+            <textarea
+              formControlName="tituloTema"
+              class="input-premium"
+              rows="6"
+              placeholder="Escriba aquí el nombre completo de su proyecto de investigación...">
+            </textarea>
+          </div>
+          <small class="text-muted mt-2 d-block">Mínimo 10 caracteres requeridos para la validación.</small>
+        </div>
+
+        <div class="form-section-card">
+          <label class="label-style"><i class="bi bi-mortarboard-fill"></i> Modalidad de Titulación</label>
+          <div class="input-wrapper">
+            <select formControlName="modalidad" class="input-premium">
+              <option value="" disabled selected>Seleccione una modalidad...</option>
+              <option value="PROYECTO_INVESTIGACION">Proyecto de Investigación</option>
+              <option value="ARTICULO_CIENTIFICO">Artículo Científico</option>
+              <option value="EXAMEN_COMPLEXIVO">Examen de Grado (Complexivo)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-cancel" routerLink="/dashboard">
+          <i class="bi bi-arrow-left me-2"></i>Cancelar y Volver
+        </button>
+        <button type="submit" [disabled]="solicitudForm.invalid || enviando" class="btn btn-submit-premium">
+          <span *ngIf="!enviando">Enviar a Revisión <i class="bi bi-send-check ms-2"></i></span>
+          <span *ngIf="enviando"><i class="bi bi-hourglass-split ms-2"></i> Enviando...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

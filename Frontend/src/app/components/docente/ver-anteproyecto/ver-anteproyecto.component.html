@@ -1,0 +1,81 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-file-earmark-pdf-fill me-2"></i>Anteproyecto del Estudiante</h2>
+      <p class="page-subtitle">Visualización del documento enviado para revisión</p>
+    </div>
+    <button class="btn-cancelar" [routerLink]="backRoute">
+      <i class="bi bi-arrow-left me-1"></i> Volver
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando anteproyecto...</p>
+  </div>
+
+  <!-- Error / sin archivo -->
+  <div class="empty-card" *ngIf="!cargando && error">
+    <i class="bi bi-file-earmark-x"></i>
+    <h4>Sin documento</h4>
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Anteproyecto disponible -->
+  <ng-container *ngIf="!cargando && !error && anteproyecto">
+
+    <!-- Tarjeta de metadatos -->
+    <div class="solicitud-card">
+      <div class="sc-label">Solicitud #{{ solicitudId }}</div>
+      <h3 class="sc-titulo">{{ anteproyecto.solicitud?.tituloTema }}</h3>
+      <div class="sc-meta">
+        <span>
+          <i class="bi bi-person me-1"></i>
+          {{ anteproyecto.solicitud?.estudiante?.usuario?.nombre }}
+          {{ anteproyecto.solicitud?.estudiante?.usuario?.apellido }}
+        </span>
+        <span>
+          <i class="bi bi-calendar me-1"></i>
+          Enviado el {{ anteproyecto.fechaEnvio | date:'dd/MM/yyyy' }}
+        </span>
+        <span class="badge" [ngClass]="getBadgeClass(anteproyecto.estado)">
+          {{ anteproyecto.estado }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="acciones-card" *ngIf="!mostrarPdf">
+      <div class="accion-btn-group">
+        <button class="btn-ver-pdf" (click)="abrirPdf()">
+          <i class="bi bi-eye-fill me-2"></i>Ver PDF en pantalla
+        </button>
+        <button class="btn-descargar" (click)="descargarPdf()">
+          <i class="bi bi-download me-2"></i>Descargar PDF
+        </button>
+      </div>
+      <p class="acciones-hint">
+        <i class="bi bi-info-circle me-1"></i>
+        El archivo se carga directamente desde el servidor de forma segura.
+      </p>
+    </div>
+
+    <!-- Visor PDF embebido -->
+    <div class="pdf-visor-card" *ngIf="mostrarPdf">
+      <div class="pdf-toolbar">
+        <span class="pdf-nombre"><i class="bi bi-file-earmark-pdf-fill me-2 text-danger-icon"></i>anteproyecto_solicitud_{{ solicitudId }}.pdf</span>
+        <div class="pdf-toolbar-actions">
+          <button class="btn-toolbar" (click)="descargarPdf()" title="Descargar">
+            <i class="bi bi-download"></i>
+          </button>
+          <button class="btn-toolbar btn-cerrar" (click)="mostrarPdf = false" title="Cerrar visor">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <iframe [src]="pdfUrl" class="pdf-iframe" title="Anteproyecto PDF"></iframe>
+    </div>
+
+  </ng-container>
+</div>

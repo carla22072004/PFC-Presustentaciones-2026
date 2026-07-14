@@ -1,0 +1,73 @@
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">
+        <i class="bi bi-journal-bookmark-fill me-2"></i>Mis Tutorías
+      </h2>
+      <p class="page-subtitle">Seguimiento de tus procesos de tutoría de anteproyecto</p>
+    </div>
+  </div>
+
+  <!-- Spinner -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando tutorías...</p>
+  </div>
+
+  <!-- Sin tutorías -->
+  <div class="empty-state" *ngIf="!cargando && tutorias.length === 0">
+    <i class="bi bi-journal-x"></i>
+    <p>No tienes tutorías asignadas por el momento.</p>
+  </div>
+
+  <!-- Tarjetas -->
+  <div class="tutorias-grid" *ngIf="!cargando && tutorias.length > 0">
+    <div class="tutoria-card" *ngFor="let t of tutorias">
+
+      <!-- Badge mensajes no leídos -->
+      <span class="badge-unread" *ngIf="t.mensajesNoLeidos > 0">
+        {{ t.mensajesNoLeidos }}
+      </span>
+
+      <!-- Encabezado -->
+      <div class="card-header">
+        <h3 class="card-titulo">{{ t.tituloTema }}</h3>
+        <span class="badge-estado badge-suspendida" *ngIf="t.solicitudSuspendida">🚫 Suspendida</span>
+        <span class="badge-estado badge-activo"   *ngIf="t.estadoTutoria === 'ACTIVO' && !t.solicitudSuspendida">En progreso</span>
+        <span class="badge-estado badge-completa" *ngIf="t.estadoTutoria === 'COMPLETADA'">✓ Completada</span>
+      </div>
+
+      <!-- Persona asignada -->
+      <p class="card-persona" *ngIf="rol === 'ESTUDIANTE'">
+        <i class="bi bi-person-badge me-1"></i>
+        <span class="label-persona">Tutor:</span> {{ t.nombreTutor }}
+      </p>
+      <p class="card-persona" *ngIf="rol !== 'ESTUDIANTE'">
+        <i class="bi bi-mortarboard me-1"></i>
+        <span class="label-persona">Estudiante:</span> {{ t.nombreEstudiante }}
+      </p>
+
+      <!-- Barra de progreso -->
+      <div class="progreso-wrap">
+        <div class="progreso-segmentos">
+          <div
+            class="segmento"
+            *ngFor="let s of segmentos(t.totalFases)"
+            [class.aprobado]="s < t.fasesAprobadas"
+          ></div>
+        </div>
+        <span class="progreso-texto">
+          {{ t.fasesAprobadas }} de {{ t.totalFases }} revisiones completadas
+        </span>
+      </div>
+
+      <!-- Acción -->
+      <button class="btn-ver" (click)="verDetalle(t.tutorId)">
+        <i class="bi bi-eye me-1"></i>Ver Tutoría
+      </button>
+
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,102 @@
+/* ══════════════════════════════════════════════════════════════════════
+   ESTILOS GLOBALES — Sistema de Pre-Sustentaciones UTEQ
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Fondo global del body */
+body {
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* MODO OSCURO — fondo global */
+body.dark-mode {
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+}
+
+/* Scrollbar */
+body.dark-mode ::-webkit-scrollbar       { width: 8px; height: 8px; }
+body.dark-mode ::-webkit-scrollbar-track { background: #0d1117; }
+body.dark-mode ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+body.dark-mode ::-webkit-scrollbar-thumb:hover { background: #3fb950; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TRANSICIÓN GLOBAL — solo se activa durante el cambio de modo
+   ══════════════════════════════════════════════════════════════════════ */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+    transition:
+            background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+            border-color     0.45s cubic-bezier(0.4, 0, 0.2, 1),
+            color            0.4s  cubic-bezier(0.4, 0, 0.2, 1),
+            box-shadow       0.45s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+/* Nunca transicionar animaciones */
+html.theme-transitioning .spinner,
+html.theme-transitioning [class*="spin"] { transition: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ESTILOS COMPARTIDOS — Formularios y componentes comunes
+   ══════════════════════════════════════════════════════════════════════ */
+
+.page-wrapper  { padding: 40px; max-width: 860px; margin: 0 auto; }
+.page-header   { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+.page-title    { font-size: 1.8rem; font-weight: 800; color: #1a5c2e; margin: 0 0 4px; }
+.page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
+
+.solicitud-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; border-left: 5px solid #1a5c2e; }
+.sc-label  { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-bottom: 6px; }
+.sc-titulo { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 10px; }
+.sc-meta   { display: flex; gap: 20px; font-size: 0.85rem; color: #64748b; flex-wrap: wrap; }
+
+.alerta-existente { border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; flex-wrap: wrap; }
+.alerta-existente--warning { background: #fef9c3; border: 1px solid #fcd34d; color: #854d0e; }
+.alerta-existente--success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+.btn-eliminar-cron { background: none; border: 1px solid currentColor; color: inherit; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.82rem; margin-left: auto; }
+
+.form-card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.form-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.full-width { grid-column: 1 / -1; }
+.form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.input-field { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-family: 'Poppins', sans-serif; box-sizing: border-box; resize: vertical; background: white; color: #1e293b; }
+.input-field:focus { outline: none; border-color: #1a5c2e; box-shadow: 0 0 0 3px rgba(26,92,46,0.08); }
+
+.form-footer  { display: flex; justify-content: space-between; margin-top: 28px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+.btn-cancelar { background: #f1f5f9; color: #64748b; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.btn-cancelar:hover { background: #e2e8f0; }
+.btn-guardar  { background: #1a5c2e; color: white; border: none; padding: 12px 28px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+.btn-guardar:hover:not(:disabled) { background: #145024; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26,92,46,0.25); }
+.btn-guardar:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+.loading-state { display: flex; flex-direction: column; align-items: center; padding: 60px; color: #64748b; gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #1a5c2e; border-radius: 50%; animation: sga-spin 0.8s linear infinite; transition: none !important; }
+@keyframes sga-spin { to { transform: rotate(360deg); } }
+
+/* ── SweetAlert2 dark mode ──────────────────────────────────────── */
+body.dark-mode .swal2-popup {
+    background: #161b22 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+}
+body.dark-mode .swal2-title       { color: #e6edf3 !important; }
+body.dark-mode .swal2-html-container { color: #8b949e !important; }
+body.dark-mode .swal2-icon.swal2-success { border-color: #238636 !important; }
+body.dark-mode .swal2-icon.swal2-success .swal2-success-ring { border-color: #238636 !important; }
+body.dark-mode .swal2-icon.swal2-success [class^='swal2-success-line'] { background: #3fb950 !important; }
+body.dark-mode .swal2-icon.swal2-error     { border-color: #da3633 !important; color: #f85149 !important; }
+body.dark-mode .swal2-icon.swal2-warning   { border-color: #d29922 !important; color: #f0b429 !important; }
+body.dark-mode .swal2-confirm { background: #238636 !important; }
+body.dark-mode .swal2-deny    { background: #da3633 !important; }
+body.dark-mode .swal2-cancel  { background: #21262d !important; color: #c9d1d9 !important; }
+
+/* ── CSS Variables para dark mode (evaluar-solicitud panels) ──── */
+body.dark-mode {
+    --panel-bg: #161b22;
+    --panel-border: #30363d;
+    --panel-color: #c9d1d9;
+    --panel-title-color: #e6edf3;
+    --tj-row-bg: #0d1117;
+}

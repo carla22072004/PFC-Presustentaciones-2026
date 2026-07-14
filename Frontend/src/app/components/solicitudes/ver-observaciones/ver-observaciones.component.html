@@ -1,0 +1,217 @@
+<div class="page-wrapper">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">
+        <i class="bi bi-chat-left-text me-2"></i>Observaciones de la Pre-Sustentación
+      </h2>
+      <p class="page-subtitle" *ngIf="observaciones">
+        {{ observaciones.tituloTema }}
+      </p>
+    </div>
+    <button class="btn-back" (click)="volver()">
+      <i class="bi bi-arrow-left"></i> Volver a Mis Trámites
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando observaciones...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="alert-error" *ngIf="error && !cargando">
+    <i class="bi bi-exclamation-octagon me-2"></i>
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!cargando && observaciones">
+
+    <!-- Info del estudiante -->
+    <div class="info-card">
+      <div class="info-row">
+        <span class="info-label">Estudiante:</span>
+        <span class="info-value">{{ observaciones.nombreEstudiante }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Tema:</span>
+        <span class="info-value">{{ observaciones.tituloTema }}</span>
+      </div>
+      <div class="info-row" *ngIf="observaciones.coordinador?.notaFinal">
+        <span class="info-label">Nota Final:</span>
+        <span class="info-value nota-final">
+          {{ observaciones.coordinador!.notaFinal!.toFixed(2) }} / 10
+        </span>
+      </div>
+      <div class="info-row" *ngIf="observaciones.coordinador?.resultado">
+        <span class="info-label">Resultado:</span>
+        <span class="resultado-badge" [ngClass]="getResultadoClass(observaciones.coordinador?.resultado)">
+          {{ observaciones.coordinador?.resultado }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Sin observaciones -->
+    <div class="empty-state" *ngIf="!tieneObservaciones()">
+      <i class="bi bi-inbox"></i>
+      <h4>No hay observaciones registradas</h4>
+      <p>Aún no se han registrado observaciones para esta pre-sustentación.</p>
+    </div>
+
+    <!-- Observaciones del Coordinador -->
+    <div class="obs-section" *ngIf="observaciones.coordinador">
+      <div class="obs-section-header coordinador-header">
+        <div class="obs-section-icon">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="obs-section-title">
+          <h3>Evaluación del Coordinador</h3>
+          <p class="obs-section-subtitle">Retroalimentación final</p>
+        </div>
+        <div class="jurado-nota" *ngIf="observaciones.coordinador?.notaFinal">
+          <span class="jn-value">{{ observaciones.coordinador!.notaFinal!.toFixed(2) }}</span>
+          <span class="jn-max">/ 10</span>
+        </div>
+      </div>
+      
+      <!-- Comentario preestablecido (según rango de nota) -->
+      <div class="coord-comentario-pre" *ngIf="observaciones.coordinador?.notaFinal">
+        <div class="ccp-header">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>Comentario según rango de nota:</span>
+        </div>
+        <div class="ccp-badges">
+          <span class="ccp-badge" [ngClass]="'ccp-' + getRangoClassCoord(observaciones.coordinador!.notaFinal!)">
+            <i class="bi" [ngClass]="getRangoIconCoord(observaciones.coordinador!.notaFinal!)"></i>
+            {{ getRangoLabelCoord(observaciones.coordinador!.notaFinal!) }}
+          </span>
+        </div>
+        <p class="ccp-texto">{{ getComentarioPorRango(observaciones.coordinador!.notaFinal!) }}</p>
+      </div>
+
+      <!-- Observaciones manuales del coordinador -->
+      <div class="coord-observaciones" *ngIf="observaciones.coordinador?.observaciones">
+        <div class="co-header">
+          <i class="bi bi-pencil-square"></i>
+          <span>Observaciones del coordinador:</span>
+        </div>
+        <p class="co-texto">{{ observaciones.coordinador!.observaciones }}</p>
+      </div>
+    </div>
+
+    <!-- Observaciones de los Jurados -->
+    <div class="obs-section" *ngFor="let jurado of observaciones.jurados">
+      <div class="obs-section-header" [ngClass]="'jurado-header-' + jurado.rol.toLowerCase().replace('_', '-')">
+        <div class="obs-section-icon">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="obs-section-title">
+          <h3>{{ formatearRol(jurado.rol) }}</h3>
+          <p class="obs-section-subtitle">{{ jurado.nombreJurado }}</p>
+        </div>
+        <div class="jurado-nota" *ngIf="jurado.notaJurado">
+          <span class="jn-value">{{ jurado.notaJurado.toFixed(2) }}</span>
+          <span class="jn-max">/ 10</span>
+        </div>
+      </div>
+      
+      <!-- Comentario preestablecido (según rango de nota) -->
+      <div class="coord-comentario-pre" *ngIf="jurado.notaJurado && jurado.comentarioPreestablecido">
+        <div class="ccp-header">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>Comentario según rango de nota:</span>
+        </div>
+        <div class="ccp-badges">
+          <span class="ccp-badge" [ngClass]="'ccp-' + getRangoClassCoord(jurado.notaJurado)">
+            <i class="bi" [ngClass]="getRangoIconCoord(jurado.notaJurado)"></i>
+            {{ getRangoLabelCoord(jurado.notaJurado) }}
+          </span>
+        </div>
+        <p class="ccp-texto">{{ jurado.comentarioPreestablecido }}</p>
+      </div>
+
+      <!-- Evaluación simple (nota + observación) -->
+      <div class="jurado-eval-simple" *ngIf="jurado.notaJurado">
+        <div class="jurado-resultado" [ngClass]="jurado.resultado === 'APROBADO' ? 'resultado-aprobado' : 'resultado-reprobado'">
+          {{ jurado.resultado }}
+        </div>
+        <div class="jurado-obs-text" *ngIf="jurado.observaciones">
+          <p>{{ jurado.observaciones }}</p>
+        </div>
+      </div>
+      
+      <!-- Evaluación por criterios (legacy) -->
+      <div class="criterios-obs" *ngIf="jurado.criterios && jurado.criterios.length > 0">
+        <div class="criterio-obs-card" *ngFor="let crit of jurado.criterios">
+          <div class="criterio-header">
+            <span class="criterio-nombre">{{ crit.nombreCriterio }}</span>
+            <div class="criterio-nota">
+              <span class="nota-value">{{ crit.notaObtenida.toFixed(2) }}</span>
+              <span class="nota-max">/ {{ crit.ponderacion }}</span>
+            </div>
+          </div>
+          <div class="criterio-escala">
+            <span class="escala-badge" [ngClass]="getRangoClass(crit.rangoDescripcion)">
+              <i class="bi" [ngClass]="getRangoIcon(crit.rangoDescripcion)"></i>
+              {{ crit.escala }}% — {{ crit.rangoDescripcion }}
+            </span>
+          </div>
+          <div class="criterio-observaciones">
+            <div class="obs-auto" *ngIf="crit.observacionAuto">
+              <div class="obs-label">
+                <i class="bi bi-info-circle"></i> Observación automática:
+              </div>
+              <div class="obs-text" [ngClass]="'obs-' + getRangoClass(crit.rangoDescripcion)">
+                {{ crit.observacionAuto }}
+              </div>
+            </div>
+            <div class="obs-manual" *ngIf="crit.observacionManual">
+              <div class="obs-label">
+                <i class="bi bi-pencil"></i> Observación del jurado:
+              </div>
+              <div class="obs-text obs-manual-text">
+                {{ crit.observacionManual }}
+              </div>
+            </div>
+            <div class="sin-observaciones-criterio" *ngIf="!crit.observacionAuto && !crit.observacionManual">
+              Sin observaciones específicas para este criterio.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sin-observaciones" *ngIf="!jurado.notaJurado && (!jurado.criterios || jurado.criterios.length === 0)">
+        Este jurado aún no ha registrado su evaluación.
+      </div>
+    </div>
+
+    <!-- Resumen de evaluación final -->
+    <div class="eval-summary" *ngIf="observaciones.coordinador?.notaFinal">
+      <h3 class="eval-summary-title">
+        <i class="bi bi-award me-2"></i>Resumen de Evaluación
+      </h3>
+      <div class="eval-summary-grid">
+        <div class="eval-summary-item">
+          <span class="esi-label">Nota del Instructor (60%)</span>
+          <span class="esi-value">{{ observaciones.coordinador?.notaInstructor?.toFixed(2) || '—' }} / 10</span>
+        </div>
+        <div class="eval-summary-item">
+          <span class="esi-label">Promedio Tribunal (40%)</span>
+          <span class="esi-value">Calculado de {{ getTotalJuradosEvaluados() }} jurados</span>
+        </div>
+        <div class="eval-summary-item total">
+          <span class="esi-label">Nota Final</span>
+          <span class="esi-value nota-total">{{ observaciones.coordinador?.notaFinal?.toFixed(2) }} / 10</span>
+        </div>
+        <div class="eval-summary-item">
+          <span class="esi-label">Resultado</span>
+          <span class="resultado-badge large" [ngClass]="getResultadoClass(observaciones.coordinador?.resultado)">
+            {{ observaciones.coordinador?.resultado }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

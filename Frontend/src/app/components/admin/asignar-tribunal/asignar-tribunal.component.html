@@ -1,0 +1,132 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-people-fill me-2"></i>Asignar Tribunal</h2>
+      <p class="page-subtitle" *ngIf="solicitud">
+        Solicitud #{{ solicitud.id }} — {{ solicitud.tituloTema }}
+      </p>
+    </div>
+    <button class="btn-back" [routerLink]="['/dashboard/admin/revisar-solicitudes']">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div class="grid-layout">
+
+    <!-- ── Panel izquierdo: Formularios ───────────────────────── -->
+    <div class="panel">
+
+      <!-- Asignar Jurado -->
+      <div class="card-section">
+        <h3 class="section-title"><i class="bi bi-person-badge me-2"></i>Asignar Miembro del Jurado</h3>
+        <form [formGroup]="formJurado" (ngSubmit)="asignarJurado()">
+          <div class="form-group">
+            <label>Docente</label>
+            <select formControlName="docenteId" class="form-control">
+              <option value="">— Seleccionar docente —</option>
+              <option *ngFor="let d of docentes" [value]="d.id">
+                {{ nombreDocente(d) }} (Carga: {{ d.cargaHorariaSemanal }}h/sem)
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Rol en el Tribunal</label>
+            <select formControlName="rol" class="form-control">
+              <option value="">— Seleccionar rol —</option>
+              <option *ngFor="let r of rolesDisponibles()" [value]="r">{{ r }}</option>
+            </select>
+            <small class="hint" *ngIf="rolesDisponibles().length === 0">
+              <i class="bi bi-check-circle-fill text-success"></i> Los 3 roles del jurado ya están asignados.
+            </small>
+          </div>
+          <button type="submit" class="btn-primary" [disabled]="formJurado.invalid || enviando || rolesDisponibles().length === 0">
+            <i class="bi bi-plus-circle me-1"></i> Asignar Jurado
+          </button>
+        </form>
+      </div>
+
+      <!-- Asignar Tutor -->
+      <div class="card-section" style="margin-top: 1.5rem;">
+        <h3 class="section-title"><i class="bi bi-person-check me-2"></i>Asignar Tutor Director</h3>
+        <div class="tutor-actual" *ngIf="tutor">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>{{ nombreDocente(tutor.docente) }}</span>
+          <button class="btn-icon-danger" (click)="eliminarTutor()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+        <form [formGroup]="formTutor" (ngSubmit)="asignarTutor()" *ngIf="!tutor">
+          <div class="form-group">
+            <label>Docente Tutor</label>
+            <select formControlName="docenteId" class="form-control">
+              <option value="">— Seleccionar docente —</option>
+              <option *ngFor="let d of docentes" [value]="d.id">
+                {{ nombreDocente(d) }} (Carga: {{ d.cargaHorariaSemanal }}h/sem)
+              </option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary" [disabled]="formTutor.invalid || enviando">
+            <i class="bi bi-plus-circle me-1"></i> Asignar Tutor
+          </button>
+        </form>
+      </div>
+
+      <!-- Estado global -->
+      <div class="estado-global" [class.completo]="todoAsignado()" [class.pendiente]="!todoAsignado()">
+        <i class="bi" [class.bi-check-circle-fill]="todoAsignado()" [class.bi-hourglass-split]="!todoAsignado()"></i>
+        {{ todoAsignado() ? 'Tribunal completo (3 jurados + tutor)' : 'Tribunal incompleto — faltan asignaciones' }}
+      </div>
+    </div>
+
+    <!-- ── Panel derecho: Información ──────────────────────────── -->
+    <div class="panel">
+
+      <!-- Jurados asignados -->
+      <div class="card-section">
+        <h3 class="section-title"><i class="bi bi-list-check me-2"></i>Tribunal Asignado</h3>
+        <div *ngIf="cargando" class="loading-sm"><div class="spinner-sm"></div></div>
+
+        <div class="jurado-lista" *ngIf="!cargando">
+          <div class="jurado-item" *ngFor="let j of jurados">
+            <div class="jurado-rol" [attr.data-rol]="j.rol">{{ j.rol }}</div>
+            <div class="jurado-info">
+              <span class="nombre">{{ nombreDocente(j.docente) }}</span>
+              <span class="email">{{ j.docente?.usuario?.email }}</span>
+            </div>
+            <button class="btn-icon-danger" (click)="eliminarJurado(j.id)" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          <div class="empty-item" *ngFor="let r of rolesDisponibles()">
+            <div class="jurado-rol vacio" [attr.data-rol]="r">{{ r }}</div>
+            <span class="pendiente-text">Sin asignar</span>
+          </div>
+          <div class="jurado-empty" *ngIf="jurados.length === 0 && !cargando">
+            <i class="bi bi-inbox"></i> No hay jurados asignados aún.
+          </div>
+        </div>
+      </div>
+
+      <!-- Docentes sugeridos -->
+      <div class="card-section" style="margin-top: 1.5rem;">
+        <h3 class="section-title">
+          <i class="bi bi-stars me-2"></i>Docentes Sugeridos
+          <small class="hint-title">(menor carga horaria)</small>
+        </h3>
+        <div class="sugerido-lista">
+          <div class="sugerido-item" *ngFor="let s of sugeridos.slice(0, 5)" (click)="usarSugerido(s.id)">
+            <div class="sugerido-avatar">{{ (s.usuario?.nombre || 'D')[0] }}</div>
+            <div class="sugerido-info">
+              <span class="nombre">{{ nombreDocente(s) }}</span>
+              <span class="area">{{ s.areaEspecialidad || 'Sin especialidad' }}</span>
+            </div>
+            <div class="sugerido-carga">
+              <span class="carga-num">{{ s.cargaHorariaSemanal }}h</span>
+              <span class="carga-label">sem</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
