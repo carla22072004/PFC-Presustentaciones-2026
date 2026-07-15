@@ -29,11 +29,20 @@ public class SolicitudController {
         return solicitudService.crearSolicitud(estudianteId, datos);
     }
 
-    /** Crear solicitud usando el usuarioId del JWT (frontend lo usa directamente) */
+    /**
+     * Crear solicitud — el backend resuelve el usuario desde el JWT,
+     * ignorando el usuarioId del path para evitar inconsistencias.
+     */
     @PostMapping("/crear-por-usuario/{usuarioId}")
     public ResponseEntity<?> crearPorUsuario(@PathVariable Long usuarioId, @RequestBody Solicitud datos) {
         try {
-            return ResponseEntity.ok(solicitudService.crearSolicitudPorUsuario(usuarioId, datos));
+            // Obtener email desde el JWT (más seguro que el id del path)
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String email = auth.getName();
+            Long realUsuarioId = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado en el sistema"))
+                    .getId();
+            return ResponseEntity.ok(solicitudService.crearSolicitudPorUsuario(realUsuarioId, datos));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
