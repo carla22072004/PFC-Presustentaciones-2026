@@ -1,11 +1,13 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.entities.Carrera;
 import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
 import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
 import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
@@ -34,6 +36,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
     private final ModalidadTitulacionRepository modalidadTitulacionRepository;
     private final ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
+    private final CarreraRepository carreraRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -103,16 +106,49 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public Solicitud crearSolicitudPorUsuario(Long usuarioId, Solicitud datos) {
+        // Buscar perfil de estudiante; si no existe, crearlo automáticamente
         Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new RuntimeException("No existe perfil de estudiante para el usuario ID: " + usuarioId));
+                .orElseGet(() -> crearPerfilEstudiante(usuarioId));
         return crearSolicitud(estudiante.getId(), datos);
+    }
+
+    /**
+     * Crea automáticamente el perfil Estudiante para un usuario con rol ESTUDIANTE
+     * que aún no tenga registro en la tabla estudiante.
+     */
+    @Transactional
+    private Estudiante crearPerfilEstudiante(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+
+        // Verificar que realmente sea un estudiante
+        if (!"ESTUDIANTE".equalsIgnoreCase(usuario.getRol())) {
+            throw new RuntimeException("El usuario no tiene rol de estudiante");
+        }
+
+        // Obtener la primera carrera disponible como default
+        Carrera carreraDefault = carreraRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No hay carreras configuradas en el sistema. Contacte al administrador."));
+
+        log.info("Creando perfil de estudiante automáticamente para usuario ID: {}", usuarioId);
+
+        Estudiante nuevoEstudiante = Estudiante.builder()
+                .usuario(usuario)
+                .carrera(carreraDefault.getNombre())
+                .carreraEntidad(carreraDefault)
+                .semestreActual((short) 1)
+                .semestre("1ro")
+                .build();
+
+        return estudianteRepository.save(nuevoEstudiante);
     }
  
     @Override
     public List<Solicitud> listarPorUsuario(Long usuarioId) {
-        Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new RuntimeException("No existe perfil de estudiante para el usuario ID: " + usuarioId));
-        return solicitudRepository.findByEstudianteId(estudiante.getId());
+        return estudianteRepository.findByUsuarioId(usuarioId)
+                .map(e -> solicitudRepository.findByEstudianteId(e.getId()))
+                .orElse(java.util.Collections.emptyList());
     }
  
     @Override
