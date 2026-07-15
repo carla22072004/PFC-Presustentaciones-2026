@@ -4,6 +4,7 @@ import ec.edu.uteq.presustentaciones.entities.Carrera;
 import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
+import ec.edu.uteq.presustentaciones.entities.PeriodoAcademico;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
@@ -11,6 +12,7 @@ import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
 import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
 import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.PeriodoAcademicoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +40,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final ModalidadTitulacionRepository modalidadTitulacionRepository;
     private final ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
     private final CarreraRepository carreraRepository;
+    private final PeriodoAcademicoRepository periodoAcademicoRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -82,10 +86,11 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .orElseThrow(() -> new RuntimeException("Modalidad no encontrada con ID: " + datos.getModalidadTitulacion().getId()));
         datos.setModalidadTitulacion(modalidad);
 
-        // Resolver convocatoria: si viene en el body úsala, si no buscar la activa
+        // Resolver convocatoria: si viene en el body úsala, si no buscar/crear la activa
         if (datos.getConvocatoria() == null || datos.getConvocatoria().getId() == null) {
-            ConvocatoriaTitulacion convActiva = convocatoriaTitulacionRepository.findFirstByActivaTrue()
-                    .orElseThrow(() -> new RuntimeException("No hay convocatoria activa. Contacte al coordinador."));
+            ConvocatoriaTitulacion convActiva = convocatoriaTitulacionRepository
+                    .findFirstByActivaTrue()
+                    .orElseGet(this::crearConvocatoriaDefault);
             datos.setConvocatoria(convActiva);
         } else {
             ConvocatoriaTitulacion convocatoria = convocatoriaTitulacionRepository
@@ -110,6 +115,40 @@ public class SolicitudServiceImpl implements SolicitudService {
         Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)
                 .orElseGet(() -> crearPerfilEstudiante(usuarioId));
         return crearSolicitud(estudiante.getId(), datos);
+    }
+
+    /**
+     * Crea automáticamente un PeriodoAcademico + ConvocatoriaTitulacion activos
+     * cuando la base de datos no tiene ninguno configurado (instalación inicial).
+     */
+    @Transactional
+    private ConvocatoriaTitulacion crearConvocatoriaDefault() {
+        int anio = java.time.Year.now().getValue();
+
+        // Crear o reusar período académico del año actual
+        PeriodoAcademico periodo = periodoAcademicoRepository
+                .findByCodigo("PA-" + anio)
+                .orElseGet(() -> {
+                    log.info("Creando período académico por defecto para año {}", anio);
+                    return periodoAcademicoRepository.save(PeriodoAcademico.builder()
+                            .codigo("PA-" + anio)
+                            .nombre("Período Académico " + anio)
+                            .fechaInicio(LocalDate.of(anio, 1, 1))
+                            .fechaFin(LocalDate.of(anio, 12, 31))
+                            .activo(true)
+                            .build());
+                });
+
+        // Crear convocatoria activa ligada al período
+        log.info("Creando convocatoria activa por defecto para período {}", periodo.getCodigo());
+        return convocatoriaTitulacionRepository.save(ConvocatoriaTitulacion.builder()
+                .codigo("CONV-" + anio + "-01")
+                .nombre("Convocatoria " + anio + " – Período I")
+                .periodoAcademico(periodo)
+                .fechaInicio(LocalDate.of(anio, 1, 1))
+                .fechaFin(LocalDate.of(anio, 12, 31))
+                .activa(true)
+                .build());
     }
 
     /**

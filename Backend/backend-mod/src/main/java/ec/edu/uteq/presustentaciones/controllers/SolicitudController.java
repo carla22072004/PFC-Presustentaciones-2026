@@ -82,19 +82,19 @@ public class SolicitudController {
     }
 
     @PostMapping("/aprobar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public Solicitud aprobar(@PathVariable Long id) {
         return solicitudService.aprobarSolicitud(id);
     }
 
     @PostMapping("/rechazar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public Solicitud rechazar(@PathVariable Long id) {
         return solicitudService.rechazarSolicitud(id);
     }
 
     @PostMapping("/rechazar-con-observacion/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public ResponseEntity<?> rechazarConObservacion(
             @PathVariable Long id,
             @RequestBody java.util.Map<String, String> body) {
@@ -107,7 +107,7 @@ public class SolicitudController {
     }
 
     @PostMapping("/suspender/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> suspender(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
@@ -119,9 +119,9 @@ public class SolicitudController {
         }
     }
 
-    /** Solo ADMIN y DOCENTE pueden ver TODAS las solicitudes */
+    /** ADMIN, COORDINADOR y DOCENTE pueden ver TODAS las solicitudes */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public List<Solicitud> listar() {
         return solicitudService.listarSolicitudes();
     }
