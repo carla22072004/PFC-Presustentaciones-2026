@@ -44,7 +44,14 @@ public class AuthController {
         // Generamos el pase de abordaje (JWT) [cite: 15]
         String token = jwtTokenProvider.generateToken(authentication);
 
-        // Respuesta enriquecida para el Dashboard de élite
+        // Cookie de seguridad HTTP-Only
+        jakarta.servlet.http.Cookie jwtCookie = new jakarta.servlet.http.Cookie("jwtToken", token);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(false); // Cambiar a true en HTTPS producción
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(86400); // 24 horas
+
+        // Respuesta enriquecida para el Dashboard
         LoginResponse response = LoginResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -55,7 +62,9 @@ public class AuthController {
                 .emailNotificaciones(usuario.getEmailNotificaciones())
                 .build();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, String.format("jwtToken=%s; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400", token))
+                .body(response);
     }
 
     @PostMapping("/register")
