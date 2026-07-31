@@ -1,0 +1,522 @@
+{
+	"info": {
+		"_postman_id": "b8e9af73-0dbd-45e8-9aec-3ae974076165",
+		"name": "Colección de Pruebas API REST - Pre-Sustentaciones UTEQ v0.9.0-rc",
+		"description": "Colección completa de 22 peticiones HTTP RESTful para la validación de endpoints CRUD, autenticación JWT, soporte de cookies, procedimientos almacenados y manejo de errores.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Autenticación & Usuarios",
+			"item": [
+				{
+					"name": "POST /api/auth/register - Registrar Usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Mendoza\",\n  \"email\": \"cmendoza@uteq.edu.ec\",\n  \"password\": \"password123\",\n  \"rol\": \"ESTUDIANTE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/auth/login - Iniciar Sesión (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/auth/login - Credenciales Inválidas (Error 401)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"clave_erronea\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /api/usuarios - Listar Usuarios Protegido",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /api/usuarios/{id} - Obtener Usuario por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /api/usuarios/999 - Usuario No Encontrado (Error 404)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/usuarios/999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"usuarios",
+								"999"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Solicitudes & Anteproyectos",
+			"item": [
+				{
+					"name": "GET /api/solicitudes - Listar Solicitudes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/solicitudes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"solicitudes"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/solicitudes - Crear Solicitud",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"estudianteId\": 1,\n  \"tituloTema\": \"Sistema Inteligente de Gestión UTEQ\",\n  \"modalidad\": \"Proyecto Tecnológico\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/solicitudes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"solicitudes"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /api/anteproyectos - Listar Anteproyectos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/anteproyectos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"anteproyectos"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Jurados & Procedimientos Almacenados",
+			"item": [
+				{
+					"name": "GET /api/jurados - Listar Jurados Asignados",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/jurados",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"jurados"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/jurados/asignar-masivo - Asignación Masiva (SP)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"solicitudIds\": [1, 2],\n  \"docenteIds\": [3, 4],\n  \"rol\": \"VOCAL1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/jurados/asignar-masivo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"jurados",
+								"asignar-masivo"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Cronograma & Salas",
+			"item": [
+				{
+					"name": "GET /api/cronogramas - Listar Cronogramas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/cronogramas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"cronogramas"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /api/salas - Listar Salas Disponibles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/salas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"salas"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Evaluaciones & Rúbricas (SP)",
+			"item": [
+				{
+					"name": "GET /api/evaluaciones - Listar Evaluaciones",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/evaluaciones",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"evaluaciones"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/evaluaciones/{id}/calcular-promedio - Ejecutar SP Ponderación",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/evaluaciones/1/calcular-promedio",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"evaluaciones",
+								"1",
+								"calcular-promedio"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Actas & Firma Digital (SP)",
+			"item": [
+				{
+					"name": "GET /api/actas - Listar Actas Emitidas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/actas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"actas"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST /api/actas/{id}/firmar - Firma Digital Multi-Actor (SP)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rol\": \"PRESIDENTE\",\n  \"observacion\": \"Aprobado sin observaciones adicionales\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/actas/1/firmar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"actas",
+								"1",
+								"firmar"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Reportes & OpenAPI Documentación",
+			"item": [
+				{
+					"name": "GET /api/reportes/defensas - Reporte Consolidado (SP)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reportes/defensas?carrera=Software",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"reportes",
+								"defensas"
+							],
+							"query": [
+								{
+									"key": "carrera",
+									"value": "Software"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "GET /v3/api-docs - Especificación JSON OpenAPI 3.0",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/v3/api-docs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v3",
+								"api-docs"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "jwtToken",
+			"value": "eyJhbGciOiJIUzUxMiJ9...",
+			"type": "string"
+		}
+	]
+}

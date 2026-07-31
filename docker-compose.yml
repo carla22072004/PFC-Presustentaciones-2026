@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  # Base de Datos PostgreSQL
+  # Base de Datos PostgreSQL 15 (Anclada con Digest SHA256 Exacto)
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15-alpine@sha256:6b8109d784a956108151c8636402636f1c7d24f0c8e3bf604b77f9e8a0058e57
     container_name: amz-postgres
     environment:
       POSTGRES_DB: presustentaciones_db
@@ -19,9 +19,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis (Para caché y mejora de rendimiento)
+  # Redis Caché (Anclada con Digest SHA256 Exacto)
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:5923055998a44b1c78ed5f36e4f35f29f0b2f69e9e623f99b2447990c0128795
     container_name: amz-redis
     ports:
       - "6379:6379"

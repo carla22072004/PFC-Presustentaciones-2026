@@ -1,0 +1,52 @@
+{
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [],
+    "checks": [
+      {
+        "name": "status is 200 or 401",
+        "path": "::status is 200 or 401",
+        "id": "e81d4e785534c03bc9842a8b98bbf8e6",
+        "passes": 1450,
+        "fails": 0
+      },
+      {
+        "name": "login status is 200 or 400",
+        "path": "::login status is 200 or 400",
+        "id": "8a09f3e498c8c7bb2496d66e74b595ec",
+        "passes": 1450,
+        "fails": 0
+      }
+    ]
+  },
+  "metrics": {
+    "http_req_duration": {
+      "avg": 84.12,
+      "min": 12.45,
+      "med": 65.30,
+      "max": 312.80,
+      "p(90)": 142.10,
+      "p(95)": 188.50
+    },
+    "http_req_failed": {
+      "passes": 0,
+      "fails": 2900,
+      "value": 0.0
+    },
+    "http_reqs": {
+      "count": 2900,
+      "rate": 24.16
+    },
+    "iterations": {
+      "count": 1450,
+      "rate": 12.08
+    },
+    "vus": {
+      "value": 0,
+      "min": 0,
+      "max": 50
+    }
+  }
+}
