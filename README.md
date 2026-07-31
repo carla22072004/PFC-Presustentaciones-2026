@@ -1,4 +1,4 @@
-# 🏛️ Sistema de Gestión de Pre-Sustentaciones UTEQ
+#  Sistema de Gestión de Pre-Sustentaciones UTEQ
 
 [![Version](https://img.shields.io/badge/version-v0.9.0--rc-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14892026.svg)](https://doi.org/10.5281/zenodo.14892026)
