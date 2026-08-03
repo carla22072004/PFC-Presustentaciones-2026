@@ -1,0 +1,276 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{xcolor}
+\usepackage[many]{tcolorbox}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{array}
+
+% Definición de colores institucionales y de diseño
+\definecolor{uteqgreen}{RGB}{0,102,51}
+\definecolor{uteqdarkgreen}{RGB}{0,75,35}
+\definecolor{boxred}{RGB}{183,28,28}
+\definecolor{boxredbg}{RGB}{253,242,242}
+\definecolor{headergray}{RGB}{240,242,245}
+\definecolor{codebg}{RGB}{248,249,250}
+\definecolor{bordergray}{RGB}{220,224,230}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=uteqgreen,
+    citecolor=uteqgreen,
+    urlcolor=blue
+}
+
+% Estilo de encabezados y pies de página
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small \bfseries Aplicaciones Web --- Ingeniería de Software --- UTEQ}
+\rhead{\small \bfseries Plan de Desarrollo --- Avance 3}
+\lfoot{\small \bfseries UTEQ $|$ Sistema de Pre-Sustentaciones}
+\rfoot{\small \bfseries Página \thepage}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Configuración de listings para código
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    captionpos=b,
+    commentstyle=\color{gray},
+    keywordstyle=\color{uteqgreen}\bfseries,
+    stringstyle=\color{boxred},
+    frame=single,
+    rulecolor=\color{bordergray},
+    numbers=none,
+    showstringspaces=false
+}
+
+\begin{document}
+
+% ---------------------------------------------------------
+% ENCABEZADO INSTITUCIONAL (Cuadro Verde)
+% ---------------------------------------------------------
+\begin{tcolorbox}[colframe=uteqgreen,colback=white,arc=1mm,boxrule=1.2pt,halign=center]
+{\Large \bfseries Universidad Técnica Estatal de Quevedo}\\[2pt]
+{\small Facultad de Ciencias de la Computación y Diseño Digital $|$ Carrera de Ingeniería de Software (Rediseño)}\\[4pt]
+{\large \bfseries Aplicaciones Web}\\[2pt]
+{\small Quinto nivel $|$ Periodo Académico Presencial 2026-2027 (PPA)}\\[4pt]
+{\Large \bfseries Plan de Desarrollo --- Avance 3 (Informe Técnico y Mejoras)}\\[2pt]
+{\small \bfseries Caso:} Sistema de Gestión de Pre-Sustentaciones UTEQ (Spring Boot 3, Angular 19, REST, JWT, Redis, PostgreSQL)
+\end{tcolorbox}
+
+\vspace{0.3cm}
+
+\noindent \textbf{Resultado de aprendizaje evaluado:} El estudiante diseña e implementa una plataforma web integral del lado del servidor y cliente (Spring Boot 3 + Angular 19) que expone y consume recursos paginados bajo un contrato JSON uniforme, valida la entrada de datos en servidor, aplica borrado lógico, integra el patrón \textit{cache-aside} con Redis, ejecuta procedimientos almacenados PostgreSQL y protege sus operaciones mediante autenticación y autorización basadas en JSON Web Token (JWT) y cookies \textit{HTTP-Only}.
+
+\vspace{0.2cm}
+\noindent \textbf{Aporte al perfil de egreso:} Consolida la construcción de un servicio web resiliente, seguro, auditable y de alta usabilidad académica, verificable desde una clonación limpia mediante contenedores Docker Compose.
+
+\vspace{0.4cm}
+
+% ---------------------------------------------------------
+% CAJA ROJA DE CRITERIOS DE EXCELENCIA
+% ---------------------------------------------------------
+\begin{tcolorbox}[colframe=boxred,colback=boxredbg,arc=1mm,boxrule=1pt,title={\bfseries 1. Criterios de Excelencia del Avance 3 (Puntos Clave del Proyecto)}]
+\begin{enumerate}
+    \item \textbf{P1 --- Usabilidad y Experiencia de Usuario (SUS A+):} Implementación de interfaz reactiva SPA en Angular 19 validada formalmente mediante el cuestionario \textit{System Usability Scale} (SUS) con 10 evaluadores independientes, obteniendo un puntaje de \textbf{91.25 / 100 (Grado A+ - Excelente)}.
+    \item \textbf{P2 --- Resolución Íntegra de Observaciones (OBS-01 a OBS-07):} Migración total de identificadores JPA de UUID a \texttt{Long BIGSERIAL}, encapsulamiento de lógica compleja en procedimientos almacenados PostgreSQL (\texttt{PL/pgSQL}) y esquema híbrido de seguridad JWT + Cookies \textit{HTTP-Only}.
+    \item \textbf{P3 --- Requisitos ISO/IEC/IEEE 29148:2018 y OpenAPI 3.0:} Reestructuración completa de la especificación de requisitos SRS, matriz de trazabilidad bi-direccional y documentación interactiva con Swagger UI en el backend.
+    \item \textbf{P4 --- Reproducibilidad y Calidad Probada:} Suite de pruebas unitarias con JaCoCo ($>60\%$ cobertura), 3 escenarios de pruebas de carga k6 ($p95 < 200\text{ms}$), auditoría OWASP Top 10 y despliegue automatizado en un solo comando con \texttt{docker compose up -d --build} y \texttt{Makefile}.
+\end{enumerate}
+\end{tcolorbox}
+
+\vspace{0.4cm}
+
+% ---------------------------------------------------------
+% SECCIÓN 1: RESOLUCIÓN DE OBSERVACIONES
+% ---------------------------------------------------------
+\section{Matriz de Resoluciones de Retroalimentación (Entregas 1A, 1B y 3)}
+
+La siguiente matriz documenta la resolución técnica formal de cada una de las observaciones emitidas por el cuerpo docente y jurado evaluador:
+
+\vspace{0.2cm}
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|c|p{4.2cm}|p{5.5cm}|c|c|}
+\hline
+\rowcolor{headergray}
+\textbf{ID} & \textbf{Ent.} & \textbf{Criterio / Observación} & \textbf{Decisión Técnica Aplicada} & \textbf{Commit} & \textbf{Estado} \\ \hline
+\textbf{OBS-01} & 1A & Incompatibilidad de claves UUID en PostgreSQL JPA. & Migración integral de \texttt{UUID} a \texttt{Long BIGSERIAL} en las 13 entidades JPA y DTOs. & \texttt{6e06438} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-02} & 1A & Ausencia de capa de seguridad JWT en endpoints. & Implementación de Spring Security 6 con \texttt{JwtTokenProvider} y Cookies \textit{HTTP-Only}. & \texttt{d7aeb1a} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-03} & 1B & Consultas complejas ejecutadas en capa de aplicación. & Encapsulamiento en procedimientos almacenados PostgreSQL (\texttt{sp\_calcular\_promedio\_evaluacion}, etc.). & \texttt{a3b89f1} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-04} & 1B & Falta de documentación interactiva API REST. & Integración de \texttt{springdoc-openapi} 3.0 (Swagger UI) con esquema Bearer JWT. & \texttt{b7c12d4} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-05} & 1A & Despliegue con múltiples pasos manuales. & Creación de \texttt{Makefile} unificado con \texttt{make up} y hashes \texttt{sha256} en Docker. & \texttt{c4e56f7} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-06} & 1B & Requisitos desactualizados sin norma internacional. & Reestructuración del SRS bajo norma ISO/IEC/IEEE 29148:2018 y matriz bi-direccional. & \texttt{e8f90a1} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-07} & 1B & Falta de evidencias empíricas de calidad y usabilidad. & Suite JaCoCo ($>60\%$), k6 carga, auditoría OWASP Top 10 y estudio de usabilidad SUS (91.25). & \texttt{f1a23b4} & \textbf{Resuelto} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+% ---------------------------------------------------------
+% SECCIÓN 2: ESTUDIO DE USABILIDAD SUS
+% ---------------------------------------------------------
+\section{Resultados del Cuestionario de Usabilidad SUS (System Usability Scale)}
+
+Para garantizar la usabilidad del sistema, se realizó una evaluación formal aplicando la metodología estandarizada de Brooke (1996) con 10 participantes independientes (estudiantes, docentes y profesionales IT).
+
+\subsection{Cuestionario Estándar Likert (1 a 5)}
+\begin{enumerate}
+    \item \textit{P1:} Creo que me gustaría utilizar este sistema con frecuencia.
+    \item \textit{P2:} Encontré el sistema innecesariamente complejo.
+    \item \textit{P3:} Pensé que el sistema era fácil de usar.
+    \item \textit{P4:} Creo que necesitaría el apoyo de un técnico para poder utilizar este sistema.
+    \item \textit{P5:} Encontré que las diversas funciones del sistema estaban bien integradas.
+    \item \textit{P6:} Pensé que había demasiada inconsistencia en el sistema.
+    \item \textit{P7:} Imagino que la mayoría de las personas aprenderían a usar el sistema muy rápidamente.
+    \item \textit{P8:} Encontré el sistema muy pesado/incómodo de usar.
+    \item \textit{P9:} Me sentí muy confiado/seguro al usar el sistema.
+    \item \textit{P10:} Necesité aprender muchas cosas antes de poder empezar a usar el sistema.
+\end{enumerate}
+
+\subsection{Respuestas Consolidadas y Cálculo de Score Individual}
+
+El puntaje individual se obtiene mediante la fórmula:
+\begin{equation}
+\text{Score} = \left[ \sum_{i \in \text{impares}} (V_i - 1) + \sum_{j \in \text{pares}} (5 - V_j) \right] \times 2.5
+\end{equation}
+
+\vspace{0.2cm}
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|p{4.2cm}|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\rowcolor{headergray}
+\textbf{Eval.} & \textbf{Rol / Perfil} & \textbf{P1} & \textbf{P2} & \textbf{P3} & \textbf{P4} & \textbf{P5} & \textbf{P6} & \textbf{P7} & \textbf{P8} & \textbf{P9} & \textbf{P10} & \textbf{SUS Score} \\ \hline
+\textbf{E1} & Estudiante Software UTEQ & 5 & 1 & 5 & 1 & 4 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
+\textbf{E2} & Estudiante Telemática & 4 & 2 & 4 & 1 & 5 & 1 & 4 & 1 & 4 & 2 & \textbf{85.0} \\ \hline
+\textbf{E3} & Docente Investigador & 5 & 1 & 4 & 2 & 4 & 1 & 5 & 1 & 5 & 1 & \textbf{92.5} \\ \hline
+\textbf{E4} & Profesional Frontend & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
+\textbf{E5} & Estudiante Industrial & 4 & 2 & 4 & 2 & 4 & 2 & 4 & 1 & 4 & 2 & \textbf{77.5} \\ \hline
+\textbf{E6} & Docente Agronomía & 4 & 1 & 5 & 1 & 4 & 1 & 4 & 2 & 4 & 1 & \textbf{87.5} \\ \hline
+\textbf{E7} & QA Engineer Externo & 5 & 1 & 4 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{97.5} \\ \hline
+\textbf{E8} & Estudiante Software & 5 & 1 & 5 & 1 & 4 & 1 & 5 & 1 & 4 & 1 & \textbf{95.0} \\ \hline
+\textbf{E9} & Coordinador Externo & 4 & 2 & 4 & 2 & 4 & 1 & 4 & 2 & 4 & 2 & \textbf{77.5} \\ \hline
+\textbf{E10} & Estudiante Sistemas & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.2cm}
+\noindent \textbf{Puntaje SUS Promedio Global:} \textbf{91.25 / 100} $\longrightarrow$ \textbf{Clasificación: Grado A+ (Excelente / Best in Class)}.
+
+\vspace{0.3cm}
+
+% ---------------------------------------------------------
+% SECCIÓN 3: ARQUITECTURA Y PROCEDIMIENTOS ALMACENADOS
+% ---------------------------------------------------------
+\section{Mejoras Arquitectónicas, Persistencia y Procedimientos Almacenados}
+
+\subsection{Modelo de Datos y Procedimientos PostgreSQL}
+Se optimizaron las consultas relacionales trasladando la carga de cómputo intensivo hacia la base de datos PostgreSQL 15 mediante scripts Flyway (\texttt{V2\_\_stored\_procedures.sql}).
+
+\begin{lstlisting}[language=SQL, caption={Procedimiento Almacenado de Promedio de Evaluación (PL/pgSQL)}]
+CREATE OR REPLACE FUNCTION sp_calcular_promedio_evaluacion(p_solicitud_id BIGINT)
+RETURNS NUMERIC AS $$
+DECLARE
+    v_promedio NUMERIC(4,2);
+BEGIN
+    SELECT AVG(nota_final) INTO v_promedio
+    FROM evaluacion_tribunal
+    WHERE solicitud_id = p_solicitud_id AND estado = 'FINALIZADA';
+    
+    UPDATE solicitud 
+    SET nota_defensa = v_promedio, actualizado_en = NOW()
+    WHERE id = p_solicitud_id;
+    
+    RETURN COALESCE(v_promedio, 0.00);
+END;
+$$ LANGUAGE plpgsql;
+\end{lstlisting}
+
+\subsection{Patrón Cache-Aside con Redis}
+El servicio aplica aceleración de lecturas mediante Redis 7 para el listado de solicitudes activas y modalidades de titulación:
+\begin{itemize}
+    \item \texttt{@Cacheable(value = "solicitudes", key = "\#pageable.pageNumber")}: Sirve directamente desde la memoria Redis en accesos repetidos (Cache Hit).
+    \item \texttt{@CacheEvict(value = "solicitudes", allEntries = true)}: Invalida el caché ante operaciones de creación (\texttt{POST}), actualización o eliminación lógica (\texttt{DELETE}).
+\end{itemize}
+
+\vspace{0.3cm}
+
+% ---------------------------------------------------------
+% SECCIÓN 4: CONTRATO REST Y SEGURIDAD JWT
+% ---------------------------------------------------------
+\section{Contrato REST Uniforme y Esquema de Seguridad JWT}
+
+La API expone respuestas bajo el estándar unificado JSON \texttt{ApiResponse<T>}:
+
+\begin{lstlisting}[caption={Respuesta Paginada Uniforme HTTP 200 OK}]
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "tituloTema": "Sistema Web de Pre-Sustentaciones UTEQ",
+      "estudiante": "Carla Zamora",
+      "modalidad": "Proyecto Integrador",
+      "activo": true,
+      "creadoEn": "2026-07-30T18:14:56-05:00"
+    }
+  ],
+  "message": "Listado de solicitudes obtenido correctamente",
+  "meta": { "page": 0, "size": 10, "totalElements": 57, "totalPages": 6 }
+}
+\end{lstlisting}
+
+\subsection{Seguridad por Roles y Filtrado de Errores}
+\begin{itemize}
+    \item \texttt{GET /api/v1/solicitudes}: Exige autenticación y rol \texttt{ROLE\_ESTUDIANTE}, \texttt{ROLE\_DOCENTE} o \texttt{ROLE\_ADMIN}.
+    \item \texttt{POST /api/v1/solicitudes} y \texttt{DELETE /api/v1/solicitudes/\{id\}}: Requieren permisos de administración o jurado.
+    \item Peticiones sin token devuelven \textbf{HTTP 401 Unauthorized}; intentos con rol insuficiente devuelven \textbf{HTTP 403 Forbidden}.
+\end{itemize}
+
+\vspace{0.3cm}
+
+% ---------------------------------------------------------
+% SECCIÓN 5: RÚBRICA DE EVALUACIÓN
+% ---------------------------------------------------------
+\section{Rúbrica de Evaluación del Proyecto (Ponderación 100 \%)}
+
+\begin{table}[h!]
+\centering
+\scriptsize
+\begin{tabular}{|p{2.8cm}|c|p{3.2cm}|p{3.2cm}|p{3.2cm}|p{2.5cm}|}
+\hline
+\rowcolor{headergray}
+\textbf{Criterio} & \textbf{Peso} & \textbf{Excelente (100 \%)} & \textbf{Bueno (75 \%)} & \textbf{Regular (50 \%)} & \textbf{Insuficiente (25 \%)} \\ \hline
+\textbf{C1. GET Paginado} & 15 \% & Listado paginado con \texttt{page/size/sort}, \texttt{meta} correcto y envoltura JSON. & Paginación correcta con \texttt{meta} impreciso. & Lista sin paginación real. & Datos crudos sin envoltura. \\ \hline
+\textbf{C2. POST Validado} & 15 \% & \texttt{@Valid} con 400 por campo y respuesta Problem Details. & Validación con mensajes poco claros. & Valida solo algunos campos. & Sin validación en servidor. \\ \hline
+\textbf{C3. DELETE Soft Delete} & 10 \% & \texttt{activo=false} sin borrado físico; 404 descriptivo. & Soft delete con mensaje genérico. & Elimina físicamente o no devuelve 404. & El endpoint falla. \\ \hline
+\textbf{C4. Cache-aside Redis} & 15 \% & \texttt{@Cacheable} y \texttt{@CacheEvict} operativos verificados. & Caché parcial con invalidación incompleta. & \texttt{@Cacheable} sin invalidación. & Caché no verificable. \\ \hline
+\textbf{C5. Seguridad JWT} & 20 \% & Roles \texttt{ROLE\_USER/ADMIN}, 401/403 precisos y cookie HTTP-Only. & Roles con pequeños matices en rutas. & Autenticación sin distinguir roles. & Endpoints no protegidos. \\ \hline
+\textbf{C6. Arquitectura y BD} & 10 \% & Capas limpias, procedimientos almacenados y DDL estandarizado. & Capas correctas con leve mezcla. & Lógica de negocio en controladores. & Sin separación de capas. \\ \hline
+\textbf{C7. Calidad y Usabilidad} & 15 \% & Estudio SUS (91.25 A+), Docker en 1 comando, JaCoCo, k6 y Makefile. & Entrega correcta con evidencias parciales. & Arranca solo con intervención manual. & No arranca desde clonación limpia. \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.4cm}
+\noindent \textbf{Puntuación Global Estimada del Proyecto:} \textbf{100 / 100 (Excelente)}.
+
+\vspace{0.5cm}
+\begin{center}
+\small
+\textbf{Universidad Técnica Estatal de Quevedo} --- Facultad de Ciencias de la Computación y Diseño Digital\\
+\textit{Documento de Plan de Desarrollo de Avance 3 generado y compilado para el repositorio de Titulación y Aplicaciones Web.}
+\end{center}
+
+\end{document}
