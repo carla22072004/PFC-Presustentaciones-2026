@@ -1,7 +1,6 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.entities.Usuario;
-import ec.edu.uteq.presustentaciones.enums.RolUsuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,14 +35,14 @@ class UsuarioServiceImplTest {
         usuario.setNombre("Juan");
         usuario.setApellido("Pérez");
         usuario.setEmail("jperez@uteq.edu.ec");
-        usuario.setRol(RolUsuario.ESTUDIANTE);
+        usuario.setRol("ESTUDIANTE");
         usuario.setActivo(true);
     }
 
     @Test
-    void testObtenerTodos() {
+    void testListarTodos() {
         when(usuarioRepository.findAll()).thenReturn(Arrays.asList(usuario));
-        List<Usuario> resultado = usuarioService.obtenerTodos();
+        List<Usuario> resultado = usuarioService.listarTodos();
         assertEquals(1, resultado.size());
         assertEquals("Juan", resultado.get(0).getNombre());
     }
@@ -57,9 +56,9 @@ class UsuarioServiceImplTest {
     }
 
     @Test
-    void testGuardarUsuario() {
+    void testCrearUsuario() {
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-        Usuario guardado = usuarioService.guardar(usuario);
+        Usuario guardado = usuarioService.crear(usuario);
         assertNotNull(guardado);
         assertEquals(1L, guardado.getId());
     }
@@ -70,9 +69,9 @@ class UsuarioServiceImplTest {
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
         
         usuarioService.desactivar(1L);
-        assertFalse(usuario.isActivo());
+        assertFalse(usuario.getActivo());
 
         usuarioService.activar(1L);
-        assertTrue(usuario.isActivo());
+        assertTrue(usuario.getActivo());
     }
 }

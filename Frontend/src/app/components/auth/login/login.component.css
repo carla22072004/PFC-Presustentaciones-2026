@@ -2,7 +2,7 @@
 
 /* Contenedor Principal con fondo blanco puro */
 .dubai-wrapper {
-    height: 100vh;
+    min-height: 100vh;
     width: 100%;
     display: flex;
     align-items: center;
@@ -10,7 +10,9 @@
     font-family: 'Poppins', sans-serif;
     background: #ffffff;
     position: relative;
-    overflow: hidden;
+    overflow: auto;
+    padding: 1.5rem;
+    box-sizing: border-box;
 }
 
 /* Círculos difuminados de fondo (Blobs) */
@@ -52,11 +54,11 @@
 .logo-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .uteq-logo {
-    width: 100px; /* Ajusta el tamaño a tu gusto */
+    width: 68px; /* Ajusta el tamaño a tu gusto */
     height: auto;
     object-fit: contain;
     /* Sombra suave para que resalte sobre el cristal */
@@ -68,22 +70,26 @@
     backdrop-filter: blur(25px); /* Efecto de vidrio esmerilado */
     -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(255, 255, 255, 0.6);
-    padding: 3.5rem;
-    border-radius: 40px; /* Bordes muy redondeados tipo Dubai */
+    padding: clamp(1.75rem, 4vh, 2.5rem) clamp(1.75rem, 4vw, 2.75rem);
+    border-radius: 32px; /* Bordes muy redondeados tipo Dubai */
     width: 100%;
-    max-width: 480px;
+    max-width: 420px;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
     z-index: 10;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08); /* Sombra muy sutil */
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* Estilo de la Marca */
 .brand-name {
     color: #1a5c2e; /* Verde Institucional */
     font-weight: 800;
-    font-size: 2.8rem;
-    letter-spacing: -2px;
-    margin-bottom: 0.2rem;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
     text-transform: uppercase;
 }
 
@@ -94,15 +100,15 @@
 
 .subtitle {
     color: #64748b;
-    font-size: 1rem;
-    margin-bottom: 3rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.75rem;
     font-weight: 300;
 }
 
 /* Inputs Premium */
 .input-group-custom {
     text-align: left;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.1rem;
 }
 
 .input-group-custom label {
@@ -118,10 +124,10 @@
     width: 100%;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
-    padding: 14px 20px;
-    border-radius: 15px;
+    padding: 11px 16px;
+    border-radius: 14px;
     color: #1e293b;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
@@ -134,20 +140,20 @@
 /* Botón de Acceso Élite */
 .btn-dubai {
     width: 100%;
-    padding: 16px;
-    border-radius: 15px;
+    padding: 13px;
+    border-radius: 14px;
     border: none;
     background: linear-gradient(135deg, #2d5a3a 0%, #1a5c2e 100%);
     color: white;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    margin-top: 1.5rem;
+    margin-top: 0.75rem;
     box-shadow: 0 10px 20px -10px rgba(26, 92, 46, 0.4);
 }
 
@@ -162,11 +168,11 @@
 
 /* Footer del Login */
 .login-footer {
-    margin-top: 2.5rem;
-    font-size: 0.75rem;
+    margin-top: 1.5rem;
+    font-size: 0.7rem;
     color: #94a3b8;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
-    padding-top: 1.5rem;
+    padding-top: 1rem;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

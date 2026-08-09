@@ -1,27 +1,25 @@
-version: '3.8'
-
 services:
-  # Base de Datos PostgreSQL 15 (Anclada con Digest SHA256 Exacto)
+  # Base de Datos PostgreSQL 15
   postgres:
-    image: postgres:15-alpine@sha256:6b8109d784a956108151c8636402636f1c7d24f0c8e3bf604b77f9e8a0058e57
+    image: postgres:15-alpine
     container_name: amz-postgres
     environment:
-      POSTGRES_DB: presustentaciones_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: BdPresustentaciones
+      POSTGRES_USER: JEAN
+      POSTGRES_PASSWORD: 1234
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U JEAN"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis Caché (Anclada con Digest SHA256 Exacto)
+  # Redis Caché
   redis:
-    image: redis:7-alpine@sha256:5923055998a44b1c78ed5f36e4f35f29f0b2f69e9e623f99b2447990c0128795
+    image: redis:7-alpine
     container_name: amz-redis
     ports:
       - "6379:6379"
