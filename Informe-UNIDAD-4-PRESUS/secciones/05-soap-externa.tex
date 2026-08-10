@@ -1,0 +1,53 @@
+\section{Consumo de Servicios Web Externos y SOAP}
+\subsection{SOAP vs. REST: análisis técnico comparativo}
+
+SOAP (\textit{Simple Object Access Protocol}) es un protocolo de intercambio de mensajes basado en XML que describe
+sus contratos mediante \textbf{WSDL} (\textit{Web Services Description Language}). Los mensajes viajan sobre HTTP,
+SMTP o TCP y cada operación se identifica mediante una \textit{SOAPAction}. REST, en cambio, es un estilo
+arquitectónico que usa cualquier formato de representación (JSON preferido), se apoya únicamente en HTTP y su
+descripción es opcional (OpenAPI). En la Tabla~\ref{tab:soap} se comparan ambos enfoques.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}p{3.2cm}p{4.6cm}p{4.6cm}@{}}
+\toprule
+\textbf{Criterio} & \textbf{SOAP} & \textbf{REST} \\
+\midrule
+Formato del mensaje & XML (Envelope) & JSON / XML / texto \\
+Overhead de serialización & Alto (envoltorio e.g. envelopes) & Bajo \\
+Tipado & Fuerte (esquemas XSD) & Débil (schemas opcionales) \\
+Interoperabilidad & Muy alta (estándares WS-*) & Alta (más simple) \\
+Facilidad desde JavaScript & Baja (requiere librerías) & Alta (fetch/Ajax nativo) \\
+Casos de uso vigentes & Banca, sector público, SRI, SENESCYT & Aplicaciones web modernas \\
+\bottomrule
+\end{tabular}
+\caption{Comparación SOAP vs. REST para el Sistema de Pre-Sustentaciones.}
+\label{tab:soap}
+\end{table}
+
+En el ámbito universitario ecuatoriano, SOAP sigue vigente en sistemas gubernamentales como la verificación de
+títulos en SENESCYT y facturación electrónica del SRI. Para el Sistema de Pre-Sustentaciones UTEQ, REST es la
+elección adecuada para la comunicación entre el frontend Angular y el backend Spring Boot.
+
+\subsection{Clientes HTTP del lado del servidor}
+
+Para el consumo de APIs externas desde el servidor, los frameworks ofrecen clientes dedicados: \textbf{GuzzleHTTP}
+en PHP, \textbf{HttpClient} en .NET, y \textbf{RestTemplate / WebClient} en Java/Spring. El \texttt{WebClient}
+reactivo ofrece manejo de \textit{timeout}, reintentos con \textit{backoff exponencial} y concurrencia no
+bloqueante. En la integración futura del PFC con una API externa (por ejemplo, consulta del calendario académico o
+validación de docentes) se implementará \texttt{WebClient} con configuración de \textit{connect timeout} y
+\textit{read timeout}, manejo de errores 4xx/5xx mediante \texttt{onErrorResume} y política de reintentos.
+
+\subsection{Caché de respuestas externas}
+
+Las APIs externas imponen límites de \textit{rate limiting}; por ello sus respuestas deben cachearse para evitar
+superar cuotas y reducir la latencia. El patrón \textbf{cache-aside} consiste en consultar primero Redis; si hay
+\textit{hit}, se devuelve la respuesta cacheada; si hay \textit{miss}, se consulta el origen, se almacena en
+caché con un TTL y se responde. La configuración usará \texttt{@Cacheable("api_externa")} y un TTL por defecto en Redis.
+
+\subsection{Tendencias: Jamstack y APIs en 2025}
+
+El patrón \textbf{Jamstack} (JavaScript + APIs + Markup) separa frontend y backend. El Sistema de Pre-Sustentaciones
+sigue una arquitectura SPA con Angular 21 y un backend de API Spring Boot 3.2.1, alineado con esta tendencia moderna.

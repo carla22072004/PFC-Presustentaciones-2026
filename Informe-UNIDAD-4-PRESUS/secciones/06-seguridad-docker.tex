@@ -1,0 +1,42 @@
+\section{Seguridad, Pruebas de Rendimiento y Despliegue con Docker}
+\subsection{Auditoría de seguridad OWASP}
+
+Se realizó la evaluación de seguridad sobre la aplicación usando el OWASP Top 10:2021 (A01--A07) más XSS. La
+Tabla~\ref{tab:owasp} resume la vulnerabilidad, el vector de ataque, la contramedida implementada y la evidencia.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{2.4cm}p{2.9cm}p{3.3cm}p{2.6cm}@{}}
+\toprule
+\textbf{Vulnerabilidad} & \textbf{Vector de ataque} & \textbf{Contramedida implementada} & \textbf{Evidencia} \\
+\midrule
+A01 Control de acceso & Acceso no autorizado a /api/solicitudes & Reglas @PreAuthorize y SecurityConfig (ADMIN, DOCENTE, COORDINADOR) & OWASP-AUDIT.md \\
+A02 Fallo criptográfico & Robo de credenciales/token & BCryptPasswordEncoder, JWT HS256, cookie HttpOnly & SecurityConfig + AuthController \\
+A03 Inyección & SQL/JPQL malicioso en solicitudes & Validación Jakarta @Valid y Spring Data JPA parametrizado & OWASP-AUDIT.md \\
+A05 Malconfiguración & Cabeceras inseguras & Desactivación CSRF adecuada para Stateless JWT, CORS acotado & SecurityConfig.java \\
+A07 Fallos de autenticación & Fuerza bruta en login & Autenticación gestionada por AuthenticationManager & AuthController.java \\
+XSS & Script malicioso en el navegador & Saneamiento automático de plantillas Angular 21 & Frontend Angular \\
+\bottomrule
+\end{tabular}
+\caption{Resumen de la auditoría OWASP aplicada al PFC Pre-Sustentaciones.}
+\label{tab:owasp}
+\end{table}
+
+\subsection{Prueba de carga con k6}
+
+La metodología de prueba de carga del PFC se realizó con \textbf{k6} contra endpoints representativos. Se ejecutaron
+3 corridas independientes (`run1`, `run2`, `run3`). Los resultados confirmaron baja latencia y alta capacidad de
+procesamiento bajo carga simulada, registrando métricas crudas en `docs/pruebas/k6/`.
+
+\subsection{Containerización con Docker Compose}
+
+Docker Compose permite desplegar la infraestructura de la aplicación con aislamiento de dependencias. El
+\texttt{docker-compose.yml} del PFC define los servicios:
+\begin{itemize}
+    \item \textbf{postgres} (postgres:15-alpine, puerto 5432:5432, volumen \texttt{postgres\_data}).
+    \item \textbf{redis} (redis:7-alpine, puerto 6379:6379) con healthcheck \texttt{redis-cli ping}.
+\end{itemize}
+
+El despliegue se ejecuta de forma unificada mediante `docker compose up -d` o con el `Makefile` (`make up`).

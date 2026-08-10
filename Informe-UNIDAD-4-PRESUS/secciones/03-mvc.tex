@@ -1,0 +1,99 @@
+\section{El Patrón MVC y su Implementación en Frameworks Modernos}
+\subsection{Historia y evolución del MVC}
+
+El patrón Modelo-Vista-Controlador (MVC) fue descrito por primera vez por \textbf{Trygve Reenskaug en 1979}
+mientras trabajaba en el entorno \textbf{Smalltalk-80} del Xerox PARC. En su formulación original, el
+\textit{modelo} representa el estado y la lógica de negocio, la \textit{vista} es la representación visual de ese
+estado y el \textit{controlador} es el componente que maneja la entrada del usuario (eventos de teclado y ratón).
+El objetivo era dividir responsabilidades para permitir que múltiples vistas observaran un mismo modelo y que los
+cambios en los datos se reflejaran automáticamente en la interfaz.
+
+Cuando el MVC se trasladó al entorno web, la semántica de los componentes cambió para adaptarse a la
+arquitectura \textit{request/response} del protocolo HTTP. En el modelo web, el controlador ya no maneja eventos de
+entrada locales, sino que procesa \textbf{solicitudes HTTP}: recibe un verbo y una URI, invoca al modelo y
+selecciona una vista. La vista puede renderizarse en el servidor mediante un motor de plantillas o en el cliente
+mediante una aplicación de una sola página (SPA). Por su parte, el modelo se amplía para incluir repositorios,
+servicios de aplicación y objetos de acceso a datos (DAO). De esta forma, MVC se convierte en el patrón
+arquitectónico dominante de la mayoría de frameworks modernos.
+
+Sobre el MVC clásico se desarrollaron variantes que resuelven limitaciones concretas. El patrón \textbf{MVP}
+(Model-View-Presenter) elimina la referencia directa entre la vista y el modelo: el presentador actúa como
+intermediario único y la vista es pasiva. El patrón \textbf{MVVM} (Model-View-ViewModel) introduce un
+\textit{ViewModel} con enlace bidireccional de datos (\textit{data binding}), muy utilizado en aplicaciones SPA
+como Angular, donde una directiva como \texttt{[(ngModel)]} sincroniza automáticamente la vista y el modelo.
+
+\subsection{El patrón Front Controller}
+
+Todos los frameworks MVC web relevantes (Laravel, Symfony, Spring MVC, ASP.NET Core, Django) emplean el patrón
+\textbf{Front Controller}: un punto de entrada único que centraliza el manejo de errores, la autenticación, el
+logging y el enrutamiento. En Spring Boot, ese punto de entrada es \texttt{DispatcherServlet}, declarado y
+configurado automáticamente por el arranque de la aplicación. Este diseño evita repetir lógica transversal
+(auth, CORS, cabeceras de seguridad) en cada controlador.
+
+El ciclo completo de una petición MVC en Spring Boot, aplicado al PFC Pre-Sustentaciones, es el siguiente:
+
+\begin{enumerate}[label=\textbf{Paso \arabic*.}]
+    \item \textbf{Recepción de la petición HTTP:} el cliente envía, por ejemplo, \texttt{GET /api/solicitudes}
+    con el token JWT. El contenedor embebido (Apache Tomcat) recibe la solicitud.
+    \item \textbf{Filtros de seguridad:} \texttt{JwtAuthenticationFilter} se ejecuta antes de
+    \texttt{UsernamePasswordAuthenticationFilter} (ver \texttt{SecurityConfig.java}) y, si el token es válido,
+    autentica la petición sin estado (\texttt{SessionCreationPolicy.STATELESS}).
+    \item \textbf{Enrutamiento:} \texttt{DispatcherServlet} consulta el \texttt{HandlerMapping} y localiza el
+    \texttt{SolicitudController.listar()} que atiende \texttt{GET /api/solicitudes}.
+    \item \textbf{Invocación del controlador:} el \texttt{HandlerAdapter} invoca el método del controlador,
+    que verifica la autorización con \texttt{@PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")}.
+    \item \textbf{Interacción con el modelo:} el controlador delega en \texttt{SolicitudService.listarSolicitudes()},
+    que a su vez consulta \texttt{SolicitudRepository} y devuelve un \texttt{List<Solicitud>}.
+    \item \textbf{Serialización de la respuesta:} el \texttt{HttpMessageConverter} (Jackson) serializa el objeto de
+    respuesta a JSON y el servidor devuelve el código HTTP 200.
+\end{enumerate}
+
+Este flujo se evidencia en el siguiente fragmento real del controlador:
+
+\begin{lstlisting}[style=javaStyle, label=lst:c1, caption={SolicitudController.java — endpoint GET /api/solicitudes}]
+@CrossOrigin(origins = "http://localhost:4200")
+@RestController
+@RequestMapping("/api/solicitudes")
+public class SolicitudController {
+
+    private final SolicitudService solicitudService;
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    public List<Solicitud> listar() {
+        return solicitudService.listarSolicitudes();
+    }
+}
+\end{lstlisting}
+
+\subsection{Comparativa de frameworks MVC en 2025}
+
+Para justificar la elección del framework del PFC se compararon los cinco frameworks MVC de mayor adopción en el
+mercado latinoamericano (Tabla~\ref{tab:frameworks}). La comparación considera el paradigma, el ORM incluido, el
+motor de plantillas, el ecosistema de paquetes y el rendimiento reportado en \textit{TechEmpower Framework
+Benchmarks} (Round 22).
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}p{2.6cm}p{3.4cm}p{2.6cm}p{2.6cm}p{3.2cm}@{}}
+\toprule
+\textbf{Framework} & \textbf{Paradigma} & \textbf{ORM incluido} & \textbf{Motor de plantillas} & \textbf{Ecosistema / mercado} \\
+\midrule
+Laravel 11.x & Convención sobre configuración & Eloquent ORM & Blade & Amplio en LATAM, Packagist \\
+Symfony 7.x & Explícito y extensible & Doctrine ORM & Twig & Gran adopción empresarial \\
+Spring Boot 3.x & Configuración por anotaciones, opinionated & Spring Data JPA & Thymeleaf / SPA & Muy amplio, Java dominante \\
+ASP.NET Core 8.x & Convención + C\# fuertemente tipado & EF Core & Razor & Medio en LATAM \\
+Django 5.x & Convención sobre configuración & Django ORM & DTL / Jinja2 & Medio, buena en Sudamérica \\
+\bottomrule
+\end{tabular}
+\caption{Frameworks MVC evaluados para el PFC (adaptado de documentación oficial de cada framework).}
+\label{tab:frameworks}
+\end{table}
+
+En el benchmark TechEmpower Round 22, los frameworks JVM (Spring Boot, Vert.x, Quarkus) se ubican de forma
+consistente en la franja media-alta de rendimiento, con latencias muy competitivas cuando se combinan con caché.
+Para el PFC se eligió \textbf{Spring Boot 3.2.1} por su ecosistema maduro de seguridad (\texttt{spring-security}),
+soporte de primera clase a JPA/PostgreSQL, integración natural con Redis y por el conocimiento previo del equipo.
+La decisión técnica queda registrada en los \textbf{ADR} del directorio \texttt{docs/arquitectura/adrs/}.

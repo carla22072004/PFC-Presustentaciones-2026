@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * Rangos de observación: 67-100 (Alto), 34-66 (Medio), 1-33 (Bajo)
  */
 @Entity
-@Table(name = "evaluaciones_criterio",
+@Table(name = "evaluaciones_criterio", schema = "presus",
        uniqueConstraints = @UniqueConstraint(
            columnNames = {"evaluador_id", "criterio_id"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

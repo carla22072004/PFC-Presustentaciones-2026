@@ -1,0 +1,81 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{letterpaper, margin=1in}
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Informe Técnico Unidad IV --- PFC Pre-Sustentaciones UTEQ}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Estilos de código
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codecomment}{RGB}{95,140,95}
+\definecolor{codestring}{RGB}{163,21,21}
+\lstdefinestyle{javaStyle}{
+    backgroundcolor=\color{codebg},
+    commentstyle=\color{codecomment}\itshape,
+    keywordstyle=\color{codekeyword}\bfseries,
+    stringstyle=\color{codestring},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{gray!40},
+    language=Java
+}
+\lstdefinestyle{yamlStyle}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!40},
+    language={}
+}
+\lstdefinestyle{bashStyle}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    frame=single,
+    rulecolor=\color{gray!40},
+    breaklines=true,
+    language=bash
+}
+
+\begin{document}
+
+% ============ CARÁTULA ============
+\input{secciones/01-portada}
+\tableofcontents
+\newpage
+
+\input{secciones/02-introduccion}
+\input{secciones/03-mvc}
+\input{secciones/04-api-rest}
+\input{secciones/05-soap-externa}
+\input{secciones/06-seguridad-docker}
+\input{secciones/07-conclusiones}
+\input{secciones/08-anexo-c}
+\input{secciones/09-referencias}
+
+\end{document}

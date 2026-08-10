@@ -1,0 +1,29 @@
+\section*{Anexo C --- Preguntas de Análisis}
+\addcontentsline{toc}{section}{Anexo C --- Preguntas de Análisis}
+\subsection*{C.1 [Evaluación / Bloom nivel 6] --- La decisión técnica más difícil}
+
+Revisando el PFC completo, la decisión técnica más difícil fue estructurar la comunicación entre el frontend Angular
+y el backend Spring Boot asegurando la persistencia de sesión sin sobrecargar la base de datos. Se optó por una
+estrategia \textbf{JWT Stateless con Cookie HTTP-Only}, combinada con anotaciones de autorización granular
+\texttt{@PreAuthorize} por roles. Esta decisión permitió simplificar el backend y desacoplar completamente la UI
+del servidor, aunque requirió un manejo riguroso de CORS y cabeceras de seguridad.
+
+\subsection*{C.2 [Síntesis / Bloom nivel 5] --- Escalado a 500 usuarios concurrentes}
+
+Para soportar \textbf{500 usuarios concurrentes con una tasa de error de 0\%}, se proponen tres ejes de escalado:
+\textbf{(1) Infraestructura}: desplegar múltiples réplicas del contenedor backend detrás de un proxy inverso NGINX
+que actúe como balanceador de carga. \textbf{(2) Caché}: activar `@Cacheable` con Redis para consultas frecuentes de
+catálogos, salas y cronogramas. \textbf{(3) Base de datos}: optimizar el pool de conexiones de HikariCP y utilizar
+réplicas de lectura en PostgreSQL.
+
+\subsection*{C.3 [Análisis / Bloom nivel 4] --- Principios REST cumplidos}
+
+El sistema cumple rigurosamente con Client-Server, Stateless, Uniform Interface y Layered System (parcial). Queda
+pendiente la implementación de la capa de Caché a nivel de aplicación (`@Cacheable` con Redis).
+
+\subsection*{C.4 [Evaluación / Bloom nivel 6] --- Comparación con un sistema de producción real}
+
+En comparación con un sistema universitario en producción (p. ej., SGA UTEQ), el proyecto destaca por su excelente
+usabilidad (SUS 91.25/100), su arquitectura limpia basada en C4/ADRs y su cobertura de dominio. Para alcanzar un nivel
+comercial requeriría integración con SSO institucional (OAuth2 / SAML2), monitoreo con Prometheus/Grafana y alta
+disponibilidad multi-nodo.

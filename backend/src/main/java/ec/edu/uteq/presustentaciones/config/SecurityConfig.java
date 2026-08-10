@@ -38,7 +38,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/actuator/**")
+                        .permitAll()
                         .requestMatchers("/api/tutorias/fases/*/pdf").permitAll()
                         .requestMatchers("/api/catalogos/**").authenticated()
                         .requestMatchers("/api/solicitudes/**").authenticated()
@@ -56,8 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/jurados/**").authenticated()
                         .requestMatchers("/api/tutores/**").authenticated()
                         .requestMatchers("/api/docentes/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

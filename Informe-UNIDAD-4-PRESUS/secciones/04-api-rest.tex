@@ -1,0 +1,113 @@
+\section{Diseño de APIs REST: Principios de Fielding y OpenAPI}
+\subsection{Los 6 principios de REST y su aplicación en el Sistema de Pre-Sustentaciones}
+
+Roy Fielding定義 REST en su tesis doctoral (2000) a partir de restricciones arquitectónicas. A continuación se
+analiza cada principio y su grado de cumplimiento en la API del Sistema de Gestión de Pre-Sustentaciones UTEQ.
+
+\begin{enumerate}
+    \item \textbf{Client-Server:} separación de responsabilidades. El frontend Angular 21 (cliente) y el backend
+    Spring Boot 3.2.1 (servidor) son aplicaciones independientes que se comunican únicamente por HTTP en el puerto
+    8080 y 4200. \textbf{Cumplido.}
+    \item \textbf{Stateless:} cada petición contiene toda la información necesaria. El sistema utiliza autenticación
+    \textbf{JWT stateless}: el servidor no guarda sesiones (\texttt{SessionCreationPolicy.STATELESS}) y cada
+    petición incluye el token en la cabecera \texttt{Authorization: Bearer} o en cookie HTTP-Only.
+    \textbf{Cumplido.}
+    \item \textbf{Cacheable:} las respuestas pueden declarar si son cacheadas. Redis 7 está incluido en el
+    \texttt{docker-compose.yml}, pero el backend no ha habilitado `@Cacheable` en los servicios REST.
+    \textbf{Falta por implementar.}
+    \item \textbf{Uniform Interface:} URIs de recursos y verbos HTTP semánticos. La API usa sustantivos para los
+    recursos (\texttt{/api/solicitudes}, \texttt{/api/anteproyectos}, \texttt{/api/cronogramas}, \texttt{/api/evaluaciones},
+    \texttt{/api/jurados}, \texttt{/api/actas}) y verbos HTTP estándar (GET, POST, PUT, DELETE).
+    \textbf{Cumplido.}
+    \item \textbf{Layered System:} el cliente no conoce detalles internos. La arquitectura de capas (Controller →
+    Service → Repository) y la posibilidad futura de colocar un proxy/nginx delante del backend permiten cumplir
+    este principio. \textbf{Cumplido parcialmente} (todavía no hay nginx en producción).
+    \item \textbf{Code-On-Demand (opcional):} el servidor puede enviar código ejecutable. No se aplica en el sistema,
+    lo cual es una restricción opcional del estilo. \textbf{No aplicado.}
+\end{enumerate}
+
+\subsection{Diseño de URIs REST semánticas}
+
+Las URIs del PFC siguen la regla \textit{recursos como sustantivos y jerarquía por identificación}. Por ejemplo,
+\texttt{GET /api/solicitudes/{id}} identifica una solicitud concreta, mientras que
+\texttt{GET /api/solicitudes/mis-solicitudes} obtiene las solicitudes del usuario logueado extrayendo el ID desde
+el contexto del token JWT sin exponer IDs en la URL. El diseño completo de recursos principales se muestra en la
+Tabla~\ref{tab:uris}.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}cll@{}}
+\toprule
+\textbf{Recurso} & \textbf{Verbos soportados} & \textbf{Respuesta} \\
+\midrule
+/api/auth/login, /register & POST & LoginResponse / 201 \\
+/api/solicitudes & GET, POST & List / 201 \\
+/api/solicitudes/mis-solicitudes & GET & List / 200 \\
+/api/anteproyectos & GET, POST & Anteproyecto / 201 \\
+/api/cronogramas & GET, POST, PUT & Cronograma / 200 \\
+/api/evaluaciones & GET, POST & Evaluacion / 201 \\
+/api/jurados & GET, POST & Jurado / 201 \\
+/api/actas & GET, POST & Acta / 201 \\
+/api/reportes/** & GET & ByteArray (PDF) / 200 \\
+\bottomrule
+\end{tabular}
+\caption{Recursos principales de la API REST del Sistema de Pre-Sustentaciones (ruta base /api).}
+\label{tab:uris}
+\end{table}
+
+\subsection{JWT: estructura y flujo de autenticación}
+
+Un JWT (\textit{JSON Web Token}) está compuesto por tres partes separadas por puntos:
+\begin{enumerate}
+    \item \textbf{Header}: algoritmo de firma (HS256) y tipo de token.
+    \item \textbf{Payload}: \textit{claims} (datos reclamados). En la versión actual se incluyen `sub`, `iat` y `exp`.
+    Se propone ampliar a los 7 claims del RFC 7519 (`jti`, `iss`, `sub`, `aud`, `iat`, `nbf`, `exp`).
+    \item \textbf{Signature}: firma HMAC-SHA256 calculada con la clave secreta (\texttt{jwt.secret}).
+\end{enumerate}
+
+El flujo implementado es el siguiente: el usuario se autentica en \texttt{POST /api/auth/login}; el servidor valida
+la contraseña con \texttt{BCryptPasswordEncoder}, genera el JWT mediante \texttt{JwtTokenProvider} y devuelve
+la respuesta con la cookie \texttt{jwtToken} (HttpOnly, Max-Age 24h) y el objeto \texttt{LoginResponse}.
+
+\begin{lstlisting}[style=javaStyle, label=lst:jwt, caption={JwtTokenProvider.java — generación del token (fragmento)}]
+public String generateToken(Authentication authentication) {
+    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+    return Jwts.builder()
+            .subject(userDetails.getUsername())
+            .issuedAt(now)
+            .expiration(expiryDate)
+            .signWith(getSigningKey())
+            .compact();
+}
+\end{lstlisting}
+
+\subsection{OpenAPI / Swagger 3.0}
+
+El proyecto documenta su API con \textbf{Springdoc OpenAPI 2.3.0}. La configuración (\texttt{OpenApiConfig.java})
+define el título \textbf{``Sistema de Gestión de Pre-Sustentaciones UTEQ - API OpenAPI 3.0''}, la versión 0.9.0-rc
+y el esquema de seguridad por token Bearer JWT. La interfaz interactiva de Swagger UI queda accesible en
+\texttt{/swagger-ui/index.html}. Adicionalmente, el proyecto incluye la colección Postman exportada en
+\texttt{docs/postman/PFC-Collection.json} con 22 peticiones organizadas y probadas.
+
+\begin{lstlisting}[style=javaStyle, label=lst:oa, caption={OpenApiConfig.java — bean OpenAPI con Bearer auth (fragmento)}]
+@Bean
+public OpenAPI customOpenAPI() {
+    final String securitySchemeName = "bearerAuth";
+    return new OpenAPI()
+            .info(new Info()
+                    .title("Sistema de Gestión de Pre-Sustentaciones UTEQ - API OpenAPI 3.0")
+                    .version("0.9.0-rc"))
+            .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+            .components(new Components()
+                    .addSecuritySchemes(securitySchemeName,
+                            new SecurityScheme()
+                                    .name(securitySchemeName)
+                                    .type(SecurityScheme.Type.HTTP)
+                                    .scheme("bearer")
+                                    .bearerFormat("JWT")));
+}
+\end{lstlisting}

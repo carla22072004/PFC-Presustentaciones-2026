@@ -7,7 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tutoria_mensajes")
+@Table(name = "tutoria_mensajes", schema = "presus")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TutoriaMensaje {
 

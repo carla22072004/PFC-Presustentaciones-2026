@@ -25,11 +25,13 @@ public class AnteproyectoController {
     @Value("${app.upload.dir:uploads/anteproyectos}")
     private String uploadDir;
 
-    public AnteproyectoController(AnteproyectoService s) { this.anteproyectoService = s; }
+    public AnteproyectoController(AnteproyectoService s) {
+        this.anteproyectoService = s;
+    }
 
     @PostMapping(value = "/enviar/{solicitudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Anteproyecto> enviar(@PathVariable Long solicitudId,
-                                               @RequestParam("archivo") MultipartFile archivo) {
+            @RequestParam("archivo") MultipartFile archivo) {
         return ResponseEntity.ok(anteproyectoService.enviarAnteproyecto(solicitudId, archivo));
     }
 
@@ -46,12 +48,15 @@ public class AnteproyectoController {
         try {
             Path ruta = Paths.get(uploadDir).resolve(ap.getArchivoPdf()).normalize();
             Resource resource = new UrlResource(ruta.toUri());
-            if (!resource.exists() || !resource.isReadable()) return ResponseEntity.notFound().build();
+            if (!resource.exists() || !resource.isReadable())
+                return ResponseEntity.notFound().build();
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + ap.getArchivoPdf() + "\"")
                     .body(resource);
-        } catch (MalformedURLException e) { return ResponseEntity.internalServerError().build(); }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /** RF-02: Verificar integridad SHA-256 del archivo en disco */
@@ -61,12 +66,11 @@ public class AnteproyectoController {
             boolean ok = anteproyectoService.verificarIntegridad(solicitudId);
             Anteproyecto ap = anteproyectoService.buscarPorSolicitud(solicitudId).orElseThrow();
             return ResponseEntity.ok(Map.of(
-                "solicitudId", solicitudId,
-                "integridadOk", ok,
-                "sha256Registrado", ap.getSha256Hash() != null ? ap.getSha256Hash() : "—",
-                "mensaje", ok ? "✓ Archivo íntegro: el hash SHA-256 coincide."
-                              : "⚠ Advertencia: el archivo puede haber sido modificado."
-            ));
+                    "solicitudId", solicitudId,
+                    "integridadOk", ok,
+                    "sha256Registrado", ap.getSha256Hash() != null ? ap.getSha256Hash() : "—",
+                    "mensaje", ok ? "✓ Archivo íntegro: el hash SHA-256 coincide."
+                            : "⚠ Advertencia: el archivo puede haber sido modificado."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

@@ -1,0 +1,11 @@
+\section{Conclusiones}
+El Sistema de Gestión de Pre-Sustentaciones UTEQ cumple de manera notable los criterios de la Unidad IV: implementa
+el patrón MVC con Spring Boot 3.2.1, expone 21 controladores RESTful protegidos por Spring Security y JWT stateless,
+posee una interfaz SPA completa en Angular 21.1 con una usabilidad destacada de 91.25/100 (SUS Grado A+), documenta
+su API con OpenAPI 2.3.0 y Postman, y gestiona la persistencia en PostgreSQL 15 con procedimientos almacenados PL/pgSQL
+y respaldo en Redis 7.
+
+Como oportunidades de mejora para alcanzar la máxima madurez arquitectónica se identifican: la incorporación de
+un cliente `WebClient` para el consumo de APIs externas con patrón cache-aside en Redis, el versionado explícito de
+los endpoints (`/api/v1/`), la expansión del token JWT a 7 claims conforme a RFC 7519 con mecanismo de refresh token y
+blacklist, y la adición del contenedor backend y proxy inverso nginx al archivo Docker Compose.
