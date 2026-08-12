@@ -17,12 +17,17 @@ import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -276,7 +281,30 @@ public class SolicitudServiceImpl implements SolicitudService {
     public List<Solicitud> listarSolicitudes() {
         return solicitudRepository.findAllWithEstudiante();
     }
- 
+
+    @Override
+    public Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado) {
+        int paginaSegura = Math.max(pagina, 0);
+        int tamanioSeguro = Math.min(Math.max(tamanio, 1), 100);
+        PageRequest pageRequest = PageRequest.of(paginaSegura, tamanioSeguro, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
+
+        if (estado != null && !estado.isBlank()) {
+            return solicitudRepository.findAllWithEstudianteByEstadoCodigo(estado, pageRequest);
+        }
+        return solicitudRepository.findAllWithEstudiante(pageRequest);
+    }
+
+    @Override
+    public Map<String, Long> contarPorEstado() {
+        Map<String, Long> conteos = new LinkedHashMap<>();
+        long total = solicitudRepository.count();
+        conteos.put("TODAS", total);
+        for (SolicitudRepository.EstadoConteo c : solicitudRepository.contarAgrupadoPorEstado()) {
+            conteos.put(c.getCodigo(), c.getTotal());
+        }
+        return conteos;
+    }
+
     @Override
     public List<Solicitud> listarPorEstudiante(Long estudianteId) {
         return solicitudRepository.findByEstudianteId(estudianteId);

@@ -21,6 +21,15 @@ export class RevisarSolicitudesComponent implements OnInit {
     modalObs: string | null = null;
     modalTitulo = '';
 
+    // Paginación server-side — con miles de solicitudes no se puede cargar todo de una vez
+    paginaActual = 0; // 0-indexed, como Spring Pageable
+    tamanioPagina = 20;
+    totalElementos = 0;
+    totalPaginas = 0;
+
+    // Conteos por estado para las pestañas de filtro (independientes de la página cargada)
+    conteos: Record<string, number> = {};
+
     // Modal de rechazo con observación
     modalRechazo = false;
     solicitudIdRechazo: number | null = null;
@@ -40,6 +49,7 @@ export class RevisarSolicitudesComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.cargarConteos();
         this.cargar();
         // Safety: stop spinner after 10s even if backend unreachable
         setTimeout(() => { if (this.cargando) this.cargando = false; }, 10000);
@@ -47,22 +57,65 @@ export class RevisarSolicitudesComponent implements OnInit {
 
     cargar(): void {
         this.cargando = true;
-        this.solicitudService.listarSolicitudes().subscribe({
-            next: (data) => { this.solicitudes = data; this.cargando = false; this.cdr.markForCheck(); },
+        this.solicitudService.listarSolicitudesPaginado(this.paginaActual, this.tamanioPagina, this.filtroEstado || undefined).subscribe({
+            next: (data) => {
+                this.solicitudes = data.content;
+                this.totalElementos = data.totalElements;
+                this.totalPaginas = data.totalPages;
+                this.cargando = false;
+                this.cdr.markForCheck();
+            },
             error: () => { this.cargando = false; this.notification.error('Error al cargar solicitudes.', 'Error'); this.cdr.markForCheck(); }
         });
     }
 
+    cargarConteos(): void {
+        this.solicitudService.contarPorEstado().subscribe({
+            next: (data) => { this.conteos = data; this.cdr.markForCheck(); },
+            error: () => {}
+        });
+    }
+
     get solicitudesFiltradas(): any[] {
-        if (!this.filtroEstado) return this.solicitudes;
-        return this.solicitudes.filter(s => s.estado === this.filtroEstado);
+        return this.solicitudes;
     }
 
     contar(estado: string): number {
-        return this.solicitudes.filter(s => s.estado === estado).length;
+        return this.conteos[estado] || 0;
     }
 
-    setFiltro(estado: string): void { this.filtroEstado = estado; }
+    setFiltro(estado: string): void {
+        if (this.filtroEstado === estado) return;
+        this.filtroEstado = estado;
+        this.paginaActual = 0;
+        this.cargar();
+    }
+
+    /** Ventana de números de página a mostrar alrededor de la página actual */
+    get paginasVisibles(): number[] {
+        const total = this.totalPaginas;
+        const actual = this.paginaActual;
+        const ventana = 2;
+        let inicio = Math.max(0, actual - ventana);
+        let fin = Math.min(total - 1, actual + ventana);
+        // Mantener siempre el mismo ancho de ventana cuando sea posible
+        if (fin - inicio < ventana * 2) {
+            inicio = Math.max(0, fin - ventana * 2);
+            fin = Math.min(total - 1, inicio + ventana * 2);
+        }
+        const paginas: number[] = [];
+        for (let i = inicio; i <= fin; i++) paginas.push(i);
+        return paginas;
+    }
+
+    irAPagina(pagina: number): void {
+        if (pagina < 0 || pagina >= this.totalPaginas || pagina === this.paginaActual) return;
+        this.paginaActual = pagina;
+        this.cargar();
+    }
+
+    paginaAnterior(): void { this.irAPagina(this.paginaActual - 1); }
+    paginaSiguiente(): void { this.irAPagina(this.paginaActual + 1); }
 
     inicialNombre(s: any): string {
         return (s.estudiante?.usuario?.nombre || 'E')[0].toUpperCase();
@@ -76,6 +129,7 @@ export class RevisarSolicitudesComponent implements OnInit {
                     sol.estado = 'APROBADA';
                     this.cdr.markForCheck();
                 }
+                this.cargarConteos();
 
                 this.notification.success(
                     'Solicitud aprobada. Redirigiendo para asignar tribunal...',
@@ -123,6 +177,7 @@ export class RevisarSolicitudesComponent implements OnInit {
                     sol.observaciones = obsAGuardar;
                     this.cdr.markForCheck();
                 }
+                this.cargarConteos();
 
                 setTimeout(() => {
                     this.notification.success('Solicitud rechazada. El estudiante fue notificado.', '✓ Rechazada');
@@ -164,6 +219,7 @@ export class RevisarSolicitudesComponent implements OnInit {
                     sol.motivoSuspension = motivo;
                     this.cdr.markForCheck();
                 }
+                this.cargarConteos();
                 this.notification.success('Solicitud suspendida. El estudiante fue notificado.', '✓ Suspendida');
             },
             error: () => this.notification.error('No se pudo suspender.', 'Error')

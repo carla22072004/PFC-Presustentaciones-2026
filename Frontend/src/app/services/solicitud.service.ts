@@ -13,6 +13,18 @@ export class SolicitudService {
     listarSolicitudes(): Observable<any[]> {
         return this.http.get<any[]>(this.apiUrl);
     }
+    listarSolicitudesPaginado(page: number, size: number, estado?: string): Observable<{
+        content: any[]; totalElements: number; totalPages: number; page: number; size: number;
+    }> {
+        let params = `page=${page}&size=${size}`;
+        if (estado) params += `&estado=${encodeURIComponent(estado)}`;
+        return this.http.get<{ content: any[]; totalElements: number; totalPages: number; page: number; size: number; }>(
+            `${this.apiUrl}/paginado?${params}`
+        );
+    }
+    contarPorEstado(): Observable<Record<string, number>> {
+        return this.http.get<Record<string, number>>(`${this.apiUrl}/contar-por-estado`);
+    }
     listarMisSolicitudes(): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/mis-solicitudes`);
     }
