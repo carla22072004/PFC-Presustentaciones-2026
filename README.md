@@ -1,10 +1,9 @@
 # Sistema de Gestión de Pre-Sustentaciones UTEQ
 
 [![Version](https://img.shields.io/badge/version-v0.9.0--rc-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14892026.svg)](https://doi.org/10.5281/zenodo.14892026)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![JaCoCo Coverage](https://img.shields.io/badge/coverage-%3E60%25-brightgreen.svg)](docs/informe-entrega-3.pdf)
-[![OWASP Top 10](https://img.shields.io/badge/OWASP-PASSED-success.svg)](docs/seguridad/OWASP-AUDIT.md)
+[![JaCoCo Coverage](https://img.shields.io/badge/coverage-2.8%25-orange.svg)](docs/mediciones/COVERAGE.md)
+[![OWASP Top 10](https://img.shields.io/badge/OWASP-revisión_manual-yellow.svg)](docs/seguridad/OWASP-AUDIT.md)
 
 Sistema web para la automatización, gestión y evaluación de pre-sustentaciones de trabajos de titulación de la **Universidad Técnica Estatal de Quevedo (UTEQ)**.
 
