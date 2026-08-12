@@ -1,92 +1,58 @@
-# 🛡️ INFORME DE AUDITORÍA AUTOMÁTICA DE SEGURIDAD OWASP TOP 10
+# 🛡️ AUDITORÍA DE SEGURIDAD OWASP TOP 10 — REVISIÓN MANUAL DE CÓDIGO
 
-**Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ  
-**Herramientas de Auditoría:** OWASP ZAP CLI, SpotBugs Security Plugin, Dependency-Check CLI  
-**Fecha de Ejecución:** 30 de Julio de 2026  
-
----
-
-## 📌 Resumen de Controles Auditados
-
-Se evaluaron 6 controles de seguridad críticos basados en la norma OWASP Top 10:
-
-1. **A01:2021 - Broken Access Control (Control de Acceso Defectuoso)**
-2. **A02:2021 - Cryptographic Failures (Fallas Criptográficas)**
-3. **A03:2021 - Injection (Inyección SQL y Comandos)**
-4. **A04:2021 - Insecure Design (Diseño Inseguro)**
-5. **A05:2021 - Security Misconfiguration (Configuración Insegura de Seguridad)**
-6. **A06:2021 - Vulnerable and Outdated Components (Componentes Vulnerables)**
+**Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
+**Metodología:** Revisión manual del código fuente (backend Spring Security + controladores REST) contra los 6 controles listados abajo. **No se ejecutaron herramientas automáticas** (OWASP ZAP, SpotBugs, Dependency-Check) — una versión anterior de este documento citaba salidas de esas herramientas que nunca se corrieron; se retiraron.
+**Fecha:** 2026-08-11/12.
 
 ---
 
-## 💻 Salidas de Consola y Comandos de Ejecución
+## Resumen
 
-### Control #1: Prevención de Inyección SQL (A03:2021)
-```text
-$ dependency-check --scan ./backend --format HTML --out ./docs/seguridad/
-[INFO] Checking for SQL Injection patterns in JPA Repositories and PL/pgSQL scripts...
-[SUCCESS] 0 dynamic SQL queries detected in Spring Data JPA interfaces.
-[SUCCESS] All complex queries encapsulated in parameterized PL/pgSQL Stored Procedures (V2__stored_procedures.sql).
-[RESULT] PASSED - 100% Prepared Statements / Bound Parameters.
-```
+De los 6 controles revisados, esta ronda encontró y corrigió **3 problemas reales de control de acceso** en la gestión de usuarios, y deja **1 hallazgo abierto** (secreto JWT hardcodeado) pendiente de una decisión de gestión de secretos que excede el alcance de esta corrección.
 
-### Control #2: Autenticación Segura y JWT (A02:2021 & A07:2021)
-```text
-$ owasp-zap-cli quick-scan --self-contained -t http://localhost:8080/api/auth/login
-[INFO] Testing Password Hashing Mechanism...
-[INFO] Algorithm: BCrypt (Strength factor: 10).
-[INFO] Testing JWT Secret Entropy...
-[SUCCESS] Secret Key entropy: 256-bit SHA-256 HMAC (64 hex characters).
-[SUCCESS] Cookies marked with HttpOnly=true, SameSite=Lax.
-[RESULT] PASSED - Token validation robust and secure.
-```
+## A01:2021 — Broken Access Control
 
-### Control #3: Control de Acceso y Autorización por Roles (A01:2021)
-```text
-$ curl -i -X GET http://localhost:8080/api/usuarios -H "Authorization: Bearer TokenInvalido"
-HTTP/1.1 401 Unauthorized
-WWW-Authenticate: Bearer error="invalid_token"
-Content-Type: application/json
+**Hallado (corregido):** `UsuarioController` no tenía ninguna anotación `@PreAuthorize` — cualquier usuario autenticado (de cualquier rol) podía listar/crear/editar/desactivar/eliminar usuarios vía `/api/usuarios/**`, incluyendo asignar el rol `ADMIN` a cualquier cuenta. Corregido: los endpoints de gestión ahora requieren `hasRole('ADMIN')`; `GET /{id}` y `PATCH /{id}/perfil` verifican que el `id` corresponda al usuario autenticado (resuelto desde el JWT, no desde el parámetro de la URL) salvo que quien pide sea ADMIN.
 
-{"status":401,"error":"Unauthorized","message":"Acceso no autorizado"}
-[RESULT] PASSED - Protected endpoints return 401/403 strictly.
-```
+**Hallado (corregido):** `POST /api/auth/register` estaba bajo `permitAll()` (matcher `/api/auth/**`) y permitía crear una cuenta con `rol: "ADMIN"` sin ninguna autenticación. No lo usa ningún componente del frontend. Corregido: ahora requiere `hasRole('ADMIN')`.
 
-### Control #4: Configuración Insegura de CORS y Headers HTTP (A05:2021)
-```text
-$ curl -i -X OPTIONS http://localhost:8080/api/auth/login -H "Origin: http://evilsite.com"
-HTTP/1.1 403 Forbidden
-[INFO] Checking CORS origins... Allowed: [http://localhost:4200, http://localhost:3000].
-[RESULT] PASSED - CORS restricted strictly to white-listed origins.
-```
+**Hallado (corregido):** `GlobalExceptionHandler` capturaba `RuntimeException` genéricamente y devolvía siempre 400 — como `AccessDeniedException` (la excepción que lanza `@PreAuthorize` al denegar acceso) también es una `RuntimeException`, un rechazo de autorización se reportaba como `400 Bad Request` en vez de `403 Forbidden`. No era un agujero de seguridad (el acceso sí se bloqueaba), pero el código de estado era engañoso. Se agregó un `@ExceptionHandler(AccessDeniedException.class)` específico que devuelve 403.
 
-### Control #5: Auditoría de Componentes y Dependencias (A06:2021)
-```text
-$ ./mvnw.cmd dependency-check:check
-[INFO] Scanning pom.xml dependencies...
-[INFO] Checking CVE database...
-[INFO] Dependencies analyzed: 42
-[SUCCESS] Vulnerabilities found: 0 Critical, 0 High.
-[RESULT] PASSED - All dependencies up to date (Spring Boot 3.2.1, JJWT 0.12.5).
-```
+**Verificado, sin cambios necesarios:** el resto de los recursos (`/api/solicitudes/**`, `/api/evaluaciones/**`, etc.) exige autenticación vía `SecurityConfig`, y los endpoints sensibles usan `hasAnyRole(...)` a nivel de método. Los controladores que actúan "en nombre del usuario actual" (p. ej. `SolicitudController.crearPorUsuario`) ya resuelven el usuario desde el JWT en vez de confiar en un ID recibido del cliente — ese patrón es el que se replicó al corregir `UsuarioController`.
 
-### Control #6: Protección de Datos Sensibles en Tránsito y Reposo (A02:2021)
-```text
-$ spotbugs -textui -effort:max ./backend/target/presustentaciones-1.0.0-SNAPSHOT.jar
-[INFO] Scanning bytecode for hardcoded secrets, weak PRNGs, and cleartext passwords...
-[SUCCESS] No plain-text passwords or exposed secrets detected.
-[RESULT] PASSED - Zero critical security code smells.
-```
+## A02:2021 — Cryptographic Failures
+
+**Hallado (corregido):** `UsuarioServiceImpl.crear()` guardaba la contraseña **en texto plano** — no llamaba a `PasswordEncoder`, a diferencia de `AuthController.register()` que sí lo hacía. Cualquier usuario creado vía `POST /api/usuarios` habría quedado con la contraseña sin encriptar en la base de datos, y además no habría podido iniciar sesión (el login compara contra un hash BCrypt). Corregido: se inyectó `PasswordEncoder` y se encripta antes de guardar.
+
+**Hallado (corregido):** la entidad `Usuario` devolvía el campo `password` (hash BCrypt) en **toda** respuesta JSON — `GET /api/usuarios`, `GET /api/usuarios/{id}`, etc. — porque los controladores serializan la entidad JPA directamente. Corregido con `@JsonProperty(access = WRITE_ONLY)` en el campo: se sigue aceptando en el cuerpo de creación, pero nunca se serializa de vuelta al cliente.
+
+**Hallado (abierto, no corregido):** el secreto JWT (`jwt.secret`) está hardcodeado en texto plano en `application.properties`, en el repositorio. Correcto: BCrypt con factor 10, algoritmo de firma HS512. Pendiente: mover el secreto a una variable de entorno / gestor de secretos antes de cualquier despliegue real — no se cambió aquí porque invalidaría todas las sesiones activas y requiere decidir el mecanismo de configuración por entorno, fuera del alcance de esta corrección puntual.
+
+## A03:2021 — Injection
+
+**Verificado, sin hallazgos:** todo el acceso a datos pasa por Spring Data JPA (parámetros ligados) o por los procedimientos almacenados PL/pgSQL parametrizados de `V2__stored_procedures.sql`. No se encontró concatenación manual de SQL ni JPQL/`@Query` con interpolación de strings sin parametrizar en los repositorios revisados.
+
+## A04:2021 — Insecure Design
+
+**Hallado (sin corregir, riesgo bajo):** la mayoría de los controladores devuelve entidades JPA directamente en vez de DTOs (documentado también en `CLAUDE.md`); esto acopla la API al modelo de datos interno y hace más fácil que se filtren campos sensibles por accidente (como pasó con `password`, ver A02). Los módulos más nuevos (rúbricas, tutorías, evaluación) sí usan DTOs dedicados — se recomienda extender ese patrón al resto.
+
+## A05:2021 — Security Misconfiguration
+
+**Verificado:** CORS restringido explícitamente a `http://localhost:4200` y `http://localhost:3000` (`SecurityConfig` + `WebConfig`, más `@CrossOrigin` por controlador) — configurado en 3 lugares distintos que hay que mantener sincronizados si se agrega un origen nuevo (riesgo de mantenimiento, no de seguridad activa). CSRF deshabilitado deliberadamente (correcto para una API JWT stateless sin cookies de sesión). Sesión configurada como `STATELESS`.
+
+## A06:2021 — Vulnerable and Outdated Components
+
+**No verificado en esta ronda** — requiere correr `mvn dependency-check:check` o `npm audit` contra las versiones reales del `pom.xml`/`package.json`, que no se ejecutaron como parte de esta revisión manual. Pendiente para una próxima corrida real (con las herramientas efectivamente instaladas) en vez de asumir "0 vulnerabilidades" sin haberlas corrido.
 
 ---
 
-## 📊 Matriz Consolidada de Auditoría OWASP
+## Matriz consolidada
 
-| Control OWASP | Estado | Vulnerabilidades Halladas | Severidad Máxima | Acción Tomada |
-|---|---|---|---|---|
-| A01: Broken Access Control | ✅ PASSED | 0 | Ninguna | Enforzamiento `@PreAuthorize` y JWT filter |
-| A02: Cryptographic Failures | ✅ PASSED | 0 | Ninguna | BCrypt 10 rounds + Secret 256-bits |
-| A03: Injection (SQLi) | ✅ PASSED | 0 | Ninguna | Stored Procedures PL/pgSQL parametrizados |
-| A04: Insecure Design | ✅ PASSED | 0 | Ninguna | DTOs limpios sin exposiciones de entidades |
-| A05: Security Misconfig | ✅ PASSED | 0 | Ninguna | Headers de seguridad + CORS estricto |
-| A06: Vulnerable Components | ✅ PASSED | 0 | Ninguna | Actualización a parches estables 2026 |
+| Control OWASP | Estado | Hallazgos | Acción |
+|---|---|---|---|
+| A01: Broken Access Control | 🟢 Corregido | 2 reales (usuarios sin `@PreAuthorize`, registro público) | `@PreAuthorize('ADMIN')` + validación de propiedad |
+| A02: Cryptographic Failures | 🟡 Corregido parcialmente | 2 corregidos (password en texto plano, filtrado en JSON), 1 abierto (secreto JWT hardcodeado) | Ver detalle arriba |
+| A03: Injection | 🟢 Sin hallazgos | 0 | — |
+| A04: Insecure Design | 🟡 Riesgo bajo, sin corregir | 1 (entidades expuestas directamente) | Recomendado para próxima entrega |
+| A05: Security Misconfig | 🟢 Sin hallazgos | 0 | — |
+| A06: Vulnerable Components | ⚪ No verificado | — | Pendiente de correr la herramienta real |
