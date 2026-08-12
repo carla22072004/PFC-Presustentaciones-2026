@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,12 +21,16 @@ class JwtTokenProviderTest {
     void setUp() {
         jwtTokenProvider = new JwtTokenProvider();
         ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", secret);
-        ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpirationInMs", expirationMs);
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpiration", (long) expirationMs);
     }
 
     @Test
     void testGenerateAndValidateToken() {
-        Authentication auth = new UsernamePasswordAuthenticationToken("user@uteq.edu.ec", "password");
+        UserDetails userDetails = User.withUsername("user@uteq.edu.ec")
+                .password("password")
+                .authorities("ROLE_ESTUDIANTE")
+                .build();
+        Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, "password", userDetails.getAuthorities());
         String token = jwtTokenProvider.generateToken(auth);
 
         assertNotNull(token);
