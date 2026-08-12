@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.SolicitudService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -124,6 +125,33 @@ public class SolicitudController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public List<Solicitud> listar() {
         return solicitudService.listarSolicitudes();
+    }
+
+    /**
+     * Versión paginada de {@link #listar()} — evita cargar miles de filas de una sola vez,
+     * que es lo que hacía colapsar la tabla de "Gestionar Solicitudes" en el frontend.
+     */
+    @GetMapping("/paginado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    public ResponseEntity<?> listarPaginado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String estado) {
+        Page<Solicitud> resultado = solicitudService.listarSolicitudesPaginado(page, size, estado);
+        return ResponseEntity.ok(Map.of(
+                "content", resultado.getContent(),
+                "totalElements", resultado.getTotalElements(),
+                "totalPages", resultado.getTotalPages(),
+                "page", resultado.getNumber(),
+                "size", resultado.getSize()
+        ));
+    }
+
+    /** Conteo de solicitudes por estado, para los contadores de las pestañas de filtro */
+    @GetMapping("/contar-por-estado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    public ResponseEntity<Map<String, Long>> contarPorEstado() {
+        return ResponseEntity.ok(solicitudService.contarPorEstado());
     }
 
     @GetMapping("/estudiante/{estudianteId}")

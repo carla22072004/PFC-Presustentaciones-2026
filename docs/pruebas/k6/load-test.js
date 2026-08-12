@@ -13,7 +13,7 @@ export const options = {
     },
 };
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = `${__ENV.BASE_URL || 'http://localhost:8080/api'}`;
 
 export default function () {
     // 1. Health check / catalog request
@@ -22,10 +22,10 @@ export default function () {
         'status is 200 or 401': (r) => r.status === 200 || r.status === 401,
     });
 
-    // 2. Auth Login test
+    // 2. Auth Login test (credenciales reales del admin sembrado)
     const payload = JSON.stringify({
         email: 'admin@uteq.edu.ec',
-        password: 'password123',
+        password: 'admin123',
     });
 
     const params = {
@@ -36,7 +36,7 @@ export default function () {
 
     const loginRes = http.post(`${BASE_URL}/auth/login`, payload, params);
     check(loginRes, {
-        'login status is 200 or 400': (r) => r.status === 200 || r.status === 400,
+        'login status is 200': (r) => r.status === 200,
     });
 
     sleep(1);

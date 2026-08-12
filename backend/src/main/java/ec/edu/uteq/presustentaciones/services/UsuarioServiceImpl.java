@@ -1,9 +1,14 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.entities.RolUsuario;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +22,22 @@ import java.util.Optional;
 public class UsuarioServiceImpl implements IUsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final RolUsuarioRepository rolUsuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    /** rol (string) y rolUsuario (FK a roles_usuario) son dos columnas paralelas para el mismo dato — hay que mantenerlas sincronizadas. */
+    private RolUsuario resolverRol(String codigoRol) {
+        return rolUsuarioRepository.findByCodigo(codigoRol)
+                .orElseThrow(() -> new RuntimeException("Rol inválido: " + codigoRol));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Usuario> listarPaginado(int page, int size, String q) {
+        int paginaSegura = Math.max(page, 0);
+        int tamanioSeguro = Math.min(Math.max(size, 1), 100);
+        return usuarioRepository.buscarPaginado(q, PageRequest.of(paginaSegura, tamanioSeguro));
+    }
 
     @Override
     public Usuario crear(Usuario usuario) {
@@ -26,6 +47,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new RuntimeException("Ya existe un usuario con el email: " + usuario.getEmail());
         }
 
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        usuario.setRolUsuario(resolverRol(usuario.getRol()));
         return usuarioRepository.save(usuario);
     }
 
@@ -39,7 +62,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
         existente.setNombre(usuario.getNombre());
         existente.setApellido(usuario.getApellido());
         existente.setEmail(usuario.getEmail());
-        existente.setRol(usuario.getRol());
+        if (usuario.getRol() != null && !usuario.getRol().equals(existente.getRol())) {
+            existente.setRol(usuario.getRol());
+            existente.setRolUsuario(resolverRol(usuario.getRol()));
+        }
         if (usuario.getTelefono() != null) {
             existente.setTelefono(usuario.getTelefono());
         }

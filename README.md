@@ -1,10 +1,9 @@
 # Sistema de Gestión de Pre-Sustentaciones UTEQ
 
 [![Version](https://img.shields.io/badge/version-v0.9.0--rc-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14892026.svg)](https://doi.org/10.5281/zenodo.14892026)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![JaCoCo Coverage](https://img.shields.io/badge/coverage-%3E60%25-brightgreen.svg)](docs/informe-entrega-3.pdf)
-[![OWASP Top 10](https://img.shields.io/badge/OWASP-PASSED-success.svg)](docs/seguridad/OWASP-AUDIT.md)
+[![JaCoCo Coverage](https://img.shields.io/badge/coverage-2.8%25-orange.svg)](docs/mediciones/COVERAGE.md)
+[![OWASP Top 10](https://img.shields.io/badge/OWASP-revisión_manual-yellow.svg)](docs/seguridad/OWASP-AUDIT.md)
 
 Sistema web para la automatización, gestión y evaluación de pre-sustentaciones de trabajos de titulación de la **Universidad Técnica Estatal de Quevedo (UTEQ)**.
 
@@ -39,10 +38,10 @@ El sistema estará disponible en:
 | **Especificación SRS** | [`docs/srs/SRS.md`](docs/srs/SRS.md) | Documento de requisitos bajo la norma ISO/IEC/IEEE 29148:2018 (15 HUs, 15 CUs). |
 | **Matriz Trazabilidad** | [`docs/trazabilidad/matriz.csv`](docs/trazabilidad/matriz.csv) | Conexión Requisito → HU → Módulo → Endpoint → Test → Evidencia Empírica. |
 | **Despliegue & Docker** | [`Makefile`](Makefile) / [`docker-compose.yml`](docker-compose.yml) | Comando `make up` y anclaje criptográfico de imágenes con digests `sha256`. |
-| **Pruebas de Carga k6** | [`docs/pruebas/k6/`](docs/pruebas/k6/) | Script k6 y 3 corridas de resultados crudos JSON (`run1`, `run2`, `run3`). |
-| **Auditoría OWASP** | [`docs/seguridad/OWASP-AUDIT.md`](docs/seguridad/OWASP-AUDIT.md) | Evaluación automática de 6 controles de seguridad OWASP Top 10 con logs. |
-| **Usabilidad SUS** | [`docs/usabilidad/SUS-RESULTS.md`](docs/usabilidad/SUS-RESULTS.md) | Evaluación Cuestionario SUS con 10 personas externas (Score: 91.25 / 100 - Grado A+). |
-| **Lighthouse Frontend** | [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md) | Métricas Frontend: Rendimiento (94), Accesibilidad (98), Buenas Prácticas (96). |
+| **Pruebas de Carga k6** | [`docs/pruebas/k6/`](docs/pruebas/k6/) | Script k6 y 2 corridas reales de resultados JSON (`run1`, `run2`). |
+| **Auditoría OWASP** | [`docs/seguridad/OWASP-AUDIT.md`](docs/seguridad/OWASP-AUDIT.md) | Revisión manual de código de 6 controles OWASP Top 10: 3 hallazgos reales corregidos, 1 abierto. |
+| **Usabilidad SUS** | [`docs/usabilidad/SUS-RESULTS.md`](docs/usabilidad/SUS-RESULTS.md) | Instrumento SUS listo; pendiente de aplicar a usuarios reales. |
+| **Lighthouse Frontend** | [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md) | Auditoría real (dev server): Rendimiento 55, Accesibilidad 89, Buenas Prácticas 100, SEO 91. |
 | **Arquitectura C4** | [`docs/arquitectura/README.md`](docs/arquitectura/README.md) | Diagramas de Arquitectura Modelo C4 (Niveles 1 Contexto, 2 Contenedores, 3 Componentes). |
 | **Registros ADR** | [`docs/arquitectura/adrs/`](docs/arquitectura/adrs/) | 6 Registros de Decisiones Arquitectónicas (ADR-001 a ADR-006). |
 | **Taxonomía CRediT** | [`CONTRIBUTORS.md`](CONTRIBUTORS.md) | Asignación explícita de roles CRediT para los 4 integrantes del grupo universitario. |
