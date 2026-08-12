@@ -1,0 +1,112 @@
+<div class="usr-wrapper">
+    <div class="usr-header">
+        <div>
+            <h2 class="usr-title"><i class="bi bi-people-fill me-2"></i>Gestionar Usuarios y Roles</h2>
+            <p class="usr-subtitle">Administración total del sistema: crear, activar, desactivar y asignar roles</p>
+        </div>
+        <div class="usr-actions">
+            <button class="usr-btn usr-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+            <button class="usr-btn usr-btn-nuevo" (click)="abrirModalNuevo()"><i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario</button>
+        </div>
+    </div>
+
+    <input class="usr-buscador" type="text" placeholder="Buscar por nombre, correo o rol..."
+           [(ngModel)]="filtroTexto" (ngModelChange)="onBuscarChange()" />
+
+    <div class="usr-loading" *ngIf="cargando"><div class="usr-spinner"></div><p>Cargando usuarios...</p></div>
+
+    <div class="usr-table-card" *ngIf="!cargando">
+        <table class="usr-tabla">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th class="usr-text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let u of usuarios">
+                    <td>
+                        <div class="usr-persona">
+                            <div class="usr-avatar">{{ u.nombre[0] }}</div>
+                            <span>{{ u.nombre }} {{ u.apellido }}</span>
+                            <span class="usr-tag-yo" *ngIf="esUsuarioActual(u)">Tú</span>
+                        </div>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <select class="usr-select-rol" [ngModel]="u.rol" (ngModelChange)="cambiarRol(u, $event)" [disabled]="esUsuarioActual(u)">
+                            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <span class="usr-badge" [class.usr-badge-activo]="u.activo" [class.usr-badge-inactivo]="!u.activo">
+                            {{ u.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </td>
+                    <td class="usr-text-center">
+                        <button class="usr-icon-btn" [title]="u.activo ? 'Desactivar' : 'Activar'"
+                                [disabled]="esUsuarioActual(u)" (click)="toggleActivo(u)">
+                            <i class="bi" [ngClass]="u.activo ? 'bi-toggle2-on' : 'bi-toggle2-off'"></i>
+                        </button>
+                        <button class="usr-icon-btn usr-icon-danger" title="Eliminar"
+                                [disabled]="esUsuarioActual(u)" (click)="eliminar(u)">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="usuarios.length === 0">
+                    <td colspan="5" class="usr-vacio">No se encontraron usuarios.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="usr-paginacion" *ngIf="totalPaginas > 1">
+            <span class="usr-paginacion-info">Página {{ paginaActual + 1 }} de {{ totalPaginas }} — {{ totalElementos | number }} usuarios</span>
+            <div class="usr-paginacion-controles">
+                <button class="usr-pag-btn" [disabled]="paginaActual === 0" (click)="irAPagina(0)" title="Primera"><i class="bi bi-chevron-bar-left"></i></button>
+                <button class="usr-pag-btn" [disabled]="paginaActual === 0" (click)="paginaAnterior()" title="Anterior"><i class="bi bi-chevron-left"></i></button>
+                <button *ngFor="let p of paginasVisibles" class="usr-pag-btn usr-pag-num" [class.usr-pag-activo]="p === paginaActual" (click)="irAPagina(p)">{{ p + 1 }}</button>
+                <button class="usr-pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="paginaSiguiente()" title="Siguiente"><i class="bi bi-chevron-right"></i></button>
+                <button class="usr-pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="irAPagina(totalPaginas - 1)" title="Última"><i class="bi bi-chevron-bar-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: nuevo usuario -->
+    <div class="usr-modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
+        <div class="usr-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario</h3>
+            <div class="usr-form-grupo">
+                <label>Nombre</label>
+                <input type="text" [(ngModel)]="nuevoUsuario.nombre" placeholder="Nombre" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Apellido</label>
+                <input type="text" [(ngModel)]="nuevoUsuario.apellido" placeholder="Apellido" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Correo institucional</label>
+                <input type="email" [(ngModel)]="nuevoUsuario.email" placeholder="usuario@uteq.edu.ec" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Contraseña</label>
+                <input type="password" [(ngModel)]="nuevoUsuario.password" placeholder="Contraseña temporal" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Rol</label>
+                <select [(ngModel)]="nuevoUsuario.rol">
+                    <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+                </select>
+            </div>
+            <div class="usr-modal-acciones">
+                <button class="usr-btn usr-btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+                <button class="usr-btn usr-btn-nuevo" [disabled]="guardando" (click)="crearUsuario()">
+                    {{ guardando ? 'Creando...' : 'Crear Usuario' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

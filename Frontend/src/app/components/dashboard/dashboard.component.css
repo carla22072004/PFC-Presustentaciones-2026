@@ -224,9 +224,10 @@
 .sga-card:hover .arrow-icon { transform: translateX(3px); color: #1a5c2e; }
 
 /* Role chips */
-.chip-admin      { background: linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; }
-.chip-docente    { background: linear-gradient(135deg,#065f46,#059669); color:#fff; }
-.chip-estudiante { background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; }
+.chip-admin       { background: linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; }
+.chip-coordinador { background: linear-gradient(135deg,#9a3412,#ea580c); color:#fff; }
+.chip-docente     { background: linear-gradient(135deg,#065f46,#059669); color:#fff; }
+.chip-estudiante  { background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; }
 
 /* Role info banner */
 .role-info-banner {
