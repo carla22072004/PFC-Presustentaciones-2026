@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 import { LoginComponent } from './components/auth/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { RegistrarSolicitudComponent } from './components/solicitudes/registrar-solicitudes/registrar-solicitud.component';
@@ -18,6 +19,7 @@ import { MisAsignacionesComponent } from './components/jurado/mis-asignaciones.c
 import { FirmarActaDocenteComponent } from './components/docente/firmar-acta/firmar-acta-docente.component';
 import { EvaluarRubricaComponent } from './components/jurado/evaluar-rubrica/evaluar-rubrica.component';
 import { VerObservacionesComponent } from './components/solicitudes/ver-observaciones/ver-observaciones.component';
+import { GestionUsuariosComponent } from './components/admin/gestion-usuarios/gestion-usuarios.component';
 
 import { PerfilComponent } from './components/perfil/perfil.component';
 import { MisTutoriasComponent } from './components/tutorias/mis-tutorias/mis-tutorias.component';
@@ -40,7 +42,9 @@ export const routes: Routes = [
             { path: 'notas',                          component: MisNotasComponent,             canActivate: [authGuard] },
             { path: 'horario',                        component: MiHorarioComponent,            canActivate: [authGuard] },
             { path: 'notificaciones',                 component: NotificacionesComponent,       canActivate: [authGuard] },
-            // ── Coordinador (ADMIN) ─────────────────────────────────────────
+            // ── Administrador del sistema (ADMIN) ────────────────────────────
+            { path: 'admin/usuarios',                 component: GestionUsuariosComponent,      canActivate: [roleGuard(['ADMIN'])] },
+            // ── Coordinador (COORDINADOR) ─────────────────────────────────────
             { path: 'admin/revisar-solicitudes',      component: RevisarSolicitudesComponent,   canActivate: [authGuard] },
             { path: 'admin/cronograma/:id',           component: ProgramarCronogramaComponent,  canActivate: [authGuard] },
             { path: 'admin/asignar-jurados/:id',      component: AsignarJuradosComponent,       canActivate: [authGuard] },

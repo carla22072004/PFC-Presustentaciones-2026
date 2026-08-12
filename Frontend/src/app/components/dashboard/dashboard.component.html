@@ -86,6 +86,11 @@
 
             <div class="role-info-banner admin-banner" *ngIf="userRole === 'ADMIN'">
                 <i class="bi bi-info-circle-fill me-2"></i>
+                <span>Como <strong>Administrador del sistema</strong>, controlas la gestión de usuarios: crear cuentas, asignar roles (Coordinador, Docente, Estudiante) y activar o desactivar accesos.</span>
+            </div>
+
+            <div class="role-info-banner coordinador-banner" *ngIf="userRole === 'COORDINADOR'">
+                <i class="bi bi-info-circle-fill me-2"></i>
                 <span>Como <strong>Coordinador</strong>, gestionas el ciclo completo: aprueba solicitudes → asigna tribunal → programa cronograma → registra evaluación → genera acta.</span>
             </div>
 
