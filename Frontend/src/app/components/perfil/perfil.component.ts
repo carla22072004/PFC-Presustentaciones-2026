@@ -88,7 +88,8 @@ export class PerfilComponent implements OnInit {
 
     get rolLabel(): string {
         const map: Record<string, string> = {
-            ADMIN: 'Coordinador',
+            ADMIN: 'Administrador',
+            COORDINADOR: 'Coordinador',
             DOCENTE: 'Docente / Jurado',
             ESTUDIANTE: 'Estudiante'
         };

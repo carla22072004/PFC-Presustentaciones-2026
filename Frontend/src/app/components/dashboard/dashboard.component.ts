@@ -36,10 +36,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ];
 
     // El COORDINADOR gestiona TODO el flujo: revisa → asigna tribunal → programa → evalúa
-    modulosAdmin = [
+    modulosCoordinador = [
         { titulo: 'Gestionar Solicitudes', icon: 'bi-clipboard2-check', image: 'img/MisTramites.png', route: '/dashboard/admin/revisar-solicitudes',
             desc: 'Aprobar, rechazar y hacer seguimiento de todas las solicitudes' },
         { titulo: 'Notificaciones',        icon: 'bi-bell',             image: 'img/MisNotas.png',    route: '/dashboard/notificaciones',
+            desc: 'Mensajes y alertas del sistema' },
+    ];
+
+    // El ADMIN es el administrador del sistema: controla usuarios y roles, no el flujo de solicitudes
+    modulosAdministrador = [
+        { titulo: 'Gestionar Usuarios y Roles', icon: 'bi-people-fill', image: 'img/MisTramites.png', route: '/dashboard/admin/usuarios',
+            desc: 'Crear, activar, desactivar y asignar roles a los usuarios del sistema' },
+        { titulo: 'Notificaciones',             icon: 'bi-bell',        image: 'img/MisNotas.png',    route: '/dashboard/notificaciones',
             desc: 'Mensajes y alertas del sistema' },
     ];
 
@@ -61,6 +69,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         '/dashboard/notas':                       'Mis Notas',
         '/dashboard/horario':                     'Mi Horario',
         '/dashboard/notificaciones':              'Notificaciones',
+        '/dashboard/admin/usuarios':               'Gestionar Usuarios y Roles',
         '/dashboard/admin/revisar-solicitudes':  'Gestionar Solicitudes',
         '/dashboard/admin/cronograma':            'Programar Presentación',
         '/dashboard/admin/asignar-jurados':      'Asignar Tribunal y Tutor',
@@ -113,14 +122,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     get modulosPermitidos() {
-        if (this.userRole === 'ESTUDIANTE') return this.modulosEstudiante;
-        if (this.userRole === 'DOCENTE')    return this.modulosDocente;
-        return this.modulosAdmin;
+        if (this.userRole === 'ESTUDIANTE')  return this.modulosEstudiante;
+        if (this.userRole === 'DOCENTE')     return this.modulosDocente;
+        if (this.userRole === 'ADMIN')       return this.modulosAdministrador;
+        if (this.userRole === 'COORDINADOR') return this.modulosCoordinador;
+        return [];
     }
 
     get rolLabel(): string {
         const map: Record<string, string> = {
-            ADMIN: 'Coordinador',
+            ADMIN: 'Administrador',
+            COORDINADOR: 'Coordinador',
             DOCENTE: 'Docente / Jurado',
             ESTUDIANTE: 'Estudiante'
         };
@@ -130,6 +142,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     get rolColor(): string {
         const map: Record<string, string> = {
             ADMIN: 'chip-admin',
+            COORDINADOR: 'chip-coordinador',
             DOCENTE: 'chip-docente',
             ESTUDIANTE: 'chip-estudiante'
         };
