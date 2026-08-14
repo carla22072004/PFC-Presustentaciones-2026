@@ -5,6 +5,7 @@ import ec.edu.uteq.presustentaciones.entities.Jurado;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
 import ec.edu.uteq.presustentaciones.services.JuradoService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class JuradoController {
 
     /** Asignar un jurado manualmente a una solicitud */
     @PostMapping("/asignar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> asignarJurado(
             @RequestParam Long solicitudId,
             @RequestParam Long docenteId,
@@ -40,6 +42,7 @@ public class JuradoController {
 
     /** Asignación automática de los 3 jurados (PRESIDENTE, VOCAL_1, VOCAL_2) */
     @PostMapping("/asignar-automatico/{solicitudId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> asignarAutomaticamente(@PathVariable Long solicitudId) {
         try {
             juradoService.asignarJuradosAutomaticamente(solicitudId);
@@ -64,6 +67,7 @@ public class JuradoController {
 
     /** Eliminar un jurado */
     @DeleteMapping("/{juradoId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<Void> eliminarJurado(@PathVariable Long juradoId) {
         juradoService.eliminarJurado(juradoId);
         return ResponseEntity.noContent().build();
@@ -71,6 +75,7 @@ public class JuradoController {
 
     /** Sugerir docentes disponibles para asignar (sin los ya asignados) */
     @GetMapping("/sugerencias/{solicitudId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public List<Docente> sugerirDocentes(
             @PathVariable Long solicitudId,
             @RequestParam(defaultValue = "5") int cantidad) {
@@ -81,6 +86,7 @@ public class JuradoController {
 
     /** Asignar tutor a una solicitud */
     @PostMapping("/tutor/asignar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> asignarTutor(
             @RequestParam Long solicitudId,
             @RequestParam Long docenteId) {
@@ -102,6 +108,7 @@ public class JuradoController {
 
     /** Eliminar tutor */
     @DeleteMapping("/tutor/{tutorId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<Void> eliminarTutor(@PathVariable Long tutorId) {
         juradoService.eliminarTutor(tutorId);
         return ResponseEntity.noContent().build();

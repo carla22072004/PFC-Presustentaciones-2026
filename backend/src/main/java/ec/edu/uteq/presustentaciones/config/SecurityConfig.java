@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/actuator/**")
                         .permitAll()
-                        .requestMatchers("/api/tutorias/fases/*/pdf").permitAll()
+                        .requestMatchers("/api/tutorias/**").authenticated()
                         .requestMatchers("/api/catalogos/**").authenticated()
                         .requestMatchers("/api/solicitudes/**").authenticated()
                         .requestMatchers("/api/anteproyectos/**").authenticated()
@@ -54,7 +54,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/rubrica-evaluacion/**").authenticated()
                         .requestMatchers("/api/reportes/**").authenticated()
                         .requestMatchers("/api/estado/**").authenticated()
-                        .requestMatchers("/api/jurados/**").authenticated()
                         .requestMatchers("/api/jurados/**").authenticated()
                         .requestMatchers("/api/tutores/**").authenticated()
                         .requestMatchers("/api/docentes/**").authenticated()

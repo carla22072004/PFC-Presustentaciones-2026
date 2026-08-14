@@ -4,11 +4,16 @@ import ec.edu.uteq.presustentaciones.dto.NuevoMensajeRequest;
 import ec.edu.uteq.presustentaciones.dto.TutoriaFaseDTO;
 import ec.edu.uteq.presustentaciones.dto.TutoriaMensajeDTO;
 import ec.edu.uteq.presustentaciones.dto.TutoriaResumenDTO;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.TutoriaService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,9 +26,11 @@ import java.util.Map;
 public class TutoriaController {
 
     private final TutoriaService tutoriaService;
+    private final UsuarioRepository usuarioRepository;
 
-    public TutoriaController(TutoriaService tutoriaService) {
+    public TutoriaController(TutoriaService tutoriaService, UsuarioRepository usuarioRepository) {
         this.tutoriaService = tutoriaService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     // ── Listados por usuario ──────────────────────────────────────────────────
@@ -31,7 +38,8 @@ public class TutoriaController {
     @GetMapping("/estudiante/{usuarioId}")
     public ResponseEntity<?> obtenerTutoriasEstudiante(@PathVariable Long usuarioId) {
         try {
-            List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasEstudiante(usuarioId);
+            Long realUsuarioId = resolverUsuarioId(usuarioId);
+            List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasEstudiante(realUsuarioId);
             return ResponseEntity.ok(resultado);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -41,7 +49,8 @@ public class TutoriaController {
     @GetMapping("/docente/{usuarioId}")
     public ResponseEntity<?> obtenerTutoriasDocente(@PathVariable Long usuarioId) {
         try {
-            List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasDocente(usuarioId);
+            Long realUsuarioId = resolverUsuarioId(usuarioId);
+            List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasDocente(realUsuarioId);
             return ResponseEntity.ok(resultado);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -52,9 +61,10 @@ public class TutoriaController {
 
     @GetMapping("/{tutorId}/resumen")
     public ResponseEntity<?> obtenerResumen(@PathVariable Long tutorId,
-                                            @RequestParam Long usuarioId) {
+                                            @RequestParam(required = false) Long usuarioId) {
         try {
-            TutoriaResumenDTO resumen = tutoriaService.obtenerResumen(tutorId, usuarioId);
+            Long realUsuarioId = resolverUsuarioId(usuarioId);
+            TutoriaResumenDTO resumen = tutoriaService.obtenerResumen(tutorId, realUsuarioId);
             return ResponseEntity.ok(resumen);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -74,11 +84,13 @@ public class TutoriaController {
     // ── Operaciones sobre fases ───────────────────────────────────────────────
 
     @PostMapping("/{tutorId}/nueva-fase")
+    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> crearFaseConObservacion(@PathVariable Long tutorId,
                                                      @RequestParam String observacion,
-                                                     @RequestParam Long tutorUsuarioId) {
+                                                     @RequestParam(required = false) Long tutorUsuarioId) {
         try {
-            TutoriaFaseDTO fase = tutoriaService.crearFaseConObservacion(tutorId, tutorUsuarioId, observacion);
+            Long realTutorUsuarioId = obtenerUsuarioAutenticado().getId();
+            TutoriaFaseDTO fase = tutoriaService.crearFaseConObservacion(tutorId, realTutorUsuarioId, observacion);
             return ResponseEntity.ok(fase);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -88,9 +100,10 @@ public class TutoriaController {
     @PostMapping(value = "/fases/{faseId}/subir-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> subirPdfCorregido(@PathVariable Long faseId,
                                                @RequestParam("archivo") MultipartFile archivo,
-                                               @RequestParam Long estudianteUsuarioId) {
+                                               @RequestParam(required = false) Long estudianteUsuarioId) {
         try {
-            TutoriaFaseDTO fase = tutoriaService.subirPdfCorregido(faseId, archivo, estudianteUsuarioId);
+            Long realEstudianteUsuarioId = obtenerUsuarioAutenticado().getId();
+            TutoriaFaseDTO fase = tutoriaService.subirPdfCorregido(faseId, archivo, realEstudianteUsuarioId);
             return ResponseEntity.ok(fase);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -98,11 +111,13 @@ public class TutoriaController {
     }
 
     @PostMapping("/fases/{faseId}/aprobar")
+    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> aprobarFase(@PathVariable Long faseId,
-                                         @RequestParam Long tutorUsuarioId,
+                                         @RequestParam(required = false) Long tutorUsuarioId,
                                          @RequestParam(required = false) String comentario) {
         try {
-            TutoriaFaseDTO fase = tutoriaService.aprobarFase(faseId, tutorUsuarioId, comentario);
+            Long realTutorUsuarioId = obtenerUsuarioAutenticado().getId();
+            TutoriaFaseDTO fase = tutoriaService.aprobarFase(faseId, realTutorUsuarioId, comentario);
             return ResponseEntity.ok(fase);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -111,11 +126,12 @@ public class TutoriaController {
 
     @PostMapping("/fases/{faseId}/mensaje")
     public ResponseEntity<?> enviarMensaje(@PathVariable Long faseId,
-                                           @RequestParam Long remitenteId,
+                                           @RequestParam(required = false) Long remitenteId,
                                            @RequestBody NuevoMensajeRequest request) {
         try {
+            Long realRemitenteId = obtenerUsuarioAutenticado().getId();
             TutoriaMensajeDTO mensaje = tutoriaService.enviarMensaje(
-                    faseId, remitenteId, request.getContenido(), request.getTipo());
+                    faseId, realRemitenteId, request.getContenido(), request.getTipo());
             return ResponseEntity.ok(mensaje);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -124,9 +140,10 @@ public class TutoriaController {
 
     @PutMapping("/fases/{faseId}/leer")
     public ResponseEntity<?> marcarMensajesLeidos(@PathVariable Long faseId,
-                                                  @RequestParam Long usuarioId) {
+                                                  @RequestParam(required = false) Long usuarioId) {
         try {
-            tutoriaService.marcarMensajesLeidos(faseId, usuarioId);
+            Long realUsuarioId = obtenerUsuarioAutenticado().getId();
+            tutoriaService.marcarMensajesLeidos(faseId, realUsuarioId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -147,5 +164,26 @@ public class TutoriaController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // ── Helpers de seguridad ──────────────────────────────────────────────────
+
+    private Usuario obtenerUsuarioAutenticado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            throw new RuntimeException("Usuario no autenticado");
+        }
+        return usuarioRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en el sistema"));
+    }
+
+    private Long resolverUsuarioId(Long usuarioIdSolicitado) {
+        Usuario autenticado = obtenerUsuarioAutenticado();
+        boolean esAdminOCoord = "ADMIN".equalsIgnoreCase(autenticado.getRol())
+                || "COORDINADOR".equalsIgnoreCase(autenticado.getRol());
+        if (esAdminOCoord && usuarioIdSolicitado != null) {
+            return usuarioIdSolicitado;
+        }
+        return autenticado.getId();
     }
 }

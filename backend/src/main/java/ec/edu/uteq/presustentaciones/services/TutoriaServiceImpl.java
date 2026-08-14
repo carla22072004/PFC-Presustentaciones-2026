@@ -284,6 +284,17 @@ public class TutoriaServiceImpl implements TutoriaService {
         Usuario remitente = usuarioRepository.findById(remitenteId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        Long tutorUserId = (fase.getTutor() != null && fase.getTutor().getDocente() != null && fase.getTutor().getDocente().getUsuario() != null)
+                ? fase.getTutor().getDocente().getUsuario().getId() : null;
+        Long estudianteUserId = (fase.getTutor() != null && fase.getTutor().getSolicitud() != null && fase.getTutor().getSolicitud().getEstudiante() != null && fase.getTutor().getSolicitud().getEstudiante().getUsuario() != null)
+                ? fase.getTutor().getSolicitud().getEstudiante().getUsuario().getId() : null;
+        boolean esPrivilegiado = remitente.getRol() != null &&
+                ("ADMIN".equalsIgnoreCase(remitente.getRol()) || "COORDINADOR".equalsIgnoreCase(remitente.getRol()));
+
+        if (!remitenteId.equals(tutorUserId) && !remitenteId.equals(estudianteUserId) && !esPrivilegiado) {
+            throw new RuntimeException("No autorizado para enviar mensajes en esta tutoría");
+        }
+
         TutoriaMensaje mensaje = TutoriaMensaje.builder()
                 .fase(fase)
                 .remitente(remitente)
