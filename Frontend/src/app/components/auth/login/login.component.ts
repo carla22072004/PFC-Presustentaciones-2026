@@ -49,7 +49,11 @@ export class LoginComponent implements OnInit {
                 error: (err: any) => {
                     this.cargando = false;
                     this.cdr.markForCheck();
-                    if (err.status === 403) {
+                    if (err.status === 429) {
+                        // Extraer el mensaje del ResponseWrapper de error del backend
+                        const errMsg = err.error?.message || 'Límite de intentos excedido. Por favor, intente de nuevo en un minuto.';
+                        this.notification.error(errMsg, 'Límite Excedido');
+                    } else if (err.status === 403) {
                         this.notification.error('El servidor bloqueó la petición (CORS)', 'Error 403');
                     } else if (err.status === 401) {
                         this.notification.error('Correo o contraseña incorrectos.', 'Acceso Denegado');
