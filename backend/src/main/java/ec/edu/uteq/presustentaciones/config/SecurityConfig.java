@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.config;
 
+import ec.edu.uteq.presustentaciones.security.RateLimitingFilter;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +19,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -30,6 +30,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -37,28 +38,29 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Cabeceras de Seguridad (Requisito E14)
+                .headers(headers -> headers
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)) // 1 año de HSTS
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' http://localhost:8080 http://localhost:4200 ws://localhost:4200 ws://localhost:8080 http://universities.hipolabs.com; frame-ancestors 'none';"))
+                        .frameOptions(frame -> frame.deny()) // X-Frame-Options: DENY
+                )
+                // Autorización de peticiones HTTP (Requisito Versionado /api/v1/)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/actuator/**")
-                        .permitAll()
-                        .requestMatchers("/api/tutorias/**").authenticated()
-                        .requestMatchers("/api/catalogos/**").authenticated()
-                        .requestMatchers("/api/solicitudes/**").authenticated()
-                        .requestMatchers("/api/anteproyectos/**").authenticated()
-                        .requestMatchers("/api/cronogramas/**").authenticated()
-                        .requestMatchers("/api/evaluaciones/**").authenticated()
-                        .requestMatchers("/api/notificaciones/**").authenticated()
-                        .requestMatchers("/api/actas/**").authenticated()
-                        .requestMatchers("/api/salas/**").authenticated()
-                        .requestMatchers("/api/rubricas/**").authenticated()
-                        .requestMatchers("/api/rubrica-evaluacion/**").authenticated()
-                        .requestMatchers("/api/reportes/**").authenticated()
-                        .requestMatchers("/api/estado/**").authenticated()
-                        .requestMatchers("/api/jurados/**").authenticated()
-                        .requestMatchers("/api/tutores/**").authenticated()
-                        .requestMatchers("/api/docentes/**").authenticated()
+                        .requestMatchers(
+                                "/api/v1/auth/**", 
+                                "/v3/api-docs/**", 
+                                "/swagger-ui/**", 
+                                "/swagger-ui.html",
+                                "/actuator/**"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
+                // Añadir filtros de Rate Limiting y JWT (Requisitos Rate Limiting & Blacklist)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
