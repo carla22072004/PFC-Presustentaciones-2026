@@ -55,6 +55,14 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
             throw new RuntimeException("Tu trabajo ha sido suspendido y no puedes subir archivos. Motivo: " + solicitud.getMotivoSuspension());
         }
 
+        String contentType = archivo.getContentType();
+        if (contentType == null || !contentType.equals("application/pdf")) {
+            throw new RuntimeException("Solo se permiten archivos PDF");
+        }
+        if (archivo.getSize() > 10L * 1024 * 1024) {
+            throw new RuntimeException("El archivo no puede superar los 10 MB");
+        }
+
         Path dirPath = Paths.get(uploadDir);
         try { Files.createDirectories(dirPath); } catch (IOException e) {
             throw new RuntimeException("No se pudo crear el directorio de uploads", e);
