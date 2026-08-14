@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @SpringBootApplication
 @EnableJpaRepositories
 @EnableAsync
+@org.springframework.cache.annotation.EnableCaching
 @Slf4j
 public class PreSustentacionesApplication implements CommandLineRunner {
 
