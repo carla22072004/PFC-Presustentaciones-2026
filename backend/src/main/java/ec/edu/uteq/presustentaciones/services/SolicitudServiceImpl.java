@@ -22,6 +22,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -73,6 +75,7 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud crearSolicitud(Long estudianteId, Solicitud datos) {
         Estudiante estudiante = estudianteRepository.findById(estudianteId)
                 .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + estudianteId));
@@ -189,6 +192,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
  
     @Override
+    @Cacheable(value = "solicitudes", key = "'usuario:' + #usuarioId")
     public List<Solicitud> listarPorUsuario(Long usuarioId) {
         return estudianteRepository.findByUsuarioId(usuarioId)
                 .map(e -> solicitudRepository.findByEstudianteId(e.getId()))
@@ -197,6 +201,7 @@ public class SolicitudServiceImpl implements SolicitudService {
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud enviarSolicitud(Long solicitudId) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
@@ -228,6 +233,7 @@ public class SolicitudServiceImpl implements SolicitudService {
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud aprobarSolicitud(Long solicitudId) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
@@ -248,12 +254,14 @@ public class SolicitudServiceImpl implements SolicitudService {
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud rechazarSolicitud(Long solicitudId) {
         return rechazarConObservacion(solicitudId, null);
     }
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud rechazarConObservacion(Long solicitudId, String observacion) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
@@ -278,6 +286,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
  
     @Override
+    @Cacheable(value = "solicitudes", key = "'all'")
     public List<Solicitud> listarSolicitudes() {
         return solicitudRepository.findAllWithEstudiante();
     }
@@ -306,17 +315,20 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     @Override
+    @Cacheable(value = "solicitudes", key = "'estudiante:' + #estudianteId")
     public List<Solicitud> listarPorEstudiante(Long estudianteId) {
         return solicitudRepository.findByEstudianteId(estudianteId);
     }
  
     @Override
+    @Cacheable(value = "solicitudes", key = "#id", unless = "#result == null or !#result.isPresent()")
     public Optional<Solicitud> obtenerPorId(Long id) {
         return solicitudRepository.findById(id);
     }
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud suspenderSolicitud(Long solicitudId, String motivo) {
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
