@@ -55,8 +55,9 @@ public class ReporteController {
     @GetMapping("/cronograma/pdf")
     public ResponseEntity<byte[]> reporteCronograma() throws Exception {
         List<Cronograma> lista = cronogramaRepo.findAll().stream()
-                .filter(c -> "ACTIVO".equals(c.getEstado()))
-                .sorted((a, b) -> a.getFechaInicio().compareTo(b.getFechaInicio()))
+                .filter(c -> c.getEstado() != null && "ACTIVO".equalsIgnoreCase(c.getEstado().getCodigo()))
+                .sorted((a, b) -> a.getFechaInicio() != null && b.getFechaInicio() != null
+                        ? a.getFechaInicio().compareTo(b.getFechaInicio()) : 0)
                 .toList();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

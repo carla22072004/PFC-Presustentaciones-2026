@@ -51,7 +51,7 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
-        if ("SUSPENDIDA".equals(solicitud.getEstado())) {
+        if (solicitud.getEstado() != null && "SUSPENDIDA".equalsIgnoreCase(solicitud.getEstado().getCodigo())) {
             throw new RuntimeException("Tu trabajo ha sido suspendido y no puedes subir archivos. Motivo: " + solicitud.getMotivoSuspension());
         }
 
