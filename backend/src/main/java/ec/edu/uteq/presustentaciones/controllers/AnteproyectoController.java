@@ -8,6 +8,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -77,11 +78,13 @@ public class AnteproyectoController {
     }
 
     @PostMapping("/aprobar/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
     public ResponseEntity<Anteproyecto> aprobar(@PathVariable Long id, @RequestParam String observaciones) {
         return ResponseEntity.ok(anteproyectoService.aprobarAnteproyecto(id, observaciones));
     }
 
     @PostMapping("/rechazar/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
     public ResponseEntity<Anteproyecto> rechazar(@PathVariable Long id, @RequestParam String observaciones) {
         return ResponseEntity.ok(anteproyectoService.rechazarAnteproyecto(id, observaciones));
     }
