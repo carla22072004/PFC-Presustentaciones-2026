@@ -136,7 +136,7 @@ public class TutoriaServiceImpl implements TutoriaService {
         }
 
         Solicitud solicitud = fase.getTutor().getSolicitud();
-        if ("SUSPENDIDA".equals(solicitud.getEstado())) {
+        if (solicitud.getEstado() != null && "SUSPENDIDA".equalsIgnoreCase(solicitud.getEstado().getCodigo())) {
             throw new RuntimeException("No puedes subir más archivos. Este tema ha sido suspendido por: " + solicitud.getMotivoSuspension());
         }
 
