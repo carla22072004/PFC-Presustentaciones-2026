@@ -50,9 +50,9 @@ public class SecurityConfig {
                 // Autorización de peticiones HTTP (Requisito Versionado /api/v1/)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**", 
-                                "/v3/api-docs/**", 
-                                "/swagger-ui/**", 
+                                "/api/v1/auth/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/actuator/**"
                         ).permitAll()

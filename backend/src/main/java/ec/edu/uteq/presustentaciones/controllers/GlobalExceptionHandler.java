@@ -4,6 +4,7 @@ import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -20,6 +21,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ResponseWrapper.error("No tienes permisos para realizar esta acción"));
+    }
+
+    /**
+     * BadCredentialsException (login fallido) es una AuthenticationException, que a su vez
+     * es una RuntimeException: sin este handler caía en el genérico y el frontend recibía
+     * 400 en vez de 401, mostrando "Error de Conexión" en lugar de "credenciales incorrectas".
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleAuthenticationException(AuthenticationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ResponseWrapper.error("Correo o contraseña incorrectos"));
     }
 
     @ExceptionHandler(RuntimeException.class)
