@@ -13,7 +13,7 @@ import lombok.*;
 public class TipoEvaluador {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Short id;
 
