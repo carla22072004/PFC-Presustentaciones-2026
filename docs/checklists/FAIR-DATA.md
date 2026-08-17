@@ -9,7 +9,7 @@
 |---|---|---|
 | Los datos tienen una ubicación estable y documentada dentro del repositorio | ✅ | `docs/mediciones/` reorganizado en Fase 6 para coincidir con rutas declaradas exigidas por la guía; `docs/mediciones/DATA-PROVENANCE.md` indexa cada dato con su ubicación exacta |
 | Existe metadata que describe qué mide cada dato | ✅ | `docs/mediciones/DATA-DICTIONARY.md` documenta unidades, tipo de dato y rangos aceptables para cada variable |
-| Un identificador único y persistente (DOI, hash de commit) referencia cada versión de los datos | 🟡 Parcial | El repositorio tiene `CITATION.cff` y está preparado para Zenodo (`docs/ZENODO.md`), lo que da DOI a nivel de repositorio completo, pero no hay un identificador granular por archivo de datos individual (p. ej. no hay un DOI específico para `k6/run3-summary.json`) |
+| Un identificador único y persistente (DOI, hash de commit) referencia cada versión de los datos | 🟡 Parcial | El repositorio tiene `CITATION.cff` y está preparado para Zenodo (`../ZENODO.md`), y desde la Fase 10 existe además un proceso preparado para depositar el dataset de mediciones **por separado**, con su propio DOI y licencia CC-BY 4.0 (`../ZENODO-DATASET.md`) — pero ninguno de los dos depósitos se ha ejecutado todavía, y aun ejecutado, el DOI sería a nivel de dataset completo, no granular por archivo individual (p. ej. no habría un DOI específico solo para `k6/run3-summary.json`) |
 
 ## Accessible (Accesible)
 
