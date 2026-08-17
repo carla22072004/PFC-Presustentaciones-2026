@@ -48,3 +48,13 @@ backend/.env
 
 # Salida local de Lighthouse CI (lhci autorun / lhci collect)
 .lighthouseci/
+
+# Artefactos de compilacion LaTeX (se regeneran con `make pdf` / latexmk)
+*.aux
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.toc
+*.synctex.gz
