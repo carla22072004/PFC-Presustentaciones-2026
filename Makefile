@@ -1,20 +1,25 @@
 # Makefile para despliegue, verificación y reproducción del entorno PFC-UTEQ
 
-.PHONY: help up down restart logs ps clean all test bench audit docs
+.PHONY: help up down restart logs ps clean all build test bench audit docs pdf wait-backend
 
 help:
 	@echo "Comandos disponibles:"
-	@echo "  make up      - Levanta todo el entorno con Docker Compose"
-	@echo "  make down    - Detiene y elimina contenedores"
-	@echo "  make restart - Reinicia los servicios"
-	@echo "  make logs    - Muestra los logs en tiempo real"
-	@echo "  make ps      - Muestra el estado de los contenedores"
-	@echo "  make clean   - Limpia volúmenes y contenedores huérfanos"
-	@echo "  make all     - Compila el backend y construye el build de producción del frontend"
-	@echo "  make test    - Corre la suite de tests del backend (JaCoCo incluido)"
-	@echo "  make bench   - Corre las 5 pruebas de carga k6 contra localhost:8080"
-	@echo "  make audit   - Corre SpotBugs/find-sec-bugs (SQL dinámico) + npm audit"
-	@echo "  make docs    - Regenera las figuras de docs/mediciones/perf/figuras/ y valida la matriz de trazabilidad"
+	@echo "  make up          - Levanta todo el entorno con Docker Compose"
+	@echo "  make down        - Detiene y elimina contenedores"
+	@echo "  make restart     - Reinicia los servicios"
+	@echo "  make logs        - Muestra los logs en tiempo real"
+	@echo "  make ps          - Muestra el estado de los contenedores"
+	@echo "  make clean       - Limpia volúmenes y contenedores huérfanos"
+	@echo "  make build       - Compila el backend y construye el build de producción del frontend"
+	@echo "  make test        - Corre la suite de tests del backend (JaCoCo incluido)"
+	@echo "  make bench       - Corre las 5 pruebas de carga k6 contra localhost:8080"
+	@echo "  make audit       - Corre SpotBugs/find-sec-bugs (SQL dinámico) + npm audit"
+	@echo "  make docs        - Regenera las figuras de docs/mediciones/perf/figuras/ y valida la matriz de trazabilidad"
+	@echo "  make pdf         - Compila Informe-Final/informe-final.tex a PDF (requiere latexmk/MiKTeX o TeX Live)"
+	@echo "  make all         - Objetivo de reproducibilidad (Criterio R1): desde una clonación limpia,"
+	@echo "                     construye, levanta todos los contenedores, espera a que las migraciones"
+	@echo "                     Flyway se apliquen, corre tests + benchmarks + auditoría + reportes, y"
+	@echo "                     compila el PDF final. Sale con código 0 solo si TODO lo anterior tuvo éxito."
 
 up:
 	@echo "Levantando la infraestructura de contenedores..."
@@ -37,7 +42,7 @@ clean:
 
 ## --- Objetivos exigidos por la guía (Fase 6) ---
 
-all:
+build:
 	@echo "Compilando el backend..."
 	cd backend && ./mvnw -q compile
 	@echo "Construyendo el build de producción del frontend..."
@@ -64,3 +69,32 @@ docs:
 	python scripts/gen-figuras.py
 	@echo "Validando la matriz de trazabilidad contra el repositorio real..."
 	./scripts/validate-traceability.sh || true
+
+pdf:
+	@echo "Compilando el PDF del informe final (Informe-Final/informe-final.tex)..."
+	cd Informe-Final && latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex
+	@echo "PDF generado: Informe-Final/informe-final.pdf"
+
+## --- Objetivo de reproducibilidad end-to-end (Fase 10, Criterio R1) ---
+
+wait-backend:
+	@echo "Esperando a que el backend responda healthy en /actuator/health (las migraciones Flyway se aplican en el arranque de Spring Boot)..."
+	@i=0; \
+	while [ $$i -lt 30 ]; do \
+		if curl -sf http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then \
+			echo "Backend UP (migraciones aplicadas)."; \
+			exit 0; \
+		fi; \
+		i=$$((i + 1)); \
+		echo "  intento $$i/30, esperando 5s..."; \
+		sleep 5; \
+	done; \
+	echo "ERROR: el backend no respondió healthy tras 150s. Revisa 'docker compose logs backend'."; \
+	exit 1
+
+all: build up wait-backend test bench audit docs pdf
+	@echo ""
+	@echo "=== make all completado con éxito ==="
+	@echo "Contenedores arriba, migraciones Flyway aplicadas, tests corridos (JaCoCo), benchmarks k6"
+	@echo "ejecutados, auditoría de seguridad corrida, figuras/trazabilidad regeneradas y PDF final"
+	@echo "compilado en Informe-Final/informe-final.pdf."

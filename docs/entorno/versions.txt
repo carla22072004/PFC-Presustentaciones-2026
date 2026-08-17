@@ -1,8 +1,14 @@
-# Versiones exactas del entorno usado para verificar y generar la evidencia de la Fase 5/6
-# Generado corriendo --version en cada herramienta el 2026-08-17 (Windows 11, jeana-dev-pc).
-# Regenerar con: docker --version && docker compose version && java -version &&
-#                node --version && npm --version && npx ng version &&
-#                k6 version && ./mvnw --version (desde backend/)
+# Versiones exactas del entorno usado para verificar y generar la evidencia del proyecto.
+# Generado corriendo --version en cada herramienta el 2026-08-17 (Windows 11, jeana-dev-pc),
+# y verificado de nuevo end-to-end en la Fase 10 contra un `docker compose up -d --build` real
+# (volumen de Postgres limpio) que llegó a estado UP con las migraciones Flyway aplicadas.
+#
+# Regenerar localmente con: ./scripts/gen-versions.sh > docs/entorno/versions.txt
+# El pipeline de CI (.github/workflows/ci.yml, job "entorno") regenera y publica su propia
+# copia como artefacto en cada push, con las versiones reales del runner de GitHub Actions
+# (Docker/JDK/Node/Angular CLI/SO) -- esa copia de CI es la que demuestra reproducibilidad
+# fuera de la máquina de un integrante; k6 no se instala en ese job porque bench/audit son
+# objetivos explícitamente locales (ver 'make bench'/'make audit').
 #
 # Nota: el backend declara Java 17 como target de compilacion (maven.compiler.source/target
 # en backend/pom.xml), pero el JDK instalado en esta maquina es 21 -- Maven compila en modo

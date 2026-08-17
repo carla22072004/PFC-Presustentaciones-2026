@@ -89,3 +89,39 @@ jobs:
         with:
           name: frontend-dist
           path: Frontend/dist/presustentaciones-frontend/browser
+
+  entorno:
+    name: Entorno — genera docs/entorno/versions.txt desde el runner real de CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Instalar dependencias del frontend (para que 'npx ng version' resuelva el Angular CLI local)
+        working-directory: Frontend
+        run: npm ci
+
+      # k6 no se instala aquí a propósito: bench/audit son objetivos explícitamente locales
+      # (ver 'make bench'/'make audit' en el Makefile) -- este job documenta el entorno real
+      # de CI (Docker/JDK/Node/Angular CLI/SO), no simula una máquina de desarrollo completa.
+      - name: Generar docs/entorno/versions.txt con las versiones reales de este runner
+        run: ./scripts/gen-versions.sh | tee docs/entorno/versions.txt
+
+      - name: Publicar versions.txt como artefacto verificable
+        uses: actions/upload-artifact@v4
+        with:
+          name: entorno-versions
+          path: docs/entorno/versions.txt
