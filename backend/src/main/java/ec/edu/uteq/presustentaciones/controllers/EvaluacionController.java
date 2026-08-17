@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -55,8 +57,8 @@ public class EvaluacionController {
     }
 
     @GetMapping
-    public List<EvaluacionFinal> listar() {
-        return evaluacionService.listarEvaluaciones();
+    public ResponseEntity<Page<EvaluacionFinal>> listar(Pageable pageable) {
+        return ResponseEntity.ok(evaluacionService.listarEvaluaciones(pageable));
     }
 
     @GetMapping("/estudiante/{estudianteId}")

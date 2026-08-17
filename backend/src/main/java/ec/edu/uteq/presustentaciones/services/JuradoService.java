@@ -3,6 +3,8 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.Docente;
 import ec.edu.uteq.presustentaciones.entities.Jurado;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +14,7 @@ public interface JuradoService {
     // ── Jurados ──────────────────────────────────────────────────────────────
     Jurado asignarJurado(Long solicitudId, Long docenteId, String rol);
     List<Jurado> listarPorSolicitud(Long solicitudId);
-    List<Jurado> listarTodos();
+    Page<Jurado> listarTodos(Pageable pageable);
     void eliminarJurado(Long juradoId);
 
     // ── Tutor ─────────────────────────────────────────────────────────────────

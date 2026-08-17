@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' http://localhost:8080 http://localhost:4200 ws://localhost:4200 ws://localhost:8080 http://universities.hipolabs.com; frame-ancestors 'none';"))
                         .frameOptions(frame -> frame.deny()) // X-Frame-Options: DENY
+                        .contentTypeOptions(contentType -> {}) // X-Content-Type-Options: nosniff
                 )
                 // Autorización de peticiones HTTP (Requisito Versionado /api/v1/)
                 .authorizeHttpRequests(auth -> auth

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -21,7 +23,7 @@ public class RubricaController {
     private final CriterioRubricaRepository criterioRepository;
 
     @GetMapping
-    public List<Rubrica> listar() { return rubricaRepository.findAll(); }
+    public Page<Rubrica> listar(Pageable pageable) { return rubricaRepository.findAll(pageable); }
 
     @GetMapping("/{id}")
     public ResponseEntity<Rubrica> obtener(@PathVariable Long id) {

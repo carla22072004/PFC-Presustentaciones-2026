@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -36,8 +38,8 @@ public class TutorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tutor>> listar() {
-        return ResponseEntity.ok(tutorService.listarTodos());
+    public ResponseEntity<Page<Tutor>> listar(Pageable pageable) {
+        return ResponseEntity.ok(tutorService.listarTodos(pageable));
     }
 
     @DeleteMapping("/{id}")
