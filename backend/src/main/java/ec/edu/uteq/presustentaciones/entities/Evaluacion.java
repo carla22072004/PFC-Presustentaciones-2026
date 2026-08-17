@@ -4,6 +4,35 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * sp_calcular_promedio_evaluacion (backend/src/main/resources/db/migration/V2__stored_procedures.sql)
+ * agrega las notas por criterio de evaluaciones_criterio junto con nota_instructor de esta
+ * misma tabla, y persiste nota_final + resultado -- invocado vía EvaluacionRepository
+ * (JPA 2.1 @NamedStoredProcedureQuery, Fase 3 / Criterio P1). Es un PROCEDURE con un
+ * parámetro INOUT tipo refcursor (ParameterMode.REF_CURSOR) en vez de una FUNCTION con
+ * RETURNS TABLE -- ver la nota completa en V2__stored_procedures.sql sobre por qué
+ * (Postgres rechaza la sintaxis CALL que Hibernate genera contra una FUNCTION).
+ */
+@NamedStoredProcedureQuery(
+        name = "Evaluacion.calcularPromedioEvaluacion",
+        procedureName = "presus.sp_calcular_promedio_evaluacion",
+        resultSetMappings = "PromedioEvaluacionMapping",
+        parameters = {
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_solicitud_id", type = Long.class),
+                @StoredProcedureParameter(mode = ParameterMode.REF_CURSOR, name = "p_resultado", type = void.class)
+        }
+)
+@SqlResultSetMapping(
+        name = "PromedioEvaluacionMapping",
+        classes = @ConstructorResult(
+                targetClass = ec.edu.uteq.presustentaciones.dto.PromedioEvaluacionResult.class,
+                columns = {
+                        @ColumnResult(name = "solicitud_id", type = Long.class),
+                        @ColumnResult(name = "nota_final", type = Double.class),
+                        @ColumnResult(name = "estado_resultado", type = String.class)
+                }
+        )
+)
 @Entity
 @Table(name = "evaluaciones", schema = "presus")
 @Getter

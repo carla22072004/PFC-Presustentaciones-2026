@@ -6,6 +6,23 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * sp_generar_codigo_expediente (backend/src/main/resources/db/migration/
+ * V3__stored_procedures_validacion_y_codigos.sql) es un PROCEDURE de Postgres (no FUNCTION)
+ * con un parámetro INOUT para el valor de retorno escalar -- Hibernate invoca @Procedure vía
+ * la sintaxis JDBC "{call proc(?, ?)}", que Postgres solo acepta para PROCEDURE (una FUNCTION
+ * con RETURNS<tipo> rechaza CALL con "is not a procedure. Hint: To call a function, use
+ * SELECT", sin importar cuántos parámetros se declaren) -- bugs reales encontrados probando
+ * el endpoint en vivo contra Docker. Fase 3 / Criterio P1.
+ */
+@NamedStoredProcedureQuery(
+        name = "Estudiante.generarCodigoExpediente",
+        procedureName = "presus.sp_generar_codigo_expediente",
+        parameters = {
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_anio", type = Integer.class),
+                @StoredProcedureParameter(mode = ParameterMode.INOUT, name = "p_codigo", type = String.class)
+        }
+)
 @Entity
 @Table(name = "estudiante", schema = "presus")
 @Getter
