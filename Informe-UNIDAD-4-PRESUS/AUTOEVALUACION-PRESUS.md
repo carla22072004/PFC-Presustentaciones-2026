@@ -25,10 +25,10 @@ autenticación JWT stateless, documentación OpenAPI 3.0 (Springdoc 2.3.0), 21 c
 PDF con iText, y despliegue con Docker Compose. La documentación es exhaustiva: SRS (ISO/IEC/IEEE 29148:2018),
 6 ADR, colección Postman con 22 peticiones, auditoría OWASP, pruebas de carga k6 y métricas Lighthouse reales
 contra build de producción (Performance 64/61 desktop/mobile, Accesibilidad 89, Buenas Prácticas 100, SEO 91;
-ver [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](../docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md)).
+ver [`docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md`](../docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md)).
 La encuesta SUS (91.25/100, Grado A+) de una versión anterior de este informe **era fabricada y fue retirada**;
 el instrumento real está listo pero pendiente de aplicarse a usuarios reales
-(ver [`docs/usabilidad/SUS-RESULTS.md`](../docs/usabilidad/SUS-RESULTS.md)). Sin embargo, el análisis contra los criterios exigidos por la guía
+(ver [`docs/mediciones/sus/SUS-RESULTS.md`](../docs/mediciones/sus/SUS-RESULTS.md)). Sin embargo, el análisis contra los criterios exigidos por la guía
 de la Unidad IV identifica **brechas concretas** que deben cerrarse: la **integración de una API REST externa**,
 el **versionado de la API** (`/api/v1/`), el **proxy de borde (nginx)**, la **ausencia de refresh token** y la
 **caché Redis en el backend**.
@@ -71,7 +71,9 @@ La siguiente tabla clasifica los hallazgos por severidad y prioridad de atenció
   observaciones, notificaciones, estado en tiempo real).
 - **Generación de PDF integrada:** uso de iText para generación de actas y reportes directamente desde el backend,
   con endpoints dedicados (`/api/reportes/**`, `/api/tutorias/fases/*/pdf`).
-- **Documentación exhaustiva:** SRS (ISO/IEC/IEEE 29148:2018) con 15 HUs y 15 CUs, 6 ADR, colección Postman con
+- **Documentación exhaustiva:** SRS v1.0.0 (ISO/IEC/IEEE 29148:2018) con 12 HU y 12 CU (corregido en la
+  Fase 7 de "15 HUs y 15 CUs", que era una cifra que nunca existió — ver
+  [`../docs/requisitos/CHANGELOG-REQ.md`](../docs/requisitos/CHANGELOG-REQ.md)), 6 ADR, colección Postman con
   22 peticiones, arquitectura C4 en 3 niveles, matriz de trazabilidad, diccionario de datos, OWASP audit y
   documento ético con consentimientos informados.
 - **Calidad web medida contra build de producción:** Lighthouse real con 6 corridas (3 desktop + 3 mobile) da

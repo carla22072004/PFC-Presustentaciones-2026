@@ -45,3 +45,6 @@ yarn-error.log
 # Variables de entorno con secretos reales (usar .env.example como plantilla)
 .env
 backend/.env
+
+# Salida local de Lighthouse CI (lhci autorun / lhci collect)
+.lighthouseci/

@@ -2,7 +2,7 @@
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ  
 **Motor de BD:** PostgreSQL 15.x  
-**Esquema de Migración:** Flyway (`V2__stored_procedures.sql`)  
+**Esquema de Migración:** Flyway — [`backend/src/main/resources/db/migration/V2__stored_procedures.sql`](../../backend/src/main/resources/db/migration/V2__stored_procedures.sql) (ver la decisión explícita de convención de carpetas en [`../adr/ADR-003-estrategia-hibrida-bd-sp.md`](../adr/ADR-003-estrategia-hibrida-bd-sp.md))  
 
 ---
 

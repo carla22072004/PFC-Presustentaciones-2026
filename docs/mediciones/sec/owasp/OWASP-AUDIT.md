@@ -1,7 +1,7 @@
 # 🛡️ AUDITORÍA DE SEGURIDAD OWASP TOP 10 — REVISIÓN MANUAL + HERRAMIENTAS AUTOMÁTICAS
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
-**Metodología:** Revisión manual del código fuente (2026-08-11/12) contra los 6 controles listados abajo, **más 3 herramientas automáticas reales corridas el 2026-08-17** (Fase 5): OWASP ZAP baseline (escaneo dinámico contra la app corriendo), SpotBugs + find-sec-bugs (análisis estático, incluye la regla `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE` para SQL dinámico), y `npm audit` (componentes vulnerables del frontend). Evidencia completa en [`docs/seguridad/zap/`](zap/) y en el job `backend` de [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
+**Metodología:** Revisión manual del código fuente (2026-08-11/12) contra los 6 controles listados abajo, **más 3 herramientas automáticas reales corridas el 2026-08-17** (Fase 5): OWASP ZAP baseline (escaneo dinámico contra la app corriendo), SpotBugs + find-sec-bugs (análisis estático, incluye la regla `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE` para SQL dinámico), y `npm audit` (componentes vulnerables del frontend). Evidencia completa en [`docs/mediciones/sec/zap/`](../zap/) y en el job `backend` de [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml).
 **Fecha:** 2026-08-11/12 (revisión manual), 2026-08-17 (herramientas automáticas).
 
 ---
@@ -61,7 +61,7 @@ La revisión manual encontró y corrigió **3 problemas reales de control de acc
 
 ## Análisis estático SpotBugs / find-sec-bugs (2026-08-17)
 
-Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`, filtrado a la categoría `SECURITY` ([`backend/spotbugs-security-include.xml`](../../backend/spotbugs-security-include.xml)), integrado como paso no bloqueante en `.github/workflows/ci.yml` (se publica el reporte XML como artefacto en cada push). **189 hallazgos reales**, ninguno de tipo `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE`:
+Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`, filtrado a la categoría `SECURITY` ([`backend/spotbugs-security-include.xml`](../../../../backend/spotbugs-security-include.xml)), integrado como paso no bloqueante en `.github/workflows/ci.yml` (se publica el reporte XML como artefacto en cada push). **189 hallazgos reales**, ninguno de tipo `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE`:
 
 | Regla | Cantidad | Severidad | Estado |
 |---|---|---|---|
@@ -74,14 +74,14 @@ Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`,
 
 ## Escaneo dinámico OWASP ZAP (2026-08-17)
 
-Corrido con `zap-baseline.py` (imagen oficial `zaproxy/zap-stable`) contra la app real corriendo con la topología de producción (nginx sirviendo el build de Angular + proxy inverso a `/api/v1/` y `/actuator/`, backend Spring Boot, Postgres y Redis). Reportes completos: [`docs/seguridad/zap/zap-baseline-report.html`](zap/zap-baseline-report.html) y [`zap-baseline-report.json`](zap/zap-baseline-report.json).
+Corrido con `zap-baseline.py` (imagen oficial `zaproxy/zap-stable`) contra la app real corriendo con la topología de producción (nginx sirviendo el build de Angular + proxy inverso a `/api/v1/` y `/actuator/`, backend Spring Boot, Postgres y Redis). Reportes completos: [`docs/mediciones/sec/zap/zap-baseline-report.html`](../zap/zap-baseline-report.html) y [`zap-baseline-report.json`](../zap/zap-baseline-report.json).
 
 **Antes de corregir:** `FAIL-NEW: 0` · `WARN-NEW: 11` · `PASS: 56`
 **Después de corregir 4 hallazgos:** `FAIL-NEW: 0` · `WARN-NEW: 7` · `PASS: 60`
 
 **0 alertas de alta confianza (`FAIL`) en ambas corridas** — ningún hallazgo crítico tipo XSS reflejado, inyección SQL detectable dinámicamente, o cookie insegura. Los 4 hallazgos corregidos en el momento (real, verificado con `curl -I` antes/después):
 
-- `10020` Missing Anti-clickjacking Header, `10021` X-Content-Type-Options Missing, `10038` CSP Header Not Set, `10036` Server Version Disclosure — las 4 causadas por el mismo hueco: **nginx sirve el HTML/JS/CSS del frontend directamente sin pasar por el backend**, así que las cabeceras de seguridad que Spring Security agrega (Requisito E14) nunca llegaban a esas respuestas. Se agregaron las mismas cabeceras (`X-Frame-Options`, `X-Content-Type-Options`, `Content-Security-Policy`, `Permissions-Policy`, `server_tokens off`) directamente en [`nginx/nginx.conf`](../../nginx/nginx.conf).
+- `10020` Missing Anti-clickjacking Header, `10021` X-Content-Type-Options Missing, `10038` CSP Header Not Set, `10036` Server Version Disclosure — las 4 causadas por el mismo hueco: **nginx sirve el HTML/JS/CSS del frontend directamente sin pasar por el backend**, así que las cabeceras de seguridad que Spring Security agrega (Requisito E14) nunca llegaban a esas respuestas. Se agregaron las mismas cabeceras (`X-Frame-Options`, `X-Content-Type-Options`, `Content-Security-Policy`, `Permissions-Policy`, `server_tokens off`) directamente en [`nginx/nginx.conf`](../../../../nginx/nginx.conf).
 
 Los 7 `WARN` restantes son de severidad menor y quedan documentados para una próxima iteración: `10003` Vulnerable JS Library (relacionado con A06), `10049` Storable-but-Non-Cacheable en assets estáticos, `10055` CSP sin `object-src`/`base-uri` explícitos, `10109`/`10110` informativos (SPA moderna, uso de `eval` requerido por el compilador JIT de Angular), `90003` Subresource Integrity ausente en los `<script>`, `90004` Cross-Origin-Embedder-Policy ausente.
 

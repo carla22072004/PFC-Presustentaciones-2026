@@ -73,10 +73,10 @@ npx http-server dist/presustentaciones-frontend/browser -p 4300 -s
 # 3. Correr Lighthouse 3 veces por perfil contra el build servido
 CHROME_PATH="/c/Program Files/Google/Chrome/Application/chrome.exe"
 npx lighthouse http://localhost:4300/ --preset=desktop \
-  --output=json --output-path=../docs/mediciones/lighthouse/prod-runs/desktop-runN.json \
+  --output=json --output-path=../prod-runs/desktop-runN.json \
   --chrome-flags="--headless --no-sandbox" --quiet
 
 npx lighthouse http://localhost:4300/ \
-  --output=json --output-path=../docs/mediciones/lighthouse/prod-runs/mobile-runN.json \
+  --output=json --output-path=../prod-runs/mobile-runN.json \
   --chrome-flags="--headless --no-sandbox" --quiet
 ```

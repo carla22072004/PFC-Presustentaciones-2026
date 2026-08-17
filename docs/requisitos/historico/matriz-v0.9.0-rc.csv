@@ -1,0 +1,13 @@
+ID_Requisito,Historia_Usuario,Modulo_Backend,Endpoint_REST,Caso_Prueba_Unitario,Evidencia_Empirica
+RF-01,HU-01,Seguridad / Auth,POST /api/auth/login,JwtTokenProviderTest.java,OWASP Audit - Auth Control #2
+RF-02,HU-02,Solicitudes,POST /api/solicitudes,SolicitudServiceImplTest.java,Postman Test Collection #2
+RF-03,HU-03,Jurados,POST /api/jurados/asignar-masivo,sp_asignar_jurado_masivo,JaCoCo Report Coverage > 60%
+RF-04,HU-04,Cronograma,POST /api/cronogramas,CronogramaServiceImplTest.java,Postman Test Collection #8
+RF-05,HU-05,Evaluaciones,POST /api/evaluaciones/evaluar,sp_calcular_promedio_evaluacion,k6 Load Test Run 1 JSON
+RF-06,HU-06,Actas,POST /api/actas/generar,ActaServiceImplTest.java,Postman Test Collection #14
+RF-07,HU-07,Actas / Firmas,PUT /api/actas/{id}/firmar,sp_firmar_acta_digital,OWASP Audit - Access Control #4
+RF-08,HU-08,Notificaciones,GET /api/notificaciones,NotificacionServiceImplTest.java,Postman Test Collection #18
+RF-09,HU-09,Reportes,GET /api/reportes/defensas,sp_generar_reporte_defensas,k6 Load Test Run 2 JSON
+RF-10,HU-10,Salas,GET /api/salas,SalaServiceImplTest.java,SUS Usability Score > 80
+RF-11,HU-11,Usuarios,GET /api/usuarios,UsuarioServiceImplTest.java,OWASP Audit - Data Security #3
+RF-12,HU-12,Anteproyectos,POST /api/anteproyectos/upload,AnteproyectoServiceImplTest.java,Lighthouse Accessibility > 90
