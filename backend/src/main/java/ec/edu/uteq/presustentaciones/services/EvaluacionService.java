@@ -2,6 +2,8 @@ package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +19,7 @@ public interface EvaluacionService {
     EvaluacionFinal evaluarSolicitud(Long solicitudId, Long rubricaId,
                                  Double notaFinal, String observaciones);
 
-    List<EvaluacionFinal> listarEvaluaciones();
+    Page<EvaluacionFinal> listarEvaluaciones(Pageable pageable);
     List<EvaluacionFinal> listarPorEstudiante(Long estudianteId);
     List<EvaluacionFinal> listarPorUsuario(Long usuarioId);
     Optional<EvaluacionFinal> buscarPorSolicitud(Long solicitudId);

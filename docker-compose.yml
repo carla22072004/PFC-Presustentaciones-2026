@@ -5,14 +5,14 @@ services:
     container_name: amz-postgres
     environment:
       POSTGRES_DB: BdPresustentaciones
-      POSTGRES_USER: JEAN
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgresAdmin}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U JEAN"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,12 +37,12 @@ services:
     container_name: amz-backend
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/BdPresustentaciones
-      - DB_USERNAME=JEAN
-      - DB_PASSWORD=1234
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgresAdmin}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      - JWT_EXPIRATION=86400000
+      - JWT_SECRET=${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
     ports:
       - "8080:8080"
     depends_on:

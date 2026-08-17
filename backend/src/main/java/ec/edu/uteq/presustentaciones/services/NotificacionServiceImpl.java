@@ -5,6 +5,8 @@ import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.NotificacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -75,13 +77,13 @@ public class NotificacionServiceImpl implements NotificacionService {
     }
 
     @Override
-    public List<Notificacion> listarNotificaciones() {
-        return notificacionRepository.findAll();
+    public Page<Notificacion> listarNotificaciones(Pageable pageable) {
+        return notificacionRepository.findAll(pageable);
     }
 
     @Override
-    public List<Notificacion> listarPorUsuario(Long usuarioId) {
-        return notificacionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
+    public Page<Notificacion> listarPorUsuario(Long usuarioId, Pageable pageable) {
+        return notificacionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId, pageable);
     }
 
     @Override

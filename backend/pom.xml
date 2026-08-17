@@ -164,6 +164,12 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- H2 Database for Offline DDL Generation / Testing -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- Flyway para migraciones de BD -->
         <dependency>
             <groupId>org.flywaydb</groupId>

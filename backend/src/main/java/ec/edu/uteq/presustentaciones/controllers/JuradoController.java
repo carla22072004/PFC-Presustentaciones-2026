@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -61,8 +63,8 @@ public class JuradoController {
 
     /** Listar todos los jurados */
     @GetMapping
-    public List<Jurado> listarTodos() {
-        return juradoService.listarTodos();
+    public Page<Jurado> listarTodos(Pageable pageable) {
+        return juradoService.listarTodos(pageable);
     }
 
     /** Eliminar un jurado */

@@ -2,7 +2,8 @@ package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.entities.Acta;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface ActaService {
@@ -16,6 +17,6 @@ public interface ActaService {
     /** Retorna el path del PDF generado para descarga */
     byte[] obtenerPdfBytes(Long actaId);
 
-    List<Acta> listarActas();
+    Page<Acta> listarActas(Pageable pageable);
     Optional<Acta> buscarPorSolicitud(Long solicitudId);
 }

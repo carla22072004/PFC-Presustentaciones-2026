@@ -23,6 +23,9 @@ import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,8 +149,8 @@ public class ActaServiceImpl implements ActaService {
     }
 
     @Override
-    public List<Acta> listarActas() {
-        return actaRepository.findAll();
+    public Page<Acta> listarActas(Pageable pageable) {
+        return actaRepository.findAll(pageable);
     }
 
     @Override
