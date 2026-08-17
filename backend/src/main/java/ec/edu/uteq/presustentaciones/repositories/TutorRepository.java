@@ -15,4 +15,7 @@ public interface TutorRepository extends JpaRepository<Tutor, Long> {
 
     List<Tutor> findBySolicitudEstudianteUsuarioId(Long usuarioId);
     List<Tutor> findByDocenteUsuarioId(Long usuarioId);
+
+    @Query(value = "SELECT * FROM presus.sp_obtener_estadisticas_tutores()", nativeQuery = true)
+    List<Object[]> obtenerEstadisticasTutoresSp();
 }
