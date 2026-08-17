@@ -149,4 +149,39 @@ public class JuradoController {
         }
         return ResponseEntity.ok(null);
     }
+
+    /**
+     * SP (Fase 3): Asignación masiva de jurados por rol.
+     * Llama a presus.sp_asignar_jurado_masivo(p_solicitud_ids, p_docente_ids, p_rol)
+     * Flujo: POST → JuradoController → JuradoService → JuradoRepository → SP → PostgreSQL
+     *
+     * Body esperado: { "solicitudIds": [1,2,3], "docenteIds": [4,5,6], "rol": "PRESIDENTE" }
+     */
+    @PostMapping("/asignar-masivo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    public ResponseEntity<?> asignarMasivo(@RequestBody Map<String, Object> body) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Integer> solicitudIdsList = (List<Integer>) body.get("solicitudIds");
+            @SuppressWarnings("unchecked")
+            List<Integer> docenteIdsList   = (List<Integer>) body.get("docenteIds");
+            String rol = (String) body.get("rol");
+
+            if (solicitudIdsList == null || docenteIdsList == null || rol == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Se requieren 'solicitudIds', 'docenteIds' y 'rol'"));
+            }
+            Long[] solicitudIds = solicitudIdsList.stream().map(i -> i.longValue()).toArray(Long[]::new);
+            Long[] docenteIds   = docenteIdsList.stream().map(i -> i.longValue()).toArray(Long[]::new);
+
+            juradoService.asignarJuradoMasivoSP(solicitudIds, docenteIds, rol);
+            return ResponseEntity.ok(Map.of(
+                    "mensaje", "Asignación masiva ejecutada correctamente",
+                    "asignados", solicitudIds.length,
+                    "rol", rol
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
