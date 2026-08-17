@@ -90,6 +90,15 @@ public class JuradoServiceImpl implements JuradoService {
     }
 
     @Override
+    @Transactional
+    public void asignarJuradoMasivo(List<Long> solicitudIds, List<Long> docenteIds, String rol) {
+        juradoRepository.asignarJuradoMasivo(
+                solicitudIds.toArray(new Long[0]),
+                docenteIds.toArray(new Long[0]),
+                rol.toUpperCase());
+    }
+
+    @Override
     public List<Jurado> listarPorSolicitud(Long solicitudId) {
         return juradoRepository.findBySolicitudId(solicitudId);
     }

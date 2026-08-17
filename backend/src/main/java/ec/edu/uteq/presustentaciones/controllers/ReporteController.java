@@ -174,6 +174,20 @@ public class ReporteController {
         return pdfResponse(baos, "estadisticas_evaluaciones.pdf");
     }
 
+    /**
+     * Reporte consolidado de defensas por carrera vía sp_generar_reporte_defensas
+     * (Fase 3 / Criterio P1, categoría "consultas multi-tabla"). @Transactional es
+     * necesario aquí: el procedimiento devuelve un REFCURSOR y Postgres solo lo mantiene
+     * abierto dentro de la misma transacción que lo abrió -- sin esto, Hibernate hace el
+     * fetch del cursor en una transacción/conexión ya cerrada ("cursor ... does not exist").
+     */
+    @GetMapping("/defensas")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<ec.edu.uteq.presustentaciones.dto.ReporteDefensaResult>> reporteDefensas(
+            @RequestParam String carrera) {
+        return ResponseEntity.ok(solicitudRepo.generarReporteDefensas(carrera));
+    }
+
     /** RF-11: JSON de estadísticas para gráficas */
     @GetMapping("/estadisticas/json")
     public ResponseEntity<Map<String, Object>> estadisticasJson() {

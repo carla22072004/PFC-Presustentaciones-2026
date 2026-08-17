@@ -62,7 +62,21 @@ public class CronogramaServiceImpl implements CronogramaService {
                     "Conflicto de horario: la sala '" + sala.getNombre() +
                             "' ya tiene una pre-sustentación programada en esa franja.");
         }
- 
+
+        // sp_validar_conflicto_jurado (Fase 3 / Criterio P1, categoría "validaciones
+        // cruzadas"): ningún docente ya asignado como jurado de esta solicitud puede quedar
+        // programado en dos defensas cuyos horarios se solapen.
+        for (Jurado jurado : juradoRepository.findBySolicitudId(solicitudId)) {
+            Boolean disponible = juradoRepository.validarConflictoJurado(
+                    solicitudId, jurado.getDocente().getId(), inicio, DURACION, null);
+            if (Boolean.FALSE.equals(disponible)) {
+                throw new RuntimeException(
+                        "Conflicto de horario: el docente " + jurado.getDocente().getUsuario().getNombre() +
+                                " " + jurado.getDocente().getUsuario().getApellido() +
+                                " ya es jurado de otra defensa programada en esa franja.");
+            }
+        }
+
         ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo("PROGRAMADO")
                 .orElseGet(() -> estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()
                         .codigo("PROGRAMADO").nombre("Programado").build()));

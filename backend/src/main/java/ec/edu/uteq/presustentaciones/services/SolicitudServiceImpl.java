@@ -180,12 +180,18 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         log.info("Creando perfil de estudiante automáticamente para usuario ID: {}", usuarioId);
 
+        // sp_generar_codigo_expediente (Fase 3 / Criterio P1, categoría "generación de
+        // códigos secuenciales"): nextval() sobre una secuencia dedicada es atómico a nivel
+        // de motor, así que dos altas concurrentes nunca reciben el mismo código.
+        String expedienteCodigo = estudianteRepository.generarCodigoExpediente(null, null);
+
         Estudiante nuevoEstudiante = Estudiante.builder()
                 .usuario(usuario)
                 .carrera(carreraDefault.getNombre())
                 .carreraEntidad(carreraDefault)
                 .semestreActual((short) 1)
                 .semestre("1ro")
+                .expedienteCodigo(expedienteCodigo)
                 .build();
 
         return estudianteRepository.save(nuevoEstudiante);

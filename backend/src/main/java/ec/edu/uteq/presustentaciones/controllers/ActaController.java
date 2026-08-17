@@ -41,9 +41,10 @@ public class ActaController {
     @PostMapping("/firmar/{actaId}")
     public ResponseEntity<?> firmarActa(
             @PathVariable Long actaId,
-            @RequestParam String rol) {
+            @RequestParam String rol,
+            @RequestParam(required = false) String observacion) {
         try {
-            Acta acta = actaService.firmarActa(actaId, rol);
+            Acta acta = actaService.firmarActa(actaId, rol, observacion);
             return ResponseEntity.ok(acta);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

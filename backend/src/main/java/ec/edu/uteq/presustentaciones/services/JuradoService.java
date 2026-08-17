@@ -13,6 +13,9 @@ public interface JuradoService {
 
     // ── Jurados ──────────────────────────────────────────────────────────────
     Jurado asignarJurado(Long solicitudId, Long docenteId, String rol);
+
+    /** Asignación masiva vía sp_asignar_jurado_masivo (Fase 3 / Criterio P1). */
+    void asignarJuradoMasivo(List<Long> solicitudIds, List<Long> docenteIds, String rol);
     List<Jurado> listarPorSolicitud(Long solicitudId);
     Page<Jurado> listarTodos(Pageable pageable);
     void eliminarJurado(Long juradoId);

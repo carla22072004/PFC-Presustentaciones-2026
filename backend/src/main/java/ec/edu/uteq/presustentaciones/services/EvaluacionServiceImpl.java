@@ -1,9 +1,12 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.dto.PromedioEvaluacionResult;
+import ec.edu.uteq.presustentaciones.entities.Evaluacion;
 import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.entities.Rubrica;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.RubricaRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,34 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     private final NotificacionService notificacionService;
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
     private final ec.edu.uteq.presustentaciones.repositories.ResultadoEvaluacionRepository resultadoEvaluacionRepository;
+    private final EvaluacionRepository evaluacionSpRepository;
+
+    @Override
+    @Transactional
+    public PromedioEvaluacionResult calcularPromedioSp(Long solicitudId) {
+        Solicitud solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+
+        // sp_calcular_promedio_evaluacion necesita una fila previa en "evaluaciones" (lee su
+        // nota_instructor); la crea si no existe, tomando la nota del instructor ya
+        // registrada en el flujo ponderado (evaluaciones_finales) cuando esté disponible.
+        Evaluacion base = evaluacionSpRepository.findBySolicitudId(solicitudId)
+                .orElseGet(() -> {
+                    Double notaInstructor = evaluacionRepository.findBySolicitudId(solicitudId)
+                            .map(EvaluacionFinal::getNotaInstructor)
+                            .orElse(null);
+                    return evaluacionSpRepository.save(Evaluacion.builder()
+                            .solicitud(solicitud)
+                            .notaInstructor(notaInstructor)
+                            .build());
+                });
+
+        List<PromedioEvaluacionResult> resultado = evaluacionSpRepository.calcularPromedioEvaluacion(solicitudId);
+        if (resultado.isEmpty()) {
+            throw new RuntimeException("El procedimiento no devolvió resultado para la solicitud " + solicitudId);
+        }
+        return resultado.get(0);
+    }
 
     @Override
     @Transactional

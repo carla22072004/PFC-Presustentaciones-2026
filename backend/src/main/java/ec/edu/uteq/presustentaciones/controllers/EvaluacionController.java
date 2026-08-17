@@ -77,4 +77,17 @@ public class EvaluacionController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    /**
+     * Calcula y persiste la nota final ponderada agregando las notas del tribunal vía
+     * sp_calcular_promedio_evaluacion (Fase 3 / Criterio P1, categoría "cálculos agregados").
+     */
+    @PostMapping("/{solicitudId}/calcular-promedio")
+    public ResponseEntity<?> calcularPromedio(@PathVariable Long solicitudId) {
+        try {
+            return ResponseEntity.ok(evaluacionService.calcularPromedioSp(solicitudId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
