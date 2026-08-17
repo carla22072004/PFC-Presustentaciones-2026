@@ -1,0 +1,91 @@
+\section{Introducción}
+\label{sec:introduccion}
+
+\subsection{Contexto del problema}
+
+El proceso de pre-sustentación de trabajos de titulación en la carrera de Ingeniería de Software de la
+UTEQ involucra al menos cinco roles (estudiante, tutor, coordinador, jurado, presidente de tribunal) y
+seis hitos secuenciales obligatorios: registro de solicitud, carga de anteproyecto, asignación de
+jurados, programación de cronograma, evaluación por rúbrica y emisión de acta firmada. Previo a este
+proyecto, ese flujo se gestionaba con formularios físicos/digitales sueltos y hojas de cálculo, sin un
+sistema que garantizara la integridad del anteproyecto entregado, la trazabilidad de quién asignó a qué
+jurado y cuándo, o el cálculo verificable de la nota ponderada final.
+
+\textbf{Nota de honestidad metodológica sobre la cuantificación del problema:} la guía de este informe
+exige un ``contexto cuantificado del problema''. El equipo no realizó una encuesta formal a la
+coordinación académica de la carrera para obtener cifras institucionales verificadas (número de
+pre-sustentaciones por periodo, tiempo promedio de gestión manual, tasa de errores administrativos). Esa
+cuantificación institucional real no existe en este informe --- se declara la ausencia explícitamente en
+vez de inventar cifras plausibles pero no verificables, lo cual sería exactamente el tipo de dato
+fabricado que las reglas transversales de esta guía penalizan. Lo que sí se cuantifica, porque es
+verificable directamente en el repositorio, es el alcance técnico del artefacto construido: 12
+requisitos funcionales (Sección~\ref{sec:requisitos}), 21 controladores REST, y la evidencia empírica
+completa de la Sección~\ref{sec:evaluacion}.
+
+\subsection{Preguntas de investigación}
+
+\begin{description}
+    \item[RQ1] ¿Puede automatizarse el flujo completo de pre-sustentación (solicitud $\rightarrow$
+    anteproyecto $\rightarrow$ jurado $\rightarrow$ cronograma $\rightarrow$ evaluación $\rightarrow$
+    acta) en un sistema web único, con trazabilidad verificable de cada transición de estado?
+    \item[RQ2] ¿Cuál es el comportamiento real de rendimiento del sistema bajo carga concurrente
+    moderada (50 usuarios), y qué efecto cuantificable tiene una capa de caché (Redis) sobre la latencia
+    de un endpoint que consume una API externa?
+    \item[RQ3] ¿Qué vulnerabilidades de seguridad reales (no hipotéticas) existen en la implementación,
+    y en qué medida las contramedidas aplicadas (JWT de 7 claims, rate limiting, cabeceras HTTP,
+    consultas parametrizadas) las cierran, verificado con herramientas automatizadas independientes
+    (find-sec-bugs, OWASP ZAP)?
+    \item[RQ4] ¿Qué tan honesta y verificable puede mantenerse la documentación de un proyecto académico
+    de este tipo bajo presión de plazos, dado que el propio proceso de este equipo incluyó episodios
+    reales de datos fabricados que tuvieron que detectarse y corregirse?
+\end{description}
+
+\subsection{Objetivos}
+
+\textbf{Objetivo general:} diseñar, implementar y evaluar empíricamente un sistema web que automatice el
+proceso de pre-sustentación de trabajos de titulación de la UTEQ, con evidencia verificable y no
+fabricada en cada etapa del ciclo de vida del software.
+
+\textbf{Objetivos específicos:}
+\begin{enumerate}[nosep]
+    \item Especificar los requisitos del sistema bajo ISO/IEC/IEEE 29148:2018, con historias de usuario
+    en formato Connextra e INVEST, y casos de uso bajo la plantilla de Cockburn (responde RQ1).
+    \item Implementar el sistema con una arquitectura de tres capas (Angular, Spring Boot, PostgreSQL +
+    Redis) documentada con el modelo C4 y registros de decisión arquitectónica (ADR) (responde RQ1).
+    \item Medir empíricamente el rendimiento bajo carga con k6 y cuantificar el efecto de la caché con
+    estadística inferencial no paramétrica (responde RQ2).
+    \item Auditar la seguridad del sistema combinando revisión manual contra OWASP Top~10, análisis
+    estático (SpotBugs/find-sec-bugs) y escaneo dinámico (OWASP ZAP) (responde RQ3).
+    \item Documentar de forma trazable y verificable cada hallazgo del proceso, incluyendo los errores
+    propios del equipo, en vez de presentar solo resultados favorables (responde RQ4).
+\end{enumerate}
+
+\subsection{Contribuciones}
+
+\begin{enumerate}[nosep]
+    \item Un sistema funcional de código abierto (licencia MIT) que automatiza el ciclo completo de
+    pre-sustentación, con 12 requisitos funcionales verificados y trazados.
+    \item Un conjunto de evidencia empírica real y reproducible (scripts, datos crudos, notebooks
+    ejecutados) para rendimiento, seguridad, cobertura y calidad web, documentado en
+    \texttt{docs/mediciones/DATA-PROVENANCE.md} con la procedencia de cada cifra citada.
+    \item Un caso documentado, dentro del propio proceso de desarrollo, de detección y corrección de
+    datos académicos fabricados (encuesta de usabilidad, métricas de rendimiento, citas de evidencia de
+    trazabilidad) --- una contribución metodológica sobre integridad de la evidencia en proyectos
+    académicos de ingeniería de software, más que un hallazgo técnico convencional.
+    \item Una plantilla reutilizable de documentación de ingeniería de requisitos (SRS versionado,
+    historias de usuario Connextra+Gherkin, casos de uso Cockburn, checklist INCOSE completo) aplicable a
+    proyectos similares de la carrera.
+\end{enumerate}
+
+\subsection{Organización del documento}
+
+El resto de este informe se organiza así: la Sección~\ref{sec:marco-teorico} presenta el marco teórico;
+la Sección~\ref{sec:trabajos-relacionados}, los trabajos relacionados y la búsqueda de literatura
+realizada; la Sección~\ref{sec:requisitos} resume la ingeniería de requisitos (documentada en detalle en
+\texttt{docs/requisitos/}); la Sección~\ref{sec:metodos} instancia Design Science Research y GQM; la
+Sección~\ref{sec:arquitectura} describe el diseño y la arquitectura; la Sección~\ref{sec:implementacion},
+la implementación; la Sección~\ref{sec:evaluacion} presenta la evaluación empírica completa; las
+Secciones~\ref{sec:discusion}--\ref{sec:conclusiones} discuten los resultados, las amenazas a la validez,
+el trabajo futuro y las conclusiones; y la Sección final presenta las declaraciones obligatorias y las
+referencias.
+\newpage

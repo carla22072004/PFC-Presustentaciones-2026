@@ -1,0 +1,11 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {table}{\numberline {1}{\ignorespaces Comparación de los trece trabajos empíricos más directamente relacionados con las técnicas aplicadas en este proyecto.}}{15}{table.1}%
+\contentsline {table}{\numberline {2}{\ignorespaces Los 12 requisitos funcionales, su prioridad MoSCoW y su estado real de verificación automatizada (fuente: \texttt {docs/trazabilidad/matriz.csv} v1.0.0).}}{16}{table.2}%
+\contentsline {table}{\numberline {3}{\ignorespaces Instanciación del modelo de proceso DSR de Peffers et al. \cite {peffers2007}.}}{18}{table.3}%
+\contentsline {table}{\numberline {4}{\ignorespaces Esquema GQM para la meta de rendimiento del sistema de caché.}}{19}{table.4}%
+\contentsline {table}{\numberline {5}{\ignorespaces Resumen de los 6 ADR reales del repositorio (\texttt {docs/adr/}).}}{20}{table.5}%
+\contentsline {table}{\numberline {6}{\ignorespaces Stack tecnológico real del sistema.}}{22}{table.6}%
+\contentsline {table}{\numberline {7}{\ignorespaces Estadística descriptiva de latencia, caché fría vs. caliente.}}{24}{table.7}%
+\contentsline {table}{\numberline {8}{\ignorespaces Lighthouse, media de 3 corridas por perfil.}}{25}{table.8}%
+\contentsline {table}{\numberline {9}{\ignorespaces Asignación de los 14 roles CRediT. ``---'' indica un rol que genuinamente no aplica a ningún integrante en este proyecto (no hubo financiamiento externo ni un supervisor formal más allá del docente-director, cuyo rol se declara por separado, no como coautor).}}{31}{table.9}%
+\contentsline {table}{\numberline {10}{\ignorespaces Declaración de uso de IA generativa.}}{32}{table.10}%

@@ -1,0 +1,39 @@
+\section{Discusión}
+\label{sec:discusion}
+
+\subsection*{RQ1: ¿Puede automatizarse el flujo completo con trazabilidad verificable?}
+Sí, parcialmente verificado. Los 12 requisitos funcionales están implementados y el flujo completo
+(solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$ acta) se verificó
+manualmente end-to-end contra la topología de producción. Sin embargo, la trazabilidad
+\textbf{automatizada} solo cubre 5 de 12 requisitos con prueba dedicada (Sección~\ref{sec:requisitos}) ---
+la respuesta a RQ1 es ``sí, funcionalmente'' pero ``parcialmente, en términos de verificación
+automatizada continua''.
+
+\subsection*{RQ2: ¿Cuál es el efecto cuantificable de la caché sobre la latencia?}
+Respondida con evidencia estadística fuerte: reducción de latencia de 13.9$\times$ (109.62\,ms a
+7.86\,ms), estadísticamente significativa ($p = 3.02\times10^{-11}$) con separación perfecta entre
+distribuciones (tamaño de efecto $r=1.00$). Es la pregunta de investigación con la respuesta más sólida
+de las cuatro, porque es la única con un diseño experimental que aísla una sola variable (estado de la
+caché) manteniendo todo lo demás constante.
+
+\subsection*{RQ3: ¿Qué vulnerabilidades reales existen y qué tan cerradas están?}
+Ninguna vulnerabilidad de inyección SQL (0 hallazgos de \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE}
+en 189 hallazgos totales de find-sec-bugs) y 0 fallos \texttt{FAIL} en el escaneo dinámico OWASP ZAP. Sin
+embargo, existen 41 vulnerabilidades de dependencias de terceros sin corregir (6 críticas) y 9 hallazgos
+de \texttt{PATH\_TRAVERSAL\_IN} sin resolver (riesgo real bajo, porque las entradas son IDs \texttt{Long},
+no cadenas arbitrarias, pero no verificado formalmente). La respuesta honesta es: las vulnerabilidades de
+\textbf{código propio} más críticas (inyección SQL, comparación de hash insegura) están cerradas y
+verificadas; las vulnerabilidades de \textbf{dependencias de terceros} no.
+
+\subsection*{RQ4: ¿Qué tan honesta puede mantenerse la documentación bajo presión de plazos?}
+Esta pregunta se responde con el propio historial del proyecto, no con una medición externa. Se
+detectaron y corrigieron, dentro de este mismo proceso: una encuesta SUS fabricada (91.25/100 con 10
+evaluadores inexistentes), métricas Lighthouse citadas sin haber corrido la herramienta, 5 citas de
+archivos de test inexistentes en la matriz de trazabilidad, una afirmación falsa sobre anclaje de
+imágenes Docker por digest, y una afirmación falsa sobre custodia de formularios de consentimiento
+firmados. En cada caso, la corrección fue reemplazar el dato fabricado por una medición real o una
+declaración explícita de ausencia --- nunca por otro dato fabricado más plausible. Esto sugiere que sí es
+posible mantener honestidad bajo presión de plazos, al costo de reportar cifras menos favorables (22.7\,\%
+de cobertura en vez de un ``$>$60\,\%'' fabricado; SUS ``pendiente'' en vez de ``91.25/100''), lo cual es
+precisamente el trade-off que esta guía exige explícitamente priorizar.
+\newpage
