@@ -438,4 +438,10 @@ public class TutoriaServiceImpl implements TutoriaService {
             throw new RuntimeException("Error al calcular SHA-256 del archivo", e);
         }
     }
+
+    @Override
+    @Transactional
+    public void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256) {
+        tutoriaFaseRepository.spRegistrarTutoriaAvance(tutorId, numeroFase, archivoPdf, tamanoBytes, sha256);
+    }
 }

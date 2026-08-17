@@ -97,19 +97,10 @@ public class ActaServiceImpl implements ActaService {
     @Override
     @Transactional
     public Acta firmarActa(Long actaId, String rol) {
+        actaRepository.spFirmarActaDigital(actaId, rol, "Firma registrada vía stored procedure");
+
         Acta acta = actaRepository.findById(actaId)
                 .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
-
-        LocalDateTime ahora = LocalDateTime.now();
-        switch (rol.toUpperCase()) {
-            case "PRESIDENTE" -> { acta.setFirmadaPresidente(true); acta.setFechaFirmaPresidente(ahora); }
-            case "VOCAL_1"    -> { acta.setFirmadaVocal1(true);     acta.setFechaFirmaVocal1(ahora); }
-            case "VOCAL_2"    -> { acta.setFirmadaVocal2(true);     acta.setFechaFirmaVocal2(ahora); }
-            case "TUTOR"      -> { acta.setFirmadaTutor(true);      acta.setFechaFirmaTutor(ahora); }
-            default -> throw new RuntimeException("Rol inválido: " + rol + ". Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR");
-        }
-
-        acta.actualizarEstadoFirma();
 
         // Si el acta quedó completamente firmada, cambiar estado a COMPLETADA y regenerar PDF
         if (acta.isFirmada()) {

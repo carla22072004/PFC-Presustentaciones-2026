@@ -23,4 +23,5 @@ public interface EvaluacionService {
     List<EvaluacionFinal> listarPorEstudiante(Long estudianteId);
     List<EvaluacionFinal> listarPorUsuario(Long usuarioId);
     Optional<EvaluacionFinal> buscarPorSolicitud(Long solicitudId);
+    java.util.Map<String, Object> calcularPromedioSP(Long solicitudId);
 }

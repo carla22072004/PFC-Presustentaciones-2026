@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -135,6 +137,20 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     @Override
     public Optional<EvaluacionFinal> buscarPorSolicitud(Long solicitudId) {
         return evaluacionRepository.findBySolicitudId(solicitudId);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> calcularPromedioSP(Long solicitudId) {
+        List<Object[]> res = evaluacionRepository.calcularPromedioEvaluacionSp(solicitudId);
+        Map<String, Object> map = new HashMap<>();
+        if (!res.isEmpty()) {
+            Object[] row = res.get(0);
+            map.put("solicitudId", row[0]);
+            map.put("notaFinal", row[1]);
+            map.put("estadoResultado", row[2]);
+        }
+        return map;
     }
 
     public String generarComentarioPorRango(Double notaFinal) {
