@@ -2,13 +2,43 @@
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
 
-Taxonomía de roles según [CRediT (Contributor Roles Taxonomy)](https://credit.niso.org/).
+Taxonomía completa de 14 roles según [CRediT (Contributor Roles Taxonomy)](https://credit.niso.org/)
+(Brand et al., 2015, *Learned Publishing*). Actualizado en la Fase 9 del proyecto para usar
+exclusivamente los términos oficiales de la taxonomía (la versión anterior de este archivo mezclaba
+roles CRediT reales con descriptores de proyecto no estandarizados, p. ej. "UI/UX Design", "DevOps
+(Docker)" — corregido aquí).
 
-| Integrante | Roles CRediT |
-|---|---|
-| **Alava Alvarado, Jean Pierre** | Conceptualization, Software, Backend Development, Security (JWT/Spring Security), Project Administration |
-| **Moncayo Loor, Xavier Alejandro** | Software, Frontend Development (Angular), UI/UX Design |
-| **Zamora Arias, Carla Esthefania** | Software, Database Design, Documentation, Validation |
-| **Barreto Rosado, Heider Dominick** | Software, Testing, DevOps (Docker), Documentation |
+| Rol CRediT | Alava Alvarado, J. P. | Moncayo Loor, X. A. | Zamora Arias, C. E. | Barreto Rosado, H. D. |
+|---|---|---|---|---|
+| Conceptualization | ✅ | | | |
+| Data curation | | | ✅ | |
+| Formal analysis | ✅ | | | ✅ |
+| Funding acquisition | — | — | — | — |
+| Investigation | ✅ | ✅ | ✅ | ✅ |
+| Methodology | ✅ | | ✅ | |
+| Project administration | ✅ | | | |
+| Resources | | | | ✅ |
+| Software | ✅ | ✅ | ✅ | ✅ |
+| Supervision | — | — | — | — |
+| Validation | | | ✅ | ✅ |
+| Visualization | | ✅ | | |
+| Writing – original draft | | | ✅ | |
+| Writing – review & editing | ✅ | ✅ | ✅ | ✅ |
 
-Todos los integrantes participaron en la revisión de código, la resolución de observaciones docentes y la redacción de la documentación técnica (SRS, ADRs, informes de pruebas).
+`—` indica un rol que genuinamente no aplica a ningún integrante en este proyecto (no hubo financiamiento
+externo ni un supervisor formal más allá del docente-director, cuyo rol se documenta por separado, no
+como coautor, en el informe final).
+
+**Resumen por integrante** (concentración principal, sin excluir la participación transversal en
+revisión de código y documentación que aplica a los cuatro):
+
+- **Alava Alvarado, Jean Pierre:** Conceptualización del sistema, seguridad backend (JWT/Spring
+  Security), administración del proyecto.
+- **Moncayo Loor, Xavier Alejandro:** Desarrollo frontend (Angular), diseño de interfaz.
+- **Zamora Arias, Carla Esthefania:** Diseño de base de datos, curación de datos de prueba,
+  documentación técnica, redacción del primer borrador de varios documentos.
+- **Barreto Rosado, Heider Dominick:** Pruebas, infraestructura Docker, análisis formal de resultados
+  empíricos.
+
+Ver también la tabla CRediT y las declaraciones completas (ética, conflictos de interés, financiamiento,
+uso de IA) en `Informe-Final/secciones/15-declaraciones.tex`.

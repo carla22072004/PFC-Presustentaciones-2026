@@ -78,10 +78,11 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                 log.warn("Verificación de catálogo de roles: {}", e.getMessage());
             }
 
-            // Buscar rol admin de la base de datos
+            // Buscar roles de la base de datos
             ec.edu.uteq.presustentaciones.entities.RolUsuario adminRol = rolUsuarioRepository.findByCodigo("ADMIN").orElse(null);
+            ec.edu.uteq.presustentaciones.entities.RolUsuario coordinadorRol = rolUsuarioRepository.findByCodigo("COORDINADOR").orElse(null);
 
-            // Único usuario sembrado: administrador del sistema
+            // Usuario administrador del sistema
             if (!usuarioRepository.existsByEmail("admin@uteq.edu.ec")) {
                 Usuario admin = Usuario.builder()
                     .nombre("Admin")
@@ -94,6 +95,24 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                     .build();
                 usuarioRepository.save(admin);
                 log.info("Usuario administrador inicial verificado.");
+            }
+
+            // Usuario de demostración (Fase 8, criterio P5): credenciales publicadas en
+            // README.md para que el tribunal pueda entrar sin registrarse. Rol COORDINADOR
+            // porque expone el flujo académico completo (asignar jurados, programar
+            // cronograma, ver reportes) sin ser una cuenta de administración del sistema.
+            if (!usuarioRepository.existsByEmail("demo@uteq.edu.ec")) {
+                Usuario demo = Usuario.builder()
+                    .nombre("Usuario")
+                    .apellido("Demostración")
+                    .email("demo@uteq.edu.ec")
+                    .password(passwordEncoder.encode("Demo2026!"))
+                    .rol("COORDINADOR")
+                    .rolUsuario(coordinadorRol)
+                    .activo(true)
+                    .build();
+                usuarioRepository.save(demo);
+                log.info("Usuario de demostración inicial verificado.");
             }
 
         } catch (Exception e) {
