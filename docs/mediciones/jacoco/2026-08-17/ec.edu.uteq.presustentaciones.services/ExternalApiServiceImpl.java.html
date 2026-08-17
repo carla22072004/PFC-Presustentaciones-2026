@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExternalApiServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">ExternalApiServiceImpl.java</span></div><h1>ExternalApiServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.dto.UniversityDto;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+import reactor.netty.http.client.HttpClient;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+@Service
+<span class="fc" id="L23">@Slf4j</span>
+public class ExternalApiServiceImpl implements ExternalApiService {
+
+    private final WebClient webClient;
+
+<span class="fc" id="L28">    public ExternalApiServiceImpl() {</span>
+<span class="fc" id="L29">        HttpClient httpClient = HttpClient.create()</span>
+<span class="fc" id="L30">                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)</span>
+<span class="fc" id="L31">                .responseTimeout(Duration.ofSeconds(5))</span>
+<span class="pc" id="L32">                .doOnConnected(conn -&gt; conn</span>
+<span class="nc" id="L33">                        .addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.SECONDS))</span>
+<span class="nc" id="L34">                        .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.SECONDS)));</span>
+
+<span class="fc" id="L36">        this.webClient = WebClient.builder()</span>
+<span class="fc" id="L37">                .clientConnector(new ReactorClientHttpConnector(httpClient))</span>
+<span class="fc" id="L38">                .baseUrl(&quot;http://universities.hipolabs.com&quot;)</span>
+<span class="fc" id="L39">                .build();</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    @org.springframework.cache.annotation.Cacheable(value = &quot;universidades&quot;, key = &quot;'ecuador'&quot;)
+    public List&lt;UniversityDto&gt; getUniversitiesOfEcuador() {
+<span class="fc" id="L45">        log.info(&quot;Iniciando consumo de API externa de universidades de Hipo Labs...&quot;);</span>
+        try {
+<span class="fc" id="L47">            return this.webClient.get()</span>
+<span class="pc" id="L48">                    .uri(uriBuilder -&gt; uriBuilder.path(&quot;/search&quot;).queryParam(&quot;country&quot;, &quot;Ecuador&quot;).build())</span>
+<span class="fc" id="L49">                    .retrieve()</span>
+<span class="fc" id="L50">                    .onStatus(HttpStatusCode::is4xxClientError, response -&gt; {</span>
+<span class="nc" id="L51">                        log.error(&quot;Error cliente 4xx consumiendo API externa: {}&quot;, response.statusCode());</span>
+<span class="nc" id="L52">                        return Mono.error(new RuntimeException(&quot;API Externa retornó error de cliente: &quot; + response.statusCode()));</span>
+                    })
+<span class="fc" id="L54">                    .onStatus(HttpStatusCode::is5xxServerError, response -&gt; {</span>
+<span class="nc" id="L55">                        log.error(&quot;Error servidor 5xx consumiendo API externa: {}&quot;, response.statusCode());</span>
+<span class="nc" id="L56">                        return Mono.error(new RuntimeException(&quot;API Externa retornó error de servidor: &quot; + response.statusCode()));</span>
+                    })
+<span class="fc" id="L58">                    .bodyToFlux(UniversityDto.class)</span>
+<span class="fc" id="L59">                    .collectList()</span>
+                    // Reintentos con Backoff Exponencial (3 intentos, inicial de 1 segundo)
+<span class="fc" id="L61">                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                            .filter(throwable -&gt; !(throwable instanceof WebClientResponseException.BadRequest))</span>
+<span class="fc" id="L63">                            .doBeforeRetry(retrySignal -&gt; log.warn(&quot;Reintentando petición a API externa. Intento: {}&quot;, retrySignal.totalRetries() + 1))</span>
+                    )
+                    // Respuesta controlada ante errores (onErrorResume)
+<span class="fc" id="L66">                    .onErrorResume(throwable -&gt; {</span>
+<span class="fc" id="L67">                        log.error(&quot;Fallo definitivo tras reintentos al consumir API de universidades. Causa: {}&quot;, throwable.getMessage());</span>
+                        // Fallback con la universidad local UTEQ
+<span class="fc" id="L69">                        UniversityDto localU = UniversityDto.builder()</span>
+<span class="fc" id="L70">                                .name(&quot;Universidad Técnica Estatal de Quevedo (Fallback Local)&quot;)</span>
+<span class="fc" id="L71">                                .country(&quot;Ecuador&quot;)</span>
+<span class="fc" id="L72">                                .domains(Collections.singletonList(&quot;uteq.edu.ec&quot;))</span>
+<span class="fc" id="L73">                                .webPages(Collections.singletonList(&quot;https://www.uteq.edu.ec&quot;))</span>
+<span class="fc" id="L74">                                .build();</span>
+<span class="fc" id="L75">                        return Mono.just(Collections.singletonList(localU));</span>
+                    })
+<span class="fc" id="L77">                    .block();</span>
+<span class="nc" id="L78">        } catch (Exception e) {</span>
+<span class="nc" id="L79">            log.error(&quot;Error inesperado en getUniversitiesOfEcuador: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L80">            return Collections.singletonList(</span>
+<span class="nc" id="L81">                    UniversityDto.builder()</span>
+<span class="nc" id="L82">                            .name(&quot;Universidad Técnica Estatal de Quevedo (Fallback Local)&quot;)</span>
+<span class="nc" id="L83">                            .country(&quot;Ecuador&quot;)</span>
+<span class="nc" id="L84">                            .domains(Collections.singletonList(&quot;uteq.edu.ec&quot;))</span>
+<span class="nc" id="L85">                            .webPages(Collections.singletonList(&quot;https://www.uteq.edu.ec&quot;))</span>
+<span class="nc" id="L86">                            .build()</span>
+            );
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

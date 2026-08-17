@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">EmailService.java</span></div><h1>EmailService.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+<span class="fc" id="L13">@Slf4j</span>
+<span class="nc" id="L14">public class EmailService {</span>
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
+    @Value(&quot;${spring.mail.username:noreply@uteq.edu.ec}&quot;)
+    private String smtpUsername;
+
+    @Value(&quot;${app.mail.enabled:false}&quot;)
+    private boolean enabled;
+
+    /**
+     * Envía una notificación HTML con el nombre del remitente (usuario logueado).
+     *
+     * @param destinatario  correo del receptor
+     * @param mensaje       cuerpo del mensaje
+     * @param remitenteNombre nombre completo del usuario que genera la notificación
+     * @param remitenteEmail  correo del usuario que genera la notificación
+     */
+    @Async
+    public void enviarNotificacion(String destinatario, String mensaje,
+                                   String remitenteNombre, String remitenteEmail) {
+<span class="nc bnc" id="L36" title="All 4 branches missed.">        if (!enabled || mailSender == null) {</span>
+<span class="nc" id="L37">            log.info(&quot;[EMAIL DESHABILITADO] Para: {} | Mensaje: {}&quot;, destinatario, mensaje);</span>
+<span class="nc" id="L38">            return;</span>
+        }
+        try {
+<span class="nc" id="L41">            MimeMessage mail = mailSender.createMimeMessage();</span>
+<span class="nc" id="L42">            MimeMessageHelper helper = new MimeMessageHelper(mail, true, &quot;UTF-8&quot;);</span>
+
+            // El correo sale desde la cuenta SMTP pero con el nombre del usuario
+<span class="nc" id="L45">            helper.setFrom(smtpUsername, remitenteNombre + &quot; (UTEQ - Pre-Sustentaciones)&quot;);</span>
+<span class="nc" id="L46">            helper.setTo(destinatario);</span>
+<span class="nc" id="L47">            helper.setSubject(&quot;📬 Nueva Notificación — Sistema de Pre-Sustentaciones UTEQ&quot;);</span>
+<span class="nc" id="L48">            helper.setText(buildHtml(mensaje, remitenteNombre, remitenteEmail), true);</span>
+
+<span class="nc" id="L50">            mailSender.send(mail);</span>
+<span class="nc" id="L51">            log.info(&quot;Email enviado a: {} por: {}&quot;, destinatario, remitenteEmail);</span>
+<span class="nc" id="L52">        } catch (MessagingException | java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L53">            log.error(&quot;Error al enviar email a {}: {}&quot;, destinatario, e.getMessage());</span>
+<span class="nc" id="L54">        }</span>
+<span class="nc" id="L55">    }</span>
+
+    /** Sobrecarga de compatibilidad para llamadas sin remitente (usa valor genérico) */
+    @Async
+    public void enviarNotificacion(String destinatario, String mensaje) {
+<span class="nc" id="L60">        enviarNotificacion(destinatario, mensaje, &quot;Sistema de Pre-Sustentaciones&quot;, smtpUsername);</span>
+<span class="nc" id="L61">    }</span>
+
+    private String buildHtml(String mensaje, String remitenteNombre, String remitenteEmail) {
+<span class="nc" id="L64">        return &quot;&quot;&quot;</span>
+            &lt;!DOCTYPE html&gt;
+            &lt;html lang=&quot;es&quot;&gt;
+            &lt;head&gt;
+              &lt;meta charset=&quot;UTF-8&quot;/&gt;
+              &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;/&gt;
+            &lt;/head&gt;
+            &lt;body style=&quot;margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;&quot;&gt;
+              &lt;table width=&quot;100%%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;background:#f0f4f8;padding:40px 0;&quot;&gt;
+                &lt;tr&gt;&lt;td align=&quot;center&quot;&gt;
+                  &lt;table width=&quot;600&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;max-width:600px;width:100%%;&quot;&gt;
+
+                    &lt;!-- HEADER --&gt;
+                    &lt;tr&gt;
+                      &lt;td style=&quot;background:linear-gradient(135deg,#1a3c6e 0%%,#2563eb 100%%);
+                                 border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;&quot;&gt;
+                        &lt;p style=&quot;margin:0;color:#93c5fd;font-size:13px;letter-spacing:2px;
+                                  text-transform:uppercase;font-weight:600;&quot;&gt;
+                          Universidad Técnica Estatal de Quevedo
+                        &lt;/p&gt;
+                        &lt;h1 style=&quot;margin:8px 0 0;color:#ffffff;font-size:26px;font-weight:700;&quot;&gt;
+                          Sistema de Pre-Sustentaciones
+                        &lt;/h1&gt;
+                      &lt;/td&gt;
+                    &lt;/tr&gt;
+
+                    &lt;!-- BODY --&gt;
+                    &lt;tr&gt;
+                      &lt;td style=&quot;background:#ffffff;padding:40px;&quot;&gt;
+
+                        &lt;p style=&quot;margin:0 0 6px;color:#6b7280;font-size:13px;font-weight:600;
+                                  text-transform:uppercase;letter-spacing:1px;&quot;&gt;
+                          Nueva notificación
+                        &lt;/p&gt;
+                        &lt;h2 style=&quot;margin:0 0 24px;color:#111827;font-size:20px;font-weight:700;&quot;&gt;
+                          Tienes un nuevo mensaje
+                        &lt;/h2&gt;
+
+                        &lt;!-- Mensaje principal --&gt;
+                        &lt;div style=&quot;background:#eff6ff;border-left:4px solid #2563eb;
+                                    border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:28px;&quot;&gt;
+                          &lt;p style=&quot;margin:0;color:#1e3a5f;font-size:15px;line-height:1.7;&quot;&gt;
+                            %s
+                          &lt;/p&gt;
+                        &lt;/div&gt;
+
+                        &lt;p style=&quot;margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.6;&quot;&gt;
+                          Por favor, ingresa al sistema para ver más detalles y tomar las acciones
+                          correspondientes.
+                        &lt;/p&gt;
+
+                        &lt;!-- Botón CTA --&gt;
+                        &lt;div style=&quot;text-align:center;margin-bottom:32px;&quot;&gt;
+                          &lt;a href=&quot;http://localhost:4200&quot;
+                             style=&quot;display:inline-block;background:linear-gradient(135deg,#1a3c6e,#2563eb);
+                                    color:#ffffff;text-decoration:none;padding:14px 36px;
+                                    border-radius:8px;font-size:15px;font-weight:600;
+                                    letter-spacing:0.5px;&quot;&gt;
+                            Ir al Sistema ➜
+                          &lt;/a&gt;
+                        &lt;/div&gt;
+
+                        &lt;!-- Remitente --&gt;
+                        &lt;div style=&quot;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;
+                                    padding:16px 20px;&quot;&gt;
+                          &lt;p style=&quot;margin:0;color:#6b7280;font-size:12px;font-weight:600;
+                                    text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;&quot;&gt;
+                            Enviado por
+                          &lt;/p&gt;
+                          &lt;p style=&quot;margin:0;color:#111827;font-size:14px;font-weight:700;&quot;&gt;
+                            %s
+                          &lt;/p&gt;
+                          &lt;p style=&quot;margin:2px 0 0;color:#6b7280;font-size:13px;&quot;&gt;%s&lt;/p&gt;
+                        &lt;/div&gt;
+                      &lt;/td&gt;
+                    &lt;/tr&gt;
+
+                    &lt;!-- FOOTER --&gt;
+                    &lt;tr&gt;
+                      &lt;td style=&quot;background:#f8fafc;border-top:1px solid #e5e7eb;
+                                 border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;&quot;&gt;
+                        &lt;p style=&quot;margin:0;color:#9ca3af;font-size:12px;line-height:1.6;&quot;&gt;
+                          Este es un mensaje automático del Sistema de Pre-Sustentaciones UTEQ.&lt;br/&gt;
+                          Por favor, no respondas directamente a este correo.
+                        &lt;/p&gt;
+                      &lt;/td&gt;
+                    &lt;/tr&gt;
+
+                  &lt;/table&gt;
+                &lt;/td&gt;&lt;/tr&gt;
+              &lt;/table&gt;
+            &lt;/body&gt;
+            &lt;/html&gt;
+<span class="nc" id="L157">            &quot;&quot;&quot;.formatted(mensaje, remitenteNombre, remitenteEmail);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JuradoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">JuradoController.java</span></div><h1>JuradoController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Docente;
+import ec.edu.uteq.presustentaciones.entities.Jurado;
+import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.services.JuradoService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/jurados&quot;)
+public class JuradoController {
+
+    private final JuradoService juradoService;
+
+<span class="nc" id="L24">    public JuradoController(JuradoService juradoService) {</span>
+<span class="nc" id="L25">        this.juradoService = juradoService;</span>
+<span class="nc" id="L26">    }</span>
+
+    // ── Jurados ───────────────────────────────────────────────────────────────
+
+    /** Asignar un jurado manualmente a una solicitud */
+    @PostMapping(&quot;/asignar&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; asignarJurado(
+            @RequestParam Long solicitudId,
+            @RequestParam Long docenteId,
+            @RequestParam String rol) {
+        try {
+<span class="nc" id="L38">            Jurado j = juradoService.asignarJurado(solicitudId, docenteId, rol);</span>
+<span class="nc" id="L39">            return ResponseEntity.ok(j);</span>
+<span class="nc" id="L40">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L41">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /**
+     * Asignación masiva de jurados vía sp_asignar_jurado_masivo (Fase 3 / Criterio P1,
+     * categoría &quot;actualizaciones masivas&quot;): asigna N pares (solicitud, docente) al mismo rol
+     * en una sola llamada transaccional.
+     */
+    @PostMapping(&quot;/asignar-masivo&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; asignarJuradoMasivo(@RequestBody Map&lt;String, Object&gt; body) {
+        try {
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L55">            List&lt;Number&gt; solicitudIdsRaw = (List&lt;Number&gt;) body.get(&quot;solicitudIds&quot;);</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L57">            List&lt;Number&gt; docenteIdsRaw = (List&lt;Number&gt;) body.get(&quot;docenteIds&quot;);</span>
+<span class="nc" id="L58">            String rol = (String) body.get(&quot;rol&quot;);</span>
+<span class="nc bnc" id="L59" title="All 6 branches missed.">            if (solicitudIdsRaw == null || docenteIdsRaw == null || rol == null) {</span>
+<span class="nc" id="L60">                return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;,</span>
+                        &quot;Se requieren solicitudIds, docenteIds y rol&quot;));
+            }
+<span class="nc" id="L63">            List&lt;Long&gt; solicitudIds = solicitudIdsRaw.stream().map(Number::longValue).toList();</span>
+<span class="nc" id="L64">            List&lt;Long&gt; docenteIds = docenteIdsRaw.stream().map(Number::longValue).toList();</span>
+<span class="nc" id="L65">            juradoService.asignarJuradoMasivo(solicitudIds, docenteIds, rol);</span>
+<span class="nc" id="L66">            return ResponseEntity.ok(Map.of(</span>
+                    &quot;mensaje&quot;, &quot;Jurados asignados masivamente&quot;,
+<span class="nc" id="L68">                    &quot;cantidad&quot;, solicitudIds.size()));</span>
+<span class="nc" id="L69">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L70">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /** Asignación automática de los 3 jurados (PRESIDENTE, VOCAL_1, VOCAL_2) */
+    @PostMapping(&quot;/asignar-automatico/{solicitudId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; asignarAutomaticamente(@PathVariable Long solicitudId) {
+        try {
+<span class="nc" id="L79">            juradoService.asignarJuradosAutomaticamente(solicitudId);</span>
+<span class="nc" id="L80">            List&lt;Jurado&gt; jurados = juradoService.listarPorSolicitud(solicitudId);</span>
+<span class="nc" id="L81">            return ResponseEntity.ok(jurados);</span>
+<span class="nc" id="L82">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L83">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /** Listar jurados de una solicitud */
+    @GetMapping(&quot;/solicitud/{solicitudId}&quot;)
+    public List&lt;Jurado&gt; listarPorSolicitud(@PathVariable Long solicitudId) {
+<span class="nc" id="L90">        return juradoService.listarPorSolicitud(solicitudId);</span>
+    }
+
+    /** Listar todos los jurados */
+    @GetMapping
+    public Page&lt;Jurado&gt; listarTodos(Pageable pageable) {
+<span class="nc" id="L96">        return juradoService.listarTodos(pageable);</span>
+    }
+
+    /** Eliminar un jurado */
+    @DeleteMapping(&quot;/{juradoId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;Void&gt; eliminarJurado(@PathVariable Long juradoId) {
+<span class="nc" id="L103">        juradoService.eliminarJurado(juradoId);</span>
+<span class="nc" id="L104">        return ResponseEntity.noContent().build();</span>
+    }
+
+    /** Sugerir docentes disponibles para asignar (sin los ya asignados) */
+    @GetMapping(&quot;/sugerencias/{solicitudId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public List&lt;Docente&gt; sugerirDocentes(
+            @PathVariable Long solicitudId,
+            @RequestParam(defaultValue = &quot;5&quot;) int cantidad) {
+<span class="nc" id="L113">        return juradoService.sugerirDocentes(solicitudId, cantidad);</span>
+    }
+
+    // ── Tutor ─────────────────────────────────────────────────────────────────
+
+    /** Asignar tutor a una solicitud */
+    @PostMapping(&quot;/tutor/asignar&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; asignarTutor(
+            @RequestParam Long solicitudId,
+            @RequestParam Long docenteId) {
+        try {
+<span class="nc" id="L125">            Tutor t = juradoService.asignarTutor(solicitudId, docenteId);</span>
+<span class="nc" id="L126">            return ResponseEntity.ok(t);</span>
+<span class="nc" id="L127">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L128">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /** Obtener el tutor activo de una solicitud */
+    @GetMapping(&quot;/tutor/solicitud/{solicitudId}&quot;)
+    public ResponseEntity&lt;Tutor&gt; obtenerTutor(@PathVariable Long solicitudId) {
+<span class="nc" id="L135">        return juradoService.obtenerTutorDeSolicitud(solicitudId)</span>
+<span class="nc" id="L136">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L137">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    /** Eliminar tutor */
+    @DeleteMapping(&quot;/tutor/{tutorId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;Void&gt; eliminarTutor(@PathVariable Long tutorId) {
+<span class="nc" id="L144">        juradoService.eliminarTutor(tutorId);</span>
+<span class="nc" id="L145">        return ResponseEntity.noContent().build();</span>
+    }
+
+    // ── Vistas del docente como jurado ────────────────────────────────────────
+
+    /** Listar todas las asignaciones de un docente como jurado */
+    @GetMapping(&quot;/docente/{docenteId}&quot;)
+    public List&lt;Jurado&gt; listarPorDocente(@PathVariable Long docenteId) {
+<span class="nc" id="L153">        return juradoService.listarPorDocente(docenteId);</span>
+    }
+
+    /** Listar tutorias de un docente */
+    @GetMapping(&quot;/tutor/docente/{docenteId}&quot;)
+    public List&lt;Tutor&gt; listarTutoriasPorDocente(@PathVariable Long docenteId) {
+<span class="nc" id="L159">        return juradoService.listarTutoriasPorDocente(docenteId);</span>
+    }
+
+    @GetMapping(&quot;/info/{solicitudId}/{usuarioId}&quot;)
+    public ResponseEntity&lt;?&gt; obtenerInfoJurado(@PathVariable Long solicitudId, @PathVariable Long usuarioId) {
+<span class="nc" id="L164">        Optional&lt;Jurado&gt; juradoOpt = juradoService.obtenerInfoJurado(solicitudId, usuarioId);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (juradoOpt.isPresent()) {</span>
+<span class="nc" id="L166">            Jurado jurado = juradoOpt.get();</span>
+<span class="nc" id="L167">            String nombreDocente = &quot;&quot;;</span>
+<span class="nc bnc" id="L168" title="All 4 branches missed.">            if (jurado.getDocente() != null &amp;&amp; jurado.getDocente().getUsuario() != null) {</span>
+<span class="nc" id="L169">                nombreDocente = jurado.getDocente().getUsuario().getNombre() + &quot; &quot; </span>
+<span class="nc" id="L170">                        + jurado.getDocente().getUsuario().getApellido();</span>
+            }
+<span class="nc" id="L172">            return ResponseEntity.ok(Map.of(</span>
+<span class="nc" id="L173">                    &quot;id&quot;, jurado.getId(),</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                    &quot;rol&quot;, jurado.getRol() != null ? jurado.getRol() : &quot;&quot;,</span>
+<span class="nc" id="L175">                    &quot;confirmado&quot;, jurado.isConfirmado(),</span>
+                    &quot;nombreDocente&quot;, nombreDocente
+            ));
+        }
+<span class="nc" id="L179">        return ResponseEntity.ok(null);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

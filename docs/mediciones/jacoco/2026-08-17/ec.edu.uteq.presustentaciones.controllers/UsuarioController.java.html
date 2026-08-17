@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UsuarioController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">UsuarioController.java</span></div><h1>UsuarioController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.dto.PerfilRequest;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.IUsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * La gestión de usuarios (listar/crear/editar rol/activar/eliminar) es exclusiva de ADMIN.
+ * Cada usuario autenticado solo puede ver/editar su propio perfil vía {@code /{id}} y {@code /{id}/perfil}.
+ */
+@RestController
+@RequestMapping(&quot;/api/usuarios&quot;)
+<span class="fc" id="L26">@RequiredArgsConstructor</span>
+@CrossOrigin(origins = {&quot;http://localhost:4200&quot;, &quot;http://localhost:3000&quot;})
+<span class="fc" id="L28">@Slf4j</span>
+@Tag(name = &quot;Usuarios&quot;, description = &quot;API para gestión de usuarios del sistema&quot;)
+public class UsuarioController {
+
+    private final IUsuarioService usuarioService;
+    private final UsuarioRepository usuarioRepository;
+
+    @GetMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Listar todos los usuarios (solo ADMIN) — sin paginar, uso interno/pequeñas instalaciones&quot;)
+    public ResponseEntity&lt;List&lt;Usuario&gt;&gt; listarTodos() {
+<span class="fc" id="L39">        log.info(&quot;GET /api/usuarios - Listando todos los usuarios&quot;);</span>
+<span class="fc" id="L40">        return ResponseEntity.ok(usuarioService.listarTodos());</span>
+    }
+
+    /** La tabla puede tener decenas de miles de filas (datos de carga k6) — el panel de admin siempre usa este endpoint paginado. */
+    @GetMapping(&quot;/paginado&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Listar usuarios paginado, con búsqueda opcional (solo ADMIN)&quot;)
+    public ResponseEntity&lt;?&gt; listarPaginado(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size,
+            @RequestParam(required = false) String q
+    ) {
+<span class="nc" id="L52">        var resultado = usuarioService.listarPaginado(page, size, q);</span>
+<span class="nc" id="L53">        return ResponseEntity.ok(java.util.Map.of(</span>
+<span class="nc" id="L54">                &quot;content&quot;, resultado.getContent(),</span>
+<span class="nc" id="L55">                &quot;totalElements&quot;, resultado.getTotalElements(),</span>
+<span class="nc" id="L56">                &quot;totalPages&quot;, resultado.getTotalPages(),</span>
+<span class="nc" id="L57">                &quot;page&quot;, resultado.getNumber(),</span>
+<span class="nc" id="L58">                &quot;size&quot;, resultado.getSize()</span>
+        ));
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;Obtener usuario por ID (propio usuario o ADMIN)&quot;)
+    public ResponseEntity&lt;?&gt; obtenerPorId(@PathVariable Long id) {
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (!esUsuarioActualOAdmin(id)) {</span>
+<span class="nc" id="L66">            return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="nc" id="L67">                    .body(java.util.Map.of(&quot;error&quot;, &quot;No tienes permiso para ver este usuario&quot;));</span>
+        }
+<span class="nc" id="L69">        log.info(&quot;GET /api/usuarios/{} - Obteniendo usuario&quot;, id);</span>
+<span class="nc" id="L70">        return usuarioService.obtenerPorId(id)</span>
+<span class="nc" id="L71">                .&lt;ResponseEntity&lt;?&gt;&gt;map(ResponseEntity::ok)</span>
+<span class="nc" id="L72">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @GetMapping(&quot;/email/{email}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Buscar usuario por email (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Usuario&gt; buscarPorEmail(@PathVariable String email) {
+<span class="nc" id="L79">        log.info(&quot;GET /api/usuarios/email/{} - Buscando usuario&quot;, email);</span>
+<span class="nc" id="L80">        return usuarioService.obtenerPorEmail(email)</span>
+<span class="nc" id="L81">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L82">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @GetMapping(&quot;/activos&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Listar usuarios activos (solo ADMIN)&quot;)
+    public ResponseEntity&lt;List&lt;Usuario&gt;&gt; listarActivos() {
+<span class="nc" id="L89">        log.info(&quot;GET /api/usuarios/activos - Listando usuarios activos&quot;);</span>
+<span class="nc" id="L90">        return ResponseEntity.ok(usuarioService.listarActivos());</span>
+    }
+
+    @PostMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Crear nuevo usuario (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Usuario&gt; crear(@RequestBody Usuario usuario) {
+<span class="nc" id="L97">        log.info(&quot;POST /api/usuarios - Creando usuario: {}&quot;, usuario.getEmail());</span>
+<span class="nc" id="L98">        Usuario creado = usuarioService.crear(usuario);</span>
+<span class="nc" id="L99">        return ResponseEntity.status(HttpStatus.CREATED).body(creado);</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Actualizar usuario, incluido su rol (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Usuario&gt; actualizar(
+            @PathVariable Long id,
+            @RequestBody Usuario usuario
+    ) {
+<span class="nc" id="L109">        log.info(&quot;PUT /api/usuarios/{} - Actualizando usuario&quot;, id);</span>
+<span class="nc" id="L110">        Usuario actualizado = usuarioService.actualizar(id, usuario);</span>
+<span class="nc" id="L111">        return ResponseEntity.ok(actualizado);</span>
+    }
+
+    @PatchMapping(&quot;/{id}/activar&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Activar usuario (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Void&gt; activar(@PathVariable Long id) {
+<span class="nc" id="L118">        log.info(&quot;PATCH /api/usuarios/{}/activar&quot;, id);</span>
+<span class="nc" id="L119">        usuarioService.activar(id);</span>
+<span class="nc" id="L120">        return ResponseEntity.ok().build();</span>
+    }
+
+    @PatchMapping(&quot;/{id}/desactivar&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Desactivar usuario (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Void&gt; desactivar(@PathVariable Long id) {
+<span class="nc" id="L127">        log.info(&quot;PATCH /api/usuarios/{}/desactivar&quot;, id);</span>
+<span class="nc" id="L128">        usuarioService.desactivar(id);</span>
+<span class="nc" id="L129">        return ResponseEntity.ok().build();</span>
+    }
+
+    @PatchMapping(&quot;/{id}/perfil&quot;)
+    @Operation(summary = &quot;Actualizar correo de notificaciones y teléfono del perfil propio&quot;)
+    public ResponseEntity&lt;?&gt; actualizarPerfil(
+            @PathVariable Long id,
+            @RequestBody PerfilRequest req
+    ) {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (!esUsuarioActual(id)) {</span>
+<span class="nc" id="L139">            return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="nc" id="L140">                    .body(java.util.Map.of(&quot;error&quot;, &quot;No puedes editar el perfil de otro usuario&quot;));</span>
+        }
+        try {
+<span class="nc" id="L143">            Usuario actualizado = usuarioService.actualizarPerfil(id, req.getEmailNotificaciones(), req.getTelefono());</span>
+<span class="nc" id="L144">            return ResponseEntity.ok(actualizado);</span>
+<span class="nc" id="L145">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L146">            return ResponseEntity.badRequest().body(java.util.Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Eliminar usuario (solo ADMIN)&quot;)
+    public ResponseEntity&lt;Void&gt; eliminar(@PathVariable Long id) {
+<span class="nc" id="L154">        log.info(&quot;DELETE /api/usuarios/{}&quot;, id);</span>
+<span class="nc" id="L155">        usuarioService.eliminar(id);</span>
+<span class="nc" id="L156">        return ResponseEntity.noContent().build();</span>
+    }
+
+    /** El id del path coincide con el usuario autenticado (resuelto por email del JWT, no por el id recibido). */
+    private boolean esUsuarioActual(Long id) {
+<span class="nc" id="L161">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L162">        return usuarioRepository.findByEmail(auth.getName())</span>
+<span class="nc" id="L163">                .map(u -&gt; u.getId().equals(id))</span>
+<span class="nc" id="L164">                .orElse(false);</span>
+    }
+
+    private boolean esUsuarioActualOAdmin(Long id) {
+<span class="nc" id="L168">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L169">        boolean esAdmin = auth.getAuthorities().stream()</span>
+<span class="nc" id="L170">                .anyMatch(a -&gt; a.getAuthority().equals(&quot;ROLE_ADMIN&quot;));</span>
+<span class="nc bnc" id="L171" title="All 4 branches missed.">        return esAdmin || esUsuarioActual(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

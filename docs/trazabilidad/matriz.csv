@@ -1,13 +1,13 @@
-ID_Requisito,Historia_Usuario,Modulo_Backend,Endpoint_REST,Prioridad_MoSCoW,Caso_Prueba_Unitario_Real,Estado_Verificacion,Evidencia_Empirica_Real
-RF-01,HU-01,Seguridad / Auth,POST /api/v1/auth/login,Must,JwtTokenProviderTest.java;Phase4FeaturesTest.java,VERIFICADO,docs/mediciones/sec/owasp/OWASP-AUDIT.md (control A02)
-RF-02,HU-02,Solicitudes,POST /api/v1/solicitudes,Must,ninguna (SolicitudServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada)
-RF-03,HU-03,Jurados,POST /api/v1/jurados/asignar-masivo,Must,JuradoServiceImplTest.java,VERIFICADO,JaCoCo 53% cobertura de lineas real (docs/mediciones/jacoco/COVERAGE.md)
-RF-04,HU-04,Cronograma,POST /api/v1/cronogramas/crear,Must,ninguna (CronogramaServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada)
-RF-05,HU-05,Evaluaciones,POST /api/v1/evaluaciones/evaluar,Must,RubricaEvaluacionServiceImplTest.java,VERIFICADO,ninguna adicional (cita previa de k6 era incorrecta, ver historias/HU-05.md)
-RF-06,HU-06,Actas,POST /api/v1/actas/generar,Must,ninguna (ActaServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada)
-RF-07,HU-07,Actas / Firmas,PUT /api/v1/actas/{id}/firmar,Should,ninguna,NO_VERIFICADO,docs/mediciones/sec/owasp/OWASP-AUDIT.md (control A01, verificacion manual de acceso)
-RF-08,HU-08,Notificaciones,GET /api/v1/notificaciones,Could,ninguna (NotificacionServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada)
-RF-09,HU-09,Reportes,GET /api/v1/reportes/estadisticas/json,Could,ninguna,NO_VERIFICADO,ninguna (cita previa de k6 era incorrecta, ver casos-de-uso/CU-09.md)
-RF-10,HU-10,Salas,GET /api/v1/salas,Should,ninguna (SalaServiceImplTest.java no existe),NO_VERIFICADO,ninguna (cita previa de SUS era un non-sequitur, ver historias/HU-10.md)
-RF-11,HU-11,Usuarios,GET /api/v1/usuarios,Must,UsuarioServiceImplTest.java,VERIFICADO,JaCoCo 68% cobertura de lineas real + OWASP-AUDIT.md control A01
-RF-12,HU-12,Anteproyectos,POST /api/v1/anteproyectos/enviar/{id},Must,AnteproyectoServiceImplTest.java,VERIFICADO,JaCoCo 72% cobertura de lineas real + STATIC-ANALYSIS.md (UNSAFE_HASH_EQUALS corregido)
+ID_Requisito,Historia_Usuario,Modulo_Backend,Endpoint_REST,Prioridad_MoSCoW,Caso_Prueba_Unitario_Real,Estado_Verificacion,Evidencia_Empirica_Real,Tipo_Acceso
+RF-01,HU-01,Seguridad / Auth,POST /api/v1/auth/login,Must,JwtTokenProviderTest.java;Phase4FeaturesTest.java,VERIFICADO,docs/mediciones/sec/owasp/OWASP-AUDIT.md (control A02),CRUD-ORM
+RF-02,HU-02,Solicitudes,POST /api/v1/solicitudes/crear-por-usuario/{usuarioId},Must,SolicitudServiceImplTest.java,VERIFICADO,JaCoCo 65% cobertura de lineas real (docs/mediciones/jacoco/COVERAGE.md) + verificado end-to-end contra Docker (docs/basedatos/CATALOGO-SP.md),CRUD-ORM + SP (sp_generar_codigo_expediente al crear el perfil Estudiante)
+RF-03,HU-03,Jurados,POST /api/v1/jurados/asignar-masivo,Must,JuradoServiceImplTest.java,VERIFICADO,JaCoCo 53% cobertura de lineas real (docs/mediciones/jacoco/COVERAGE.md),SP (sp_asignar_jurado_masivo)
+RF-04,HU-04,Cronograma,POST /api/v1/cronogramas/crear,Must,CronogramaServiceImplTest.java,VERIFICADO,JaCoCo 48% cobertura de lineas real (docs/mediciones/jacoco/COVERAGE.md) + verificado end-to-end contra Docker,CRUD-ORM + SP (sp_validar_conflicto_jurado)
+RF-05,HU-05,Evaluaciones,POST /api/v1/evaluaciones/evaluar,Must,RubricaEvaluacionServiceImplTest.java,VERIFICADO,ninguna adicional (cita previa de k6 era incorrecta, ver historias/HU-05.md),CRUD-ORM
+RF-06,HU-06,Actas,POST /api/v1/actas/generar,Must,ninguna (ActaServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada),CRUD-ORM
+RF-07,HU-07,Actas / Firmas,POST /api/v1/actas/firmar/{actaId},Should,ninguna,NO_VERIFICADO,docs/mediciones/sec/owasp/OWASP-AUDIT.md (control A01, verificacion manual de acceso),SP (sp_firmar_acta_digital)
+RF-08,HU-08,Notificaciones,GET /api/v1/notificaciones,Could,ninguna (NotificacionServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada),CRUD-ORM
+RF-09,HU-09,Reportes,GET /api/v1/reportes/estadisticas/json,Could,ninguna,NO_VERIFICADO,ninguna (cita previa de k6 era incorrecta, ver casos-de-uso/CU-09.md),CRUD-ORM
+RF-10,HU-10,Salas,GET /api/v1/salas,Should,ninguna (SalaServiceImplTest.java no existe),NO_VERIFICADO,ninguna (cita previa de SUS era un non-sequitur, ver historias/HU-10.md),CRUD-ORM
+RF-11,HU-11,Usuarios,GET /api/v1/usuarios,Must,UsuarioServiceImplTest.java,VERIFICADO,JaCoCo 68% cobertura de lineas real + OWASP-AUDIT.md control A01,CRUD-ORM
+RF-12,HU-12,Anteproyectos,POST /api/v1/anteproyectos/enviar/{id},Must,AnteproyectoServiceImplTest.java,VERIFICADO,JaCoCo 72% cobertura de lineas real + STATIC-ANALYSIS.md (UNSAFE_HASH_EQUALS corregido),CRUD-ORM

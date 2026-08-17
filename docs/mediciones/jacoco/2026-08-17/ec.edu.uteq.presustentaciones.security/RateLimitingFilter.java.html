@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RateLimitingFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.security</a> &gt; <span class="el_source">RateLimitingFilter.java</span></div><h1>RateLimitingFilter.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.security;
+
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
+public class RateLimitingFilter extends OncePerRequestFilter {
+
+    private final RateLimiterService rateLimiterService;
+<span class="fc" id="L22">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+
+<span class="fc" id="L28">        String path = request.getRequestURI();</span>
+        
+        // Aplica únicamente a la ruta de autenticación de login (POST /api/v1/auth/login)
+<span class="pc bpc" id="L31" title="1 of 4 branches missed.">        if (path.equals(&quot;/api/v1/auth/login&quot;) &amp;&amp; request.getMethod().equalsIgnoreCase(&quot;POST&quot;)) {</span>
+<span class="fc" id="L32">            String ip = getClientIp(request);</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">            if (!rateLimiterService.isAllowed(ip)) {</span>
+<span class="nc" id="L34">                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());</span>
+<span class="nc" id="L35">                response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L36">                response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+                
+<span class="nc" id="L38">                ResponseWrapper&lt;Object&gt; errorResponse = ResponseWrapper.error(</span>
+                        &quot;Límite de intentos excedido. Por favor, intente de nuevo en un minuto.&quot;
+                );
+<span class="nc" id="L41">                response.getWriter().write(objectMapper.writeValueAsString(errorResponse));</span>
+<span class="nc" id="L42">                return;</span>
+            }
+        }
+
+<span class="fc" id="L46">        filterChain.doFilter(request, response);</span>
+<span class="fc" id="L47">    }</span>
+
+    private String getClientIp(HttpServletRequest request) {
+<span class="fc" id="L50">        String xfHeader = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
+<span class="pc bpc" id="L51" title="3 of 4 branches missed.">        if (xfHeader == null || xfHeader.isBlank()) {</span>
+<span class="fc" id="L52">            return request.getRemoteAddr();</span>
+        }
+<span class="nc" id="L54">        return xfHeader.split(&quot;,&quot;)[0].trim();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificacionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">NotificacionController.java</span></div><h1>NotificacionController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Notificacion;
+import ec.edu.uteq.presustentaciones.services.NotificacionService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/notificaciones&quot;)
+public class NotificacionController {
+
+    private final NotificacionService notificacionService;
+
+<span class="nc" id="L19">    public NotificacionController(NotificacionService notificacionService) {</span>
+<span class="nc" id="L20">        this.notificacionService = notificacionService;</span>
+<span class="nc" id="L21">    }</span>
+
+    @PostMapping(&quot;/crear&quot;)
+    public Notificacion crear(@RequestParam Long usuarioId, @RequestParam String mensaje) {
+<span class="nc" id="L25">        return notificacionService.crearNotificacion(usuarioId, mensaje);</span>
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;Page&lt;Notificacion&gt;&gt; listar(Pageable pageable) {
+<span class="nc" id="L30">        return ResponseEntity.ok(notificacionService.listarNotificaciones(pageable));</span>
+    }
+
+    @GetMapping(&quot;/usuario/{usuarioId}&quot;)
+    public ResponseEntity&lt;Page&lt;Notificacion&gt;&gt; listarPorUsuario(@PathVariable Long usuarioId, Pageable pageable) {
+<span class="nc" id="L35">        return ResponseEntity.ok(notificacionService.listarPorUsuario(usuarioId, pageable));</span>
+    }
+
+    @GetMapping(&quot;/usuario/{usuarioId}/no-leidas&quot;)
+    public ResponseEntity&lt;Map&lt;String, Long&gt;&gt; contarNoLeidas(@PathVariable Long usuarioId) {
+<span class="nc" id="L40">        return ResponseEntity.ok(Map.of(&quot;total&quot;, notificacionService.contarNoLeidas(usuarioId)));</span>
+    }
+
+    @PatchMapping(&quot;/{id}/marcar-leida&quot;)
+    public ResponseEntity&lt;Notificacion&gt; marcarLeida(@PathVariable Long id) {
+<span class="nc" id="L45">        return ResponseEntity.ok(notificacionService.marcarComoLeida(id));</span>
+    }
+
+    @PatchMapping(&quot;/usuario/{usuarioId}/marcar-todas-leidas&quot;)
+    public ResponseEntity&lt;Void&gt; marcarTodasLeidas(@PathVariable Long usuarioId) {
+<span class="nc" id="L50">        notificacionService.marcarTodasLeidas(usuarioId);</span>
+<span class="nc" id="L51">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
