@@ -2,7 +2,6 @@ import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectorRef } fr
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription, debounceTime } from 'rxjs';
-import Swal from 'sweetalert2';
 import { UsuarioService, Usuario } from '../../../services/usuario.service';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -52,6 +51,12 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void { this.subs.unsubscribe(); }
+
+    // sweetalert2 se carga en un chunk aparte (no en el bundle inicial): solo se
+    // necesita cuando el usuario abre un dialogo de confirmacion.
+    private async swal() {
+        return (await import('sweetalert2')).default;
+    }
 
     onBuscarChange(): void { this.busquedaSub.next(this.filtroTexto); }
 
@@ -136,9 +141,10 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
         });
     }
 
-    cambiarRol(usuario: Usuario, nuevoRol: Usuario['rol']): void {
+    async cambiarRol(usuario: Usuario, nuevoRol: Usuario['rol']): Promise<void> {
         if (usuario.rol === nuevoRol || !usuario.id) return;
         const rolAnterior = usuario.rol;
+        const Swal = await this.swal();
         Swal.fire({
             title: '¿Cambiar rol de usuario?',
             text: `${usuario.nombre} ${usuario.apellido} pasará de ${rolAnterior} a ${nuevoRol}.`,
@@ -179,8 +185,9 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
         });
     }
 
-    eliminar(usuario: Usuario): void {
+    async eliminar(usuario: Usuario): Promise<void> {
         if (!usuario.id) return;
+        const Swal = await this.swal();
         Swal.fire({
             title: '¿Eliminar usuario?',
             text: `Esta acción no se puede deshacer: se eliminará a ${usuario.nombre} ${usuario.apellido} (${usuario.email}).`,

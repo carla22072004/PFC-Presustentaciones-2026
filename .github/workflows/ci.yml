@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend — build, tests, JaCoCo, análisis estático de seguridad
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "maven"
+          cache-dependency-path: backend/pom.xml
+
+      - name: Compilar y ejecutar pruebas (JaCoCo se genera en la fase test)
+        run: ./mvnw -B test
+
+      - name: Publicar reporte de cobertura JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/target/site/jacoco
+          if-no-files-found: warn
+
+      - name: Publicar resultados de pruebas (surefire)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports
+          if-no-files-found: warn
+
+      # No bloquea el pipeline (findsecbugs reporta deuda de seguridad preexistente
+      # que se está resolviendo de forma incremental); el reporte queda publicado
+      # como evidencia reproducible para el criterio P3. Incluye la regla
+      # SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE (SQL dinámico / inyección SQL).
+      - name: Análisis estático de seguridad (SpotBugs + find-sec-bugs)
+        continue-on-error: true
+        run: ./mvnw -B com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs
+
+      - name: Publicar reporte SpotBugs / find-sec-bugs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-security-report
+          path: backend/target/spotbugsXml.xml
+          if-no-files-found: warn
+
+  frontend:
+    name: Frontend — build de producción
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build de producción (ng build)
+        run: npx ng build --configuration production
+
+      - name: Publicar build de producción
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: Frontend/dist/presustentaciones-frontend/browser

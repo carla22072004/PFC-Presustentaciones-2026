@@ -1,6 +1,7 @@
 # Sistema de Gestión de Pre-Sustentaciones UTEQ
 
 [![Version](https://img.shields.io/badge/version-v0.9.0--rc-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
+[![CI](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![JaCoCo Coverage](https://img.shields.io/badge/coverage-2.8%25-orange.svg)](docs/mediciones/COVERAGE.md)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP-revisión_manual-yellow.svg)](docs/seguridad/OWASP-AUDIT.md)
@@ -38,10 +39,10 @@ El sistema estará disponible en:
 | **Especificación SRS** | [`docs/srs/SRS.md`](docs/srs/SRS.md) | Documento de requisitos bajo la norma ISO/IEC/IEEE 29148:2018 (15 HUs, 15 CUs). |
 | **Matriz Trazabilidad** | [`docs/trazabilidad/matriz.csv`](docs/trazabilidad/matriz.csv) | Conexión Requisito → HU → Módulo → Endpoint → Test → Evidencia Empírica. |
 | **Despliegue & Docker** | [`Makefile`](Makefile) / [`docker-compose.yml`](docker-compose.yml) | Comando `make up` y anclaje criptográfico de imágenes con digests `sha256`. |
-| **Pruebas de Carga k6** | [`docs/pruebas/k6/`](docs/pruebas/k6/) | Script k6 y 2 corridas reales de resultados JSON (`run1`, `run2`). |
-| **Auditoría OWASP** | [`docs/seguridad/OWASP-AUDIT.md`](docs/seguridad/OWASP-AUDIT.md) | Revisión manual de código de 6 controles OWASP Top 10: 3 hallazgos reales corregidos, 1 abierto. |
+| **Pruebas de Carga k6** | [`docs/pruebas/k6/`](docs/pruebas/k6/) | Script k6, 5 corridas reales (`run1`-`run5`) y análisis estadístico caché fría/caliente (Wilcoxon, IC 95%, tamaño de efecto). |
+| **Auditoría OWASP** | [`docs/seguridad/OWASP-AUDIT.md`](docs/seguridad/OWASP-AUDIT.md) | Revisión manual de 6 controles OWASP Top 10 + herramientas automáticas reales: OWASP ZAP (0 FAIL, 4 hallazgos corregidos), SpotBugs/find-sec-bugs (0 SQL dinámico, 1 timing-attack corregido), `npm audit` (41 deps vulnerables detectadas). |
 | **Usabilidad SUS** | [`docs/usabilidad/SUS-RESULTS.md`](docs/usabilidad/SUS-RESULTS.md) | Instrumento SUS listo; pendiente de aplicar a usuarios reales. |
-| **Lighthouse Frontend** | [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md) | Auditoría real (dev server): Rendimiento 55, Accesibilidad 89, Buenas Prácticas 100, SEO 91. |
+| **Lighthouse Frontend** | [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md) | 6 corridas reales contra build de producción (3 desktop + 3 mobile): Rendimiento 64/61, Accesibilidad 89, Buenas Prácticas 100, SEO 91. Rendimiento aún bajo el umbral de 80 (ver nota metodológica sobre contención de CPU). |
 | **Arquitectura C4** | [`docs/arquitectura/README.md`](docs/arquitectura/README.md) | Diagramas de Arquitectura Modelo C4 (Niveles 1 Contexto, 2 Contenedores, 3 Componentes). |
 | **Registros ADR** | [`docs/arquitectura/adrs/`](docs/arquitectura/adrs/) | 6 Registros de Decisiones Arquitectónicas (ADR-001 a ADR-006). |
 | **Taxonomía CRediT** | [`CONTRIBUTORS.md`](CONTRIBUTORS.md) | Asignación explícita de roles CRediT para los 4 integrantes del grupo universitario. |

@@ -41,3 +41,7 @@ yarn-error.log
 
 # Logs y otros
 *.log
+
+# Variables de entorno con secretos reales (usar .env.example como plantilla)
+.env
+backend/.env

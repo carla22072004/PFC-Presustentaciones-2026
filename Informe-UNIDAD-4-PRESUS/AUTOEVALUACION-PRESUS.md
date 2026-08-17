@@ -6,6 +6,13 @@
 > **Propósito:** análisis crítico de qué falta y qué debería mejorar en el proyecto, para guiar la
 > retroalimentación entre los integrantes de la actividad combinada PFC + práctica experimental.
 
+> **Nota de estado (2026-08-17):** este documento es una fotografía de la evaluación cruzada en el momento en que
+> se escribió. Desde entonces se cerraron varios de los hallazgos E1–E8 (API externa, caché Redis, versionado
+> `/api/v1`, JWT de 7 claims + refresh token, Dockerfile/nginx, cabeceras de seguridad, rate limiting) — ver el
+> historial de commits del backend. Las cifras de SUS y Lighthouse citadas más abajo se corrigieron para reflejar
+> mediciones reales; los hallazgos y el plan de mejora que siguen no se reescribieron y pueden estar desactualizados
+> frente al estado actual del repositorio.
+
 ---
 
 ## 1. Resumen ejecutivo
@@ -16,8 +23,12 @@ tutorías, rúbricas, actas y reportes. Está construido con **Spring Boot 3.2.1
 frontend, **PostgreSQL 15** como base de datos y **Redis 7** como caché distribuida. El proyecto incluye
 autenticación JWT stateless, documentación OpenAPI 3.0 (Springdoc 2.3.0), 21 controladores REST, generación de
 PDF con iText, y despliegue con Docker Compose. La documentación es exhaustiva: SRS (ISO/IEC/IEEE 29148:2018),
-6 ADR, colección Postman con 22 peticiones, auditoría OWASP, pruebas de carga k6, evaluación SUS (91.25/100,
-Grado A+) y métricas Lighthouse (94/98/96). Sin embargo, el análisis contra los criterios exigidos por la guía
+6 ADR, colección Postman con 22 peticiones, auditoría OWASP, pruebas de carga k6 y métricas Lighthouse reales
+contra build de producción (Performance 64/61 desktop/mobile, Accesibilidad 89, Buenas Prácticas 100, SEO 91;
+ver [`docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md`](../docs/mediciones/lighthouse/LIGHTHOUSE-REPORT.md)).
+La encuesta SUS (91.25/100, Grado A+) de una versión anterior de este informe **era fabricada y fue retirada**;
+el instrumento real está listo pero pendiente de aplicarse a usuarios reales
+(ver [`docs/usabilidad/SUS-RESULTS.md`](../docs/usabilidad/SUS-RESULTS.md)). Sin embargo, el análisis contra los criterios exigidos por la guía
 de la Unidad IV identifica **brechas concretas** que deben cerrarse: la **integración de una API REST externa**,
 el **versionado de la API** (`/api/v1/`), el **proxy de borde (nginx)**, la **ausencia de refresh token** y la
 **caché Redis en el backend**.
@@ -63,8 +74,10 @@ La siguiente tabla clasifica los hallazgos por severidad y prioridad de atenció
 - **Documentación exhaustiva:** SRS (ISO/IEC/IEEE 29148:2018) con 15 HUs y 15 CUs, 6 ADR, colección Postman con
   22 peticiones, arquitectura C4 en 3 niveles, matriz de trazabilidad, diccionario de datos, OWASP audit y
   documento ético con consentimientos informados.
-- **Usabilidad validada:** puntuación SUS de 91.25/100 (Grado A+) con 10 evaluadores externos, y métricas
-  Lighthouse de Rendimiento 94, Accesibilidad 98, Buenas Prácticas 96.
+- **Calidad web medida contra build de producción:** Lighthouse real con 6 corridas (3 desktop + 3 mobile) da
+  Accesibilidad 89 y Buenas Prácticas 100 (ya cumplen); Rendimiento 64/61 sigue bajo el umbral de 80
+  (ver nota metodológica en el reporte). La encuesta SUS de 91.25/100 citada en una versión anterior de este
+  documento era fabricada y fue retirada; el instrumento real existe pero está pendiente de aplicarse.
 - **Seguridad base funcional:** JWT stateless con JJWT 0.12.5, BCrypt, `SessionCreationPolicy.STATELESS`,
   `@PreAuthorize` por roles (ADMIN, DOCENTE, COORDINADOR), CORS configurado y validación con Jakarta Validation.
 - **Despliegue parcialmente reproducible:** Docker Compose con PostgreSQL 15 y Redis 7, health checks con
@@ -75,8 +88,8 @@ La siguiente tabla clasifica los hallazgos por severidad y prioridad de atenció
 ## 5. Conclusión de la autoevaluación
 
 El proyecto cumple de manera notable los criterios de funcionalidad, documentación y usabilidad exigidos en las
-prácticas experimentales. Con 21 controladores REST, un frontend Angular 21 completo y una puntuación SUS de
-91.25, demuestra un dominio sólido del patrón MVC y la arquitectura cliente-servidor. Las brechas principales
+prácticas experimentales. Con 21 controladores REST y un frontend Angular 21 completo, demuestra un dominio
+sólido del patrón MVC y la arquitectura cliente-servidor. Las brechas principales
 —por ser los criterios específicos del Paso 3 de la Unidad IV— son la **ausencia de consumo de una API REST
 externa**, la **falta de caché Redis activa en el backend** (Redis existe en Docker Compose pero no se usa desde
 el código), el **versionado de la API** y el **proxy nginx** en el despliegue de producción. La seguridad, aunque

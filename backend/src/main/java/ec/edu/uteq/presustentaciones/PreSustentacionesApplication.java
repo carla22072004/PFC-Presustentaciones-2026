@@ -65,6 +65,19 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                 log.warn("Verificación de carrera inicial: {}", e.getMessage());
             }
 
+            // Sembrar catalogo de roles si no existe (ninguna migracion los inserta:
+            // roles_usuario.id no es autogenerado, requiere valores explicitos)
+            try {
+                jdbcTemplate.update(
+                    "INSERT INTO presus.roles_usuario (id, codigo, nombre) VALUES " +
+                    "(1, 'ADMIN', 'Administrador'), (2, 'DOCENTE', 'Docente'), " +
+                    "(3, 'COORDINADOR', 'Coordinador'), (4, 'ESTUDIANTE', 'Estudiante') " +
+                    "ON CONFLICT (id) DO NOTHING"
+                );
+            } catch (Exception e) {
+                log.warn("Verificación de catálogo de roles: {}", e.getMessage());
+            }
+
             // Buscar rol admin de la base de datos
             ec.edu.uteq.presustentaciones.entities.RolUsuario adminRol = rolUsuarioRepository.findByCodigo("ADMIN").orElse(null);
 
