@@ -24,8 +24,8 @@ authors:
     affiliation: "Universidad Técnica Estatal de Quevedo"
     # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
 title: "Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ"
-version: "0.9.0-rc"
-date-released: "2026-07-30"
+version: "1.0.0"
+date-released: "2026-08-17"
 url: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 repository-code: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 # doi: "10.5281/zenodo.PENDIENTE" — solo se completa cuando el release v1.0.0 se deposite en
