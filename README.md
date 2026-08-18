@@ -1,6 +1,7 @@
 # Sistema de Gestión de Pre-Sustentaciones UTEQ
 
-[![Version](https://img.shields.io/badge/version-v0.9.0--rc-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21988564.svg)](https://doi.org/10.5281/zenodo.21988564)
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
 [![CI](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![JaCoCo Coverage](https://img.shields.io/badge/coverage-28.5%25-orange.svg)](docs/mediciones/jacoco/COVERAGE.md)
@@ -83,7 +84,7 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 | **Procedencia de datos** | [`docs/mediciones/DATA-PROVENANCE.md`](docs/mediciones/DATA-PROVENANCE.md) | Mapea cada cifra citada en el informe a su archivo crudo y comando de origen. |
 | **Versiones del entorno** | [`docs/entorno/versions.txt`](docs/entorno/versions.txt) | Versiones exactas de Docker, JDK, Node, Angular CLI y k6 usadas para generar la evidencia. Regenerable con [`scripts/gen-versions.sh`](scripts/gen-versions.sh); el job `entorno` de [`ci.yml`](.github/workflows/ci.yml) publica su propia copia como artefacto en cada push. |
 | **Checklists metodológicos** | [`docs/checklists/`](docs/checklists/) | Autoevaluación honesta contra Ralph 2021 (General + Engineering Research + Benchmarking), PRISMA 2020 (evaluado contra el procedimiento de búsqueda real del capítulo de trabajos relacionados), Runeson & Höst (no aplica — el proyecto es DSR+GQM, no estudio de caso), INCOSE y FAIR. |
-| **DOI del software / dataset (Zenodo)** | [`docs/ZENODO.md`](docs/ZENODO.md) / [`docs/ZENODO-DATASET.md`](docs/ZENODO-DATASET.md) | ⏳ Pendiente de depósito real — proceso documentado paso a paso para depositar el software (release v1.0.0, licencia MIT) y el dataset de mediciones (CC-BY 4.0) en registros Zenodo **separados**, siguiendo el principio de citación independiente. `CITATION.cff` ya tiene los campos `orcid`/`doi` listos (comentados) para completarse cuando existan valores reales — ORCID requiere que cada integrante se registre personalmente en orcid.org. |
+| **DOI del software (Zenodo)** | [`docs/ZENODO.md`](docs/ZENODO.md) / [`docs/ZENODO-DATASET.md`](docs/ZENODO-DATASET.md) | ✅ **Archivado en Zenodo** — DOI oficial: [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) (`v1.0.0`, licencia MIT). El dataset de mediciones se deposita por separado siguiendo el principio de citación independiente (`docs/ZENODO-DATASET.md`). |
 | **Scripts de análisis** | [`scripts/`](scripts/) | Notebooks reales y ejecutados (`perf-analysis.ipynb`, `sus-analysis.ipynb`) + `validate-traceability.sh`, `audit-sql-dynamic.sh`, `gen-figuras.py`. |
 | **Pruebas de Carga k6** | [`k6/`](k6/) | Script k6, 5 corridas reales (`run1`-`run5`) y análisis estadístico caché fría/caliente (Wilcoxon, IC 95%, tamaño de efecto). |
 | **Auditoría OWASP** | [`docs/mediciones/sec/owasp/OWASP-AUDIT.md`](docs/mediciones/sec/owasp/OWASP-AUDIT.md) | Revisión manual de 6 controles OWASP Top 10 + herramientas automáticas reales: OWASP ZAP (0 FAIL, 4 hallazgos corregidos), SpotBugs/find-sec-bugs (0 SQL dinámico, 1 timing-attack corregido), `npm audit` (41 deps vulnerables detectadas). |

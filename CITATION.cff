@@ -28,10 +28,7 @@ version: "1.0.0"
 date-released: "2026-08-17"
 url: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 repository-code: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
-# doi: "10.5281/zenodo.PENDIENTE" — solo se completa cuando el release v1.0.0 se deposite en
-# Zenodo de verdad (ver docs/ZENODO.md, "Cómo obtener un DOI real"). Una versión anterior de
-# este archivo tenía un DOI inventado (10.5281/zenodo.14892026) que no correspondía a este
-# repositorio; se retiró en la Fase 9 y no se reemplaza por otro número de relleno.
+doi: "10.5281/zenodo.21988564"
 keywords:
   - "pre-sustentacion"
   - "titulacion"
