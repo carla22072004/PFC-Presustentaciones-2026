@@ -10,7 +10,7 @@ authors:
   - family-names: "Alava Alvarado"
     given-names: "Jean Pierre"
     affiliation: "Universidad Técnica Estatal de Quevedo"
-    # orcid: "https://orcid.org/0009-0001-2878-2919"
+    orcid: "https://orcid.org/0009-0001-2878-2919"
   - family-names: "Moncayo Loor"
     given-names: "Xavier Alejandro"
     affiliation: "Universidad Técnica Estatal de Quevedo"
@@ -25,7 +25,7 @@ authors:
     # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
 title: "Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ"
 version: "0.9.0-rc"
-date-released: 2026-07-30
+date-released: "2026-07-30"
 url: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 repository-code: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 # doi: "10.5281/zenodo.PENDIENTE" — solo se completa cuando el release v1.0.0 se deposite en

@@ -32,7 +32,7 @@ Tampoco existe todavía un **release ni un tag `v1.0.0`** en el repositorio (`gi
 - **Título del Registro:** Sistema de Gestión de Pre-Sustentaciones de Trabajos de Titulación UTEQ
 - **Licencia:** MIT Open Source License
 - **Repositorio GitHub:** `https://github.com/carla22072004/PFC-Presustentaciones-2026`
-- **Autores CRediT:** Jean Pierre Alava Alvarado, Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
+- **Autores CRediT:** Jean Pierre Alava Alvarado ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)), Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
 - **Formato de Cita BibTeX (sin DOI hasta que exista uno real):**
 
 ```bibtex

@@ -32,7 +32,7 @@ como coautor, en el informe final).
 **Resumen por integrante** (concentración principal, sin excluir la participación transversal en
 revisión de código y documentación que aplica a los cuatro):
 
-- **Alava Alvarado, Jean Pierre:** Conceptualización del sistema, seguridad backend (JWT/Spring
+- **Alava Alvarado, Jean Pierre** ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)): Conceptualización del sistema, seguridad backend (JWT/Spring
   Security), administración del proyecto.
 - **Moncayo Loor, Xavier Alejandro:** Desarrollo frontend (Angular), diseño de interfaz.
 - **Zamora Arias, Carla Esthefania:** Diseño de base de datos, curación de datos de prueba,
