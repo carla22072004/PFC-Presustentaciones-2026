@@ -74,27 +74,34 @@ List<Object[]> generarReporteDefensas(@Param("carrera") String carrera);
 
 ---
 
-### 3. `sp_asignar_jurado_masivo`
+### 3. `sp_asignar_jurado_masivo` — ✅ Conectado y probado (única SP verificada end-to-end)
 * **Tipo:** Procedimiento Almacenado PL/pgSQL (`PROCEDURE`)
-* **Propósito:** Realiza la asignación masiva y transaccional de un arreglo de docentes como jurados a un arreglo de solicitudes de pre-sustentación en un único paso.
-* **Firma SQL:**
+* **Propósito:** Asigna (upsert) un docente como jurado de una solicitud, resolviendo el código de rol contra `roles_jurado`. La semántica "masiva" se logra invocándolo una vez por par `(solicitud, docente)` desde un único método de servicio `@Transactional`: si un par falla, se revierte también lo ya insertado del lote en esa misma llamada.
+* **Corrección aplicada (14-18 ago 2026):** la versión original recibía `BIGINT[]` y escribía en una tabla `jurados(docente_id, solicitud_id, rol VARCHAR, ...)` que **no es la que usa la capa JPA real** — la entidad `Jurado.java` mapea a `miembros_tribunal(solicitud_id, docente_id, rol_jurado_id FK, ...)`. Se reescribió el procedimiento para escribir en `miembros_tribunal` resolviendo `rol_jurado_id`, y se cambió de parámetros array a escalares por par (los arrays de PostgreSQL no se bindean de forma fiable vía `@Procedure`/JPA). También se detectó y corrigió que el `search_path` del rol de conexión (`JEAN`) no incluía el esquema `presus`, causando `relation "roles_jurado" does not exist` en tiempo de ejecución (`ALTER ROLE "JEAN" SET search_path TO presus, public;`).
+* **Firma SQL real:**
 ```sql
 CREATE OR REPLACE PROCEDURE sp_asignar_jurado_masivo(
-    p_solicitud_ids BIGINT[],
-    p_docente_ids BIGINT[],
-    p_rol VARCHAR
+    p_solicitud_id BIGINT,
+    p_docente_id BIGINT,
+    p_rol_codigo VARCHAR
 )
 ```
 * **Parámetros:**
-  - `p_solicitud_ids` (BIGINT[]): Arreglo de IDs de solicitudes.
-  - `p_docente_ids` (BIGINT[]): Arreglo de IDs de docentes.
-  - `p_rol` (VARCHAR): Rol del jurado (`'PRESIDENTE'`, `'VOCAL1'`, `'VOCAL2'`).
-* **Manejo de Errores:** Lanza excepción si las longitudes de los arreglos no coinciden.
-* **Invocación desde Java JPA:**
+  - `p_solicitud_id` (BIGINT): ID de la solicitud.
+  - `p_docente_id` (BIGINT): ID del docente.
+  - `p_rol_codigo` (VARCHAR): código de `roles_jurado` (`'PRESIDENTE'`, `'VOCAL'`, `'SECRETARIO'`).
+* **Manejo de Errores:** `RAISE EXCEPTION` si el código de rol no existe en `roles_jurado`; la FK de `miembros_tribunal` rechaza `docente_id`/`solicitud_id` inexistentes.
+* **Invocación real desde Java JPA** (`JuradoRepository.java`):
 ```java
 @Procedure(procedureName = "sp_asignar_jurado_masivo")
-void asignarJuradoMasivo(Long[] solicitudIds, Long[] docenteIds, String rol);
+void spAsignarJuradoMasivo(@Param("p_solicitud_id") Long solicitudId,
+                            @Param("p_docente_id") Long docenteId,
+                            @Param("p_rol_codigo") String rolCodigo);
 ```
+Invocado desde `JuradoServiceImpl.asignarJuradoMasivo(List<Long>, List<Long>, String)`, anotado `@Transactional`, expuesto en `POST /api/v1/jurados/asignar-masivo` (roles `ADMIN`/`COORDINADOR`).
+* **Prueba de control transaccional (verificada manualmente):** lote de 2 pares donde el primero es válido y el segundo viola la FK de `docente_id` → el `INSERT` del primer par se ejecuta pero, al fallar el segundo, Spring revierte la transacción completa; se confirmó que **ningún** registro del lote queda en `miembros_tribunal`.
+
+> **Nota de estado real:** `sp_calcular_promedio_evaluacion` (#1), `sp_generar_reporte_defensas` (#2) y `sp_firmar_acta_digital` (#4) documentados arriba **siguen sin invocarse desde código Java** y, al verificar sus cuerpos SQL contra el esquema real (`presus`), `sp_generar_reporte_defensas` referencia tablas en plural (`solicitudes`, `estudiantes`, `cronogramas`, `salas`) que no existen — las tablas reales son singulares (`solicitud`, `estudiante`, `cronograma`, `sala`) — y `sp_calcular_promedio_evaluacion` actualiza columnas (`estado`, `actualizado_en`) que no existen en la tabla real `evaluaciones` (las columnas reales son `resultado`, sin columna de fecha de actualización). Ambas quedan pendientes de corrección y conexión.
 
 ---
 

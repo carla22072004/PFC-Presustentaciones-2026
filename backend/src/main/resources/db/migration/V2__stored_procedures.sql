@@ -86,31 +86,31 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 3. Procedimiento para asignación masiva segura de jurados
+-- 3. Procedimiento para asignación segura de un jurado (invocado una vez por par
+--    solicitud/docente desde Java dentro de un límite @Transactional para lograr
+--    semántica de "asignación masiva": todo el lote se confirma o se revierte junto).
+--    NOTA DE CORRECCIÓN: la versión original apuntaba a una tabla "jurados" con
+--    columna "rol" VARCHAR que no es la que usa la capa JPA en producción; la
+--    entidad real (Jurado.java) mapea a "miembros_tribunal", con rol_jurado_id
+--    como FK a roles_jurado. Se corrige para escribir en la tabla real.
 CREATE OR REPLACE PROCEDURE sp_asignar_jurado_masivo(
-    p_solicitud_ids BIGINT[],
-    p_docente_ids BIGINT[],
-    p_rol VARCHAR
+    p_solicitud_id BIGINT,
+    p_docente_id BIGINT,
+    p_rol_codigo VARCHAR
 )
 AS $$
 DECLARE
-    v_solicitud_id BIGINT;
-    v_docente_id BIGINT;
-    i INT;
+    v_rol_jurado_id SMALLINT;
 BEGIN
-    IF array_length(p_solicitud_ids, 1) != array_length(p_docente_ids, 1) THEN
-        RAISE EXCEPTION 'Los arreglos de solicitudes y docentes deben tener la misma longitud';
+    SELECT id INTO v_rol_jurado_id FROM roles_jurado WHERE codigo = p_rol_codigo;
+    IF v_rol_jurado_id IS NULL THEN
+        RAISE EXCEPTION 'Rol de jurado invalido: %', p_rol_codigo;
     END IF;
 
-    FOR i IN 1..array_length(p_solicitud_ids, 1) LOOP
-        v_solicitud_id := p_solicitud_ids[i];
-        v_docente_id := p_docente_ids[i];
-
-        INSERT INTO jurados (docente_id, solicitud_id, rol, confirmado, asignado_en)
-        VALUES (v_docente_id, v_solicitud_id, p_rol, true, NOW())
-        ON CONFLICT (docente_id, solicitud_id) 
-        DO UPDATE SET rol = EXCLUDED.rol, asignado_en = NOW();
-    END LOOP;
+    INSERT INTO miembros_tribunal (solicitud_id, docente_id, rol_jurado_id, confirmado, asignado_en)
+    VALUES (p_solicitud_id, p_docente_id, v_rol_jurado_id, true, NOW())
+    ON CONFLICT (solicitud_id, docente_id)
+    DO UPDATE SET rol_jurado_id = EXCLUDED.rol_jurado_id, asignado_en = NOW();
 END;
 $$ LANGUAGE plpgsql;
 

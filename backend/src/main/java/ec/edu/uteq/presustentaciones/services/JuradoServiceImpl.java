@@ -231,6 +231,19 @@ public class JuradoServiceImpl implements JuradoService {
         notificarEstudianteTribunalCompleto(solicitud, todosJurados);
     }
 
+    // ── Asignación masiva vía procedimiento almacenado ──────────────────────────
+
+    @Override
+    @Transactional
+    public void asignarJuradoMasivo(List<Long> solicitudIds, List<Long> docenteIds, String rolCodigo) {
+        if (solicitudIds == null || docenteIds == null || solicitudIds.size() != docenteIds.size()) {
+            throw new RuntimeException("Los arreglos de solicitudes y docentes deben tener la misma longitud");
+        }
+        for (int i = 0; i < solicitudIds.size(); i++) {
+            juradoRepository.spAsignarJuradoMasivo(solicitudIds.get(i), docenteIds.get(i), rolCodigo);
+        }
+    }
+
     @Override
     public List<Jurado> listarPorDocente(Long docenteId) {
         return juradoRepository.findByDocenteId(docenteId);
