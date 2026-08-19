@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.SolicitudService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/solicitudes")
@@ -63,6 +65,7 @@ public class SolicitudController {
                     .getId();
             return ResponseEntity.ok(solicitudService.listarPorUsuario(usuarioId));
         } catch (RuntimeException e) {
+            log.error("Error al listar mis-solicitudes: {}", e.getMessage(), e);
             return ResponseEntity.ok(java.util.List.of());
         }
     }
@@ -73,6 +76,7 @@ public class SolicitudController {
         try {
             return ResponseEntity.ok(solicitudService.listarPorUsuario(usuarioId));
         } catch (RuntimeException e) {
+            log.error("Error al listar solicitudes por usuario {}: {}", usuarioId, e.getMessage(), e);
             return ResponseEntity.ok(java.util.List.of());
         }
     }

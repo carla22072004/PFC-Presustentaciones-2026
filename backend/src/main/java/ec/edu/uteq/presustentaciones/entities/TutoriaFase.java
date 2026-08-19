@@ -30,6 +30,14 @@ public class TutoriaFase {
     @Builder.Default
     private String estado = "PENDIENTE_ESTUDIANTE";
 
+    /**
+     * Columna "estado_id" (FK NOT NULL a estados_proceso) heredada del esquema real,
+     * sincronizada automáticamente a partir de "estado" (mismo patrón aplicado en
+     * Solicitud.java, Anteproyecto.java y Tutor.java para el mismo problema).
+     */
+    @Column(name = "estado_id", nullable = false)
+    private Short estadoProcesoId;
+
     @Column(name = "fecha_inicio", nullable = false, updatable = false)
     private LocalDateTime fechaInicio;
 
@@ -48,5 +56,19 @@ public class TutoriaFase {
     @PrePersist
     protected void onCreate() {
         fechaInicio = LocalDateTime.now();
+        sincronizarEstadoProceso();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        sincronizarEstadoProceso();
+    }
+
+    private void sincronizarEstadoProceso() {
+        estadoProcesoId = switch (estado) {
+            case "PENDIENTE_TUTOR" -> (short) 2;   // EN_PROCESO
+            case "APROBADA" -> (short) 3;          // APROBADO
+            default -> (short) 1;                  // PENDIENTE (PENDIENTE_ESTUDIANTE)
+        };
     }
 }

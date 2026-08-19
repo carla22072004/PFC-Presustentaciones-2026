@@ -33,10 +33,19 @@ public class Tutor {
     @Column(name = "fecha_asignacion", nullable = false, updatable = false)
     private LocalDateTime fechaAsignacion;
 
-    /** Estado de la tutoría: ACTIVO, FINALIZADO, REEMPLAZADO */
+    /** Estado de la tutoría: ACTIVO, COMPLETADA, FINALIZADO, REEMPLAZADO */
     @Column(name = "estado", nullable = false, length = 20)
     @Builder.Default
     private String estado = "ACTIVO";
+
+    /**
+     * Columna "estado_id" (FK NOT NULL a estados_proceso) heredada del esquema real,
+     * en paralelo a "estado" (texto), que es el que usa la lógica de la aplicación.
+     * Se sincroniza automáticamente a partir de "estado" (mismo patrón aplicado en
+     * Solicitud.java y Anteproyecto.java para el mismo problema).
+     */
+    @Column(name = "estado_id", nullable = false)
+    private Short estadoProcesoId;
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones;
@@ -44,5 +53,20 @@ public class Tutor {
     @PrePersist
     protected void onCreate() {
         fechaAsignacion = LocalDateTime.now();
+        sincronizarEstadoProceso();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        sincronizarEstadoProceso();
+    }
+
+    private void sincronizarEstadoProceso() {
+        estadoProcesoId = switch (estado) {
+            case "ACTIVO" -> (short) 2;                         // EN_PROCESO
+            case "COMPLETADA", "FINALIZADO" -> (short) 3;       // APROBADO
+            case "REEMPLAZADO" -> (short) 5;                    // RECHAZADO
+            default -> (short) 1;                               // PENDIENTE
+        };
     }
 }

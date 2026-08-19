@@ -74,6 +74,17 @@ public class Solicitud {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private EstadoSolicitud estado;
 
+    /**
+     * Columna "estado" (VARCHAR) heredada del esquema real de la base de datos,
+     * en paralelo a la relación "estado" (FK a estado_id) de arriba. Es NOT NULL
+     * en la tabla real y ninguna clase la poblaba, causando un error al crear o
+     * actualizar una solicitud ("null value in column estado"). Se mantiene
+     * sincronizada automáticamente en @PrePersist/@PreUpdate a partir del código
+     * de la relación FK, sin tocar los puntos del servicio que la usan.
+     */
+    @Column(name = "estado", nullable = false, length = 30)
+    private String estadoCodigo;
+
     @Column(name = "motivo_suspension", columnDefinition = "TEXT")
     private String motivoSuspension;
 
@@ -84,10 +95,18 @@ public class Solicitud {
     protected void onCreate() {
         fechaRegistro = LocalDateTime.now();
         actualizadoEn = LocalDateTime.now();
+        sincronizarEstadoCodigo();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         actualizadoEn = LocalDateTime.now();
+        sincronizarEstadoCodigo();
+    }
+
+    private void sincronizarEstadoCodigo() {
+        if (estado != null) {
+            estadoCodigo = estado.getCodigo();
+        }
     }
 }

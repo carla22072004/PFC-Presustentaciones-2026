@@ -54,13 +54,34 @@ public class Cronograma {
     @JoinColumn(name = "estado_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private EstadoCronograma estado;
-    
+
+    /**
+     * Columna "estado" (VARCHAR NOT NULL) heredada del esquema real, en paralelo a
+     * la relación "estado" (FK a estado_id) de arriba. Caso inverso al de
+     * Solicitud/Anteproyecto/Tutor/TutoriaFase: aquí la relación FK ya estaba bien
+     * mapeada, pero faltaba sincronizar la columna de texto redundante.
+     */
+    @Column(name = "estado", nullable = false, length = 30)
+    private String estadoCodigo;
+
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
-    
+
     @PrePersist
     protected void onCreate() {
         creadoEn = LocalDateTime.now();
+        sincronizarEstadoCodigo();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        sincronizarEstadoCodigo();
+    }
+
+    private void sincronizarEstadoCodigo() {
+        if (estado != null) {
+            estadoCodigo = estado.getCodigo();
+        }
     }
     
     public LocalDateTime getFechaFin() {

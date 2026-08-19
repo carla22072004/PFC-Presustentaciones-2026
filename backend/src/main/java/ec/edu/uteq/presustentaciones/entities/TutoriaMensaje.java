@@ -40,8 +40,24 @@ public class TutoriaMensaje {
     @Builder.Default
     private Boolean leido = false;
 
+    /**
+     * Columna "tipo_mensaje_id" (FK NOT NULL a tipos_mensaje) heredada del esquema
+     * real, sincronizada a partir de "tipo" (mismo patrón aplicado en Solicitud,
+     * Anteproyecto, Tutor, TutoriaFase y Cronograma para el mismo problema).
+     */
+    @Column(name = "tipo_mensaje_id", nullable = false)
+    private Short tipoMensajeId;
+
     @PrePersist
+    @PreUpdate
     protected void onCreate() {
-        fechaEnvio = LocalDateTime.now();
+        if (fechaEnvio == null) {
+            fechaEnvio = LocalDateTime.now();
+        }
+        tipoMensajeId = switch (tipo) {
+            case "RESPUESTA" -> (short) 2;   // ARCHIVO (respuesta trae el PDF corregido)
+            case "APROBACION" -> (short) 3;  // SISTEMA
+            default -> (short) 1;            // TEXTO (OBSERVACION)
+        };
     }
 }
