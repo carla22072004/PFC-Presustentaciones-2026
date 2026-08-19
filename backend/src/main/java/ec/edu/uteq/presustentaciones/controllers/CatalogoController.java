@@ -1,8 +1,12 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
+import ec.edu.uteq.presustentaciones.entities.AreaTematica;
 import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
+import ec.edu.uteq.presustentaciones.entities.LineaInvestigacion;
 import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
+import ec.edu.uteq.presustentaciones.repositories.AreaTematicaRepository;
 import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.LineaInvestigacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +23,32 @@ public class CatalogoController {
 
     private final ModalidadTitulacionRepository modalidadRepo;
     private final ConvocatoriaTitulacionRepository convocatoriaRepo;
+    private final LineaInvestigacionRepository lineaInvestigacionRepo;
+    private final AreaTematicaRepository areaTematicaRepo;
 
     /** Lista todas las modalidades de titulación disponibles */
     @GetMapping("/modalidades")
     public ResponseEntity<List<ModalidadTitulacion>> listarModalidades() {
         return ResponseEntity.ok(modalidadRepo.findAll());
+    }
+
+    /** Lista todas las líneas de investigación institucionales disponibles */
+    @GetMapping("/lineas-investigacion")
+    public ResponseEntity<List<LineaInvestigacion>> listarLineasInvestigacion() {
+        return ResponseEntity.ok(lineaInvestigacionRepo.findAll());
+    }
+
+    /**
+     * Lista las áreas temáticas. Si se pasa lineaId, filtra solo las de esa línea
+     * (uso típico: poblar el segundo dropdown dependiente del formulario de registro de tema).
+     */
+    @GetMapping("/areas-tematicas")
+    public ResponseEntity<List<AreaTematica>> listarAreasTematicas(
+            @RequestParam(required = false) Integer lineaId) {
+        if (lineaId != null) {
+            return ResponseEntity.ok(areaTematicaRepo.findByLineaInvestigacionId(lineaId));
+        }
+        return ResponseEntity.ok(areaTematicaRepo.findAll());
     }
 
     /** Lista todas las convocatorias activas */

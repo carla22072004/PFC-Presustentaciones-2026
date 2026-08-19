@@ -50,6 +50,47 @@
           </div>
         </div>
 
+        <div class="form-section-card">
+          <label class="label-style"><i class="bi bi-signpost-split-fill"></i> Línea de Investigación Institucional</label>
+          <div class="input-wrapper">
+            <div *ngIf="cargandoLineas" class="d-flex align-items-center gap-2 text-muted py-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              <small>Cargando líneas de investigación...</small>
+            </div>
+
+            <select
+              *ngIf="!cargandoLineas"
+              formControlName="lineaInvestigacion"
+              (change)="onLineaChange()"
+              class="input-premium"
+              id="selectLinea">
+              <option [ngValue]="null" disabled selected>Seleccione una línea de investigación...</option>
+              <option *ngFor="let l of lineasInvestigacion" [value]="l.id">{{ l.nombre }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section-card">
+          <label class="label-style"><i class="bi bi-diagram-3-fill"></i> Área Temática</label>
+          <div class="input-wrapper">
+            <div *ngIf="cargandoAreas" class="d-flex align-items-center gap-2 text-muted py-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              <small>Cargando áreas temáticas...</small>
+            </div>
+
+            <select
+              *ngIf="!cargandoAreas"
+              formControlName="areaTematica"
+              class="input-premium"
+              id="selectArea">
+              <option [ngValue]="null" disabled selected>
+                {{ solicitudForm.get('lineaInvestigacion')?.value ? 'Seleccione un área temática...' : 'Primero seleccione una línea de investigación' }}
+              </option>
+              <option *ngFor="let a of areasTematicas" [value]="a.id">{{ a.nombre }}</option>
+            </select>
+          </div>
+        </div>
+
       </div>
 
       <div class="form-footer">

@@ -15,6 +15,20 @@ export interface ConvocatoriaTitulacion {
     activa: boolean;
 }
 
+export interface LineaInvestigacion {
+    id: number;
+    codigo: string;
+    nombre: string;
+    descripcion?: string;
+}
+
+export interface AreaTematica {
+    id: number;
+    nombre: string;
+    descripcion?: string;
+    lineaInvestigacion: LineaInvestigacion;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogoService {
     private apiUrl = 'http://localhost:8080/api/catalogos';
@@ -26,5 +40,16 @@ export class CatalogoService {
 
     listarConvocatoriasActivas(): Observable<ConvocatoriaTitulacion[]> {
         return this.http.get<ConvocatoriaTitulacion[]>(`${this.apiUrl}/convocatorias`);
+    }
+
+    listarLineasInvestigacion(): Observable<LineaInvestigacion[]> {
+        return this.http.get<LineaInvestigacion[]>(`${this.apiUrl}/lineas-investigacion`);
+    }
+
+    listarAreasTematicas(lineaId?: number): Observable<AreaTematica[]> {
+        const url = lineaId
+            ? `${this.apiUrl}/areas-tematicas?lineaId=${lineaId}`
+            : `${this.apiUrl}/areas-tematicas`;
+        return this.http.get<AreaTematica[]>(url);
     }
 }

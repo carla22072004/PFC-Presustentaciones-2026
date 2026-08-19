@@ -8,9 +8,11 @@ import ec.edu.uteq.presustentaciones.entities.PeriodoAcademico;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
+import ec.edu.uteq.presustentaciones.repositories.AreaTematicaRepository;
 import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
 import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
+import ec.edu.uteq.presustentaciones.repositories.LineaInvestigacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.PeriodoAcademicoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
@@ -48,6 +50,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
     private final CarreraRepository carreraRepository;
     private final PeriodoAcademicoRepository periodoAcademicoRepository;
+    private final LineaInvestigacionRepository lineaInvestigacionRepository;
+    private final AreaTematicaRepository areaTematicaRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -107,6 +111,30 @@ public class SolicitudServiceImpl implements SolicitudService {
             datos.setConvocatoria(convocatoria);
         }
 
+        // Resolver línea de investigación (opcional, igual que en la columna real de la BD)
+        if (datos.getLineaInvestigacion() != null && datos.getLineaInvestigacion().getId() != null) {
+            ec.edu.uteq.presustentaciones.entities.LineaInvestigacion linea = lineaInvestigacionRepository
+                    .findById(datos.getLineaInvestigacion().getId())
+                    .orElseThrow(() -> new RuntimeException("Línea de investigación no encontrada con ID: " + datos.getLineaInvestigacion().getId()));
+            datos.setLineaInvestigacion(linea);
+        } else {
+            datos.setLineaInvestigacion(null);
+        }
+
+        // Resolver área temática (opcional); si viene, debe pertenecer a la línea seleccionada
+        if (datos.getAreaTematica() != null && datos.getAreaTematica().getId() != null) {
+            ec.edu.uteq.presustentaciones.entities.AreaTematica area = areaTematicaRepository
+                    .findById(datos.getAreaTematica().getId())
+                    .orElseThrow(() -> new RuntimeException("Área temática no encontrada con ID: " + datos.getAreaTematica().getId()));
+            if (datos.getLineaInvestigacion() != null
+                    && !area.getLineaInvestigacion().getId().equals(datos.getLineaInvestigacion().getId())) {
+                throw new RuntimeException("El área temática seleccionada no pertenece a la línea de investigación elegida");
+            }
+            datos.setAreaTematica(area);
+        } else {
+            datos.setAreaTematica(null);
+        }
+
         datos.setEstado(estadoCreada);
         datos.setEstudiante(estudiante);
         datos.setCreadoPor(estudiante.getUsuario());
@@ -118,7 +146,16 @@ public class SolicitudServiceImpl implements SolicitudService {
  
     @Override
     @Transactional
+    @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud crearSolicitudPorUsuario(Long usuarioId, Solicitud datos) {
+        // NOTA: crearSolicitud(...) también tiene @CacheEvict, pero como se invoca aquí
+        // como "this.crearSolicitud(...)" (autoinvocación dentro de la misma clase), el
+        // proxy de Spring AOP se salta y esa anotación nunca se dispara. Por eso este
+        // método necesita su propio @CacheEvict: es el que realmente atraviesa el proxy
+        // cuando lo llama el controlador (POST /api/solicitudes/crear-por-usuario/{id}).
+        // Bug real: /mis-solicitudes seguía devolviendo la lista vacía cacheada después
+        // de crear una solicitud nueva.
+
         // Buscar perfil de estudiante; si no existe, crearlo automáticamente
         Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)
                 .orElseGet(() -> crearPerfilEstudiante(usuarioId));
