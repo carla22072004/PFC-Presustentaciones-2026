@@ -90,6 +90,7 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
             EvaluacionCriterio ec = EvaluacionCriterio.builder()
                     .solicitud(solicitud)
                     .evaluador(evaluador)
+                    .jurado(jurado)
                     .criterio(criterio)
                     .escala(cDto.getEscala())
                     .notaObtenida(notaObtenida)

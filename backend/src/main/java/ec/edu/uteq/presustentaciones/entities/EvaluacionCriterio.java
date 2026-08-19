@@ -56,6 +56,18 @@ public class EvaluacionCriterio {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "solicitud"})
     private Evaluador evaluador;
 
+    /**
+     * FK NOT NULL a miembros_tribunal (columna real jurado_id), ausente por completo
+     * en la entidad: nada la poblaba, causando un error al registrar la evaluación de
+     * un jurado ("null value in column jurado_id"). A diferencia de los demás bugs de
+     * columnas duplicadas encontrados en esta sesión, aquí no había ningún campo en
+     * absoluto — se agrega la relación real.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "jurado_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "solicitud"})
+    private Jurado jurado;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "criterio_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "rubrica"})

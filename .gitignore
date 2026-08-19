@@ -41,3 +41,6 @@ yarn-error.log
 
 # Logs y otros
 *.log
+
+# Archivos subidos en tiempo de ejecución (anteproyectos, fases de tutoría)
+backend/uploads/

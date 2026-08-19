@@ -1,5 +1,8 @@
 package ec.edu.uteq.presustentaciones.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,11 +22,24 @@ public class RedisConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // El ObjectMapper por defecto de GenericJackson2JsonRedisSerializer no trae
+        // registrado el módulo de fechas de Java 8 (JavaTimeModule): cualquier valor
+        // cacheado que contenga un LocalDateTime (prácticamente todas las entidades:
+        // Solicitud, Usuario, Estudiante, ...) fallaba al serializarse hacia Redis con
+        // InvalidDefinitionException, y esa excepción se propagaba fuera del método
+        // @Cacheable. Bug real detectado: /api/v1/solicitudes/mis-solicitudes devolvía
+        // silenciosamente una lista vacía (el controlador atajaba la excepción) aunque
+        // el estudiante sí tenía solicitudes registradas en la base de datos.
+        ObjectMapper redisObjectMapper = new ObjectMapper();
+        redisObjectMapper.registerModule(new JavaTimeModule());
+        redisObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+
         // Configuración por defecto: 5 minutos
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(5))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer));
 
         // Configuración personalizada de TTL por cache
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
