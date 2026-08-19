@@ -6,8 +6,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.EnableAsync;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository;
@@ -21,9 +19,6 @@ import lombok.extern.slf4j.Slf4j;
  * @version 1.0.0
  */
 @SpringBootApplication
-@EnableJpaRepositories
-@EnableAsync
-@org.springframework.cache.annotation.EnableCaching
 @Slf4j
 public class PreSustentacionesApplication implements CommandLineRunner {
 
@@ -68,10 +63,24 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                 log.warn("Verificación de carrera inicial: {}", e.getMessage());
             }
 
+            // Sembrar catalogo de roles si no existe (ninguna migracion los inserta:
+            // roles_usuario.id no es autogenerado, requiere valores explicitos)
+            try {
+                jdbcTemplate.update(
+                    "INSERT INTO presus.roles_usuario (id, codigo, nombre) VALUES " +
+                    "(1, 'ADMIN', 'Administrador'), (2, 'DOCENTE', 'Docente'), " +
+                    "(3, 'COORDINADOR', 'Coordinador'), (4, 'ESTUDIANTE', 'Estudiante') " +
+                    "ON CONFLICT (id) DO NOTHING"
+                );
+            } catch (Exception e) {
+                log.warn("Verificación de catálogo de roles: {}", e.getMessage());
+            }
+
             // Buscar rol admin de la base de datos
             ec.edu.uteq.presustentaciones.entities.RolUsuario adminRol = rolUsuarioRepository.findByCodigo("ADMIN").orElse(null);
+            ec.edu.uteq.presustentaciones.entities.RolUsuario coordinadorRol = rolUsuarioRepository.findByCodigo("COORDINADOR").orElse(null);
 
-            // Único usuario sembrado: administrador del sistema
+            // Usuario administrador del sistema
             if (!usuarioRepository.existsByEmail("admin@uteq.edu.ec")) {
                 Usuario admin = Usuario.builder()
                     .nombre("Admin")
@@ -84,6 +93,24 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                     .build();
                 usuarioRepository.save(admin);
                 log.info("Usuario administrador inicial verificado.");
+            }
+
+            // Usuario de demostración (Fase 8, criterio P5): credenciales publicadas en
+            // README.md para que el tribunal pueda entrar sin registrarse. Rol COORDINADOR
+            // porque expone el flujo académico completo (asignar jurados, programar
+            // cronograma, ver reportes) sin ser una cuenta de administración del sistema.
+            if (!usuarioRepository.existsByEmail("demo@uteq.edu.ec")) {
+                Usuario demo = Usuario.builder()
+                    .nombre("Usuario")
+                    .apellido("Demostración")
+                    .email("demo@uteq.edu.ec")
+                    .password(passwordEncoder.encode("Demo2026!"))
+                    .rol("COORDINADOR")
+                    .rolUsuario(coordinadorRol)
+                    .activo(true)
+                    .build();
+                usuarioRepository.save(demo);
+                log.info("Usuario de demostración inicial verificado.");
             }
 
         } catch (Exception e) {

@@ -10,6 +10,8 @@ import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,8 +95,8 @@ public class JuradoServiceImpl implements JuradoService {
     }
 
     @Override
-    public List<Jurado> listarTodos() {
-        return juradoRepository.findAll();
+    public Page<Jurado> listarTodos(Pageable pageable) {
+        return juradoRepository.findAll(pageable);
     }
 
     @Override

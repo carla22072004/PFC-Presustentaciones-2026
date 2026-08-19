@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -55,8 +57,8 @@ public class EvaluacionController {
     }
 
     @GetMapping
-    public List<EvaluacionFinal> listar() {
-        return evaluacionService.listarEvaluaciones();
+    public ResponseEntity<Page<EvaluacionFinal>> listar(Pageable pageable) {
+        return ResponseEntity.ok(evaluacionService.listarEvaluaciones(pageable));
     }
 
     @GetMapping("/estudiante/{estudianteId}")
@@ -74,5 +76,18 @@ public class EvaluacionController {
         return evaluacionService.buscarPorSolicitud(solicitudId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Calcula y persiste la nota final ponderada agregando las notas del tribunal vía
+     * sp_calcular_promedio_evaluacion (Fase 3 / Criterio P1, categoría "cálculos agregados").
+     */
+    @PostMapping("/{solicitudId}/calcular-promedio")
+    public ResponseEntity<?> calcularPromedio(@PathVariable Long solicitudId) {
+        try {
+            return ResponseEntity.ok(evaluacionService.calcularPromedioSp(solicitudId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

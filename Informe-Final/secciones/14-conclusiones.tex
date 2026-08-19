@@ -1,0 +1,29 @@
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+Este trabajo presentó el diseño, implementación y evaluación empírica del Sistema de Gestión de
+Pre-Sustentaciones UTEQ, siguiendo Design Science Research \cite{peffers2007} de forma instanciada y
+verificable. Los 12 requisitos funcionales están implementados y el flujo académico completo se verificó
+funcionando end-to-end contra una topología de producción real. La evaluación empírica combina
+estadística descriptiva e inferencial genuina --- el hallazgo más sólido es la reducción de latencia de
+13.9$\times$ por efecto de caché Redis, con significancia estadística fuerte ($p < 10^{-10}$) y tamaño
+de efecto máximo --- y auditoría de seguridad multi-herramienta que confirma ausencia de inyección SQL en
+el código propio, aunque deja abiertas 41 vulnerabilidades de dependencias de terceros.
+
+La contribución más distintiva de este informe no es técnica sino metodológica: el proceso de
+elaboración de este mismo proyecto incluyó la detección real de datos académicos fabricados en fases
+anteriores (usabilidad, rendimiento web, evidencia de trazabilidad, integridad de configuración de
+despliegue, custodia de consentimientos informados) y su corrección sistemática, documentada de forma
+trazable en \texttt{docs/mediciones/DATA-PROVENANCE.md} y en la bitácora de cada fase del proyecto. Esa
+corrección no fue cosmética: implicó reportar una cobertura de código de 22.7\,\% en vez de un
+``$>$60\,\%'' previamente afirmado sin evidencia, y declarar la usabilidad como ``sin datos'' en vez de
+mantener un 91.25/100 fabricado.
+
+Las brechas que quedan (cobertura de pruebas incompleta, ausencia de datos SUS reales, despliegue público
+pendiente, dependencias vulnerables sin corregir) se declaran explícitamente en la
+Sección~\ref{sec:trabajo-futuro} en vez de ocultarse o rellenarse con contenido que simule completitud.
+Esta decisión --- priorizar un informe más corto pero verificable sobre uno más extenso pero con
+contenido fabricado --- es, en sí misma, la conclusión metodológica central de este trabajo: en un
+proyecto con antecedentes reales de fabricación de evidencia, la integridad de lo que se reporta importa
+más que la completitud aparente de lo que se reporta.
+\newpage

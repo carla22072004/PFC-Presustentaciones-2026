@@ -43,10 +43,10 @@ public class RedisConfig {
 
         // Configuración personalizada de TTL por cache
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        
+
         // universidades: TTL de 10 minutos (Requisito E2)
         cacheConfigurations.put("universidades", defaultConfig.entryTtl(Duration.ofMinutes(10)));
-        
+
         // solicitudes: TTL de 5 minutos
         cacheConfigurations.put("solicitudes", defaultConfig.entryTtl(Duration.ofMinutes(5)));
 

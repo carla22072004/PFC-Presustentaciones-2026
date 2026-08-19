@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtTokenProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.security.jwt</a> &gt; <span class="el_source">JwtTokenProvider.java</span></div><h1>JwtTokenProvider.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.security.jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+@Component
+<span class="fc" id="L21">@Slf4j</span>
+<span class="fc" id="L22">public class JwtTokenProvider {</span>
+
+    @Value(&quot;${jwt.secret}&quot;)
+    private String jwtSecret;
+
+    @Value(&quot;${jwt.expiration}&quot;)
+    private long jwtExpiration;
+
+    @Value(&quot;${jwt.refresh-expiration:604800000}&quot;)
+    private long jwtRefreshExpiration; // 7 días por defecto
+
+    @Autowired(required = false) // Hacemos opcional para tests unitarios simples
+    private StringRedisTemplate redisTemplate;
+
+    private SecretKey getSigningKey() {
+<span class="fc" id="L37">        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);</span>
+<span class="fc" id="L38">        return Keys.hmacShaKeyFor(keyBytes);</span>
+    }
+
+    public String generateToken(Authentication authentication) {
+<span class="fc" id="L42">        UserDetails userDetails = (UserDetails) authentication.getPrincipal();</span>
+<span class="fc" id="L43">        return generateTokenFromUsername(userDetails.getUsername());</span>
+    }
+
+    public String generateTokenFromUsername(String username) {
+<span class="fc" id="L47">        Date now = new Date();</span>
+<span class="fc" id="L48">        Date expiryDate = new Date(now.getTime() + jwtExpiration);</span>
+
+<span class="fc" id="L50">        return Jwts.builder()</span>
+<span class="fc" id="L51">                .id(UUID.randomUUID().toString()) // jti</span>
+<span class="fc" id="L52">                .issuer(&quot;PFC-Presustentaciones-UTEQ&quot;) // iss</span>
+<span class="fc" id="L53">                .subject(username) // sub</span>
+<span class="fc" id="L54">                .audience().add(&quot;PFC-Frontend-Angular&quot;).and() // aud</span>
+<span class="fc" id="L55">                .issuedAt(now) // iat</span>
+<span class="fc" id="L56">                .notBefore(now) // nbf</span>
+<span class="fc" id="L57">                .expiration(expiryDate) // exp</span>
+<span class="fc" id="L58">                .signWith(getSigningKey())</span>
+<span class="fc" id="L59">                .compact();</span>
+    }
+
+    // Generar y almacenar Refresh Token en Redis (Requisito Refresh Token)
+    public String generateRefreshToken(String username) {
+<span class="fc" id="L64">        String refreshToken = UUID.randomUUID().toString();</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if (redisTemplate != null) {</span>
+<span class="fc" id="L66">            String key = &quot;refresh:&quot; + username;</span>
+<span class="fc" id="L67">            String reverseKey = &quot;refresh_token:&quot; + refreshToken;</span>
+<span class="fc" id="L68">            redisTemplate.opsForValue().set(key, refreshToken, jwtRefreshExpiration, TimeUnit.MILLISECONDS);</span>
+<span class="fc" id="L69">            redisTemplate.opsForValue().set(reverseKey, username, jwtRefreshExpiration, TimeUnit.MILLISECONDS);</span>
+<span class="fc" id="L70">            log.info(&quot;Refresh token generado y guardado en Redis para el usuario: {}&quot;, username);</span>
+<span class="fc" id="L71">        } else {</span>
+<span class="nc" id="L72">            log.warn(&quot;StringRedisTemplate no está disponible. Refresh token no guardado.&quot;);</span>
+        }
+<span class="fc" id="L74">        return refreshToken;</span>
+    }
+
+    public String getUsernameFromRefreshToken(String token) {
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (redisTemplate == null) {</span>
+<span class="nc" id="L79">            return null;</span>
+        }
+<span class="fc" id="L81">        String reverseKey = &quot;refresh_token:&quot; + token;</span>
+<span class="fc" id="L82">        return redisTemplate.opsForValue().get(reverseKey);</span>
+    }
+
+    public boolean validateRefreshToken(String username, String token) {
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if (redisTemplate == null) {</span>
+<span class="nc" id="L87">            return false;</span>
+        }
+<span class="fc" id="L89">        String key = &quot;refresh:&quot; + username;</span>
+<span class="fc" id="L90">        String storedToken = redisTemplate.opsForValue().get(key);</span>
+<span class="pc bpc" id="L91" title="2 of 4 branches missed.">        return storedToken != null &amp;&amp; storedToken.equals(token);</span>
+    }
+
+    public void deleteRefreshToken(String username) {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (redisTemplate == null) {</span>
+<span class="nc" id="L96">            return;</span>
+        }
+<span class="nc" id="L98">        String key = &quot;refresh:&quot; + username;</span>
+<span class="nc" id="L99">        String token = redisTemplate.opsForValue().get(key);</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (token != null) {</span>
+<span class="nc" id="L101">            redisTemplate.delete(key);</span>
+<span class="nc" id="L102">            redisTemplate.delete(&quot;refresh_token:&quot; + token);</span>
+        }
+<span class="nc" id="L104">        log.info(&quot;Refresh token eliminado de Redis para el usuario: {}&quot;, username);</span>
+<span class="nc" id="L105">    }</span>
+
+    // Invalidar token JWT (Blacklist en Redis - Requisito Blacklist)
+    public void blacklistToken(String token) {
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (redisTemplate == null) {</span>
+<span class="nc" id="L110">            log.warn(&quot;StringRedisTemplate no está disponible. Blacklist omitida.&quot;);</span>
+<span class="nc" id="L111">            return;</span>
+        }
+        try {
+<span class="nc" id="L114">            Claims claims = getClaimsFromToken(token);</span>
+<span class="nc" id="L115">            String jti = claims.getId();</span>
+<span class="nc" id="L116">            Date expiration = claims.getExpiration();</span>
+<span class="nc" id="L117">            long remainingTime = expiration.getTime() - System.currentTimeMillis();</span>
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (remainingTime &gt; 0) {</span>
+<span class="nc" id="L120">                String key = &quot;blacklist:token:&quot; + jti;</span>
+<span class="nc" id="L121">                redisTemplate.opsForValue().set(key, &quot;revoked&quot;, remainingTime, TimeUnit.MILLISECONDS);</span>
+<span class="nc" id="L122">                log.info(&quot;Token JWT blacklisted (JTI: {}) por los siguientes {} ms&quot;, jti, remainingTime);</span>
+            }
+<span class="nc" id="L124">        } catch (Exception e) {</span>
+<span class="nc" id="L125">            log.error(&quot;No se pudo agregar el token a la blacklist: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L126">        }</span>
+<span class="nc" id="L127">    }</span>
+
+    public boolean isTokenBlacklisted(String token) {
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        if (redisTemplate == null) {</span>
+<span class="fc" id="L131">            return false;</span>
+        }
+        try {
+<span class="fc" id="L134">            Claims claims = getClaimsFromToken(token);</span>
+<span class="fc" id="L135">            String jti = claims.getId();</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">            if (jti == null) {</span>
+<span class="nc" id="L137">                return false;</span>
+            }
+<span class="fc" id="L139">            return Boolean.TRUE.equals(redisTemplate.hasKey(&quot;blacklist:token:&quot; + jti));</span>
+<span class="nc" id="L140">        } catch (Exception e) {</span>
+<span class="nc" id="L141">            return false;</span>
+        }
+    }
+
+    public Claims getClaimsFromToken(String token) {
+<span class="fc" id="L146">        return Jwts.parser()</span>
+<span class="fc" id="L147">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L148">                .build()</span>
+<span class="fc" id="L149">                .parseSignedClaims(token)</span>
+<span class="fc" id="L150">                .getPayload();</span>
+    }
+
+    public String getUsernameFromToken(String token) {
+<span class="fc" id="L154">        return getClaimsFromToken(token).getSubject();</span>
+    }
+
+    public boolean validateToken(String token) {
+        try {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            if (isTokenBlacklisted(token)) {</span>
+<span class="fc" id="L160">                log.warn(&quot;Token JWT rechazado: se encuentra en la blacklist.&quot;);</span>
+<span class="fc" id="L161">                return false;</span>
+            }
+<span class="fc" id="L163">            Jwts.parser()</span>
+<span class="fc" id="L164">                    .verifyWith(getSigningKey())</span>
+<span class="fc" id="L165">                    .build()</span>
+<span class="fc" id="L166">                    .parseSignedClaims(token);</span>
+<span class="fc" id="L167">            return true;</span>
+<span class="fc" id="L168">        } catch (Exception e) {</span>
+<span class="fc" id="L169">            log.error(&quot;Error validando token JWT: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L170">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

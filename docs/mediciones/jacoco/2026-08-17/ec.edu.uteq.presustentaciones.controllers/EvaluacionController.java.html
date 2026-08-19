@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EvaluacionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">EvaluacionController.java</span></div><h1>EvaluacionController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
+import ec.edu.uteq.presustentaciones.services.EvaluacionService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/evaluaciones&quot;)
+public class EvaluacionController {
+
+    private final EvaluacionService evaluacionService;
+
+<span class="nc" id="L20">    public EvaluacionController(EvaluacionService evaluacionService) {</span>
+<span class="nc" id="L21">        this.evaluacionService = evaluacionService;</span>
+<span class="nc" id="L22">    }</span>
+
+    /**
+     * RF-09: Registrar evaluación con ponderación 60/40 configurable.
+     * notaInstructor: nota del docente de Titulación (60% por defecto)
+     * notaJurado: nota promedio del tribunal (40% por defecto)
+     * pesoInstructor / pesoJurado: pesos configurables (deben sumar 100)
+     */
+    @PostMapping(&quot;/evaluar-ponderado&quot;)
+    public ResponseEntity&lt;?&gt; evaluarPonderado(
+            @RequestParam Long solicitudId,
+            @RequestParam Long rubricaId,
+            @RequestParam Double notaInstructor,
+            @RequestParam Double notaJurado,
+            @RequestParam String observaciones,
+            @RequestParam(defaultValue = &quot;60.0&quot;) Double pesoInstructor,
+            @RequestParam(defaultValue = &quot;40.0&quot;) Double pesoJurado) {
+        try {
+<span class="nc" id="L40">            EvaluacionFinal e = evaluacionService.evaluarSolicitud(</span>
+                    solicitudId, rubricaId,
+                    notaInstructor, notaJurado,
+                    observaciones, pesoInstructor, pesoJurado);
+<span class="nc" id="L44">            return ResponseEntity.ok(e);</span>
+<span class="nc" id="L45">        } catch (RuntimeException ex) {</span>
+<span class="nc" id="L46">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, ex.getMessage()));</span>
+        }
+    }
+
+    /** Endpoint legado: recibe nota final directa */
+    @PostMapping(&quot;/evaluar&quot;)
+    public EvaluacionFinal evaluar(@RequestParam Long solicitudId,
+                              @RequestParam Long rubricaId,
+                              @RequestParam Double notaFinal,
+                              @RequestParam String observaciones) {
+<span class="nc" id="L56">        return evaluacionService.evaluarSolicitud(solicitudId, rubricaId, notaFinal, observaciones);</span>
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;Page&lt;EvaluacionFinal&gt;&gt; listar(Pageable pageable) {
+<span class="nc" id="L61">        return ResponseEntity.ok(evaluacionService.listarEvaluaciones(pageable));</span>
+    }
+
+    @GetMapping(&quot;/estudiante/{estudianteId}&quot;)
+    public List&lt;EvaluacionFinal&gt; listarPorEstudiante(@PathVariable Long estudianteId) {
+<span class="nc" id="L66">        return evaluacionService.listarPorEstudiante(estudianteId);</span>
+    }
+
+    @GetMapping(&quot;/usuario/{usuarioId}&quot;)
+    public List&lt;EvaluacionFinal&gt; listarPorUsuario(@PathVariable Long usuarioId) {
+<span class="nc" id="L71">        return evaluacionService.listarPorUsuario(usuarioId);</span>
+    }
+
+    @GetMapping(&quot;/solicitud/{solicitudId}&quot;)
+    public ResponseEntity&lt;EvaluacionFinal&gt; porSolicitud(@PathVariable Long solicitudId) {
+<span class="nc" id="L76">        return evaluacionService.buscarPorSolicitud(solicitudId)</span>
+<span class="nc" id="L77">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L78">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    /**
+     * Calcula y persiste la nota final ponderada agregando las notas del tribunal vía
+     * sp_calcular_promedio_evaluacion (Fase 3 / Criterio P1, categoría &quot;cálculos agregados&quot;).
+     */
+    @PostMapping(&quot;/{solicitudId}/calcular-promedio&quot;)
+    public ResponseEntity&lt;?&gt; calcularPromedio(@PathVariable Long solicitudId) {
+        try {
+<span class="nc" id="L88">            return ResponseEntity.ok(evaluacionService.calcularPromedioSp(solicitudId));</span>
+<span class="nc" id="L89">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L90">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

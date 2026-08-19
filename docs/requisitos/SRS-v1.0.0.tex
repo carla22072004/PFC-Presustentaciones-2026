@@ -1,0 +1,257 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{letterpaper, margin=1in}
+\usepackage{setspace}
+\setstretch{1.2}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+\usepackage[table]{xcolor}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{SRS v1.0.0 --- Sistema de Gestión de Pre-Sustentaciones UTEQ}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\title{}
+\date{}
+
+\begin{document}
+
+% ============ CARATULA ============
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\LARGE \textbf{UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO}}\\[0.3cm]
+{\large Facultad de Ciencias de la Computación}\\[0.2cm]
+{\large Carrera de Ingeniería de Software (Rediseño)}\\[0.8cm]
+
+{\large \textbf{ASIGNATURA: Aplicaciones Web}}\\[0.3cm]
+{\large Quinto Nivel --- Período Académico 2026-2027 PPA}\\[1.2cm]
+
+{\Large \textbf{ESPECIFICACIÓN DE REQUISITOS DE SOFTWARE (SRS)}}\\[0.3cm]
+{\large Estándar ISO/IEC/IEEE 29148:2018}\\[0.6cm]
+{\LARGE \textbf{Sistema de Gestión de Pre-Sustentaciones UTEQ}}\\[0.6cm]
+{\Large \textbf{Versión Final v1.0.0}}\\[1.2cm]
+
+\vfill
+{\large \textbf{EQUIPO DE DESARROLLO:}}\\[0.3cm]
+{\large Alava Alvarado, Jean Pierre \quad (\href{https://orcid.org/0009-0001-2878-2919}{ORCID: 0009-0001-2878-2919})}\\[0.1cm]
+{\large Moncayo Loor, Xavier Alejandro}\\[0.1cm]
+{\large Zamora Arias, Carla Esthefania}\\[0.1cm]
+{\large Barreto Rosado, Heider Dominick}\\[1cm]
+
+{\large \textbf{DOCENTE-DIRECTOR:}}\\[0.3cm]
+{\large Ing. Guerrero Ulloa Gleiston Cíceron, Mg.}\\[1cm]
+
+{\large \textbf{FECHA:} 17 de agosto de 2026}\\[0.5cm]
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============ HISTORIAL DE VERSIONES ============
+\section{Historial de versiones}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{1.5cm} p{1.7cm} p{3.2cm} p{7.5cm}}
+\toprule
+\textbf{Versión} & \textbf{Fecha} & \textbf{Autor} & \textbf{Cambios} \\
+\midrule
+0.9.0-rc & 2026-07-30 & Equipo de desarrollo & Versión inicial (Entrega 3): 5 HU formalizadas de 12 requisitos ya referenciados en la matriz de trazabilidad; sin casos de uso. \\
+\addlinespace
+1.0.0 & 2026-08-17 & Equipo de desarrollo, asistido por Claude/Anthropic (ver \href{../etica/ai-disclosure.md}{declaración de uso de IA}) & Versión final (Fase 7): 12 HU completas en formato Connextra+INVEST+Gherkin, 12 casos de uso Cockburn, checklist INCOSE completo, matriz de trazabilidad corregida (5 citas de evidencia falsas identificadas y corregidas), tasa de estabilidad calculada. \\
+\bottomrule
+\end{tabular}
+\caption{Historial de versiones del SRS. Ver bitácora completa en \texttt{CHANGELOG-REQ.md}.}
+\end{table}
+
+\textbf{Nota sobre el criterio D0R:} este documento reemplaza a \texttt{docs/srs/SRS.md} (ahora archivado
+en \texttt{docs/requisitos/historico/SRS-v0.9.0-rc.md}) como la especificación de requisitos vigente. La
+página de aprobación (Sección~9) está lista para firma física o electrónica del docente-director; a la
+fecha de generación de este PDF, \textbf{esa firma sigue pendiente} — ver la nota explícita en esa
+sección.
+
+% ============ 1. INTRODUCCION ============
+\section{Introducción}
+
+\subsection{Propósito}
+El presente documento define los requisitos funcionales y no funcionales para el Sistema de Gestión de
+Pre-Sustentaciones UTEQ, elaborado bajo el estándar internacional ISO/IEC/IEEE 29148:2018. Sirve como
+contrato técnico entre la coordinación académica, docentes, estudiantes y el equipo desarrollador.
+
+\subsection{Alcance del sistema}
+El sistema automatiza el flujo completo de pre-sustentación de anteproyectos de titulación: registro de
+solicitudes, carga de anteproyectos con verificación de integridad SHA-256, asignación de jurados,
+programación de cronogramas, evaluación por rúbrica, y emisión y firma digital multi-actor de actas.
+
+\subsection{Definiciones, acrónimos y abreviaturas}
+\begin{itemize}[nosep]
+    \item \textbf{SRS:} Software Requirements Specification (ISO/IEC/IEEE 29148:2018).
+    \item \textbf{UTEQ:} Universidad Técnica Estatal de Quevedo.
+    \item \textbf{HU:} Historia de Usuario (formato Connextra).
+    \item \textbf{CU:} Caso de Uso (plantilla Cockburn).
+    \item \textbf{RF / RNF:} Requisito Funcional / No Funcional.
+    \item \textbf{JWT:} JSON Web Token.
+    \item \textbf{SP:} Stored Procedure (procedimiento almacenado PL/pgSQL).
+    \item \textbf{MoSCoW:} técnica de priorización Must/Should/Could/Won't.
+    \item \textbf{INVEST:} Independent, Negotiable, Valuable, Estimable, Small, Testable.
+\end{itemize}
+
+% ============ 2. DESCRIPCION GENERAL ============
+\section{Descripción general}
+
+\subsection{Perspectiva del producto}
+Solución web de arquitectura N-capas: Frontend Angular 21 (SPA), Backend Spring Boot 3.2.1, PostgreSQL
+15, caché Redis 7, desplegado con Docker Compose y nginx como proxy inverso.
+
+\subsection{Características de los usuarios}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll p{7cm}}
+\toprule
+\textbf{Rol} & \textbf{Descripción} & \textbf{Permisos clave} \\
+\midrule
+Estudiante & Postulante a titulación & Registrar solicitud, subir anteproyecto, consultar estado y acta \\
+Docente/Jurado & Evaluador asignado & Revisar anteproyecto, calificar rúbrica \\
+Presidente del Tribunal & Líder de la defensa & Generar y firmar acta \\
+Coordinador & Gestor académico & Asignar jurados, programar cronograma, salas, reportes \\
+Administrador & Admin. del sistema & Gestionar usuarios, catálogos, seguridad \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============ 3. REQUISITOS ESPECIFICOS ============
+\section{Requisitos específicos}
+
+\subsection{Requisitos funcionales (resumen)}
+
+Los 12 requisitos funcionales se documentan en detalle, con formato Connextra, checklist INVEST y
+criterios de aceptación Gherkin, en \texttt{docs/requisitos/historias/HU-01.md} a \texttt{HU-12.md}. Los
+12 casos de uso correspondientes (plantilla Cockburn, 4 niveles de meta, diagrama de secuencia) están en
+\texttt{docs/requisitos/casos-de-uso/CU-01.md} a \texttt{CU-12.md}. Esta sección resume su alcance y
+estado de verificación real.
+
+\begin{longtable}{p{1.2cm} p{3.8cm} p{1.6cm} p{2.2cm} p{3cm}}
+\toprule
+\textbf{RF} & \textbf{Título} & \textbf{Prioridad} & \textbf{Módulo} & \textbf{Verificación} \\
+\midrule
+\endhead
+RF-01 & Autenticación segura & Must & Auth & \textcolor{green!50!black}{Verificado (test real)} \\
+RF-02 & Registro de solicitud & Must & Solicitudes & \textcolor{red}{No verificado} \\
+RF-03 & Asignación de jurados & Must & Jurados & \textcolor{green!50!black}{Verificado (test real)} \\
+RF-04 & Programación de cronograma & Must & Cronograma & \textcolor{red}{No verificado} \\
+RF-05 & Evaluación por rúbrica & Must & Evaluaciones & \textcolor{green!50!black}{Verificado (test real)} \\
+RF-06 & Generación de actas & Must & Actas & \textcolor{red}{No verificado} \\
+RF-07 & Firma digital de actas & Should & Actas/Firmas & \textcolor{red}{No verificado} \\
+RF-08 & Notificaciones & Could & Notificaciones & \textcolor{red}{No verificado} \\
+RF-09 & Reportes de defensas & Could & Reportes & \textcolor{red}{No verificado} \\
+RF-10 & Gestión de salas & Should & Salas & \textcolor{red}{No verificado} \\
+RF-11 & Gestión de usuarios & Must & Usuarios & \textcolor{green!50!black}{Verificado (test real)} \\
+RF-12 & Carga de anteproyecto & Must & Anteproyectos & \textcolor{green!50!black}{Verificado (test real)} \\
+\bottomrule
+\caption{Resumen de los 12 requisitos funcionales. Fuente de verdad: \texttt{docs/trazabilidad/matriz.csv} v1.0.0.}
+\end{longtable}
+
+\textbf{Estado real del criterio D0R (100\% de los Must verificados):} de los 8 requisitos con
+prioridad \textbf{Must}, \textbf{5 tienen prueba automatizada real (62.5\%)}, no el 100\% que exige el
+criterio. Esta cifra se calculó ejecutando \texttt{scripts/validate-traceability.sh} contra el
+repositorio real, no se estimó. Los 3 Must sin verificación automatizada (RF-02, RF-04, RF-06) están
+implementados y funcionan (verificado manualmente / con Postman), pero carecen de un test automatizado
+dedicado en el repositorio. Se declara esta brecha explícitamente en vez de forzar un 100\% falso.
+
+\subsection{Requisitos no funcionales}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll p{8cm}}
+\toprule
+\textbf{RNF} & \textbf{Categoría} & \textbf{Descripción y estado real} \\
+\midrule
+RNF-01 & Rendimiento & Peticiones REST $<$ 500ms bajo 50 usuarios concurrentes. \textbf{Verificado}: p95 real de 7.4--80.9ms en 5 corridas k6 (\texttt{k6/README.md}). \\
+RNF-02 & Seguridad & Protección OWASP Top 10. \textbf{Verificado parcialmente}: 0 hallazgos de SQL dinámico (find-sec-bugs), 0 FAIL en OWASP ZAP, 41 dependencias vulnerables sin corregir (\texttt{npm audit}). \\
+RNF-03 & Usabilidad & Puntaje SUS $>$ 75/100. \textbf{No verificado}: instrumento listo, sin aplicar a usuarios reales (\texttt{docs/mediciones/sus/SUS-RESULTS.md}). \\
+RNF-04 & Mantenibilidad & Cobertura JaCoCo $\geq$ 60\%. \textbf{No cumplido}: 22.70\% de líneas real, en progreso desde 2.83\% (\texttt{docs/mediciones/jacoco/COVERAGE.md}). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============ 4. TRAZABILIDAD ============
+\section{Trazabilidad y verificación (Capítulo dedicado, no fusionado con diseño)}
+
+La matriz de trazabilidad completa (\texttt{docs/trazabilidad/matriz.csv} v1.0.0) conecta cada RF con su
+HU, módulo backend, endpoint REST, prioridad MoSCoW, prueba automatizada real (o su ausencia declarada) y
+evidencia empírica verificada. Se corrigieron en esta versión 5 citas de archivos de test inexistentes y
+3 citas de evidencia empírica incorrectas (\textit{non sequiturs} como usar el puntaje SUS general como
+evidencia de una funcionalidad CRUD específica) heredadas de la matriz v0.9.0-rc --- ver el detalle
+completo en \texttt{CHANGELOG-REQ.md}.
+
+% ============ 5. ANEXO INCOSE ============
+\section{Anexo: Checklist INCOSE v4}
+
+Se aplicaron las 9 características de calidad individuales de INCOSE (Necesario, Apropiado, No ambiguo,
+Completo, Singular, Factible, Verificable, Correcto, Conforme) a los 12 requisitos, más las 6
+características de calidad del conjunto (Completo, Consistente, Factible, Comprensible, Verificable como
+conjunto, Acotado). El checklist completo, con la matriz de 12$\times$9 y el análisis de conjunto, está
+en \texttt{docs/checklists/INCOSE-REQUIREMENTS.md} y se anexa por referencia a este documento en vez de
+duplicarse aquí verbatim, para evitar que las dos copias diverjan con el tiempo.
+
+\textbf{Conclusión del anexo:} la brecha más consistente es la característica ``Conforme'' (formato
+Historia de Usuario en vez de lenguaje normativo ``shall'' --- decisión de estilo consciente) y
+``Correcto''/``Verificable como conjunto'' para los 7 requisitos sin prueba automatizada real.
+
+% ============ 6. ELICITACION ============
+\section{Anexo: Técnicas de elicitación aplicadas}
+
+Resumen (detalle completo en \texttt{docs/requisitos/elicitacion/README.md}): de las 5 técnicas
+esperadas, \textbf{2 tienen evidencia real y verificable} en el repositorio (análisis de documentos ---
+7 observaciones docentes trazadas a commits reales en \texttt{OBSERVACIONES.md}, y evaluación cruzada de
+pares en \texttt{AUTOEVALUACION-PRESUS.md}), \textbf{1 es parcial} (prototipado iterativo vía historial
+de Git, sin sesiones formales documentadas), y \textbf{2 no tienen evidencia documentada} (entrevistas,
+observación directa, workshops) --- se declara esto explícitamente en vez de fabricar transcripciones o
+actas que no existieron.
+
+% ============ 7. PAGINA DE APROBACION ============
+\section{Página de aprobación}
+
+\begin{center}
+\begin{tabular}{p{7cm} p{7cm}}
+\toprule
+\textbf{Elaborado por (Equipo de desarrollo)} & \textbf{Revisado y aprobado por (Docente-Director)} \\
+\midrule
+& \\[1.5cm]
+\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
+Alava Alvarado, Jean Pierre & Ing. Guerrero Ulloa Gleiston Cíceron, Mg. \\
+\vspace{0.3cm} & \\
+\rule{6cm}{0.4pt} & Fecha de aprobación: \rule{4cm}{0.4pt} \\
+Moncayo Loor, Xavier Alejandro & \\
+\vspace{0.3cm} & \\
+\rule{6cm}{0.4pt} & \\
+Zamora Arias, Carla Esthefania & \\
+\vspace{0.3cm} & \\
+\rule{6cm}{0.4pt} & \\
+Barreto Rosado, Heider Dominick & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+\noindent\fbox{\parbox{\textwidth}{\textbf{Estado real de la firma (2026-08-17):} este documento se
+generó de forma automatizada como parte del cierre de la ingeniería de requisitos (Fase 7). La firma del
+docente-director \textbf{no se ha obtenido todavía} --- requiere la revisión y aprobación real del Ing.
+Guerrero Ulloa por parte del equipo humano, fuera del alcance de lo que se puede generar
+automáticamente. No se fabrica una firma ni se marca esta sección como completa hasta que ocurra
+realmente, siguiendo la misma política de integridad aplicada al resto de este repositorio (ver
+\href{../etica/ai-disclosure.md}{declaración de uso de IA}).}}
+
+\end{document}

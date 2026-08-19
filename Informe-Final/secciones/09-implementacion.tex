@@ -1,0 +1,61 @@
+\section{Implementación}
+\label{sec:implementacion}
+
+\subsection{Stack tecnológico}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{3cm}p{9cm}}
+\toprule
+\textbf{Capa} & \textbf{Tecnología y versión} \\
+\midrule
+Frontend & Angular 21.2.12, servido en producción por nginx (build multi-stage, ver \texttt{Frontend/Dockerfile}) \\
+Backend & Spring Boot 3.2.1 sobre Java 17 (compilado con JDK 21 en modo \texttt{--release 17}) \\
+Persistencia & PostgreSQL 15 (Flyway para migraciones versionadas) \\
+Caché & Redis 7, vía \texttt{spring-boot-starter-data-redis} \\
+Autenticación & JJWT 0.12.5, JWT de 7 claims RFC~7519, refresh token con blacklist en Redis \\
+Documentación API & Springdoc OpenAPI 2.3.0 (Swagger UI), versionado dinámico \texttt{/api/v1/} \\
+Generación de PDF & iText (actas y reportes) \\
+CI/CD & GitHub Actions (\texttt{.github/workflows/ci.yml}, \texttt{backup.yml}) \\
+\bottomrule
+\end{tabular}
+\caption{Stack tecnológico real del sistema.}
+\end{table}
+
+\subsection{Seguridad implementada}
+
+La autenticación usa JWT con los 7 claims de RFC~7519 (\texttt{jti}, \texttt{iss}, \texttt{sub},
+\texttt{aud}, \texttt{iat}, \texttt{nbf}, \texttt{exp}), refresh token con rotación y blacklist
+almacenados en Redis, rate limiting en \texttt{/api/v1/auth/login} (6 intentos/60s $\rightarrow$
+HTTP~429), y cabeceras de seguridad HTTP (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
+configuradas tanto en Spring Security como en nginx. El control de acceso usa
+\texttt{@PreAuthorize} por rol (ADMIN, DOCENTE, COORDINADOR, ESTUDIANTE). Los procedimientos almacenados
+y las consultas JPA son parametrizados; el análisis estático con find-sec-bugs confirmó 0 hallazgos de la
+regla \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE} (Sección~\ref{sec:evaluacion}).
+
+\subsection{Integración de API externa y caché}
+
+El servicio \texttt{ExternalApiServiceImpl} consume la API pública de universidades de Hipo Labs vía
+\texttt{WebClient} reactivo, con reintentos con backoff exponencial (3 intentos) ante fallos de red, y
+resultado cacheado en Redis (\texttt{@Cacheable}) con TTL de 10 minutos para universidades y 5 minutos
+para solicitudes. Este es el componente cuyo efecto de caché se mide cuantitativamente en la
+Sección~\ref{sec:evaluacion} (RQ2).
+
+\subsection{Despliegue}
+
+El sistema se ejecuta localmente con \texttt{docker compose up -d --build} (cuatro contenedores:
+postgres, redis, backend, nginx+frontend). Para producción, se preparó --- pero a la fecha de este
+informe \textbf{no se ha completado} --- un despliegue en Railway (\texttt{docs/despliegue/}), con un
+servicio Railway por contenedor, comunicados por red privada, y HTTPS gestionado automáticamente por el
+proveedor. La preparación incluyó: un \texttt{Frontend/Dockerfile} nuevo (antes no existía, el frontend
+solo se montaba como volumen local), la corrección de un \texttt{package-lock.json} desincronizado que
+rompía \texttt{npm ci} en un entorno Linux limpio, y la habilitación del detalle completo de
+\texttt{/actuator/health} (antes solo devolvía \texttt{\{"status":"UP"\}} sin desglose de componentes).
+
+\subsection{Usuario de demostración}
+
+Se sembró un usuario de demostración (\texttt{demo@uteq.edu.ec}, rol Coordinador) además del
+administrador, para que un evaluador externo pueda explorar el flujo académico completo sin necesidad de
+registrarse --- credenciales publicadas en \texttt{README.md}.
+\newpage

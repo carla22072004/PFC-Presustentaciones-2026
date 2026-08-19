@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SolicitudServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">SolicitudServiceImpl.java</span></div><h1>SolicitudServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.entities.Carrera;
+import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
+import ec.edu.uteq.presustentaciones.entities.Estudiante;
+import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
+import ec.edu.uteq.presustentaciones.entities.PeriodoAcademico;
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
+import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
+import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.PeriodoAcademicoRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L36">@RequiredArgsConstructor</span>
+@Transactional(readOnly = true)
+<span class="fc" id="L38">@Slf4j</span>
+public class SolicitudServiceImpl implements SolicitudService {
+
+    private final SolicitudRepository solicitudRepository;
+    private final EstudianteRepository estudianteRepository;
+    private final AnteproyectoRepository anteproyectoRepository;
+    private final NotificacionService notificacionService;
+    private final UsuarioRepository usuarioRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+    private final ModalidadTitulacionRepository modalidadTitulacionRepository;
+    private final ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
+    private final CarreraRepository carreraRepository;
+    private final PeriodoAcademicoRepository periodoAcademicoRepository;
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
+    private void notificarAdmins(String mensaje) {
+<span class="fc" id="L55">        List&lt;Usuario&gt; admins = usuarioRepository.findByRol(&quot;ADMIN&quot;);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        for (Usuario admin : admins) {</span>
+            try {
+<span class="nc" id="L58">                notificacionService.crearNotificacion(admin.getId(), mensaje);</span>
+<span class="nc" id="L59">            } catch (Exception e) {</span>
+<span class="nc" id="L60">                log.warn(&quot;No se pudo notificar al coordinador ID {}: {}&quot;, admin.getId(), e.getMessage());</span>
+<span class="nc" id="L61">            }</span>
+<span class="nc" id="L62">        }</span>
+<span class="fc" id="L63">    }</span>
+
+    private void notificarEstudiante(Solicitud solicitud, String mensaje) {
+        try {
+<span class="fc" id="L67">            Long usuarioId = solicitud.getEstudiante().getUsuario().getId();</span>
+<span class="fc" id="L68">            notificacionService.crearNotificacion(usuarioId, mensaje);</span>
+<span class="nc" id="L69">        } catch (Exception e) {</span>
+<span class="nc" id="L70">            log.warn(&quot;No se pudo notificar al estudiante de solicitud ID {}: {}&quot;, solicitud.getId(), e.getMessage());</span>
+<span class="fc" id="L71">        }</span>
+<span class="fc" id="L72">    }</span>
+
+    // ─── Métodos ─────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud crearSolicitud(Long estudianteId, Solicitud datos) {
+<span class="fc" id="L80">        Estudiante estudiante = estudianteRepository.findById(estudianteId)</span>
+<span class="fc" id="L81">                .orElseThrow(() -&gt; new RuntimeException(&quot;Estudiante no encontrado con ID: &quot; + estudianteId));</span>
+
+        // Resolver estado inicial
+<span class="fc" id="L84">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCreada = estadoSolicitudRepository.findByCodigo(&quot;CREADA&quot;)</span>
+<span class="pc" id="L85">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L86">                        .codigo(&quot;CREADA&quot;).nombre(&quot;Creada&quot;).build()));</span>
+
+        // Resolver modalidad: si el objeto ya viene completo (con id) úsalo; si no, error
+<span class="pc bpc" id="L89" title="1 of 4 branches missed.">        if (datos.getModalidadTitulacion() == null || datos.getModalidadTitulacion().getId() == null) {</span>
+<span class="fc" id="L90">            throw new RuntimeException(&quot;Debe seleccionar una modalidad de titulación válida&quot;);</span>
+        }
+<span class="fc" id="L92">        ModalidadTitulacion modalidad = modalidadTitulacionRepository</span>
+<span class="fc" id="L93">                .findById(datos.getModalidadTitulacion().getId())</span>
+<span class="pc" id="L94">                .orElseThrow(() -&gt; new RuntimeException(&quot;Modalidad no encontrada con ID: &quot; + datos.getModalidadTitulacion().getId()));</span>
+<span class="fc" id="L95">        datos.setModalidadTitulacion(modalidad);</span>
+
+        // Resolver convocatoria: si viene en el body úsala, si no buscar/crear la activa
+<span class="pc bpc" id="L98" title="3 of 4 branches missed.">        if (datos.getConvocatoria() == null || datos.getConvocatoria().getId() == null) {</span>
+<span class="fc" id="L99">            ConvocatoriaTitulacion convActiva = convocatoriaTitulacionRepository</span>
+<span class="fc" id="L100">                    .findFirstByActivaTrue()</span>
+<span class="fc" id="L101">                    .orElseGet(this::crearConvocatoriaDefault);</span>
+<span class="fc" id="L102">            datos.setConvocatoria(convActiva);</span>
+<span class="fc" id="L103">        } else {</span>
+<span class="nc" id="L104">            ConvocatoriaTitulacion convocatoria = convocatoriaTitulacionRepository</span>
+<span class="nc" id="L105">                    .findById(datos.getConvocatoria().getId())</span>
+<span class="nc" id="L106">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Convocatoria no encontrada con ID: &quot; + datos.getConvocatoria().getId()));</span>
+<span class="nc" id="L107">            datos.setConvocatoria(convocatoria);</span>
+        }
+
+<span class="fc" id="L110">        datos.setEstado(estadoCreada);</span>
+<span class="fc" id="L111">        datos.setEstudiante(estudiante);</span>
+<span class="fc" id="L112">        datos.setCreadoPor(estudiante.getUsuario());</span>
+<span class="fc" id="L113">        datos.setActualizadoPor(estudiante.getUsuario());</span>
+<span class="fc" id="L114">        datos.setFechaRegistro(LocalDateTime.now());</span>
+<span class="fc" id="L115">        datos.setActualizadoEn(LocalDateTime.now());</span>
+<span class="fc" id="L116">        return solicitudRepository.save(datos);</span>
+    }
+ 
+    @Override
+    @Transactional
+    public Solicitud crearSolicitudPorUsuario(Long usuarioId, Solicitud datos) {
+        // Buscar perfil de estudiante; si no existe, crearlo automáticamente
+<span class="fc" id="L123">        Estudiante estudiante = estudianteRepository.findByUsuarioId(usuarioId)</span>
+<span class="fc" id="L124">                .orElseGet(() -&gt; crearPerfilEstudiante(usuarioId));</span>
+<span class="fc" id="L125">        return crearSolicitud(estudiante.getId(), datos);</span>
+    }
+
+    /**
+     * Crea automáticamente un PeriodoAcademico + ConvocatoriaTitulacion activos
+     * cuando la base de datos no tiene ninguno configurado (instalación inicial).
+     */
+    @Transactional
+    private ConvocatoriaTitulacion crearConvocatoriaDefault() {
+<span class="nc" id="L134">        int anio = java.time.Year.now().getValue();</span>
+
+        // Crear o reusar período académico del año actual
+<span class="nc" id="L137">        PeriodoAcademico periodo = periodoAcademicoRepository</span>
+<span class="nc" id="L138">                .findByCodigo(&quot;PA-&quot; + anio)</span>
+<span class="nc" id="L139">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L140">                    log.info(&quot;Creando período académico por defecto para año {}&quot;, anio);</span>
+<span class="nc" id="L141">                    return periodoAcademicoRepository.save(PeriodoAcademico.builder()</span>
+<span class="nc" id="L142">                            .codigo(&quot;PA-&quot; + anio)</span>
+<span class="nc" id="L143">                            .nombre(&quot;Período Académico &quot; + anio)</span>
+<span class="nc" id="L144">                            .fechaInicio(LocalDate.of(anio, 1, 1))</span>
+<span class="nc" id="L145">                            .fechaFin(LocalDate.of(anio, 12, 31))</span>
+<span class="nc" id="L146">                            .activo(true)</span>
+<span class="nc" id="L147">                            .build());</span>
+                });
+
+        // Crear convocatoria activa ligada al período
+<span class="nc" id="L151">        log.info(&quot;Creando convocatoria activa por defecto para período {}&quot;, periodo.getCodigo());</span>
+<span class="nc" id="L152">        return convocatoriaTitulacionRepository.save(ConvocatoriaTitulacion.builder()</span>
+<span class="nc" id="L153">                .codigo(&quot;CONV-&quot; + anio + &quot;-01&quot;)</span>
+<span class="nc" id="L154">                .nombre(&quot;Convocatoria &quot; + anio + &quot; – Período I&quot;)</span>
+<span class="nc" id="L155">                .periodoAcademico(periodo)</span>
+<span class="nc" id="L156">                .fechaInicio(LocalDate.of(anio, 1, 1))</span>
+<span class="nc" id="L157">                .fechaFin(LocalDate.of(anio, 12, 31))</span>
+<span class="nc" id="L158">                .activa(true)</span>
+<span class="nc" id="L159">                .build());</span>
+    }
+
+    /**
+     * Crea automáticamente el perfil Estudiante para un usuario con rol ESTUDIANTE
+     * que aún no tenga registro en la tabla estudiante.
+     */
+    @Transactional
+    private Estudiante crearPerfilEstudiante(Long usuarioId) {
+<span class="fc" id="L168">        Usuario usuario = usuarioRepository.findById(usuarioId)</span>
+<span class="pc" id="L169">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + usuarioId));</span>
+
+        // Verificar que realmente sea un estudiante
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        if (!&quot;ESTUDIANTE&quot;.equalsIgnoreCase(usuario.getRol())) {</span>
+<span class="nc" id="L173">            throw new RuntimeException(&quot;El usuario no tiene rol de estudiante&quot;);</span>
+        }
+
+        // Obtener la primera carrera disponible como default
+<span class="fc" id="L177">        Carrera carreraDefault = carreraRepository.findAll().stream()</span>
+<span class="fc" id="L178">                .findFirst()</span>
+<span class="pc" id="L179">                .orElseThrow(() -&gt; new RuntimeException(&quot;No hay carreras configuradas en el sistema. Contacte al administrador.&quot;));</span>
+
+<span class="fc" id="L181">        log.info(&quot;Creando perfil de estudiante automáticamente para usuario ID: {}&quot;, usuarioId);</span>
+
+        // sp_generar_codigo_expediente (Fase 3 / Criterio P1, categoría &quot;generación de
+        // códigos secuenciales&quot;): nextval() sobre una secuencia dedicada es atómico a nivel
+        // de motor, así que dos altas concurrentes nunca reciben el mismo código.
+<span class="fc" id="L186">        String expedienteCodigo = estudianteRepository.generarCodigoExpediente(null, null);</span>
+
+<span class="fc" id="L188">        Estudiante nuevoEstudiante = Estudiante.builder()</span>
+<span class="fc" id="L189">                .usuario(usuario)</span>
+<span class="fc" id="L190">                .carrera(carreraDefault.getNombre())</span>
+<span class="fc" id="L191">                .carreraEntidad(carreraDefault)</span>
+<span class="fc" id="L192">                .semestreActual((short) 1)</span>
+<span class="fc" id="L193">                .semestre(&quot;1ro&quot;)</span>
+<span class="fc" id="L194">                .expedienteCodigo(expedienteCodigo)</span>
+<span class="fc" id="L195">                .build();</span>
+
+<span class="fc" id="L197">        return estudianteRepository.save(nuevoEstudiante);</span>
+    }
+ 
+    @Override
+    @Cacheable(value = &quot;solicitudes&quot;, key = &quot;'usuario:' + #usuarioId&quot;)
+    public List&lt;Solicitud&gt; listarPorUsuario(Long usuarioId) {
+<span class="nc" id="L203">        return estudianteRepository.findByUsuarioId(usuarioId)</span>
+<span class="nc" id="L204">                .map(e -&gt; solicitudRepository.findByEstudianteId(e.getId()))</span>
+<span class="nc" id="L205">                .orElse(java.util.Collections.emptyList());</span>
+    }
+ 
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud enviarSolicitud(Long solicitudId) {
+<span class="fc" id="L212">        Solicitud s = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L213">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+ 
+<span class="fc" id="L215">        boolean tienePdf = anteproyectoRepository.findBySolicitudId(solicitudId)</span>
+<span class="pc bpc" id="L216" title="2 of 4 branches missed.">                .map(a -&gt; a.getArchivoPdf() != null &amp;&amp; !a.getArchivoPdf().isBlank())</span>
+<span class="fc" id="L217">                .orElse(false);</span>
+ 
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        if (!tienePdf) {</span>
+<span class="fc" id="L220">            throw new RuntimeException(&quot;Debes cargar el PDF del anteproyecto antes de enviar la solicitud a revisión.&quot;);</span>
+        }
+ 
+<span class="fc" id="L223">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEnviada = estadoSolicitudRepository.findByCodigo(&quot;ENVIADA&quot;)</span>
+<span class="pc" id="L224">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L225">                        .codigo(&quot;ENVIADA&quot;).nombre(&quot;Enviada&quot;).build()));</span>
+
+<span class="fc" id="L227">        s.setEstado(estadoEnviada);</span>
+<span class="fc" id="L228">        Solicitud guardada = solicitudRepository.save(s);</span>
+ 
+<span class="fc" id="L230">        String nombreEstudiante = s.getEstudiante().getUsuario().getNombre()</span>
+<span class="fc" id="L231">                + &quot; &quot; + s.getEstudiante().getUsuario().getApellido();</span>
+ 
+<span class="fc" id="L233">        notificarAdmins(String.format(</span>
+                &quot;📋 Nueva solicitud de %s: \&quot;%s\&quot; está pendiente de revisión.&quot;,
+<span class="fc" id="L235">                nombreEstudiante, s.getTituloTema()));</span>
+ 
+<span class="fc" id="L237">        return guardada;</span>
+    }
+ 
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud aprobarSolicitud(Long solicitudId) {
+<span class="fc" id="L244">        Solicitud s = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L245">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+
+<span class="fc" id="L247">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoAprobada = estadoSolicitudRepository.findByCodigo(&quot;APROBADA&quot;)</span>
+<span class="pc" id="L248">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L249">                        .codigo(&quot;APROBADA&quot;).nombre(&quot;Aprobada&quot;).build()));</span>
+
+<span class="fc" id="L251">        s.setEstado(estadoAprobada);</span>
+<span class="fc" id="L252">        Solicitud guardada = solicitudRepository.save(s);</span>
+ 
+<span class="fc" id="L254">        notificarEstudiante(s, String.format(</span>
+                &quot;✅ Tu solicitud \&quot;%s\&quot; ha sido APROBADA. Pronto se te asignará fecha y tribunal.&quot;,
+<span class="fc" id="L256">                s.getTituloTema()));</span>
+ 
+<span class="fc" id="L258">        return guardada;</span>
+    }
+ 
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud rechazarSolicitud(Long solicitudId) {
+<span class="nc" id="L265">        return rechazarConObservacion(solicitudId, null);</span>
+    }
+ 
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud rechazarConObservacion(Long solicitudId, String observacion) {
+<span class="fc" id="L272">        Solicitud s = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L273">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+
+<span class="fc" id="L275">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoRechazada = estadoSolicitudRepository.findByCodigo(&quot;RECHAZADA&quot;)</span>
+<span class="pc" id="L276">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L277">                        .codigo(&quot;RECHAZADA&quot;).nombre(&quot;Rechazada&quot;).build()));</span>
+
+<span class="fc" id="L279">        s.setEstado(estadoRechazada);</span>
+<span class="pc bpc" id="L280" title="2 of 4 branches missed.">        if (observacion != null &amp;&amp; !observacion.isBlank()) {</span>
+<span class="fc" id="L281">            s.setObservaciones(observacion);</span>
+        }
+<span class="fc" id="L283">        Solicitud guardada = solicitudRepository.save(s);</span>
+ 
+<span class="pc bpc" id="L285" title="2 of 4 branches missed.">        String obs = (s.getObservaciones() != null &amp;&amp; !s.getObservaciones().isBlank())</span>
+<span class="pc" id="L286">                ? &quot; Motivo: &quot; + s.getObservaciones() : &quot;&quot;;</span>
+<span class="fc" id="L287">        notificarEstudiante(s, String.format(</span>
+                &quot;❌ Tu solicitud \&quot;%s\&quot; ha sido RECHAZADA.%s Revisa las observaciones.&quot;,
+<span class="fc" id="L289">                s.getTituloTema(), obs));</span>
+ 
+<span class="fc" id="L291">        return guardada;</span>
+    }
+ 
+    @Override
+    @Cacheable(value = &quot;solicitudes&quot;, key = &quot;'all'&quot;)
+    public List&lt;Solicitud&gt; listarSolicitudes() {
+<span class="nc" id="L297">        return solicitudRepository.findAllWithEstudiante();</span>
+    }
+
+    @Override
+    public Page&lt;Solicitud&gt; listarSolicitudesPaginado(int pagina, int tamanio, String estado) {
+<span class="nc" id="L302">        int paginaSegura = Math.max(pagina, 0);</span>
+<span class="nc" id="L303">        int tamanioSeguro = Math.min(Math.max(tamanio, 1), 100);</span>
+<span class="nc" id="L304">        PageRequest pageRequest = PageRequest.of(paginaSegura, tamanioSeguro, Sort.by(Sort.Direction.DESC, &quot;fechaRegistro&quot;));</span>
+
+<span class="nc bnc" id="L306" title="All 4 branches missed.">        if (estado != null &amp;&amp; !estado.isBlank()) {</span>
+<span class="nc" id="L307">            return solicitudRepository.findAllWithEstudianteByEstadoCodigo(estado, pageRequest);</span>
+        }
+<span class="nc" id="L309">        return solicitudRepository.findAllWithEstudiante(pageRequest);</span>
+    }
+
+    @Override
+    public Map&lt;String, Long&gt; contarPorEstado() {
+<span class="nc" id="L314">        Map&lt;String, Long&gt; conteos = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L315">        long total = solicitudRepository.count();</span>
+<span class="nc" id="L316">        conteos.put(&quot;TODAS&quot;, total);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        for (SolicitudRepository.EstadoConteo c : solicitudRepository.contarAgrupadoPorEstado()) {</span>
+<span class="nc" id="L318">            conteos.put(c.getCodigo(), c.getTotal());</span>
+<span class="nc" id="L319">        }</span>
+<span class="nc" id="L320">        return conteos;</span>
+    }
+
+    @Override
+    @Cacheable(value = &quot;solicitudes&quot;, key = &quot;'estudiante:' + #estudianteId&quot;)
+    public List&lt;Solicitud&gt; listarPorEstudiante(Long estudianteId) {
+<span class="nc" id="L326">        return solicitudRepository.findByEstudianteId(estudianteId);</span>
+    }
+ 
+    @Override
+    @Cacheable(value = &quot;solicitudes&quot;, key = &quot;#id&quot;, unless = &quot;#result == null or !#result.isPresent()&quot;)
+    public Optional&lt;Solicitud&gt; obtenerPorId(Long id) {
+<span class="nc" id="L332">        return solicitudRepository.findById(id);</span>
+    }
+ 
+    @Override
+    @Transactional
+    @CacheEvict(value = &quot;solicitudes&quot;, allEntries = true)
+    public Solicitud suspenderSolicitud(Long solicitudId, String motivo) {
+<span class="fc" id="L339">        Solicitud s = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L340">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+ 
+<span class="pc bpc" id="L342" title="1 of 2 branches missed.">        String codEstado = s.getEstado() != null ? s.getEstado().getCodigo() : &quot;&quot;;</span>
+<span class="pc bpc" id="L343" title="2 of 6 branches missed.">        boolean esSuspendible = !&quot;CREADA&quot;.equals(codEstado) &amp;&amp; !&quot;RECHAZADA&quot;.equals(codEstado) &amp;&amp; !&quot;SUSPENDIDA&quot;.equals(codEstado);</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">        if (!esSuspendible) {</span>
+<span class="fc" id="L345">            throw new RuntimeException(&quot;La solicitud no puede ser suspendida en su estado actual: &quot; + codEstado);</span>
+        }
+ 
+<span class="pc bpc" id="L348" title="1 of 4 branches missed.">        if (motivo == null || motivo.isBlank()) {</span>
+<span class="fc" id="L349">            throw new RuntimeException(&quot;Debe especificar el motivo de la suspensión&quot;);</span>
+        }
+ 
+<span class="fc" id="L352">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoSuspendida = estadoSolicitudRepository.findByCodigo(&quot;SUSPENDIDA&quot;)</span>
+<span class="pc" id="L353">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L354">                        .codigo(&quot;SUSPENDIDA&quot;).nombre(&quot;Suspendida&quot;).build()));</span>
+
+<span class="fc" id="L356">        s.setEstado(estadoSuspendida);</span>
+<span class="fc" id="L357">        s.setMotivoSuspension(motivo);</span>
+<span class="fc" id="L358">        s.setSuspendidoEn(LocalDateTime.now());</span>
+ 
+<span class="fc" id="L360">        Solicitud guardada = solicitudRepository.save(s);</span>
+<span class="fc" id="L361">        log.info(&quot;Solicitud {} suspendida desde estado {} por motivo: {}&quot;, solicitudId, codEstado, motivo);</span>
+ 
+<span class="fc" id="L363">        notificarEstudiante(s, String.format(</span>
+                &quot;🚫 Tu trabajo \&quot;%s\&quot; ha sido SUSPENDIDO. Motivo: %s. No podrás continuar.&quot;,
+<span class="fc" id="L365">                s.getTituloTema(), motivo));</span>
+
+<span class="fc" id="L367">        return guardada;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

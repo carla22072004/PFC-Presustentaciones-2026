@@ -220,16 +220,22 @@ presustentaciones-uteq-fixed/
 
 ## ⚙️ Configuración JWT
 
-En `application.properties`:
+`jwt.secret` se lee desde la variable de entorno `JWT_SECRET` (sin valor por defecto en el código:
+la app no arranca si falta). Genera uno y colócalo en tu `.env` local (nunca en `application.properties`
+ni en el repositorio):
 
-```properties
-# JWT Configuration
-jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-jwt.expiration=86400000
+```bash
+openssl rand -hex 32
+```
+
+```bash
+# .env (copiado desde .env.example, ignorado por git)
+JWT_SECRET=<pega aquí el valor generado>
+JWT_EXPIRATION=86400000
 # 86400000 ms = 24 horas
 ```
 
-⚠️ **Importante:** En producción, cambia el `jwt.secret` por uno nuevo generado de forma segura.
+⚠️ **Importante:** cada entorno (dev, CI, producción) debe usar su propio `JWT_SECRET`, nunca compartido ni versionado.
 
 ---
 

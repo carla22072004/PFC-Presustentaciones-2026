@@ -1,0 +1,36 @@
+\section{Amenazas a la Validez}
+\label{sec:amenazas-validez}
+
+\subsection{Validez de constructo}
+El p95 de latencia de k6 se usa como proxy de ``rendimiento percibido'', pero no se midió tiempo de
+renderizado en el navegador ni Web Vitals bajo carga real de usuario (solo Lighthouse en condición de
+reposo, sin carga concurrente). El puntaje SUS, cuando se aplique, medirá usabilidad percibida
+declarada, no eficiencia real de tarea (tiempo para completar un flujo).
+
+\subsection{Validez interna}
+Las mediciones de rendimiento y Lighthouse se ejecutaron en la máquina de desarrollo personal de un
+integrante del equipo, con otras aplicaciones activas (Discord, Steam, Brave), confirmado con
+\texttt{Get-Process | Sort CPU}. Esto es una amenaza real y documentada, no hipotética: el First
+Contentful Paint medido (2.9--5.9\,s) es alto para un bundle de $\sim$100\,KB transferido servido en
+localhost sin latencia de red real, lo que sugiere contención de CPU no relacionada con la aplicación
+misma, no un problema de rendimiento intrínseco del sistema.
+
+\subsection{Validez externa}
+Los 50 usuarios concurrentes de k6 son un valor fijado por el RNF-01, no derivado de datos reales de uso
+institucional de la UTEQ (que no existen para este sistema, al ser nuevo). No hay garantía de que ese
+sea el nivel de concurrencia real durante un periodo de matrícula/defensas masivas. El usuario de
+demostración y las pruebas manuales no reemplazan una prueba piloto con usuarios reales del dominio
+(estudiantes, coordinadores) --- que es precisamente la brecha que el SUS pendiente busca cerrar.
+
+\subsection{Validez de conclusión}
+El tamaño de muestra de Lighthouse ($n=3$ por perfil) es demasiado pequeño para una prueba de hipótesis
+formal entre desktop y mobile (Sección~\ref{sec:evaluacion}); solo se reportan diferencias descriptivas.
+La revisión de trabajos relacionados (Sección~\ref{sec:trabajos-relacionados}) no siguió un protocolo de
+búsqueda sistemática formal con doble revisor, lo que limita la conclusión de que la cobertura de
+literatura es exhaustiva --- se declaró explícitamente como una búsqueda dirigida, no una SLR completa.
+Finalmente, el propio historial de datos fabricados detectados en este proyecto (Sección~\ref{sec:discusion},
+RQ4) es una amenaza de conclusión de segundo orden: obliga a que cada cifra en este informe sea trazable
+a \texttt{docs/mediciones/DATA-PROVENANCE.md}, precisamente porque la confianza por defecto en la
+documentación de este proyecto específico ya se demostró insuficiente en al menos cinco episodios
+distintos.
+\newpage

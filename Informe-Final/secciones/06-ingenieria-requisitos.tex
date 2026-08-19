@@ -1,0 +1,79 @@
+\section{Ingeniería de Requisitos}
+\label{sec:requisitos}
+
+Este capítulo resume el trabajo de ingeniería de requisitos documentado en detalle en
+\texttt{docs/requisitos/} (SRS v1.0.0, \texttt{docs/requisitos/SRS-v1.0.0.pdf}), que constituye un
+capítulo dedicado y separado del diseño arquitectónico (Sección~\ref{sec:arquitectura}), conforme al
+criterio D0R de esta guía.
+
+\subsection{Requisitos funcionales y no funcionales}
+
+El sistema especifica 12 requisitos funcionales (Tabla~\ref{tab:rf-resumen}) y 4 requisitos no
+funcionales (rendimiento, seguridad, usabilidad, mantenibilidad). Cada RF está documentado como una
+historia de usuario en formato Connextra (``Como/Quiero/Para''), evaluada contra el criterio INVEST, con
+criterios de aceptación expresados en Gherkin (\texttt{docs/requisitos/historias/}), y como un caso de
+uso ``fully dressed'' con la notación de nivel de meta de Cockburn y un diagrama de secuencia
+(\texttt{docs/requisitos/casos-de-uso/}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{1.2cm}p{5.5cm}p{1.6cm}p{2.5cm}}
+\toprule
+\textbf{RF} & \textbf{Título} & \textbf{Prioridad} & \textbf{Verificación} \\
+\midrule
+RF-01 & Autenticación segura & Must & Verificado (test real) \\
+RF-02 & Registro de solicitud & Must & No verificado \\
+RF-03 & Asignación de jurados & Must & Verificado (test real) \\
+RF-04 & Programación de cronograma & Must & No verificado \\
+RF-05 & Evaluación por rúbrica & Must & Verificado (test real) \\
+RF-06 & Generación de actas & Must & No verificado \\
+RF-07 & Firma digital de actas & Should & No verificado \\
+RF-08 & Notificaciones & Could & No verificado \\
+RF-09 & Reportes de defensas & Could & No verificado \\
+RF-10 & Gestión de salas & Should & No verificado \\
+RF-11 & Gestión de usuarios & Must & Verificado (test real) \\
+RF-12 & Carga de anteproyecto & Must & Verificado (test real) \\
+\bottomrule
+\end{tabular}
+\caption{Los 12 requisitos funcionales, su prioridad MoSCoW y su estado real de verificación
+automatizada (fuente: \texttt{docs/trazabilidad/matriz.csv} v1.0.0).}
+\label{tab:rf-resumen}
+\end{table}
+
+\subsection{Calidad de los requisitos: checklist INCOSE}
+
+Se aplicaron las nueve características individuales de calidad de INCOSE \cite{incose2023} (necesario,
+apropiado, no ambiguo, completo, singular, factible, verificable, correcto, conforme) a los 12 RF, y las
+seis características de calidad del conjunto completo (\texttt{docs/checklists/INCOSE-REQUIREMENTS.md}).
+El hallazgo más consistente: ningún requisito usa lenguaje normativo tipo ``shall'' (se usa formato
+Historia de Usuario, una decisión de estilo consciente, no un descuido), y la característica de conjunto
+``verificable como conjunto'' falla porque solo 5 de 8 requisitos Must tienen prueba automatizada real
+(62.5\,\%, no el 100\,\% ideal).
+
+\subsection{Trazabilidad}
+
+\texttt{docs/trazabilidad/matriz.csv} conecta cada RF con su HU, módulo backend, endpoint REST,
+prioridad MoSCoW, prueba automatizada real (o su ausencia declarada explícitamente) y evidencia
+empírica. Esta matriz fue corregida en la Fase 7 del proyecto tras encontrarse que su versión anterior
+citaba 5 archivos de prueba que nunca existieron y 3 referencias de evidencia empírica incorrectas (por
+ejemplo, citar el puntaje de usabilidad general del sistema como evidencia de una funcionalidad CRUD
+específica de gestión de salas) --- corrección verificable ejecutando
+\texttt{scripts/validate-traceability.sh}.
+
+\subsection{Bitácora de cambios y tasa de estabilidad}
+
+\texttt{docs/requisitos/CHANGELOG-REQ.md} documenta la evolución de la SRS de la versión 0.9.0-rc (5 HU
+formalizadas de 12 requisitos ya referenciados en la matriz) a la versión 1.0.0 (12 HU completas). La
+tasa de estabilidad de \textit{alcance} es 1.00 (100\,\%): ningún requisito cambió su intención de
+negocio entre versiones, solo se formalizaron 7 requisitos que ya existían operativamente. La tasa de
+estabilidad de \textit{redacción} es 0.00 (0\,\%): se reescribió el 100\,\% del texto al nuevo formato.
+Se reportan ambas cifras porque cualquiera de las dos por sí sola sería engañosa.
+
+\subsection{Aprobación pendiente}
+
+El SRS v1.0.0 incluye una página de aprobación lista para firma física o electrónica del
+docente-director. A la fecha de este informe, esa firma \textbf{no se ha obtenido} --- es una acción que
+requiere al docente-director, no generable automáticamente. Se declara explícitamente en vez de
+simularse.
+\newpage

@@ -123,8 +123,10 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] bytes = Files.readAllBytes(rutaArchivo);
-            String hashActual = HexFormat.of().formatHex(digest.digest(bytes));
-            return hashActual.equals(ap.getSha256Hash());
+            byte[] hashActual = digest.digest(bytes);
+            byte[] hashEsperado = HexFormat.of().parseHex(ap.getSha256Hash());
+            // Comparacion en tiempo constante para evitar timing attacks (find-sec-bugs: UNSAFE_HASH_EQUALS)
+            return MessageDigest.isEqual(hashActual, hashEsperado);
         } catch (Exception e) {
             return false;
         }

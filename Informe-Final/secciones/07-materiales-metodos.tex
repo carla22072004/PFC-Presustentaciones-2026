@@ -1,0 +1,85 @@
+\section{Materiales y Métodos}
+\label{sec:metodos}
+
+\subsection{Design Science Research instanciado}
+
+Este proyecto sigue el modelo de proceso de seis actividades de Peffers et al. \cite{peffers2007}. La
+Tabla~\ref{tab:dsr} instancia cada actividad contra lo que realmente se hizo, con evidencia verificable.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{9.5cm}}
+\toprule
+\textbf{Actividad DSR} & \textbf{Instanciación real en este proyecto} \\
+\midrule
+1. Identificar el problema y motivar & Proceso manual de pre-sustentación sin trazabilidad (Sección~\ref{sec:introduccion}); motivado por observaciones docentes reales de Entregas 1A/1B (\texttt{docs/observaciones/OBSERVACIONES.md}, 7 hallazgos con hash de commit) \\
+2. Definir los objetivos de una solución & 12 requisitos funcionales priorizados MoSCoW (Sección~\ref{sec:requisitos}) \\
+3. Diseño y desarrollo & Arquitectura de 3 capas + 6 ADR (Sección~\ref{sec:arquitectura}); implementación real (Sección~\ref{sec:implementacion}) \\
+4. Demostración & Sistema funcional verificado end-to-end (login real, flujo de solicitud-jurado-cronograma-evaluación-acta) contra la topología de producción (nginx + backend + Postgres + Redis) \\
+5. Evaluación & Evaluación empírica multi-dimensional: rendimiento (k6), seguridad (OWASP ZAP + find-sec-bugs), cobertura (JaCoCo), calidad web (Lighthouse) --- Sección~\ref{sec:evaluacion} \\
+6. Comunicación & Este informe, el SRS v1.0.0, los ADR, y el repositorio público con licencia MIT \\
+\bottomrule
+\end{tabular}
+\caption{Instanciación del modelo de proceso DSR de Peffers et al. \cite{peffers2007}.}
+\label{tab:dsr}
+\end{table}
+
+\textbf{Nota honesta sobre las iteraciones DSR:} el modelo de Peffers es explícitamente iterativo (el
+resultado de la evaluación puede regresar a cualquier actividad anterior). Este proyecto sí iteró en la
+práctica --- por ejemplo, la evaluación de seguridad de la Fase 5 (actividad 5) encontró un secreto JWT
+hardcodeado que obligó a regresar a la actividad 3 (rediseño de la configuración de seguridad) --- pero
+esas iteraciones no se planificaron como tales desde el inicio del proyecto; se documentan aquí de forma
+retrospectiva, con la fecha y el hallazgo real que las disparó, no como un proceso DSR diseñado
+formalmente desde la Entrega 1A.
+
+\subsection{Esquema Goal-Question-Metric}
+
+Se instancia un esquema GQM \cite{basili1994} completo para la meta de rendimiento bajo carga, la única
+dimensión de la evaluación empírica con datos suficientes para un análisis estadístico inferencial real
+(Tabla~\ref{tab:gqm}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2cm}p{10cm}}
+\toprule
+\textbf{Nivel} & \textbf{Contenido} \\
+\midrule
+\textbf{Meta (Goal)} & Analizar el sistema de caché Redis con el propósito de caracterizar su efecto
+sobre la latencia, respecto al tiempo de respuesta del endpoint \texttt{/api/v1/universidades}, desde el
+punto de vista del equipo de desarrollo, en el contexto de carga moderada (50 usuarios concurrentes) \\
+\textbf{Pregunta 1 (Question)} & ¿Cuál es la latencia típica (mediana, percentiles) del endpoint en
+estado de caché fría vs. caliente? \\
+\textbf{Métrica 1.1} & Percentiles p50/p90/p95/p99 de latencia (ms), $n=30$ por escenario \\
+\textbf{Métrica 1.2} & Media y desviación estándar, con intervalo de confianza del 95\,\% \\
+\textbf{Pregunta 2 (Question)} & ¿La diferencia observada entre caché fría y caliente es
+estadísticamente significativa, y de qué magnitud práctica? \\
+\textbf{Métrica 2.1} & Estadístico U y valor p del test de Mann-Whitney/Wilcoxon (dos muestras
+independientes) \\
+\textbf{Métrica 2.2} & Tamaño de efecto (correlación biserial de rangos) \\
+\textbf{Pregunta 3 (Question)} & ¿El sistema cumple el requisito no funcional RNF-01 (respuesta $<$
+500\,ms bajo 50 usuarios concurrentes)? \\
+\textbf{Métrica 3.1} & p95 de \texttt{http\_req\_duration} en cada una de las 5 corridas k6, comparado
+contra el umbral de 500\,ms \\
+\bottomrule
+\end{tabular}
+\caption{Esquema GQM para la meta de rendimiento del sistema de caché.}
+\label{tab:gqm}
+\end{table}
+
+Los resultados de este esquema GQM se presentan en la Sección~\ref{sec:evaluacion} y se reproducen
+ejecutando \texttt{scripts/perf-analysis.ipynb} contra los datos crudos en \texttt{k6/}.
+
+\subsection{Instrumentos y herramientas}
+
+\begin{itemize}[nosep]
+    \item \textbf{Carga:} k6 v2.2.0 (\texttt{k6/load-test.js})
+    \item \textbf{Calidad web:} Lighthouse (vía \texttt{npx lighthouse}), contra build de producción real
+    \item \textbf{Seguridad estática:} SpotBugs 4.8.6.4 + find-sec-bugs 1.13.0
+    \item \textbf{Seguridad dinámica:} OWASP ZAP baseline scan
+    \item \textbf{Cobertura:} JaCoCo 0.8.11
+    \item \textbf{Análisis estadístico:} Python 3.14, \texttt{scipy.stats} (Mann-Whitney U), \texttt{numpy}
+    \item \textbf{Entorno:} versiones exactas documentadas en \texttt{docs/entorno/versions.txt}
+\end{itemize}
+\newpage

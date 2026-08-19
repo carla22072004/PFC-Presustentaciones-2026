@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RubricaEvaluacionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">RubricaEvaluacionController.java</span></div><h1>RubricaEvaluacionController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.dto.EvaluacionRubricaRequest;
+import ec.edu.uteq.presustentaciones.dto.EvaluacionRubricaResponse;
+import ec.edu.uteq.presustentaciones.dto.ObservacionesSolicitudDTO;
+import ec.edu.uteq.presustentaciones.entities.CriterioRubrica;
+import ec.edu.uteq.presustentaciones.repositories.CriterioRubricaRepository;
+import ec.edu.uteq.presustentaciones.services.RubricaEvaluacionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/rubrica-evaluacion&quot;)
+<span class="nc" id="L19">@RequiredArgsConstructor</span>
+public class RubricaEvaluacionController {
+
+    private final RubricaEvaluacionService service;
+    private final CriterioRubricaRepository criterioRepo;
+
+    /** RF-07: Jurado registra sus escalas por criterio */
+    @PostMapping(&quot;/registrar&quot;)
+    public ResponseEntity&lt;?&gt; registrar(@RequestBody EvaluacionRubricaRequest request) {
+        try {
+<span class="nc" id="L29">            EvaluacionRubricaResponse resp = service.registrarEvaluacion(request);</span>
+<span class="nc" id="L30">            return ResponseEntity.ok(resp);</span>
+<span class="nc" id="L31">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L32">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /** Obtener evaluación de un jurado específico */
+    @GetMapping(&quot;/solicitud/{solicitudId}/jurado/{juradoId}&quot;)
+    public ResponseEntity&lt;?&gt; obtenerJurado(
+            @PathVariable Long solicitudId,
+            @PathVariable Long juradoId) {
+        try {
+<span class="nc" id="L42">            return ResponseEntity.ok(service.obtenerEvaluacionJurado(solicitudId, juradoId));</span>
+<span class="nc" id="L43">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L44">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+
+    /** Obtener evaluaciones de todos los jurados para una solicitud */
+    @GetMapping(&quot;/solicitud/{solicitudId}&quot;)
+    public List&lt;EvaluacionRubricaResponse&gt; obtenerSolicitud(@PathVariable Long solicitudId) {
+<span class="nc" id="L51">        return service.obtenerEvaluacionesSolicitud(solicitudId);</span>
+    }
+
+    /** Nota promedio del tribunal lista para usar en la evaluación final (40%) */
+    @GetMapping(&quot;/nota-tribunal/{solicitudId}&quot;)
+    public ResponseEntity&lt;?&gt; notaTribunal(@PathVariable Long solicitudId) {
+<span class="nc" id="L57">        Double nota = service.calcularNotaTribunal(solicitudId);</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (nota == null) {</span>
+<span class="nc" id="L59">            return ResponseEntity.ok(Map.of(&quot;nota&quot;, (Object) null,</span>
+                    &quot;mensaje&quot;, &quot;No hay evaluaciones registradas aún.&quot;));
+        }
+<span class="nc" id="L62">        return ResponseEntity.ok(Map.of(&quot;nota&quot;, nota));</span>
+    }
+
+    /** Listar criterios de una rúbrica */
+    @GetMapping(&quot;/criterios/{rubricaId}&quot;)
+    public List&lt;CriterioRubrica&gt; criteriosPorRubrica(@PathVariable Long rubricaId) {
+<span class="nc" id="L68">        return criterioRepo.findByRubricaIdOrderByOrdenAsc(rubricaId);</span>
+    }
+
+    /** Obtener todas las observaciones de una solicitud (tutor, jurados, coordinador) */
+    @GetMapping(&quot;/observaciones/{solicitudId}&quot;)
+    public ResponseEntity&lt;?&gt; obtenerObservaciones(@PathVariable Long solicitudId) {
+        try {
+<span class="nc" id="L75">            ObservacionesSolicitudDTO obs = service.obtenerObservacionesSolicitud(solicitudId);</span>
+<span class="nc" id="L76">            return ResponseEntity.ok(obs);</span>
+<span class="nc" id="L77">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L78">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

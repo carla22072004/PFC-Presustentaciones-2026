@@ -23,6 +23,9 @@ import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +50,7 @@ public class ActaServiceImpl implements ActaService {
     private final EvaluacionFinalRepository evaluacionRepository;
     private final JuradoRepository juradoRepository;
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -76,6 +80,7 @@ public class ActaServiceImpl implements ActaService {
         Acta acta = Acta.builder()
                 .solicitud(solicitud)
                 .archivoPdf(fileName)
+                .fechaGeneracion(LocalDate.now())
                 .build();
 
         // Crear directorio de subida si no existe
@@ -93,19 +98,25 @@ public class ActaServiceImpl implements ActaService {
 
     @Override
     @Transactional
-    public Acta firmarActa(Long actaId, String rol) {
+    public Acta firmarActa(Long actaId, String rol, String observacion) {
         Acta acta = actaRepository.findById(actaId)
                 .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
 
-        LocalDateTime ahora = LocalDateTime.now();
-        switch (rol.toUpperCase()) {
-            case "PRESIDENTE" -> { acta.setFirmadaPresidente(true); acta.setFechaFirmaPresidente(ahora); }
-            case "VOCAL_1"    -> { acta.setFirmadaVocal1(true);     acta.setFechaFirmaVocal1(ahora); }
-            case "VOCAL_2"    -> { acta.setFirmadaVocal2(true);     acta.setFechaFirmaVocal2(ahora); }
-            case "TUTOR"      -> { acta.setFirmadaTutor(true);      acta.setFechaFirmaTutor(ahora); }
-            default -> throw new RuntimeException("Rol inválido: " + rol + ". Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR");
+        String rolNormalizado = rol.toUpperCase();
+        if (!java.util.Set.of("PRESIDENTE", "VOCAL_1", "VOCAL_2", "TUTOR").contains(rolNormalizado)) {
+            throw new RuntimeException("Rol inválido: " + rol + ". Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR");
         }
 
+        // Persiste la firma vía sp_firmar_acta_digital (Fase 3 / Criterio P1) -- el
+        // procedimiento es la fuente de verdad de firmada_*/fecha_firma_*/observaciones_acta;
+        // se refresca la entidad para que el resto del método (incluida observaciones_acta,
+        // que antes de esta fase no se escribía desde Java) vea lo que el SP realmente
+        // persistió, en vez de sobreescribirlo con el save() final de abajo.
+        actaRepository.firmarActaDigital(actaId, rolNormalizado, observacion);
+        entityManager.refresh(acta);
+
+        // firmada_*/fecha_firma_*/observaciones_acta ya quedaron persistidos y reflejados
+        // en memoria por el refresh() de arriba; solo falta recalcular el flag agregado.
         acta.actualizarEstadoFirma();
 
         // Si el acta quedó completamente firmada, cambiar estado a COMPLETADA y regenerar PDF
@@ -146,8 +157,8 @@ public class ActaServiceImpl implements ActaService {
     }
 
     @Override
-    public List<Acta> listarActas() {
-        return actaRepository.findAll();
+    public Page<Acta> listarActas(Pageable pageable) {
+        return actaRepository.findAll(pageable);
     }
 
     @Override

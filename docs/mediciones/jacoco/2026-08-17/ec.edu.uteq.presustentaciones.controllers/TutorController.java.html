@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TutorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">TutorController.java</span></div><h1>TutorController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.services.TutorService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/tutores&quot;)
+public class TutorController {
+
+    private final TutorService tutorService;
+
+<span class="nc" id="L19">    public TutorController(TutorService tutorService) {</span>
+<span class="nc" id="L20">        this.tutorService = tutorService;</span>
+<span class="nc" id="L21">    }</span>
+
+    @PostMapping(&quot;/asignar&quot;)
+    public ResponseEntity&lt;Tutor&gt; asignar(@RequestParam Long solicitudId,
+                                         @RequestParam Long docenteId) {
+        try {
+<span class="nc" id="L27">            return ResponseEntity.ok(tutorService.asignarTutor(solicitudId, docenteId));</span>
+<span class="nc" id="L28">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L29">            return ResponseEntity.badRequest().build();</span>
+        }
+    }
+
+    @GetMapping(&quot;/solicitud/{solicitudId}&quot;)
+    public ResponseEntity&lt;Tutor&gt; porSolicitud(@PathVariable Long solicitudId) {
+<span class="nc" id="L35">        return tutorService.buscarPorSolicitud(solicitudId)</span>
+<span class="nc" id="L36">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L37">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;Page&lt;Tutor&gt;&gt; listar(Pageable pageable) {
+<span class="nc" id="L42">        return ResponseEntity.ok(tutorService.listarTodos(pageable));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; eliminar(@PathVariable Long id) {
+<span class="nc" id="L47">        tutorService.eliminarTutor(id);</span>
+<span class="nc" id="L48">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

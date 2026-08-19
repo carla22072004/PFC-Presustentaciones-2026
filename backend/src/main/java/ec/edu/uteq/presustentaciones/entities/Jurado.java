@@ -6,6 +6,22 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * sp_validar_conflicto_jurado (PROCEDURE con parámetro INOUT, categoría "validaciones
+ * cruzadas" del Bloque A.2) -- ver la nota completa en Estudiante.java sobre por qué es
+ * PROCEDURE+INOUT y no FUNCTION+OUT (Postgres rechaza CALL para funciones). Fase 3 / P1.
+ */
+@NamedStoredProcedureQuery(
+        name = "Jurado.validarConflictoJurado",
+        procedureName = "presus.sp_validar_conflicto_jurado",
+        parameters = {
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_solicitud_id", type = Long.class),
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_docente_id", type = Long.class),
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_fecha_inicio", type = LocalDateTime.class),
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_duracion_min", type = Integer.class),
+                @StoredProcedureParameter(mode = ParameterMode.INOUT, name = "p_disponible", type = Boolean.class)
+        }
+)
 @Entity
 @Table(name = "miembros_tribunal", schema = "presus",
        uniqueConstraints = @UniqueConstraint(columnNames = {"solicitud_id", "docente_id"}))

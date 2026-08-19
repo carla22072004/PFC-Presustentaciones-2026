@@ -44,3 +44,20 @@ yarn-error.log
 
 # Archivos subidos en tiempo de ejecución (anteproyectos, fases de tutoría)
 backend/uploads/
+
+# Variables de entorno con secretos reales (usar .env.example como plantilla)
+.env
+backend/.env
+
+# Salida local de Lighthouse CI (lhci autorun / lhci collect)
+.lighthouseci/
+
+# Artefactos de compilacion LaTeX (se regeneran con `make pdf` / latexmk)
+*.aux
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.toc
+*.synctex.gz

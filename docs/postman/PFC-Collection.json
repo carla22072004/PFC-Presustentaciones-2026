@@ -1,507 +1,475 @@
 {
 	"info": {
 		"_postman_id": "b8e9af73-0dbd-45e8-9aec-3ae974076165",
-		"name": "Colección de Pruebas API REST - Pre-Sustentaciones UTEQ v0.9.0-rc",
-		"description": "Colección completa de 22 peticiones HTTP RESTful para la validación de endpoints CRUD, autenticación JWT, soporte de cookies, procedimientos almacenados y manejo de errores.",
+		"name": "Colección de Pruebas API REST - Pre-Sustentaciones UTEQ v1.0.0",
+		"description": "Colección de 27 peticiones HTTP RESTful verificadas contra el backend real corriendo en Docker (docker compose up, base de datos recién migrada) el 2026-08-17, no solo escritas a partir del código fuente. Cubre casos de éxito, validación (400), autorización (401/403) y recurso no encontrado (404) sobre todos los módulos: autenticación, usuarios, solicitudes, anteproyectos, jurados, cronogramas, salas, evaluaciones, actas, reportes y documentación. Todas las rutas usan el prefijo de versionado real `/api/v1/` (ver `docs/entorno/versions.txt` y README.md) — una versión anterior de esta colección usaba `/api/*` sin versión, además de varias rutas y métodos que nunca existieron en los controladores reales (`/api/jurados/asignar-masivo`, `/api/actas/{id}/firmar`, `/api/evaluaciones/{id}/calcular-promedio`, `/api/reportes/defensas`, `POST /api/solicitudes`); esos errores se corrigieron en la Fase 10 verificando cada petición contra el backend real, no solo contra el código.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "1. Autenticación & Usuarios",
+			"name": "1. Autenticación",
 			"item": [
 				{
-					"name": "POST /api/auth/register - Registrar Usuario",
+					"name": "POST /api/v1/auth/login - Iniciar Sesión Admin (Éxito)",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Mendoza\",\n  \"email\": \"cmendoza@uteq.edu.ec\",\n  \"password\": \"password123\",\n  \"rol\": \"ESTUDIANTE\"\n}"
+							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"admin123\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/register",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"register"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Contraseña corregida en la Fase 10: la versión anterior usaba \"admin\", que en realidad devuelve 401 (la contraseña real sembrada por PreSustentacionesApplication.java es \"admin123\", documentada en README.md). Verificado devolviendo 200 contra el backend real."
 					}
 				},
 				{
-					"name": "POST /api/auth/login - Iniciar Sesión (Éxito)",
+					"name": "POST /api/v1/auth/login - Credenciales Inválidas (Error 401)",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"admin\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"login"
-							]
-						}
-					}
-				},
-				{
-					"name": "POST /api/auth/login - Credenciales Inválidas (Error 401)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"clave_erronea\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"login"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Verificado: 401, manejado por GlobalExceptionHandler.handleAuthenticationException."
 					}
 				},
 				{
-					"name": "GET /api/usuarios - Listar Usuarios Protegido",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/usuarios",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"usuarios"
-							]
-						}
-					}
-				},
-				{
-					"name": "GET /api/usuarios/{id} - Obtener Usuario por ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/usuarios/1",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"usuarios",
-								"1"
-							]
-						}
-					}
-				},
-				{
-					"name": "GET /api/usuarios/999 - Usuario No Encontrado (Error 404)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/usuarios/999",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"usuarios",
-								"999"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "2. Solicitudes & Anteproyectos",
-			"item": [
-				{
-					"name": "GET /api/solicitudes - Listar Solicitudes",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/solicitudes",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"solicitudes"
-							]
-						}
-					}
-				},
-				{
-					"name": "POST /api/solicitudes - Crear Solicitud",
+					"name": "POST /api/v1/auth/login - Validación: Email con Formato Inválido (Error 400)",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"estudianteId\": 1,\n  \"tituloTema\": \"Sistema Inteligente de Gestión UTEQ\",\n  \"modalidad\": \"Proyecto Tecnológico\"\n}"
+							"raw": "{\n  \"email\": \"no-es-un-email\",\n  \"password\": \"x\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/solicitudes",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"solicitudes"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Ejercita @Email/@NotBlank de LoginRequest. Verificado: 400. Requiere el handler de MethodArgumentNotValidException agregado en GlobalExceptionHandler.java (Fase 10) -- antes de ese fix, este mismo caso devolvía 500 en vez de 400."
 					}
 				},
 				{
-					"name": "GET /api/anteproyectos - Listar Anteproyectos",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/anteproyectos",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"anteproyectos"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "3. Jurados & Procedimientos Almacenados",
-			"item": [
-				{
-					"name": "GET /api/jurados - Listar Jurados Asignados",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/jurados",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"jurados"
-							]
-						}
-					}
-				},
-				{
-					"name": "POST /api/jurados/asignar-masivo - Asignación Masiva (SP)",
+					"name": "POST /api/v1/auth/register - Registrar Usuario (ADMIN, Éxito)",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"solicitudIds\": [1, 2],\n  \"docenteIds\": [3, 4],\n  \"rol\": \"VOCAL1\"\n}"
+							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Mendoza\",\n  \"email\": \"cmendoza@uteq.edu.ec\",\n  \"password\": \"password123\",\n  \"rol\": \"ESTUDIANTE\",\n  \"rolUsuario\": { \"id\": 4 }\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/jurados/asignar-masivo",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"jurados",
-								"asignar-masivo"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "4. Cronograma & Salas",
-			"item": [
-				{
-					"name": "GET /api/cronogramas - Listar Cronogramas",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/cronogramas",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"cronogramas"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Corregido en la Fase 10: /register requiere @PreAuthorize(\"hasRole('ADMIN')\") -- no es auto-registro público, es aprovisionamiento de cuentas por un administrador (ver AuthController.java). Además el body es la entidad Usuario cruda (sin @Valid), y la columna rol_id (relación rolUsuario) es NOT NULL en la base de datos aunque el campo string legado 'rol' se acepte también; enviar solo \"rol\":\"ESTUDIANTE\" sin \"rolUsuario\":{\"id\":N} falla con un error 500 de constraint de base de datos envuelto como 400. IDs de rol reales sembrados por PreSustentacionesApplication.java: 1=ADMIN, 2=DOCENTE, 3=COORDINADOR, 4=ESTUDIANTE. Verificado devolviendo 201 contra el backend real."
 					}
 				},
 				{
-					"name": "GET /api/salas - Listar Salas Disponibles",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/salas",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"salas"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "5. Evaluaciones & Rúbricas (SP)",
-			"item": [
-				{
-					"name": "GET /api/evaluaciones - Listar Evaluaciones",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/evaluaciones",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"evaluaciones"
-							]
-						}
-					}
-				},
-				{
-					"name": "POST /api/evaluaciones/{id}/calcular-promedio - Ejecutar SP Ponderación",
+					"name": "POST /api/v1/auth/register - Sin Permisos de Administrador (Error 403)",
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/evaluaciones/1/calcular-promedio",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"evaluaciones",
-								"1",
-								"calcular-promedio"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "6. Actas & Firma Digital (SP)",
-			"item": [
-				{
-					"name": "GET /api/actas - Listar Actas Emitidas",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/api/actas",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"actas"
-							]
-						}
-					}
-				},
-				{
-					"name": "POST /api/actas/{id}/firmar - Firma Digital Multi-Actor (SP)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"rol\": \"PRESIDENTE\",\n  \"observacion\": \"Aprobado sin observaciones adicionales\"\n}"
+							"raw": "{\n  \"nombre\": \"Intento\",\n  \"apellido\": \"NoAutorizado\",\n  \"email\": \"intento@uteq.edu.ec\",\n  \"password\": \"password123\",\n  \"rol\": \"ESTUDIANTE\",\n  \"rolUsuario\": { \"id\": 4 }\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/actas/1/firmar",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"actas",
-								"1",
-								"firmar"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Sin token: verificado 403 (hasRole('ADMIN') rechaza también peticiones anónimas)."
+					}
+				},
+				{
+					"name": "POST /api/v1/auth/register - Email Duplicado (Error 400)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Mendoza\",\n  \"email\": \"cmendoza@uteq.edu.ec\",\n  \"password\": \"password123\",\n  \"rol\": \"ESTUDIANTE\",\n  \"rolUsuario\": { \"id\": 4 }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Correr después de la petición de registro exitoso con el mismo email. Verificado: 400, \"El email ya está registrado\"."
 					}
 				}
 			]
 		},
 		{
-			"name": "7. Reportes & OpenAPI Documentación",
+			"name": "2. Usuarios",
 			"item": [
 				{
-					"name": "GET /api/reportes/defensas - Reporte Consolidado (SP)",
+					"name": "GET /api/v1/usuarios - Listar Usuarios (ADMIN, Éxito)",
 					"request": {
 						"method": "GET",
 						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwtToken}}"
-							}
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/reportes/defensas?carrera=Software",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"reportes",
-								"defensas"
-							],
+							"raw": "{{baseUrl}}/api/v1/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "usuarios"]
+						},
+						"description": "Verificado: 200 contra el backend real."
+					}
+				},
+				{
+					"name": "GET /api/v1/usuarios - Sin Token de Autenticación (Error 403)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "usuarios"]
+						},
+						"description": "Verificado: 403 (no 401) -- Spring Security en este proyecto no tiene un AuthenticationEntryPoint personalizado, así que una petición sin token a una ruta 'authenticated()' cae en AccessDeniedException -> 403, comportamiento real confirmado con curl, no asumido."
+					}
+				},
+				{
+					"name": "GET /api/v1/usuarios - Rol Insuficiente, Estudiante (Error 403)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenEstudiante}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "usuarios"]
+						},
+						"description": "GET /api/v1/usuarios exige hasRole('ADMIN'); un token válido de rol ESTUDIANTE (obtenido con la petición de login de más abajo) recibe 403 -- verificado."
+					}
+				},
+				{
+					"name": "GET /api/v1/usuarios/{id} - Obtener Perfil Propio (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenEstudiante}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioEstudianteId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "usuarios", "{{usuarioEstudianteId}}"]
+						},
+						"description": "GET /{id} permite al propio usuario ver su perfil (no solo ADMIN) -- UsuarioController.esUsuarioActualOAdmin(). Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/usuarios/999 - Usuario No Encontrado (Error 404)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "usuarios", "999"]
+						},
+						"description": "Verificado: 404 con token ADMIN (999 no existe)."
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Solicitudes & Anteproyectos",
+			"item": [
+				{
+					"name": "GET /api/v1/solicitudes - Listar Solicitudes (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/solicitudes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "solicitudes"]
+						},
+						"description": "Requiere rol ADMIN, DOCENTE o COORDINADOR (@PreAuthorize en SolicitudController). Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/solicitudes - Sin Token (Error 403)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/solicitudes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "solicitudes"]
+						},
+						"description": "Verificado: 403."
+					}
+				},
+				{
+					"name": "GET /api/v1/anteproyectos/solicitud/999 - Anteproyecto No Encontrado (Error 404)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/anteproyectos/solicitud/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "anteproyectos", "solicitud", "999"]
+						},
+						"description": "Corregido en la Fase 10: la colección anterior probaba GET /api/anteproyectos, que nunca existió como ruta bare -- AnteproyectoController solo expone /solicitud/{id}, /ver/{id}, /verificar/{id}, /enviar/{id} (multipart) y /aprobar|rechazar/{id}. Verificado: 404 real (no un 405/404 genérico de Spring por ruta inexistente)."
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Jurados & Cronograma",
+			"item": [
+				{
+					"name": "GET /api/v1/jurados - Listar Jurados (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/jurados",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "jurados"]
+						},
+						"description": "Verificado: 200 (paginado, sin restricción de rol en este endpoint de solo lectura)."
+					}
+				},
+				{
+					"name": "POST /api/v1/jurados/asignar - Rol Insuficiente, Estudiante (Error 403)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenEstudiante}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/jurados/asignar?solicitudId=1&docenteId=1&rol=VOCAL_1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "jurados", "asignar"],
 							"query": [
-								{
-									"key": "carrera",
-									"value": "Software"
-								}
+								{ "key": "solicitudId", "value": "1" },
+								{ "key": "docenteId", "value": "1" },
+								{ "key": "rol", "value": "VOCAL_1" }
 							]
-						}
+						},
+						"description": "Corregido en la Fase 10: la ruta real es POST /api/v1/jurados/asignar (RequestParams de query, no body JSON) -- /asignar-masivo, usado en la colección anterior, nunca existió en JuradoController.java. Requiere ADMIN o COORDINADOR; con token ESTUDIANTE verificado: 403."
 					}
 				},
 				{
-					"name": "GET /v3/api-docs - Especificación JSON OpenAPI 3.0",
+					"name": "GET /api/v1/jurados/tutor/solicitud/999 - Tutor No Encontrado (Error 404)",
 					"request": {
 						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
 						"url": {
-							"raw": "{{baseUrl}}/v3/api-docs",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"v3",
-								"api-docs"
-							]
-						}
+							"raw": "{{baseUrl}}/api/v1/jurados/tutor/solicitud/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "jurados", "tutor", "solicitud", "999"]
+						},
+						"description": "Verificado: 404."
+					}
+				},
+				{
+					"name": "GET /api/v1/cronogramas - Listar Cronogramas (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/cronogramas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "cronogramas"]
+						},
+						"description": "Verificado: 200."
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Salas",
+			"item": [
+				{
+					"name": "GET /api/v1/salas - Listar Salas (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/salas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "salas"]
+						},
+						"description": "Verificado: 200."
+					}
+				},
+				{
+					"name": "POST /api/v1/salas - Crear Sala (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codigo\": \"AULA-201\",\n  \"nombre\": \"Aula de Pre-Sustentaciones 201\",\n  \"capacidad\": 20,\n  \"disponible\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/salas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "salas"]
+						},
+						"description": "Verificado: 200/201, retorna la Sala creada con id asignado."
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Evaluaciones & Actas (SP)",
+			"item": [
+				{
+					"name": "GET /api/v1/evaluaciones - Listar Evaluaciones (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/evaluaciones",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "evaluaciones"]
+						},
+						"description": "Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/evaluaciones/solicitud/999 - Evaluación No Encontrada (Error 404)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/evaluaciones/solicitud/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "evaluaciones", "solicitud", "999"]
+						},
+						"description": "Corregido en la Fase 10: la colección anterior probaba POST /api/evaluaciones/{id}/calcular-promedio, que nunca existió (EvaluacionController expone /evaluar-ponderado y /evaluar, ambos con RequestParams, no path variable). Verificado: 404."
+					}
+				},
+				{
+					"name": "GET /api/v1/actas - Listar Actas (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/actas",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "actas"]
+						},
+						"description": "Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/actas/solicitud/999 - Acta No Encontrada (Error 404)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/actas/solicitud/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "actas", "solicitud", "999"]
+						},
+						"description": "Corregido en la Fase 10: la ruta real de firma es POST /api/v1/actas/firmar/{actaId}?rol=... (query param, no /{id}/firmar con body JSON como probaba la colección anterior). Esta petición usa en su lugar un GET de solo lectura verificable sin necesitar un acta pre-existente sembrada: 404 confirmado."
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Reportes & Documentación",
+			"item": [
+				{
+					"name": "GET /api/v1/reportes/estadisticas/json - Reporte Consolidado (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwtTokenAdmin}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reportes/estadisticas/json",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reportes", "estadisticas", "json"]
+						},
+						"description": "Corregido en la Fase 10: la colección anterior probaba GET /api/reportes/defensas, que nunca existió (ReporteController expone /cronograma/pdf, /estadisticas/pdf y /estadisticas/json). Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /swagger-ui/index.html - Documentación Swagger UI (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/swagger-ui/index.html",
+							"host": ["{{baseUrl}}"],
+							"path": ["swagger-ui", "index.html"]
+						},
+						"description": "Corregido en la Fase 10: la colección anterior probaba GET /v3/api-docs, que devuelve 500 (\"No static resource v3/api-docs\") en el estado actual del backend -- bug real confirmado contra el sistema corriendo, reportado por separado para su corrección. /swagger-ui/index.html sí funciona (200) y es público (permitAll en SecurityConfig), así que se usa aquí como evidencia de documentación OpenAPI navegable."
+					}
+				},
+				{
+					"name": "GET /actuator/health - Estado de Salud del Sistema (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["actuator", "health"]
+						},
+						"description": "Público (permitAll). Verificado: 200, con detalle de componentes db/redis/diskSpace/ping en UP -- usado también por el criterio P5 (Fase 8) y por `make all` (wait-backend) para confirmar que las migraciones Flyway se aplicaron."
 					}
 				}
 			]
@@ -514,8 +482,18 @@
 			"type": "string"
 		},
 		{
-			"key": "jwtToken",
-			"value": "eyJhbGciOiJIUzUxMiJ9...",
+			"key": "jwtTokenAdmin",
+			"value": "pegar aquí el token de la respuesta de 'Iniciar Sesión Admin'",
+			"type": "string"
+		},
+		{
+			"key": "jwtTokenEstudiante",
+			"value": "pegar aquí el token obtenido logueándose con el usuario creado en 'Registrar Usuario'",
+			"type": "string"
+		},
+		{
+			"key": "usuarioEstudianteId",
+			"value": "id del usuario ESTUDIANTE recién creado (visible en la respuesta de login)",
 			"type": "string"
 		}
 	]

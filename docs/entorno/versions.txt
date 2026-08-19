@@ -1,0 +1,30 @@
+# Versiones exactas del entorno usado para verificar y generar la evidencia del proyecto.
+# Generado corriendo --version en cada herramienta el 2026-08-17 (Windows 11, jeana-dev-pc),
+# y verificado de nuevo end-to-end en la Fase 10 contra un `docker compose up -d --build` real
+# (volumen de Postgres limpio) que llegó a estado UP con las migraciones Flyway aplicadas.
+#
+# Regenerar localmente con: ./scripts/gen-versions.sh > docs/entorno/versions.txt
+# El pipeline de CI (.github/workflows/ci.yml, job "entorno") regenera y publica su propia
+# copia como artefacto en cada push, con las versiones reales del runner de GitHub Actions
+# (Docker/JDK/Node/Angular CLI/SO) -- esa copia de CI es la que demuestra reproducibilidad
+# fuera de la máquina de un integrante; k6 no se instala en ese job porque bench/audit son
+# objetivos explícitamente locales (ver 'make bench'/'make audit').
+#
+# Nota: el backend declara Java 17 como target de compilacion (maven.compiler.source/target
+# en backend/pom.xml), pero el JDK instalado en esta maquina es 21 -- Maven compila en modo
+# --release 17 sobre un JDK 21, lo cual es compatible y soportado. No es una discrepancia.
+
+Docker Engine:          29.6.1 (build 8900f1d)
+Docker Compose:         v5.3.0
+JDK (runtime):          OpenJDK 21.0.9 LTS (Eclipse Temurin, build 21.0.9+10-LTS)
+Java target del build:  17 (maven.compiler.source/target en backend/pom.xml)
+Apache Maven:           3.9.15 (via backend/mvnw, Maven Wrapper)
+Node.js:                v24.12.0
+npm:                    11.6.2
+Angular CLI:            21.2.10
+Angular (framework):    21.2.12
+k6:                     v2.2.0 (commit 00a9a1b7f5, go1.26.5, windows/amd64)
+Sistema operativo:      Windows 11 Pro, build 10.0.26200
+PostgreSQL (contenedor):15-alpine (ver docker-compose.yml)
+Redis (contenedor):     7-alpine (ver docker-compose.yml)
+nginx (contenedor):     alpine (ver docker-compose.yml)

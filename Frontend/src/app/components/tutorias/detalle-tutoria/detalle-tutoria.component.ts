@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import Swal from 'sweetalert2';
 import { TutoriaService } from '../../../services/tutoria.service';
 import { SolicitudService } from '../../../services/solicitud.service';
 import { AuthService } from '../../../services/auth.service';
@@ -52,6 +51,12 @@ export class DetalleTutoriaComponent implements OnInit {
     private notificationService: NotificationService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  // sweetalert2 se carga en un chunk aparte (no en el bundle inicial): solo se
+  // necesita cuando el usuario abre un dialogo de confirmacion.
+  private async swal() {
+    return (await import('sweetalert2')).default;
+  }
 
   ngOnInit(): void {
     this.rol = this.authService.getRole();
@@ -248,6 +253,7 @@ export class DetalleTutoriaComponent implements OnInit {
 
   async confirmarAprobar(): Promise<void> {
     if (!this.faseSeleccionada) return;
+    const Swal = await this.swal();
     const result = await Swal.fire({
       title: `¿Aprobar Fase ${this.faseSeleccionada.numeroFase}?`,
       text: 'Esta acción no se puede deshacer.',

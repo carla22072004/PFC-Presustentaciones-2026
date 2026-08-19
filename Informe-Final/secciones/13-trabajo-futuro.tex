@@ -1,0 +1,36 @@
+\section{Trabajo Futuro}
+\label{sec:trabajo-futuro}
+
+Se declara explícitamente lo que quedó fuera de alcance de este informe, en vez de omitirlo o
+maquillarlo con contenido de relleno:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Despliegue público en producción:} preparado completamente (Dockerfiles verificados,
+    configuración de Railway, documentación de despliegue), pero la cuenta y el despliegue real requieren
+    una acción del equipo humano que no se completó a la fecha de este informe.
+    \item \textbf{Cobertura de pruebas automatizadas:} 5 de 12 requisitos funcionales (RF-02, RF-04,
+    RF-06, RF-08, RF-10) no tienen prueba automatizada dedicada. Cobertura general de 22.7\,\%, contra
+    un objetivo de 60\,\%.
+    \item \textbf{Aplicación real del instrumento SUS:} el cuestionario está listo; aplicarlo a un grupo
+    real de al menos 5--10 usuarios (estudiantes, docentes, coordinadores) es la tarea pendiente más
+    directa y de menor esfuerzo entre las listadas aquí.
+    \item \textbf{Corrección de las 41 vulnerabilidades de dependencias del frontend} (6 críticas),
+    detectadas por \texttt{npm audit} pero no corregidas en el alcance de esta fase.
+    \item \textbf{Revisión sistemática de literatura formal:} la Sección~\ref{sec:trabajos-relacionados}
+    es una búsqueda dirigida, no una SLR completa con protocolo pre-registrado y doble revisor
+    independiente, siguiendo Kitchenham y Charters \cite{kitchenham2007}.
+    \item \textbf{Persistencia de archivos subidos en producción:} el filesystem del contenedor backend
+    es efímero en el despliegue de Railway planeado; los PDF de anteproyectos y actas se perderían en
+    cada redeploy sin un volumen persistente o almacenamiento de objetos externo.
+    \item \textbf{Firma real del docente-director sobre el SRS v1.0.0:} la página de aprobación está
+    lista; la firma en sí es una acción pendiente del docente, no del equipo de desarrollo.
+    \item \textbf{Rediseño de la rúbrica de cobertura:} priorizar pruebas de integración reales
+    (\texttt{@SpringBootTest} con base de datos real) sobre pruebas unitarias adicionales, dado que
+    actualmente el proyecto no tiene ninguna prueba de integración verdadera (solo unitarias y slice
+    tests \texttt{@WebMvcTest}).
+\end{enumerate}
+
+Esta lista se prioriza deliberadamente: los ítems 1--3 son alcanzables en días con el equipo humano
+actuando (no requieren investigación adicional, solo ejecución de lo ya preparado); los ítems 4--8
+requieren más tiempo de desarrollo o coordinación externa (el docente-director, en el caso del ítem 7).
+\newpage

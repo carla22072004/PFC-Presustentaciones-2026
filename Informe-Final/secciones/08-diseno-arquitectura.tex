@@ -1,0 +1,59 @@
+\section{Diseño del Sistema y Arquitectura}
+\label{sec:arquitectura}
+
+\subsection{Modelo C4}
+
+La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquitectura/README.md}):
+
+\begin{itemize}[nosep]
+    \item \textbf{Nivel 1 (Contexto):} el sistema se relaciona con cuatro tipos de actores (Estudiante,
+    Docente/Jurado, Coordinador, Administrador) y un sistema externo (API de universidades de Hipo Labs,
+    consumida vía \texttt{ExternalApiServiceImpl} con caché Redis de 10 minutos).
+    \item \textbf{Nivel 2 (Contenedores):} cuatro contenedores desplegables --- Frontend Angular (SPA),
+    Backend Spring Boot (API REST), PostgreSQL 15 (persistencia), Redis 7 (caché), coordinados por nginx
+    como proxy inverso.
+    \item \textbf{Nivel 3 (Componentes):} 21 controladores REST, organizados por dominio (Auth,
+    Solicitudes, Jurados, Cronograma, Evaluaciones, Actas, Notificaciones, Reportes, Salas, Usuarios,
+    Anteproyectos, y otros de soporte), cada uno delegando a una capa de servicio y, para la lógica
+    académica compleja, a procedimientos almacenados PL/pgSQL.
+\end{itemize}
+
+\subsection{Resumen de los seis Registros de Decisión Arquitectónica (ADR)}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{1.6cm}p{3.2cm}p{7cm}}
+\toprule
+\textbf{ADR} & \textbf{Decisión} & \textbf{Justificación resumida} \\
+\midrule
+ADR-001 & Arquitectura general de 3 capas & Separación Angular/Spring Boot/PostgreSQL para independencia de despliegue y escalado \\
+ADR-002 & Autenticación JWT + cookies HTTP-Only & Stateless para escalar horizontalmente sin sesión compartida; cookie HTTP-Only mitiga XSS sobre el token \\
+ADR-003 & Estrategia híbrida JPA + procedimientos almacenados & CRUD simple vía Spring Data JPA; lógica académica compleja (notas ponderadas, reportes, firmas) vía PL/pgSQL para evitar SQL dinámico. Ampliada en la Fase 8 con la decisión explícita de mantener la convención Flyway en vez de espejar en \texttt{db/procs/} \\
+ADR-004 & Frontend Angular (SPA) & Reactividad y componentización para un dominio con múltiples roles y vistas condicionales \\
+ADR-005 & Seguridad alineada a OWASP & JWT de 7 claims, rate limiting, cabeceras HSTS/CSP/X-Frame-Options, BCrypt \\
+ADR-006 & Despliegue con Docker Compose, imágenes ancladas por digest SHA-256 & Reproducibilidad determinista. Ampliada en la Fase 8 con la decisión de Railway como proveedor de producción (Sección~\ref{sec:implementacion}) \\
+\bottomrule
+\end{tabular}
+\caption{Resumen de los 6 ADR reales del repositorio (\texttt{docs/adr/}).}
+\label{tab:adrs}
+\end{table}
+
+\textbf{Corrección de integridad relevante:} ADR-006 afirmaba, en su redacción original, que las
+imágenes base ya estaban ancladas por digest SHA-256 en \texttt{docker-compose.yml}. Verificado contra el
+archivo real durante la Fase 8 de este proyecto: esa afirmación era falsa (las imágenes usaban solo tags
+mutables). Se implementó el anclaje real en esa misma revisión, con los tres digests verificados vía
+\texttt{docker pull}, en vez de simplemente corregir el texto de la ADR sin corregir el código que
+describía.
+
+\subsection{Modelo de datos}
+
+El esquema relacional (\texttt{presus}, PostgreSQL 15) modela 13 entidades principales (usuarios,
+solicitudes, anteproyectos, jurados, cronogramas, evaluaciones, actas, rúbricas, salas, notificaciones,
+entre otras) con claves foráneas que garantizan integridad referencial. Los identificadores son
+\texttt{BIGINT} autoincrementales (migrados desde UUID en una corrección temprana documentada en
+OBS-01), y cuatro procedimientos almacenados PL/pgSQL puros (\texttt{sp\_calcular\_promedio\_evaluacion},
+\texttt{sp\_asignar\_jurado\_masivo}, \texttt{sp\_firmar\_acta\_digital},
+\texttt{sp\_generar\_reporte\_defensas}) encapsulan la lógica académica que involucra uniones
+multi-tabla, versionados vía Flyway en \texttt{backend/src/main/resources/db/migration/}.
+\newpage

@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -24,13 +26,13 @@ public class NotificacionController {
     }
 
     @GetMapping
-    public List<Notificacion> listar() {
-        return notificacionService.listarNotificaciones();
+    public ResponseEntity<Page<Notificacion>> listar(Pageable pageable) {
+        return ResponseEntity.ok(notificacionService.listarNotificaciones(pageable));
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public List<Notificacion> listarPorUsuario(@PathVariable Long usuarioId) {
-        return notificacionService.listarPorUsuario(usuarioId);
+    public ResponseEntity<Page<Notificacion>> listarPorUsuario(@PathVariable Long usuarioId, Pageable pageable) {
+        return ResponseEntity.ok(notificacionService.listarPorUsuario(usuarioId, pageable));
     }
 
     @GetMapping("/usuario/{usuarioId}/no-leidas")

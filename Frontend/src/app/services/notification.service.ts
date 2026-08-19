@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import Swal from 'sweetalert2';
 
 @Injectable({
   providedIn: 'root'
@@ -8,8 +7,15 @@ export class NotificationService {
 
   constructor() { }
 
+  // sweetalert2 se carga en un chunk aparte (no en el bundle inicial) porque solo se
+  // necesita cuando realmente se muestra una notificación.
+  private async swal() {
+    return (await import('sweetalert2')).default;
+  }
+
   // Cuadro para éxito (como el registro de tesis)
-  success(message: string, title: string = '¡Operación Exitosa!') {
+  async success(message: string, title: string = '¡Operación Exitosa!') {
+    const Swal = await this.swal();
     Swal.fire({
       title: title,
       text: message,
@@ -23,7 +29,8 @@ export class NotificationService {
   }
 
   // Cuadro para errores
-  error(message: string, title: string = 'Oops...') {
+  async error(message: string, title: string = 'Oops...') {
+    const Swal = await this.swal();
     Swal.fire({
       title: title,
       text: message,

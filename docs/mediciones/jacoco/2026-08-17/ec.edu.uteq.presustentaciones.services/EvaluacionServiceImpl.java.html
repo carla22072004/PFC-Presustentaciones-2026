@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EvaluacionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">EvaluacionServiceImpl.java</span></div><h1>EvaluacionServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.dto.PromedioEvaluacionResult;
+import ec.edu.uteq.presustentaciones.entities.Evaluacion;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
+import ec.edu.uteq.presustentaciones.entities.Rubrica;
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.RubricaRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@Service
+<span class="nc" id="L23">@RequiredArgsConstructor</span>
+<span class="nc" id="L24">@Slf4j</span>
+public class EvaluacionServiceImpl implements EvaluacionService {
+
+    private final EvaluacionFinalRepository evaluacionRepository;
+    private final SolicitudRepository solicitudRepository;
+    private final RubricaRepository rubricaRepository;
+    private final NotificacionService notificacionService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.ResultadoEvaluacionRepository resultadoEvaluacionRepository;
+    private final EvaluacionRepository evaluacionSpRepository;
+
+    @Override
+    @Transactional
+    public PromedioEvaluacionResult calcularPromedioSp(Long solicitudId) {
+<span class="nc" id="L38">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="nc" id="L39">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+
+        // sp_calcular_promedio_evaluacion necesita una fila previa en &quot;evaluaciones&quot; (lee su
+        // nota_instructor); la crea si no existe, tomando la nota del instructor ya
+        // registrada en el flujo ponderado (evaluaciones_finales) cuando esté disponible.
+<span class="nc" id="L44">        Evaluacion base = evaluacionSpRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L45">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L46">                    Double notaInstructor = evaluacionRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L47">                            .map(EvaluacionFinal::getNotaInstructor)</span>
+<span class="nc" id="L48">                            .orElse(null);</span>
+<span class="nc" id="L49">                    return evaluacionSpRepository.save(Evaluacion.builder()</span>
+<span class="nc" id="L50">                            .solicitud(solicitud)</span>
+<span class="nc" id="L51">                            .notaInstructor(notaInstructor)</span>
+<span class="nc" id="L52">                            .build());</span>
+                });
+
+<span class="nc" id="L55">        List&lt;PromedioEvaluacionResult&gt; resultado = evaluacionSpRepository.calcularPromedioEvaluacion(solicitudId);</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (resultado.isEmpty()) {</span>
+<span class="nc" id="L57">            throw new RuntimeException(&quot;El procedimiento no devolvió resultado para la solicitud &quot; + solicitudId);</span>
+        }
+<span class="nc" id="L59">        return resultado.get(0);</span>
+    }
+
+    @Override
+    @Transactional
+    public EvaluacionFinal evaluarSolicitud(Long solicitudId, Long rubricaId,
+                                       Double notaInstructor, Double notaJurado,
+                                       String observaciones,
+                                       Double pesoInstructor, Double pesoJurado) {
+<span class="nc" id="L68">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="nc" id="L69">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+<span class="nc" id="L70">        Rubrica rubrica = rubricaRepository.findById(rubricaId)</span>
+<span class="nc" id="L71">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rúbrica no encontrada: &quot; + rubricaId));</span>
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        double sumaPesos = (pesoInstructor != null ? pesoInstructor : 60.0)</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">                + (pesoJurado != null ? pesoJurado : 40.0);</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (Math.abs(sumaPesos - 100.0) &gt; 0.01) {</span>
+<span class="nc" id="L76">            throw new RuntimeException(&quot;Los pesos deben sumar 100. Suma actual: &quot; + sumaPesos);</span>
+        }
+
+<span class="nc bnc" id="L79" title="All 8 branches missed.">        if (notaInstructor &lt; 0 || notaInstructor &gt; 10 || notaJurado &lt; 0 || notaJurado &gt; 10) {</span>
+<span class="nc" id="L80">            throw new RuntimeException(&quot;Las notas deben estar entre 0 y 10.&quot;);</span>
+        }
+
+<span class="nc" id="L83">        EvaluacionFinal e = EvaluacionFinal.builder()</span>
+<span class="nc" id="L84">                .solicitud(solicitud)</span>
+<span class="nc" id="L85">                .rubrica(rubrica)</span>
+<span class="nc" id="L86">                .notaInstructor(notaInstructor)</span>
+<span class="nc" id="L87">                .notaJuradoPromedio(notaJurado)</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                .pesoInstructor((pesoInstructor != null ? pesoInstructor : 60.0) / 100.0)</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                .pesoJurado((pesoJurado != null ? pesoJurado : 40.0) / 100.0)</span>
+<span class="nc" id="L90">                .observaciones(observaciones)</span>
+<span class="nc" id="L91">                .build();</span>
+
+<span class="nc" id="L93">        e.calcularNotaFinal();</span>
+        
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        String resCod = e.getNotaFinal() &gt;= 7.0 ? &quot;APROBADO&quot; : &quot;REPROBADO&quot;;</span>
+<span class="nc" id="L96">        ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion res = resultadoEvaluacionRepository.findByCodigo(resCod)</span>
+<span class="nc" id="L97">                .orElseGet(() -&gt; resultadoEvaluacionRepository.save(ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion.builder()</span>
+<span class="nc" id="L98">                        .codigo(resCod).nombre(resCod.substring(0,1) + resCod.substring(1).toLowerCase()).build()));</span>
+        
+<span class="nc" id="L100">        e.setResultado(res);</span>
+<span class="nc" id="L101">        e.setComentarioPreestablecido(generarComentarioPorRango(e.getNotaFinal()));</span>
+<span class="nc" id="L102">        EvaluacionFinal guardada = evaluacionRepository.save(e);</span>
+
+        // Cambiar estado a CALIFICADA
+<span class="nc" id="L105">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCalificada = estadoSolicitudRepository.findByCodigo(&quot;CALIFICADA&quot;)</span>
+<span class="nc" id="L106">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L107">                        .codigo(&quot;CALIFICADA&quot;).nombre(&quot;Calificada&quot;).build()));</span>
+<span class="nc" id="L108">        solicitud.setEstado(estadoCalificada);</span>
+<span class="nc" id="L109">        solicitudRepository.save(solicitud);</span>
+
+<span class="nc" id="L111">        notificarNotaFinal(solicitud, guardada);</span>
+
+<span class="nc" id="L113">        return guardada;</span>
+    }
+
+    @Override
+    @Transactional
+    public EvaluacionFinal evaluarSolicitud(Long solicitudId, Long rubricaId,
+                                       Double notaFinal, String observaciones) {
+<span class="nc" id="L120">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="nc" id="L121">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+<span class="nc" id="L122">        Rubrica rubrica = rubricaRepository.findById(rubricaId)</span>
+<span class="nc" id="L123">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rúbrica no encontrada&quot;));</span>
+
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        String resCod = notaFinal &gt;= 7 ? &quot;APROBADO&quot; : &quot;REPROBADO&quot;;</span>
+<span class="nc" id="L126">        ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion res = resultadoEvaluacionRepository.findByCodigo(resCod)</span>
+<span class="nc" id="L127">                .orElseGet(() -&gt; resultadoEvaluacionRepository.save(ec.edu.uteq.presustentaciones.entities.ResultadoEvaluacion.builder()</span>
+<span class="nc" id="L128">                        .codigo(resCod).nombre(resCod.substring(0,1) + resCod.substring(1).toLowerCase()).build()));</span>
+
+<span class="nc" id="L130">        EvaluacionFinal e = EvaluacionFinal.builder()</span>
+<span class="nc" id="L131">                .solicitud(solicitud).rubrica(rubrica)</span>
+<span class="nc" id="L132">                .notaFinal(notaFinal).observaciones(observaciones)</span>
+<span class="nc" id="L133">                .pesoInstructor(0.6).pesoJurado(0.4)</span>
+<span class="nc" id="L134">                .resultado(res)</span>
+<span class="nc" id="L135">                .build();</span>
+<span class="nc" id="L136">        e.setComentarioPreestablecido(generarComentarioPorRango(notaFinal));</span>
+<span class="nc" id="L137">        EvaluacionFinal guardada = evaluacionRepository.save(e);</span>
+
+        // Cambiar estado a CALIFICADA
+<span class="nc" id="L140">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCalificada = estadoSolicitudRepository.findByCodigo(&quot;CALIFICADA&quot;)</span>
+<span class="nc" id="L141">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L142">                        .codigo(&quot;CALIFICADA&quot;).nombre(&quot;Calificada&quot;).build()));</span>
+<span class="nc" id="L143">        solicitud.setEstado(estadoCalificada);</span>
+<span class="nc" id="L144">        solicitudRepository.save(solicitud);</span>
+
+<span class="nc" id="L146">        notificarNotaFinal(solicitud, guardada);</span>
+
+<span class="nc" id="L148">        return guardada;</span>
+    }
+
+    @Override
+    public Page&lt;EvaluacionFinal&gt; listarEvaluaciones(Pageable pageable) {
+<span class="nc" id="L153">        return evaluacionRepository.findAll(pageable);</span>
+    }
+
+    @Override
+    public List&lt;EvaluacionFinal&gt; listarPorEstudiante(Long estudianteId) {
+<span class="nc" id="L158">        return evaluacionRepository.findByEstudianteId(estudianteId);</span>
+    }
+
+    @Override
+    public List&lt;EvaluacionFinal&gt; listarPorUsuario(Long usuarioId) {
+<span class="nc" id="L163">        return evaluacionRepository.findByUsuarioId(usuarioId);</span>
+    }
+
+    @Override
+    public Optional&lt;EvaluacionFinal&gt; buscarPorSolicitud(Long solicitudId) {
+<span class="nc" id="L168">        return evaluacionRepository.findBySolicitudId(solicitudId);</span>
+    }
+
+    public String generarComentarioPorRango(Double notaFinal) {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (notaFinal == null) return &quot;&quot;;</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (notaFinal &lt;= 3) {</span>
+<span class="nc" id="L174">            return &quot;El trabajo no cumple con los requisitos mínimos esperados. Se evidencian falencias significativas que requieren correcciones sustanciales.&quot;;</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        } else if (notaFinal &lt;= 6) {</span>
+<span class="nc" id="L176">            return &quot;El trabajo presenta un nivel aceptable pero con aspectos que requieren mejoras o correcciones para alcanzar los estándares esperados.&quot;;</span>
+        } else {
+<span class="nc" id="L178">            return &quot;El trabajo cumple satisfactoriamente con los objetivos y requisitos establecidos, demostrando un desempeño adecuado.&quot;;</span>
+        }
+    }
+
+    // ── Notificación nota final ───────────────────────────────────────────────
+
+    private void notificarNotaFinal(Solicitud solicitud, EvaluacionFinal evaluacion) {
+        try {
+<span class="nc" id="L186">            Long usuarioId = solicitud.getEstudiante().getUsuario().getId();</span>
+<span class="nc" id="L187">            String titulo  = solicitud.getTituloTema();</span>
+<span class="nc" id="L188">            Double nota    = evaluacion.getNotaFinal();</span>
+            
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            String resNombre = evaluacion.getResultado() != null ? evaluacion.getResultado().getNombre() : &quot;&quot;;</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            String resCodigo = evaluacion.getResultado() != null ? evaluacion.getResultado().getCodigo() : &quot;&quot;;</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            if (resCodigo.isEmpty()) {</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">                resCodigo = nota != null &amp;&amp; nota &gt;= 7 ? &quot;APROBADO&quot; : &quot;REPROBADO&quot;;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">                resNombre = &quot;APROBADO&quot;.equals(resCodigo) ? &quot;Aprobado&quot; : &quot;Reprobado&quot;;</span>
+            }
+
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            String emoji = &quot;APROBADO&quot;.equals(resCodigo) ? &quot;🎉&quot; : &quot;😔&quot;;</span>
+            String msg;
+
+<span class="nc bnc" id="L200" title="All 2 branches missed.">            if (nota != null) {</span>
+<span class="nc" id="L201">                msg = String.format(</span>
+                        &quot;%s Tu pre-sustentación \&quot;%s\&quot; ha sido evaluada. &quot; +
+                                &quot;Nota final: %.2f / 10 — Resultado: %s. Tu solicitud ahora está en fase de calificación.&quot;,
+                        emoji, titulo, nota, resNombre);
+            } else {
+<span class="nc" id="L206">                msg = String.format(</span>
+                        &quot;%s Tu pre-sustentación \&quot;%s\&quot; ha sido evaluada. Resultado: %s. Tu solicitud ahora está en fase de calificación.&quot;,
+                        emoji, titulo, resNombre);
+            }
+
+<span class="nc bnc" id="L211" title="All 4 branches missed.">            if (evaluacion.getObservaciones() != null &amp;&amp; !evaluacion.getObservaciones().isBlank()) {</span>
+<span class="nc" id="L212">                msg += &quot; Observaciones: &quot; + evaluacion.getObservaciones();</span>
+            }
+
+<span class="nc" id="L215">            notificacionService.crearNotificacion(usuarioId, msg);</span>
+<span class="nc" id="L216">        } catch (Exception e) {</span>
+<span class="nc" id="L217">            log.warn(&quot;No se pudo notificar nota final al estudiante: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L218">        }</span>
+<span class="nc" id="L219">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

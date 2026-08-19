@@ -1,0 +1,111 @@
+\section*{Declaraciones}
+\addcontentsline{toc}{section}{Declaraciones}
+
+\subsection*{Disponibilidad de código}
+El código fuente completo está disponible públicamente bajo licencia MIT en
+\url{https://github.com/carla22072004/PFC-Presustentaciones-2026}.
+
+\subsection*{Disponibilidad de datos}
+Los datos crudos de todas las mediciones empíricas citadas en este informe (corridas k6, reportes
+Lighthouse, reportes OWASP ZAP, reporte find-sec-bugs, reporte JaCoCo) están versionados en el mismo
+repositorio, con su procedencia documentada en \texttt{docs/mediciones/DATA-PROVENANCE.md}. No se
+generó ningún dato de participantes humanos (la encuesta SUS no se ha aplicado todavía --- ver
+Sección~\ref{sec:evaluacion}), por lo que no aplica una declaración de anonimización de datos de sujetos
+humanos en este informe.
+
+\subsection*{Disponibilidad de materiales}
+Los scripts de análisis (\texttt{scripts/gen-figuras.py}, \texttt{scripts/perf-analysis.ipynb},
+\texttt{scripts/sus-analysis.ipynb}, \texttt{scripts/validate-traceability.sh},
+\texttt{scripts/audit-sql-dynamic.sh}), el script de carga k6, y los archivos de configuración de
+despliegue están en el mismo repositorio bajo la misma licencia.
+
+\subsection*{Declaración ética}
+Este proyecto no involucró experimentación con seres humanos con datos reales a la fecha de este informe
+(el instrumento SUS existe pero no se ha aplicado). El protocolo de consentimiento informado para cuando
+se aplique está documentado en \texttt{docs/etica/consentimientos/plantilla-consentimiento.md}. Se
+declara explícitamente, como parte de esta misma sección, que una versión anterior del documento ético
+del proyecto (\texttt{docs/etica/ETHICS.md}) afirmaba falsamente que existían 10 formularios de
+consentimiento firmados en custodia física para una encuesta SUS que en realidad nunca se aplicó; esa
+afirmación fue detectada y corregida durante este proceso, y se documenta aquí por transparencia.
+
+\subsection*{Taxonomía CRediT (Contributor Roles Taxonomy)}
+
+Se aplican los 14 roles estándar de CRediT \cite{brand2015} a los cuatro integrantes del equipo. La
+Tabla~\ref{tab:credit} reemplaza la versión anterior de \texttt{CONTRIBUTORS.md}, que mezclaba roles
+CRediT reales con descriptores de proyecto no estandarizados (p. ej. ``UI/UX Design'', ``DevOps
+(Docker)''); esta tabla usa exclusivamente los 14 términos oficiales de la taxonomía.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Rol CRediT} & \textbf{Alava} & \textbf{Moncayo} & \textbf{Zamora} & \textbf{Barreto} \\
+\midrule
+Conceptualization & \checkmark & & & \\
+Data curation & & & \checkmark & \\
+Formal analysis & \checkmark & & & \checkmark \\
+Funding acquisition & --- & --- & --- & --- \\
+Investigation & \checkmark & \checkmark & \checkmark & \checkmark \\
+Methodology & \checkmark & & \checkmark & \\
+Project administration & \checkmark & & & \\
+Resources & & & & \checkmark \\
+Software & \checkmark & \checkmark & \checkmark & \checkmark \\
+Supervision & --- & --- & --- & --- \\
+Validation & & & \checkmark & \checkmark \\
+Visualization & & \checkmark & & \\
+Writing -- original draft & & & \checkmark & \\
+Writing -- review \& editing & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\caption{Asignación de los 14 roles CRediT. ``---'' indica un rol que genuinamente no aplica a ningún
+integrante en este proyecto (no hubo financiamiento externo ni un supervisor formal más allá del
+docente-director, cuyo rol se declara por separado, no como coautor).}
+\label{tab:credit}
+\end{table}
+
+\textit{Nota:} Alava Alvarado concentró la seguridad backend (JWT/Spring Security) y la administración
+del proyecto; Moncayo Loor, el frontend Angular; Zamora Arias, el diseño de base de datos y la
+documentación técnica; Barreto Rosado, las pruebas y la infraestructura Docker. Los cuatro participaron
+en revisión de código y redacción/edición de la documentación (fila ``Writing -- review \& editing''),
+consistente con lo ya declarado en \texttt{CONTRIBUTORS.md}.
+
+\subsection*{Conflictos de interés}
+Los autores declaran no tener conflictos de interés financieros ni personales que pudieran haber
+influido en este trabajo.
+
+\subsection*{Financiamiento}
+Este proyecto no recibió financiamiento externo. Se desarrolló como parte de las actividades académicas
+de la asignatura Aplicaciones Web, Quinto Nivel, Carrera de Ingeniería de Software, UTEQ.
+
+\subsection*{Declaración de uso de asistentes de inteligencia artificial}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{3cm}p{2.5cm}p{7.5cm}}
+\toprule
+\textbf{Herramienta} & \textbf{Versión/modelo} & \textbf{Propósito y sección donde se usó} \\
+\midrule
+Claude (Anthropic), vía Claude Code & Claude Sonnet 5 & Implementación de código (backend, frontend,
+infraestructura), redacción y corrección de documentación técnica, ejecución y análisis de pruebas
+empíricas (k6, Lighthouse, JaCoCo, OWASP ZAP, find-sec-bugs), búsqueda y verificación de referencias
+bibliográficas, y redacción de este informe final completo (todas las secciones). Detalle completo en
+\texttt{docs/etica/ai-disclosure.md}. \\
+\bottomrule
+\end{tabular}
+\caption{Declaración de uso de IA generativa.}
+\end{table}
+
+Se declara explícitamente que ninguna cifra empírica de este informe fue generada por el asistente de IA
+sin ejecutar realmente la herramienta correspondiente contra el sistema real --- ver la política completa
+en \texttt{docs/etica/ai-disclosure.md}, que documenta también los episodios detectados de datos
+fabricados en fases anteriores del proyecto (no atribuibles a este asistente, dado que ocurrieron antes
+de su intervención documentada en el historial de commits) y cómo se corrigieron.
+
+\subsection*{Agradecimientos}
+Los autores agradecen al Ing. Guerrero Ulloa Gleiston Cíceron por la retroalimentación docente que
+motivó las correcciones documentadas en \texttt{docs/observaciones/OBSERVACIONES.md}, y al Equipo E
+(Tejada Bajaña Luis Alejandro, Alava Alvarado Jean Pierre) por la evaluación cruzada que identificó las
+brechas E1--E10 cerradas en la Fase 5 de este proyecto.
+\newpage

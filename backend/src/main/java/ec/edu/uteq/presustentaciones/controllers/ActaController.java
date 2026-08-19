@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -39,9 +41,10 @@ public class ActaController {
     @PostMapping("/firmar/{actaId}")
     public ResponseEntity<?> firmarActa(
             @PathVariable Long actaId,
-            @RequestParam String rol) {
+            @RequestParam String rol,
+            @RequestParam(required = false) String observacion) {
         try {
-            Acta acta = actaService.firmarActa(actaId, rol);
+            Acta acta = actaService.firmarActa(actaId, rol, observacion);
             return ResponseEntity.ok(acta);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -79,8 +82,8 @@ public class ActaController {
     }
 
     @GetMapping
-    public List<Acta> listar() {
-        return actaService.listarActas();
+    public Page<Acta> listar(Pageable pageable) {
+        return actaService.listarActas(pageable);
     }
 
     @GetMapping("/solicitud/{solicitudId}")

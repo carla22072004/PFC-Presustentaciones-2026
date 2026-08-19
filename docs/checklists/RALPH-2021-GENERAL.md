@@ -1,0 +1,19 @@
+# Checklist — ACM SIGSOFT Empirical Standards (Ralph et al., 2021), Estándar General
+
+**Referencia:** Ralph, P. et al. (2021). *ACM SIGSOFT Empirical Standards*. https://github.com/acmsigsoft/EmpiricalStandards
+**Alcance:** aplicado a las afirmaciones empíricas hechas en este repositorio (mejoras de rendimiento, reducción de latencia por caché, hallazgos de seguridad), no al proyecto como investigación académica formal — este es un proyecto de ingeniería de software de pregrado, no un paper de investigación, y el checklist se usa aquí como vara de rigor, no como certificación.
+
+| Criterio del Estándar General | Cumple | Evidencia / justificación |
+|---|---|---|
+| Las afirmaciones empíricas están basadas en datos, no en opinión | ✅ Sí | Todas las cifras citadas en `README.md` y los informes tienen un archivo crudo de origen — ver [`../mediciones/DATA-PROVENANCE.md`](../mediciones/DATA-PROVENANCE.md) |
+| El método de recolección de datos es reproducible (comandos documentados) | ✅ Sí | `k6/README.md`, `docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md` y `docs/mediciones/sec/owasp/OWASP-AUDIT.md` incluyen los comandos exactos usados |
+| Se declara el contexto/entorno donde se midió (no se asume universal) | ✅ Sí | `docs/entorno/versions.txt` + notas metodológicas explícitas (p. ej. la nota sobre contención de CPU en `LIGHTHOUSE-REPORT.md`) |
+| Se reportan resultados negativos o inesperados, no solo los favorables | ✅ Sí | Ejemplos reales: el hallazgo de que `/catalogos/carreras` nunca existió (en `k6/README.md`), los 189 hallazgos de find-sec-bugs, los 41 de `npm audit`, el bug de migración duplicada — todos documentados sin maquillar |
+| Se distingue entre correlación observada y causalidad afirmada | 🟡 Parcial | El análisis de caché fría/caliente (`k6/README.md`) sí aísla la variable (mismo proceso, mismo token, única diferencia es el estado de Redis) — causalidad razonablemente respaldada. Las comparaciones run1/run2 vs run3-5 de k6 **no** aíslan una sola variable (cambiaron metodología, endpoint y versión de API a la vez); el propio reporte lo aclara para no sugerir una causalidad que no se puede afirmar |
+| Se discuten amenazas a la validez (validity threats) | 🔴 No, de forma sistemática | No existe una sección dedicada de "amenazas a la validez" en ningún reporte. Amenaza real no discutida explícitamente en otro lado: todas las mediciones de rendimiento se hicieron en la máquina de desarrollo personal de un integrante, con otras aplicaciones de escritorio corriendo (mencionado como nota puntual en Lighthouse, pero no generalizado como amenaza transversal a k6 y ZAP también) |
+| El tamaño de muestra tiene alguna justificación (no es arbitrario sin mención) | 🟡 Parcial | 30 muestras por escenario en el análisis de caché (n=30 es el mínimo convencional para aproximaciones normales/CLT, mencionado implícitamente pero no justificado explícitamente en el texto); 5 corridas de k6 y 6 de Lighightouse siguen el número mínimo pedido por la guía del curso, no un cálculo de poder estadístico |
+| Los artefactos (datos crudos, scripts) están disponibles para verificación independiente | ✅ Sí | Ver `docs/mediciones/DATA-PROVENANCE.md` — todo archivo crudo referenciado existe en el repositorio |
+
+## Resumen
+
+6/8 criterios cumplidos completamente, 2 parciales, 1 no cumplido (discusión sistemática de amenazas a la validez). El punto más débil real es la ausencia de una discusión explícita de amenazas a la validez transversal a todas las mediciones (no solo Lighthouse) — recomendado agregar una sección corta "Amenazas a la validez" en el informe final que cubra: máquina de desarrollo compartida, ausencia de repetición en múltiples máquinas/entornos, y tamaños de muestra no derivados de un cálculo de poder estadístico formal.

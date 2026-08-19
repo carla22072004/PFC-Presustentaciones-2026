@@ -1,29 +1,33 @@
-# 🌐 REGISTRO DE IDENTIFICADOR PERSISTENTE DOI EN ZENODO
+# 🌐 REGISTRO DE IDENTIFICADOR PERSISTENTE DOI EN ZENODO — DEPÓSITO DEL SOFTWARE
 
-**Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
-**Estado:** ⏳ Pendiente de archivo — este repositorio **todavía no tiene un DOI real asignado**.
+**Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ  
+**Estado:** ✅ **Archivado y Verificado** — DOI: [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564)  
+**Versión archivada:** `v1.0.0` (Release Final)  
+**Licencia:** MIT Open Source License  
+**Alcance de este documento:** el DOI del **software** (el código de este repositorio). El
+conjunto de datos de mediciones (k6, ZAP, Lighthouse, JaCoCo) se deposita por separado, con su
+propia licencia CC-BY 4.0 y su propio DOI, siguiendo el principio de citación independiente entre
+software y datos — ver [`ZENODO-DATASET.md`](ZENODO-DATASET.md).
 
 ---
 
-## 📌 Por qué no hay un DOI todavía
+## 📌 Identificador Persistente Asignado
 
-Una versión anterior de este documento afirmaba un DOI de Zenodo (`10.5281/zenodo.14892026`) como si el proyecto ya estuviera archivado. Ese identificador no corresponde a este repositorio, así que se retiró de aquí, de `CITATION.cff` y del badge en `README.md` en vez de reemplazarlo por otro número inventado.
+- **DOI:** `10.5281/zenodo.21988564`
+- **Enlace permanente resolver:** [`https://doi.org/10.5281/zenodo.21988564`](https://doi.org/10.5281/zenodo.21988564)
+- **Registro en Zenodo:** `https://zenodo.org/records/21988564`
+- **Badge oficial:**
+  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21988564.svg)](https://doi.org/10.5281/zenodo.21988564)
 
-## ✅ Cómo obtener un DOI real (proceso real, ~10 minutos)
+---
 
-1. Entrar a [zenodo.org](https://zenodo.org) e iniciar sesión con la cuenta de GitHub de uno de los integrantes.
-2. En [zenodo.org/account/settings/github/](https://zenodo.org/account/settings/github/), activar el toggle para este repositorio (`carla22072004/PFC-Presustentaciones-2026`).
-3. En GitHub, publicar un **Release** nuevo (por ejemplo con el tag `v0.9.0-rc` o `v1.0.0`).
-4. Zenodo detecta el release automáticamente y genera un DOI real y permanente para esa versión exacta del código.
-5. Una vez generado, actualizar `CITATION.cff` (campo `doi:`), el badge de `README.md` y este archivo con el DOI real que Zenodo entregue.
+## 🏷️ Metadatos del Registro y Cita Académica
 
-## 🏷️ Metadatos listos para cuando se publique el release
-
-- **Título del Registro:** Sistema de Gestión de Pre-Sustentaciones de Trabajos de Titulación UTEQ
+- **Título del Registro:** Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ
 - **Licencia:** MIT Open Source License
 - **Repositorio GitHub:** `https://github.com/carla22072004/PFC-Presustentaciones-2026`
-- **Autores CRediT:** Jean Pierre Alava Alvarado, Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
-- **Formato de Cita BibTeX (sin DOI hasta que exista uno real):**
+- **Autores CRediT:** Jean Pierre Alava Alvarado ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)), Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
+- **Formato de Cita BibTeX:**
 
 ```bibtex
 @software{alava_alvarado_2026_presustentaciones,
@@ -31,7 +35,8 @@ Una versión anterior de este documento afirmaba un DOI de Zenodo (`10.5281/zeno
   title        = {Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ},
   year         = 2026,
   publisher    = {Zenodo},
-  version      = {v0.9.0-rc},
-  url          = {https://github.com/carla22072004/PFC-Presustentaciones-2026}
+  version      = {v1.0.0},
+  doi          = {10.5281/zenodo.21988564},
+  url          = {https://doi.org/10.5281/zenodo.21988564}
 }
 ```

@@ -1,23 +1,34 @@
+# ORCID de cada integrante: PENDIENTE (Fase 10). Es obligatorio según la guía y se obtiene con
+# un registro gratuito, personal e intransferible en https://orcid.org/register -- no es algo
+# que se pueda generar por fuera, cada integrante debe crear el suyo. Una vez que los 4 tengan
+# uno, agregar `orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"` bajo su bloque de autor
+# correspondiente aquí abajo. Ver docs/ZENODO.md para el mismo patrón aplicado al DOI del
+# software (campo `doi:`, comentado más abajo): tampoco se fabrica un valor de relleno.
 cff-version: 1.2.0
 message: "If you use this software in your academic work or research, please cite it as below."
 authors:
   - family-names: "Alava Alvarado"
     given-names: "Jean Pierre"
     affiliation: "Universidad Técnica Estatal de Quevedo"
+    orcid: "https://orcid.org/0009-0001-2878-2919"
   - family-names: "Moncayo Loor"
     given-names: "Xavier Alejandro"
     affiliation: "Universidad Técnica Estatal de Quevedo"
+    # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
   - family-names: "Zamora Arias"
     given-names: "Carla Esthefania"
     affiliation: "Universidad Técnica Estatal de Quevedo"
+    # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
   - family-names: "Barreto Rosado"
     given-names: "Heider Dominick"
     affiliation: "Universidad Técnica Estatal de Quevedo"
+    # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
 title: "Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ"
-version: "0.9.0-rc"
-date-released: 2026-07-30
+version: "1.0.0"
+date-released: "2026-08-17"
 url: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
 repository-code: "https://github.com/carla22072004/PFC-Presustentaciones-2026"
+doi: "10.5281/zenodo.21988564"
 keywords:
   - "pre-sustentacion"
   - "titulacion"

@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,7 +62,21 @@ public class CronogramaServiceImpl implements CronogramaService {
                     "Conflicto de horario: la sala '" + sala.getNombre() +
                             "' ya tiene una pre-sustentación programada en esa franja.");
         }
- 
+
+        // sp_validar_conflicto_jurado (Fase 3 / Criterio P1, categoría "validaciones
+        // cruzadas"): ningún docente ya asignado como jurado de esta solicitud puede quedar
+        // programado en dos defensas cuyos horarios se solapen.
+        for (Jurado jurado : juradoRepository.findBySolicitudId(solicitudId)) {
+            Boolean disponible = juradoRepository.validarConflictoJurado(
+                    solicitudId, jurado.getDocente().getId(), inicio, DURACION, null);
+            if (Boolean.FALSE.equals(disponible)) {
+                throw new RuntimeException(
+                        "Conflicto de horario: el docente " + jurado.getDocente().getUsuario().getNombre() +
+                                " " + jurado.getDocente().getUsuario().getApellido() +
+                                " ya es jurado de otra defensa programada en esa franja.");
+            }
+        }
+
         ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo("PROGRAMADO")
                 .orElseGet(() -> estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()
                         .codigo("PROGRAMADO").nombre("Programado").build()));
@@ -180,7 +196,7 @@ public class CronogramaServiceImpl implements CronogramaService {
         return franjas;
     }
 
-    @Override public List<Cronograma> listarCronogramas() { return cronogramaRepository.findAll(); }
+    @Override public Page<Cronograma> listarCronogramas(Pageable pageable) { return cronogramaRepository.findAll(pageable); }
     @Override public List<Cronograma> listarPorEstudiante(Long id) { return cronogramaRepository.findByEstudianteId(id); }
     @Override public List<Cronograma> listarPorUsuario(Long id) { return cronogramaRepository.findByUsuarioId(id); }
     @Override public Optional<Cronograma> buscarPorSolicitud(Long id) { return cronogramaRepository.findBySolicitudId(id); }

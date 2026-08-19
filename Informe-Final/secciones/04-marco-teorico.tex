@@ -1,0 +1,85 @@
+\section{Marco Teórico}
+\label{sec:marco-teorico}
+
+\subsection{Design Science Research}
+
+Design Science Research (DSR) es un paradigma de investigación en sistemas de información orientado a
+crear y evaluar artefactos que resuelven problemas organizacionales identificados
+\cite{hevner2004,peffers2007}. A diferencia del paradigma conductual (behavioral science), que busca
+explicar o predecir fenómenos, DSR busca construir un artefacto --- en este caso, un sistema de software
+--- y evaluarlo empíricamente contra el problema que motivó su creación. Este trabajo instancia
+específicamente el modelo de proceso de seis actividades de Peffers et al. \cite{peffers2007}
+(Sección~\ref{sec:metodos}).
+
+\subsection{Ingeniería de requisitos}
+
+La ingeniería de requisitos de este proyecto sigue el estándar ISO/IEC/IEEE 29148:2018
+\cite{iso29148}, que define el ciclo de vida de descubrimiento, elicitación, análisis, especificación,
+verificación y gestión de requisitos. Las historias de usuario se documentan en formato Connextra
+(``Como/Quiero/Para''), evaluadas contra el criterio INVEST (Independent, Negotiable, Valuable,
+Estimable, Small, Testable), y los casos de uso siguen la plantilla ``fully dressed'' de Cockburn
+\cite{cockburn2001}, con niveles de meta explícitos (nube, cometa, mar, pez). La calidad individual y de
+conjunto de los requisitos se evalúa contra el \textit{INCOSE Guide for Writing Requirements}
+\cite{incose2023}, que define nueve características por requisito y seis del conjunto completo.
+
+\subsection{Medición del software: el enfoque Goal-Question-Metric}
+
+El enfoque Goal-Question-Metric (GQM) de Basili, Caldiera y Rombach \cite{basili1994} estructura la
+definición de métricas de software en tres niveles: una meta conceptual (\textit{qué se quiere lograr y
+por qué}), preguntas operacionales que refinan esa meta, y métricas cuantitativas que responden cada
+pregunta. Este trabajo instancia un esquema GQM completo para la meta de rendimiento del sistema
+(Sección~\ref{sec:metodos}).
+
+\subsection{Arquitectura de software: microservicios y el modelo C4}
+
+Aunque este sistema no adopta una arquitectura de microservicios en sentido estricto (es un monolito
+modular de tres capas), el vocabulario de servicios desacoplados comunicados por API HTTP proviene de la
+definición de Fowler y Lewis \cite{fowler2014}. La documentación de la arquitectura sigue el modelo C4
+(Contexto, Contenedores, Componentes), ya presente en \texttt{docs/arquitectura/README.md} desde
+entregas anteriores del proyecto.
+
+\subsection{Seguridad de aplicaciones web}
+
+El marco de referencia para la auditoría de seguridad es el OWASP Top~10:2021 \cite{owasp2021}, que
+clasifica los diez riesgos de seguridad web más críticos según datos agregados de la industria (control
+de acceso roto, fallas criptográficas, inyección, entre otros). La autenticación del sistema usa JSON Web
+Token bajo RFC~7519 \cite{jwt2019}, cuyo uso indebido (algoritmos débiles, secretos hardcodeados, ausencia
+de expiración) es una fuente documentada de vulnerabilidades reales en aplicaciones web
+\cite{lu2018,rezaeinasab2022}.
+
+\subsection{Usabilidad: la System Usability Scale}
+
+La System Usability Scale (SUS), propuesta por Brooke \cite{brooke1996} y validada empíricamente por
+Bangor, Kortum y Miller \cite{bangor2008}, es un instrumento estandarizado de 10 ítems en escala Likert
+que produce un puntaje de 0 a 100 interpretable contra una escala de grados (A+ a F). Se usa en este
+proyecto como el instrumento de medición de usabilidad planeado (Sección~\ref{sec:evaluacion}), aunque a
+la fecha de este informe no se ha aplicado a participantes reales.
+
+\subsection{Estadística inferencial no paramétrica en ingeniería de software}
+
+Cuando los datos de rendimiento no siguen una distribución normal (frecuente en mediciones de latencia,
+que suelen tener asimetría positiva por colas largas), las pruebas de hipótesis basadas en la
+distribución normal (t de Student) no son apropiadas. Arcuri y Briand \cite{arcuri2011} recomiendan el
+uso de pruebas no paramétricas como Mann-Whitney U (equivalente a Wilcoxon rank-sum para dos muestras
+independientes) junto con una medida de tamaño de efecto, en vez de reportar solo un valor p. Este
+trabajo sigue esa recomendación en el análisis de caché fría/caliente (Sección~\ref{sec:evaluacion}).
+
+\subsection{Metodologías empíricas complementarias}
+
+Runeson y Höst \cite{runeson2009} definen las guías de rigor para investigación de estudio de caso en
+ingeniería de software, y Wohlin et al. \cite{wohlin2012} las de experimentación controlada --- ambas
+metodologías complementan a DSR cuando la evaluación de un artefacto requiere comparar condiciones
+(como la comparación de caché fría/caliente de la Sección~\ref{sec:evaluacion}, que sigue la lógica de un
+experimento controlado de una sola variable).
+
+\subsection{Estándares empíricos y revisión sistemática de literatura}
+
+La comunidad ACM SIGSOFT propone un conjunto de \textit{estándares empíricos} \cite{ralph2021} que
+codifican las expectativas de rigor para distintos tipos de estudio en ingeniería de software (estudio de
+caso, benchmarking, investigación de ingeniería, entre otros) --- aplicados en este proyecto en
+\texttt{docs/checklists/}. Para la revisión de trabajos relacionados
+(Sección~\ref{sec:trabajos-relacionados}), se sigue el proceso descrito por Kitchenham y Charters
+\cite{kitchenham2007} y se reporta bajo la disciplina PRISMA 2020 \cite{page2021}, complementado con la
+técnica de \textit{snowballing} de Wohlin \cite{wohlin2014ease} para expandir la búsqueda más allá de las
+cadenas de consulta iniciales.
+\newpage

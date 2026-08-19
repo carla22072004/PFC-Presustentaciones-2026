@@ -7,6 +7,37 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * sp_generar_reporte_defensas (backend/src/main/resources/db/migration/V2__stored_procedures.sql)
+ * arma el reporte consolidado de defensas por carrera cruzando solicitud/estudiante/usuarios/
+ * cronograma/sala/evaluaciones -- invocado vía SolicitudRepository (JPA 2.1
+ * @NamedStoredProcedureQuery, Fase 3 / Criterio P1).
+ */
+@NamedStoredProcedureQuery(
+        name = "Solicitud.generarReporteDefensas",
+        procedureName = "presus.sp_generar_reporte_defensas",
+        resultSetMappings = "ReporteDefensaMapping",
+        parameters = {
+                @StoredProcedureParameter(mode = ParameterMode.IN, name = "p_carrera", type = String.class),
+                @StoredProcedureParameter(mode = ParameterMode.REF_CURSOR, name = "p_resultado", type = void.class)
+        }
+)
+@SqlResultSetMapping(
+        name = "ReporteDefensaMapping",
+        classes = @ConstructorResult(
+                targetClass = ec.edu.uteq.presustentaciones.dto.ReporteDefensaResult.class,
+                columns = {
+                        @ColumnResult(name = "solicitud_id", type = Long.class),
+                        @ColumnResult(name = "estudiante_nombre", type = String.class),
+                        @ColumnResult(name = "expediente", type = String.class),
+                        @ColumnResult(name = "titulo_tema", type = String.class),
+                        @ColumnResult(name = "estado_solicitud", type = String.class),
+                        @ColumnResult(name = "fecha_defensa", type = LocalDateTime.class),
+                        @ColumnResult(name = "sala_nombre", type = String.class),
+                        @ColumnResult(name = "nota_final", type = Double.class)
+                }
+        )
+)
 @Entity
 @Table(name = "solicitud", schema = "presus")
 @Getter

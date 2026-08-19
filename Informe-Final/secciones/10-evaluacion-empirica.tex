@@ -1,0 +1,97 @@
+\section{Evaluación Empírica de Resultados}
+\label{sec:evaluacion}
+
+Esta sección presenta los resultados reales de cada bloque de medición. Cada cifra citada aquí es
+trazable a un archivo crudo y un comando de reproducción documentado en
+\texttt{docs/mediciones/DATA-PROVENANCE.md}.
+
+\subsection{Rendimiento}
+
+\subsubsection{Carga bajo 50 usuarios concurrentes}
+Cinco corridas independientes de k6 (\texttt{k6/load-test.js}, perfil de carga: rampa a 20 usuarios en
+30s, sostenido en 50 usuarios por 1 minuto, rampa a 0) dan un p95 de \texttt{http\_req\_duration} entre
+7.4\,ms y 80.9\,ms según la corrida, muy por debajo del umbral RNF-01 de 500\,ms.
+
+\subsubsection{Efecto de la caché Redis (estadística descriptiva e inferencial)}
+Se midieron 30 muestras de latencia del endpoint \texttt{/api/v1/universidades} en estado de caché fría
+y 30 en caché caliente (\texttt{k6/cache-cold-samples.txt}, \texttt{cache-warm-samples.txt}).
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Escenario} & \textbf{Media (ms)} & \textbf{DE} & \textbf{p50} & \textbf{p95} & \textbf{IC 95\,\%} \\
+\midrule
+Caché fría ($n=30$) & 109.62 & 18.88 & 106.02 & 108.07 & [102.57, 116.67] \\
+Caché caliente ($n=30$) & 7.86 & 0.75 & 7.60 & 8.89 & [7.58, 8.14] \\
+\bottomrule
+\end{tabular}
+\caption{Estadística descriptiva de latencia, caché fría vs. caliente.}
+\end{table}
+
+\textbf{Prueba inferencial:} Mann-Whitney U (equivalente a Wilcoxon rank-sum para dos muestras
+independientes, apropiado por la asimetría observada en caché fría) \cite{arcuri2011}: $U=900$,
+$p = 3.02 \times 10^{-11}$ (dos colas), tamaño de efecto (correlación biserial de rangos) $r = 1.00$
+(separación perfecta entre las dos distribuciones). La caché reduce la latencia media
+\textbf{13.9$\times$} (109.62\,ms $\to$ 7.86\,ms). Reproducible con
+\texttt{scripts/perf-analysis.ipynb}.
+
+\subsection{Seguridad}
+
+\begin{itemize}[nosep]
+    \item \textbf{Revisión manual OWASP Top~10:} 6 de 10 controles auditados manualmente en código
+    fuente; 3 hallazgos reales corregidos, 1 abierto (\texttt{docs/mediciones/sec/owasp/OWASP-AUDIT.md}).
+    \item \textbf{OWASP ZAP (escaneo dinámico):} 0 hallazgos \texttt{FAIL}, 4 hallazgos corregidos
+    (cabeceras de seguridad faltantes en nginx), verificado contra la topología real de producción.
+    \item \textbf{Análisis estático (find-sec-bugs, 189 hallazgos totales):} 121 informativos
+    (\texttt{SPRING\_ENDPOINT}), 44 \texttt{CRLF\_INJECTION\_LOGS}, 13 \texttt{IMPROPER\_UNICODE}, 9
+    \texttt{PATH\_TRAVERSAL\_IN}, 1 \texttt{UNSAFE\_HASH\_EQUALS} (corregido en esta fase, cambiado a
+    \texttt{MessageDigest.isEqual}), 1 informativo \texttt{SPRING\_CSRF\_PROTECTION\_DISABLED}.
+    \textbf{0 hallazgos de \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE}} --- ninguna evidencia
+    de SQL dinámico/inyección.
+    \item \textbf{\texttt{npm audit} (dependencias frontend):} 41 vulnerabilidades (3 bajas, 7 moderadas,
+    25 altas, 6 críticas) --- no corregidas en el alcance de este informe, declaradas como brecha
+    abierta (Sección~\ref{sec:trabajo-futuro}).
+\end{itemize}
+
+\subsection{Usabilidad}
+
+\textbf{Sin datos reales.} El instrumento SUS \cite{brooke1996} está listo
+(\texttt{docs/mediciones/sus/SUS-RESULTS.md}), pero no se ha aplicado a participantes reales. Una versión
+anterior de este proyecto afirmaba un puntaje de 91.25/100 con 10 evaluadores --- esos datos eran
+fabricados y fueron retirados explícitamente. No se reporta ninguna cifra de usabilidad en este informe
+porque no existe ninguna medición real que reportar.
+
+\subsection{Cobertura de código}
+
+JaCoCo sobre 46 pruebas automatizadas reales: 18.13\,\% de instrucciones (2,417/13,334), 22.70\,\% de
+líneas (559/2,463) --- por debajo del umbral RNF-04 de 60\,\%, en progreso real desde 2.83\,\% en una
+medición anterior (\texttt{docs/mediciones/jacoco/COVERAGE.md}).
+
+\subsection{Calidad web (Lighthouse)}
+
+Seis corridas contra el build de producción real (3 desktop + 3 mobile, no contra el servidor de
+desarrollo, corrección metodológica de una medición anterior que sí usaba \texttt{ng serve}):
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Perfil} & \textbf{Performance (media, $n=3$)} & \textbf{Accesibilidad} & \textbf{Buenas Prácticas} & \textbf{SEO} \\
+\midrule
+Desktop & 64 & 89 & 100 & 91 \\
+Mobile & 61 & 89 & 100 & 91 \\
+\bottomrule
+\end{tabular}
+\caption{Lighthouse, media de 3 corridas por perfil.}
+\end{table}
+
+Con $n=3$ por perfil, no se reporta una prueba de hipótesis formal entre desktop y mobile --- el tamaño
+de muestra es insuficiente para una inferencia estadística significativa; se reporta solo la diferencia
+descriptiva (3 puntos). Performance sigue bajo el umbral de 80/100 en ambos perfiles. El Total Blocking
+Time (0\,ms) y el Cumulative Layout Shift ($\sim$0.01--0.03) ya son ideales; el cuello de botella es
+First Contentful Paint, medido en una máquina de desarrollo personal con otras aplicaciones activas
+(Discord, Steam, Brave) --- ver la nota metodológica completa en
+\texttt{docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md} y la discusión de esta limitación en
+Sección~\ref{sec:amenazas-validez}.
+\newpage

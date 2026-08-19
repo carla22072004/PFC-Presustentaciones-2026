@@ -1,0 +1,98 @@
+\section{Trabajos Relacionados}
+\label{sec:trabajos-relacionados}
+
+\subsection{Nota de honestidad metodológica sobre el rigor de esta revisión}
+
+La guía exige una búsqueda sistemática siguiendo la disciplina PRISMA 2020 \cite{page2021}. Se declara
+explícitamente, antes de presentar los resultados, **qué tan rigurosa fue realmente esta búsqueda**: no
+se tuvo acceso directo a bases de datos académicas indexadas (Scopus, IEEE Xplore, ACM Digital Library)
+con capacidad de exportar conteos exactos de resultados por cadena de búsqueda; la búsqueda se realizó
+mediante un motor de búsqueda web general, en 24 consultas dirigidas durante la elaboración de este
+informe, complementadas con la técnica de \textit{snowballing} de Wohlin \cite{wohlin2014ease} (seguir
+referencias desde los trabajos encontrados). Esto **no es una revisión sistemática de literatura
+completa** en el sentido estricto de Kitchenham y Charters \cite{kitchenham2007} --- no hay protocolo
+pre-registrado, no hay doble revisor independiente, y la cobertura de bases de datos es incompleta. Se
+presenta como lo que realmente es: una búsqueda dirigida y honesta, reportada con la disciplina de
+PRISMA en la medida de lo posible, no como una SLR formal. Esta limitación se declara también en la
+Sección~\ref{sec:amenazas-validez}.
+
+\subsection{Diagrama de flujo (adaptado de PRISMA 2020)}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{|p{11cm}|}
+\hline
+\textbf{Identificación} \\
+24 consultas de búsqueda web dirigidas (no bases de datos académicas indexadas directamente) $\rightarrow$
+$\sim$200 resultados de página de búsqueda revisados (t\'itulo/snippet) \\
+\hline
+\end{tabular}
+\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
+\begin{tabular}{|p{11cm}|}
+\hline
+\textbf{Cribado (screening)} \\
+32 trabajos distintos identificados con cita completa verificable (autores, año, venue, DOI cuando
+disponible) mediante snowballing y verificación cruzada (2+ fuentes independientes por cita) \\
+\hline
+\end{tabular}
+\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
+\begin{tabular}{|p{11cm}|}
+\hline
+\textbf{Elegibilidad} \\
+32 trabajos verificados retenidos como citables en este informe (Sección de Referencias). Ningún trabajo
+se excluyó por no ser relevante --- todos los identificados durante la búsqueda dirigida resultaron
+pertinentes a alguna sección del informe (metodología, seguridad, rendimiento, requisitos, calidad) \\
+\hline
+\end{tabular}
+\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
+\begin{tabular}{|p{11cm}|}
+\hline
+\textbf{Incluidos en la comparación directa (Tabla~\ref{tab:trabajos-relacionados})} \\
+13 trabajos empíricos comparados explícitamente por dominio, método y relación con este proyecto \\
+\hline
+\end{tabular}
+\caption{Diagrama de flujo de la búsqueda de literatura, adaptado de PRISMA 2020 \cite{page2021} a las
+limitaciones reales de acceso a bases de datos de este equipo.}
+\label{fig:prisma}
+\end{figure}
+
+\subsection{Por qué no hay trabajos previos sobre ``sistemas de gestión de pre-sustentaciones''}
+
+La búsqueda dirigida no encontró literatura académica indexada específicamente sobre sistemas de software
+para gestionar el proceso de pre-sustentación o defensa de tesis de pregrado como fenómeno de
+investigación en sí mismo --- es un dominio de aplicación institucional específico (UTEQ, y de forma más
+amplia, universidades ecuatorianas), no un tema de investigación en ingeniería de software per se. En su
+lugar, la comparación de la Tabla~\ref{tab:trabajos-relacionados} se centra en los trabajos empíricos que
+fundamentan las \textbf{técnicas y métodos} usados en este proyecto (autenticación JWT, integración
+continua, análisis de dependencias vulnerables, revisión de código, trazabilidad de requisitos) ---
+que es la comparación honesta y relevante que la evidencia disponible permite hacer.
+
+\subsection{Tabla comparativa}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{2cm}p{1.8cm}p{6.2cm}}
+\toprule
+\textbf{Trabajo} & \textbf{Dominio} & \textbf{Venue} & \textbf{Relación con este proyecto} \\
+\midrule
+Vasilescu et al. \cite{vasilescu2015} & CI/GitHub & FSE 2015 & Fundamenta la decisión de CI automatizado (\texttt{ci.yml}, Sección~\ref{sec:implementacion}) \\
+Hilton et al. \cite{hilton2016} & CI open-source & ASE 2016 & Costos/beneficios de CI cuantificados; contrasta con la ausencia de CI hasta la Fase 5 de este proyecto \\
+Zampetti et al. \cite{zampetti2020} & Malas prácticas de CI & Empirical SE 2020 & Catálogo de 79 anti-patrones usado para revisar \texttt{ci.yml} \\
+Beller et al. \cite{beller2017} & Fallos de build en CI & MSR 2017 & Motiva el diseño no-bloqueante del paso de análisis estático en \texttt{ci.yml} \\
+Pashchenko et al. \cite{pashchenko2018} & Dependencias vulnerables & ESEM 2018 & Marco para interpretar los 41 hallazgos de \texttt{npm audit} (Sección~\ref{sec:evaluacion}) \\
+Decan et al. \cite{decan2018} & Vulnerabilidades npm & MSR 2018 & Contexto cuantitativo del ecosistema npm citado en la discusión de dependencias \\
+Rezaei Nasab et al. \cite{rezaeinasab2022} & Seguridad en microservicios & J. Systems and Software 2022 & 28 prácticas de seguridad contrastadas contra las implementadas (JWT, rate limiting, cabeceras) \\
+Lu et al. \cite{lu2018} & Rate limiting de autenticación & ACSAC 2018 & Halló que 72\,\% de sitios reales no limitan intentos de login; motiva la implementación de rate limiting de este proyecto \\
+Bacchelli \& Bird \cite{bacchelli2013} & Revisión de código & ICSE 2013 & Contrasta con la ausencia de un proceso formal de code review en este proyecto (Sección~\ref{sec:amenazas-validez}) \\
+Mäder \& Egyed \cite{mader2015} & Trazabilidad de requisitos & Empirical SE 2015 & Fundamenta el valor de \texttt{matriz.csv} más allá de un requisito administrativo \\
+McIntosh et al. \cite{mcintosh2016} & Revisión de código y calidad & Empirical SE 2016 & Contexto para la ausencia de un proceso formal de code review en este proyecto (Sección~\ref{sec:amenazas-validez}) \\
+Maximilien \& Williams \cite{maximilien2003} & TDD y reducción de defectos & ICSE 2003 & Contrasta con la cobertura de 22.7\,\% de este proyecto (Sección~\ref{sec:evaluacion}); TDD no se practicó formalmente \\
+Gallaba et al. \cite{gallaba2022} & Datos operacionales de CI & ICSE 2022 & Fundamenta el diseño del pipeline propio (\texttt{.github/workflows/ci.yml}) \\
+\bottomrule
+\end{tabular}
+\caption{Comparación de los trece trabajos empíricos más directamente relacionados con las técnicas
+aplicadas en este proyecto.}
+\label{tab:trabajos-relacionados}
+\end{table}
+\newpage

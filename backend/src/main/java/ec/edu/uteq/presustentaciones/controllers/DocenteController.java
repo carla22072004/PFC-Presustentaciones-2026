@@ -2,6 +2,8 @@ package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.entities.Docente;
 import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,12 @@ public class DocenteController {
     @GetMapping
     public List<Docente> listar() {
         return docenteRepository.findAll();
+    }
+
+    /** Versión paginada -- misma convención que /api/v1/solicitudes/paginado y /api/v1/usuarios/paginado. */
+    @GetMapping("/paginado")
+    public Page<Docente> listarPaginado(Pageable pageable) {
+        return docenteRepository.findAll(pageable);
     }
 
     @GetMapping("/disponibles")

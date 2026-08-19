@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalaController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">SalaController.java</span></div><h1>SalaController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Sala;
+import ec.edu.uteq.presustentaciones.repositories.SalaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/salas&quot;)
+<span class="nc" id="L15">@RequiredArgsConstructor</span>
+public class SalaController {
+    private final SalaRepository salaRepository;
+
+    @GetMapping
+<span class="nc" id="L20">    public List&lt;Sala&gt; listar() { return salaRepository.findAll(); }</span>
+
+    /** Versión paginada -- misma convención que /api/v1/solicitudes/paginado y /api/v1/usuarios/paginado. */
+    @GetMapping(&quot;/paginado&quot;)
+    public Page&lt;Sala&gt; listarPaginado(Pageable pageable) {
+<span class="nc" id="L25">        return salaRepository.findAll(pageable);</span>
+    }
+
+    @PostMapping
+<span class="nc" id="L29">    public Sala crear(@RequestBody Sala sala) { return salaRepository.save(sala); }</span>
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; eliminar(@PathVariable Long id) {
+<span class="nc" id="L33">        salaRepository.deleteById(id);</span>
+<span class="nc" id="L34">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

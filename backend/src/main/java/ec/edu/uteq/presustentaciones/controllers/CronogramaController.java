@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -61,7 +63,7 @@ public class CronogramaController {
                 "mensaje", disponible ? "✓ Sala disponible en esa franja" : "✗ Sala ocupada en esa franja"));
     }
 
-    @GetMapping public List<Cronograma> listar() { return cronogramaService.listarCronogramas(); }
+    @GetMapping public ResponseEntity<Page<Cronograma>> listar(Pageable pageable) { return ResponseEntity.ok(cronogramaService.listarCronogramas(pageable)); }
     @GetMapping("/estudiante/{id}") public List<Cronograma> porEstudiante(@PathVariable Long id) { return cronogramaService.listarPorEstudiante(id); }
     @GetMapping("/usuario/{id}") public List<Cronograma> porUsuario(@PathVariable Long id) { return cronogramaService.listarPorUsuario(id); }
     @GetMapping("/solicitud/{id}") public ResponseEntity<Cronograma> porSolicitud(@PathVariable Long id) {

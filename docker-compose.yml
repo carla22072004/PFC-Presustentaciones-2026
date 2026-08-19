@@ -1,25 +1,25 @@
 services:
   # Base de Datos PostgreSQL 15
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15-alpine@sha256:fe0737ba566a2c5b2a28f34433c0a423261900ec17b9bf7ad115e1aae7e57f1b
     container_name: amz-postgres
     environment:
       POSTGRES_DB: BdPresustentaciones
-      POSTGRES_USER: JEAN
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgresAdmin}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U JEAN"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Redis Caché
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: amz-redis
     ports:
       - "6379:6379"
@@ -37,12 +37,12 @@ services:
     container_name: amz-backend
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/BdPresustentaciones
-      - DB_USERNAME=JEAN
-      - DB_PASSWORD=1234
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgresAdmin}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      - JWT_EXPIRATION=86400000
+      - "JWT_SECRET=${JWT_SECRET:?Debes definir JWT_SECRET en tu .env -- ver .env.example (genera uno con openssl rand -hex 32)}"
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
     ports:
       - "8080:8080"
     depends_on:
@@ -58,7 +58,7 @@ services:
 
   # Nginx Servidor Web y Proxy Inverso (Fase 4 - Requisito E5)
   nginx:
-    image: nginx:alpine
+    image: nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
     container_name: amz-nginx
     ports:
       - "80:80"

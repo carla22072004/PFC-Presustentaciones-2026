@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,18 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
                                 @Param("p_rol_codigo") String rolCodigo);
 
     List<Jurado> findBySolicitudId(Long solicitudId);
+
+    /**
+     * Invoca sp_validar_conflicto_jurado (FUNCTION escalar, categoría "validaciones
+     * cruzadas" del Bloque A.2): true si el docente NO tiene otra defensa asignada que se
+     * solape con el horario dado.
+     */
+    @Procedure(name = "Jurado.validarConflictoJurado")
+    Boolean validarConflictoJurado(@Param("p_solicitud_id") Long solicitudId,
+                                    @Param("p_docente_id") Long docenteId,
+                                    @Param("p_fecha_inicio") LocalDateTime fechaInicio,
+                                    @Param("p_duracion_min") Integer duracionMin,
+                                    @Param("p_disponible") Boolean disponibleInicial);
 
     @Query("SELECT j FROM Jurado j WHERE j.docente.id = :docenteId")
     List<Jurado> findByDocenteId(Long docenteId);

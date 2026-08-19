@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TutoriaServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">TutoriaServiceImpl.java</span></div><h1>TutoriaServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.dto.TutoriaFaseDTO;
+import ec.edu.uteq.presustentaciones.dto.TutoriaMensajeDTO;
+import ec.edu.uteq.presustentaciones.dto.TutoriaResumenDTO;
+import ec.edu.uteq.presustentaciones.entities.*;
+import ec.edu.uteq.presustentaciones.enums.EstadoSolicitud;
+import ec.edu.uteq.presustentaciones.repositories.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L33">@Slf4j</span>
+@Transactional(readOnly = true)
+public class TutoriaServiceImpl implements TutoriaService {
+
+    private final TutorRepository tutorRepository;
+    private final TutoriaFaseRepository tutoriaFaseRepository;
+    private final TutoriaMensajeRepository tutoriaMensajeRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AnteproyectoRepository anteproyectoRepository;
+
+    @Value(&quot;${app.upload.dir.tutorias:uploads/tutorias}&quot;)
+    private String uploadDir;
+
+    @Value(&quot;${app.upload.dir:uploads/anteproyectos}&quot;)
+    private String uploadDirAnteproyectos;
+
+    public TutoriaServiceImpl(TutorRepository tutorRepository,
+                              TutoriaFaseRepository tutoriaFaseRepository,
+                              TutoriaMensajeRepository tutoriaMensajeRepository,
+                              UsuarioRepository usuarioRepository,
+<span class="fc" id="L53">                              AnteproyectoRepository anteproyectoRepository) {</span>
+<span class="fc" id="L54">        this.tutorRepository = tutorRepository;</span>
+<span class="fc" id="L55">        this.tutoriaFaseRepository = tutoriaFaseRepository;</span>
+<span class="fc" id="L56">        this.tutoriaMensajeRepository = tutoriaMensajeRepository;</span>
+<span class="fc" id="L57">        this.usuarioRepository = usuarioRepository;</span>
+<span class="fc" id="L58">        this.anteproyectoRepository = anteproyectoRepository;</span>
+<span class="fc" id="L59">    }</span>
+
+    // ── Resumen ───────────────────────────────────────────────────────────────
+
+    @Override
+    public TutoriaResumenDTO obtenerResumen(Long tutorId, Long usuarioId) {
+<span class="fc" id="L65">        Tutor tutor = tutorRepository.findById(tutorId)</span>
+<span class="pc" id="L66">                .orElseThrow(() -&gt; new RuntimeException(&quot;Tutor no encontrado&quot;));</span>
+
+<span class="fc" id="L68">        return construirResumenParaTutor(tutor, usuarioId);</span>
+    }
+
+    // ── Fases ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public List&lt;TutoriaFaseDTO&gt; obtenerFases(Long tutorId) {
+<span class="nc" id="L75">        return tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(tutorId).stream()</span>
+<span class="nc" id="L76">                .map(this::mapFaseConMensajes)</span>
+<span class="nc" id="L77">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional
+    public TutoriaFaseDTO crearFaseConObservacion(Long tutorId, Long tutorUsuarioId, String observacion) {
+<span class="fc" id="L83">        Tutor tutor = tutorRepository.findById(tutorId)</span>
+<span class="pc" id="L84">                .orElseThrow(() -&gt; new RuntimeException(&quot;Tutor no encontrado&quot;));</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (!tutor.getDocente().getUsuario().getId().equals(tutorUsuarioId)) {</span>
+<span class="fc" id="L87">            throw new RuntimeException(&quot;No autorizado&quot;);</span>
+        }
+
+<span class="fc" id="L90">        long totalFases = tutoriaFaseRepository.countByTutorId(tutorId);</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (totalFases &gt;= 3) {</span>
+<span class="fc" id="L92">            throw new RuntimeException(&quot;No se pueden crear más de 3 fases de revisión&quot;);</span>
+        }
+
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        if (totalFases &gt; 0) {</span>
+<span class="nc" id="L96">            List&lt;TutoriaFase&gt; fases = tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(tutorId);</span>
+<span class="nc" id="L97">            TutoriaFase ultima = fases.get(fases.size() - 1);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            if (!&quot;APROBADA&quot;.equals(ultima.getEstado())) {</span>
+<span class="nc" id="L99">                throw new RuntimeException(&quot;Debes aprobar la fase actual antes de crear una nueva&quot;);</span>
+            }
+        }
+
+<span class="fc" id="L103">        TutoriaFase fase = TutoriaFase.builder()</span>
+<span class="fc" id="L104">                .tutor(tutor)</span>
+<span class="fc" id="L105">                .numeroFase((int) totalFases + 1)</span>
+<span class="fc" id="L106">                .estado(&quot;PENDIENTE_ESTUDIANTE&quot;)</span>
+<span class="fc" id="L107">                .build();</span>
+<span class="fc" id="L108">        fase = tutoriaFaseRepository.save(fase);</span>
+
+<span class="fc" id="L110">        Usuario tutorUsuario = usuarioRepository.findById(tutorUsuarioId)</span>
+<span class="pc" id="L111">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario tutor no encontrado&quot;));</span>
+
+<span class="fc" id="L113">        TutoriaMensaje mensaje = TutoriaMensaje.builder()</span>
+<span class="fc" id="L114">                .fase(fase)</span>
+<span class="fc" id="L115">                .remitente(tutorUsuario)</span>
+<span class="fc" id="L116">                .contenido(observacion)</span>
+<span class="fc" id="L117">                .tipo(&quot;OBSERVACION&quot;)</span>
+<span class="fc" id="L118">                .leido(false)</span>
+<span class="fc" id="L119">                .build();</span>
+<span class="fc" id="L120">        tutoriaMensajeRepository.save(mensaje);</span>
+
+<span class="fc" id="L122">        return mapFaseConMensajes(fase);</span>
+    }
+
+    // ── Subida de PDF ─────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public TutoriaFaseDTO subirPdfCorregido(Long faseId, MultipartFile archivo, Long estudianteUsuarioId) {
+<span class="fc" id="L130">        TutoriaFase fase = tutoriaFaseRepository.findById(faseId)</span>
+<span class="pc" id="L131">                .orElseThrow(() -&gt; new RuntimeException(&quot;Fase no encontrada&quot;));</span>
+
+<span class="fc" id="L133">        Long estudianteUsuarioReal = fase.getTutor().getSolicitud().getEstudiante().getUsuario().getId();</span>
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (!estudianteUsuarioReal.equals(estudianteUsuarioId)) {</span>
+<span class="nc" id="L135">            throw new RuntimeException(&quot;No autorizado&quot;);</span>
+        }
+
+<span class="fc" id="L138">        Solicitud solicitud = fase.getTutor().getSolicitud();</span>
+<span class="pc bpc" id="L139" title="1 of 4 branches missed.">        if (solicitud.getEstado() != null &amp;&amp; &quot;SUSPENDIDA&quot;.equalsIgnoreCase(solicitud.getEstado().getCodigo())) {</span>
+<span class="fc" id="L140">            throw new RuntimeException(&quot;No puedes subir más archivos. Este tema ha sido suspendido por: &quot; + solicitud.getMotivoSuspension());</span>
+        }
+
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if (!&quot;PENDIENTE_ESTUDIANTE&quot;.equals(fase.getEstado())) {</span>
+<span class="nc" id="L144">            throw new RuntimeException(&quot;Solo puedes subir el PDF cuando el tutor ha enviado observaciones&quot;);</span>
+        }
+
+<span class="fc" id="L147">        String contentType = archivo.getContentType();</span>
+<span class="pc bpc" id="L148" title="2 of 4 branches missed.">        if (contentType == null || !contentType.equals(&quot;application/pdf&quot;)) {</span>
+<span class="nc" id="L149">            throw new RuntimeException(&quot;Solo se permiten archivos PDF&quot;);</span>
+        }
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (archivo.getSize() &gt; 10L * 1024 * 1024) {</span>
+<span class="nc" id="L152">            throw new RuntimeException(&quot;El archivo no puede superar los 10 MB&quot;);</span>
+        }
+
+<span class="fc" id="L155">        Long tutorId = fase.getTutor().getId();</span>
+<span class="fc" id="L156">        int numeroFase = fase.getNumeroFase();</span>
+
+<span class="fc" id="L158">        Path dirPath = Paths.get(uploadDir, tutorId.toString(), &quot;fase_&quot; + numeroFase);</span>
+        try {
+<span class="fc" id="L160">            Files.createDirectories(dirPath);</span>
+<span class="nc" id="L161">        } catch (IOException e) {</span>
+<span class="nc" id="L162">            throw new RuntimeException(&quot;No se pudo crear el directorio de uploads&quot;, e);</span>
+<span class="fc" id="L163">        }</span>
+
+        // Eliminar archivo anterior si existe
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        if (fase.getArchivoPdfEstudiante() != null) {</span>
+            try {
+<span class="nc" id="L168">                Files.deleteIfExists(dirPath.resolve(fase.getArchivoPdfEstudiante()));</span>
+<span class="nc" id="L169">            } catch (IOException e) {</span>
+<span class="nc" id="L170">                log.warn(&quot;No se pudo eliminar el archivo anterior: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L171">            }</span>
+        }
+
+<span class="fc" id="L174">        String nombreArchivo = &quot;tutor_&quot; + tutorId + &quot;_fase&quot; + numeroFase + &quot;_&quot; + UUID.randomUUID() + &quot;.pdf&quot;;</span>
+<span class="fc" id="L175">        Path rutaArchivo = dirPath.resolve(nombreArchivo);</span>
+<span class="fc" id="L176">        String sha256 = calcularSha256YGuardar(archivo, rutaArchivo);</span>
+
+<span class="fc" id="L178">        fase.setArchivoPdfEstudiante(nombreArchivo);</span>
+<span class="fc" id="L179">        fase.setSha256Pdf(sha256);</span>
+<span class="fc" id="L180">        fase.setTamanoPdfBytes(archivo.getSize());</span>
+<span class="fc" id="L181">        fase.setEstado(&quot;PENDIENTE_TUTOR&quot;);</span>
+<span class="fc" id="L182">        fase = tutoriaFaseRepository.save(fase);</span>
+
+<span class="fc" id="L184">        Usuario estudiante = usuarioRepository.findById(estudianteUsuarioId)</span>
+<span class="pc" id="L185">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario estudiante no encontrado&quot;));</span>
+
+<span class="fc" id="L187">        TutoriaMensaje mensajeAuto = TutoriaMensaje.builder()</span>
+<span class="fc" id="L188">                .fase(fase)</span>
+<span class="fc" id="L189">                .remitente(estudiante)</span>
+<span class="fc" id="L190">                .contenido(&quot;He subido las correcciones solicitadas.&quot;)</span>
+<span class="fc" id="L191">                .tipo(&quot;RESPUESTA&quot;)</span>
+<span class="fc" id="L192">                .leido(false)</span>
+<span class="fc" id="L193">                .build();</span>
+<span class="fc" id="L194">        tutoriaMensajeRepository.save(mensajeAuto);</span>
+
+<span class="fc" id="L196">        return mapFaseConMensajes(fase);</span>
+    }
+
+    // ── Aprobación ────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public TutoriaFaseDTO aprobarFase(Long faseId, Long tutorUsuarioId, String comentario) {
+<span class="fc" id="L204">        TutoriaFase fase = tutoriaFaseRepository.findById(faseId)</span>
+<span class="pc" id="L205">                .orElseThrow(() -&gt; new RuntimeException(&quot;Fase no encontrada&quot;));</span>
+
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (!fase.getTutor().getDocente().getUsuario().getId().equals(tutorUsuarioId)) {</span>
+<span class="nc" id="L208">            throw new RuntimeException(&quot;No autorizado&quot;);</span>
+        }
+
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">        if (!&quot;PENDIENTE_TUTOR&quot;.equals(fase.getEstado())) {</span>
+<span class="nc" id="L212">            throw new RuntimeException(&quot;No puedes aprobar una fase sin correcciones del estudiante&quot;);</span>
+        }
+
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">        if (fase.getArchivoPdfEstudiante() == null) {</span>
+<span class="nc" id="L216">            throw new RuntimeException(&quot;No existe un PDF del estudiante para aprobar&quot;);</span>
+        }
+
+<span class="fc" id="L219">        fase.setEstado(&quot;APROBADA&quot;);</span>
+<span class="fc" id="L220">        fase.setFechaAprobacion(LocalDateTime.now());</span>
+<span class="fc" id="L221">        fase = tutoriaFaseRepository.save(fase);</span>
+
+<span class="fc" id="L223">        Usuario tutorUsuario = usuarioRepository.findById(tutorUsuarioId)</span>
+<span class="pc" id="L224">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario tutor no encontrado&quot;));</span>
+
+<span class="fc" id="L226">        TutoriaMensaje mensajeAprobacion = TutoriaMensaje.builder()</span>
+<span class="fc" id="L227">                .fase(fase)</span>
+<span class="fc" id="L228">                .remitente(tutorUsuario)</span>
+<span class="pc bpc" id="L229" title="2 of 4 branches missed.">                .contenido(comentario != null &amp;&amp; !comentario.isBlank() ? comentario : &quot;Fase aprobada.&quot;)</span>
+<span class="fc" id="L230">                .tipo(&quot;APROBACION&quot;)</span>
+<span class="fc" id="L231">                .leido(false)</span>
+<span class="fc" id="L232">                .build();</span>
+<span class="fc" id="L233">        tutoriaMensajeRepository.save(mensajeAprobacion);</span>
+
+        // Si las 3 fases están APROBADAS, marcar tutor como COMPLETADA y actualizar el Anteproyecto
+<span class="fc" id="L236">        Long tutorId = fase.getTutor().getId();</span>
+<span class="fc" id="L237">        long totalFases = tutoriaFaseRepository.countByTutorId(tutorId);</span>
+<span class="fc" id="L238">        long fasesAprobadas = tutoriaFaseRepository.countByTutorIdAndEstado(tutorId, &quot;APROBADA&quot;);</span>
+<span class="pc bpc" id="L239" title="3 of 4 branches missed.">        if (totalFases == 3 &amp;&amp; fasesAprobadas == 3) {</span>
+<span class="nc" id="L240">            Tutor tutor = fase.getTutor();</span>
+<span class="nc" id="L241">            tutor.setEstado(&quot;COMPLETADA&quot;);</span>
+<span class="nc" id="L242">            tutorRepository.save(tutor);</span>
+
+            // Reemplazar el PDF del Anteproyecto con el PDF final aprobado de la Fase 3
+<span class="nc" id="L245">            TutoriaFase fase3 = tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(tutorId)</span>
+<span class="nc" id="L246">                    .stream()</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">                    .filter(f -&gt; f.getNumeroFase() == 3)</span>
+<span class="nc" id="L248">                    .findFirst()</span>
+<span class="nc" id="L249">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Fase 3 no encontrada&quot;));</span>
+
+            // Copiar físicamente el PDF de la Fase 3 a la carpeta de anteproyectos
+<span class="nc" id="L252">            Path origen = Paths.get(uploadDir, tutorId.toString(), &quot;fase_3&quot;, fase3.getArchivoPdfEstudiante());</span>
+<span class="nc" id="L253">            Path destDir = Paths.get(uploadDirAnteproyectos);</span>
+<span class="nc" id="L254">            Path destino = destDir.resolve(fase3.getArchivoPdfEstudiante());</span>
+            try {
+<span class="nc" id="L256">                Files.createDirectories(destDir);</span>
+<span class="nc" id="L257">                Files.copy(origen, destino, StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="nc" id="L258">            } catch (IOException e) {</span>
+<span class="nc" id="L259">                throw new RuntimeException(&quot;No se pudo copiar el PDF de la Fase 3 al directorio de anteproyectos&quot;, e);</span>
+<span class="nc" id="L260">            }</span>
+
+<span class="nc" id="L262">            anteproyectoRepository.findBySolicitudId(tutor.getSolicitud().getId())</span>
+<span class="nc" id="L263">                    .ifPresent(anteproyecto -&gt; {</span>
+<span class="nc" id="L264">                        anteproyecto.setArchivoPdf(fase3.getArchivoPdfEstudiante());</span>
+<span class="nc" id="L265">                        anteproyecto.setSha256Hash(fase3.getSha256Pdf());</span>
+<span class="nc" id="L266">                        anteproyecto.setTamanoBytes(fase3.getTamanoPdfBytes());</span>
+<span class="nc" id="L267">                        anteproyecto.setEstado(&quot;APROBADO&quot;);</span>
+<span class="nc" id="L268">                        anteproyecto.setObservaciones(&quot;PDF final aprobado tras completar las 3 fases de tutoría&quot;);</span>
+<span class="nc" id="L269">                        anteproyectoRepository.save(anteproyecto);</span>
+<span class="nc" id="L270">                    });</span>
+        }
+
+<span class="fc" id="L273">        return mapFaseConMensajes(fase);</span>
+    }
+
+    // ── Mensajes ──────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public TutoriaMensajeDTO enviarMensaje(Long faseId, Long remitenteId, String contenido, String tipo) {
+<span class="fc" id="L281">        TutoriaFase fase = tutoriaFaseRepository.findById(faseId)</span>
+<span class="pc" id="L282">                .orElseThrow(() -&gt; new RuntimeException(&quot;Fase no encontrada&quot;));</span>
+
+<span class="fc" id="L284">        Usuario remitente = usuarioRepository.findById(remitenteId)</span>
+<span class="pc" id="L285">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;));</span>
+
+<span class="pc bpc" id="L287" title="3 of 6 branches missed.">        Long tutorUserId = (fase.getTutor() != null &amp;&amp; fase.getTutor().getDocente() != null &amp;&amp; fase.getTutor().getDocente().getUsuario() != null)</span>
+<span class="pc" id="L288">                ? fase.getTutor().getDocente().getUsuario().getId() : null;</span>
+<span class="pc bpc" id="L289" title="4 of 8 branches missed.">        Long estudianteUserId = (fase.getTutor() != null &amp;&amp; fase.getTutor().getSolicitud() != null &amp;&amp; fase.getTutor().getSolicitud().getEstudiante() != null &amp;&amp; fase.getTutor().getSolicitud().getEstudiante().getUsuario() != null)</span>
+<span class="pc" id="L290">                ? fase.getTutor().getSolicitud().getEstudiante().getUsuario().getId() : null;</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        boolean esPrivilegiado = remitente.getRol() != null &amp;&amp;</span>
+<span class="pc bpc" id="L292" title="2 of 4 branches missed.">                (&quot;ADMIN&quot;.equalsIgnoreCase(remitente.getRol()) || &quot;COORDINADOR&quot;.equalsIgnoreCase(remitente.getRol()));</span>
+
+<span class="pc bpc" id="L294" title="2 of 6 branches missed.">        if (!remitenteId.equals(tutorUserId) &amp;&amp; !remitenteId.equals(estudianteUserId) &amp;&amp; !esPrivilegiado) {</span>
+<span class="fc" id="L295">            throw new RuntimeException(&quot;No autorizado para enviar mensajes en esta tutoría&quot;);</span>
+        }
+
+<span class="fc" id="L298">        TutoriaMensaje mensaje = TutoriaMensaje.builder()</span>
+<span class="fc" id="L299">                .fase(fase)</span>
+<span class="fc" id="L300">                .remitente(remitente)</span>
+<span class="fc" id="L301">                .contenido(contenido)</span>
+<span class="fc" id="L302">                .tipo(tipo)</span>
+<span class="fc" id="L303">                .leido(false)</span>
+<span class="fc" id="L304">                .build();</span>
+
+<span class="fc" id="L306">        return mapMensaje(tutoriaMensajeRepository.save(mensaje));</span>
+    }
+
+    @Override
+    @Transactional
+    public void marcarMensajesLeidos(Long faseId, Long usuarioId) {
+<span class="nc" id="L312">        List&lt;TutoriaMensaje&gt; noLeidos = tutoriaMensajeRepository</span>
+<span class="nc" id="L313">                .findByFaseIdAndLeidoFalseAndRemitenteIdNot(faseId, usuarioId);</span>
+<span class="nc" id="L314">        noLeidos.forEach(m -&gt; m.setLeido(true));</span>
+<span class="nc" id="L315">        tutoriaMensajeRepository.saveAll(noLeidos);</span>
+<span class="nc" id="L316">    }</span>
+
+    // ── PDF ───────────────────────────────────────────────────────────────────
+
+    @Override
+    public Resource obtenerPdfFase(Long faseId) {
+<span class="nc" id="L322">        TutoriaFase fase = tutoriaFaseRepository.findById(faseId)</span>
+<span class="nc" id="L323">                .orElseThrow(() -&gt; new RuntimeException(&quot;Fase no encontrada&quot;));</span>
+
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (fase.getArchivoPdfEstudiante() == null) {</span>
+<span class="nc" id="L326">            throw new RuntimeException(&quot;Esta fase no tiene PDF cargado&quot;);</span>
+        }
+
+<span class="nc" id="L329">        Path ruta = Paths.get(uploadDir,</span>
+<span class="nc" id="L330">                fase.getTutor().getId().toString(),</span>
+<span class="nc" id="L331">                &quot;fase_&quot; + fase.getNumeroFase(),</span>
+<span class="nc" id="L332">                fase.getArchivoPdfEstudiante()).normalize();</span>
+
+        try {
+<span class="nc" id="L335">            Resource resource = new UrlResource(ruta.toUri());</span>
+<span class="nc bnc" id="L336" title="All 4 branches missed.">            if (!resource.exists() || !resource.isReadable()) {</span>
+<span class="nc" id="L337">                throw new RuntimeException(&quot;No se puede leer el archivo PDF&quot;);</span>
+            }
+<span class="nc" id="L339">            return resource;</span>
+<span class="nc" id="L340">        } catch (Exception e) {</span>
+<span class="nc" id="L341">            throw new RuntimeException(&quot;Error al acceder al archivo PDF: &quot; + e.getMessage(), e);</span>
+        }
+    }
+
+    // ── Listados por usuario ──────────────────────────────────────────────────
+
+    @Override
+    public List&lt;TutoriaResumenDTO&gt; obtenerTutoriasEstudiante(Long estudianteUsuarioId) {
+<span class="nc" id="L349">        return tutorRepository.findBySolicitudEstudianteUsuarioId(estudianteUsuarioId).stream()</span>
+<span class="nc" id="L350">                .map(tutor -&gt; construirResumenParaTutor(tutor, estudianteUsuarioId))</span>
+<span class="nc" id="L351">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public List&lt;TutoriaResumenDTO&gt; obtenerTutoriasDocente(Long docenteUsuarioId) {
+<span class="nc" id="L356">        return tutorRepository.findByDocenteUsuarioId(docenteUsuarioId).stream()</span>
+<span class="nc" id="L357">                .map(tutor -&gt; construirResumenParaTutor(tutor, docenteUsuarioId))</span>
+<span class="nc" id="L358">                .collect(Collectors.toList());</span>
+    }
+
+    // ── Helpers privados ──────────────────────────────────────────────────────
+
+    private TutoriaResumenDTO construirResumenParaTutor(Tutor tutor, Long usuarioId) {
+<span class="fc" id="L364">        Long tutorId = tutor.getId();</span>
+<span class="fc" id="L365">        List&lt;TutoriaFase&gt; fases = tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(tutorId);</span>
+
+<span class="fc" id="L367">        long mensajesNoLeidos = fases.stream()</span>
+<span class="fc" id="L368">                .mapToLong(fase -&gt; tutoriaMensajeRepository</span>
+<span class="fc" id="L369">                        .countByFaseIdAndLeidoFalseAndRemitenteIdNot(fase.getId(), usuarioId))</span>
+<span class="fc" id="L370">                .sum();</span>
+
+<span class="fc" id="L372">        long fasesAprobadas = tutoriaFaseRepository.countByTutorIdAndEstado(tutorId, &quot;APROBADA&quot;);</span>
+
+<span class="fc" id="L374">        Solicitud solicitud = tutor.getSolicitud();</span>
+<span class="fc" id="L375">        String nombreEstudiante = solicitud.getEstudiante().getUsuario().getNombre()</span>
+<span class="fc" id="L376">                + &quot; &quot; + solicitud.getEstudiante().getUsuario().getApellido();</span>
+<span class="fc" id="L377">        String nombreTutor = tutor.getDocente().getUsuario().getNombre()</span>
+<span class="fc" id="L378">                + &quot; &quot; + tutor.getDocente().getUsuario().getApellido();</span>
+
+<span class="pc bpc" id="L380" title="3 of 4 branches missed.">        boolean solicitudSuspendida = solicitud.getEstado() != null &amp;&amp; &quot;SUSPENDIDA&quot;.equals(solicitud.getEstado().getCodigo());</span>
+
+<span class="fc" id="L382">        return TutoriaResumenDTO.builder()</span>
+<span class="fc" id="L383">                .tutorId(tutorId)</span>
+<span class="fc" id="L384">                .solicitudId(solicitud.getId())</span>
+<span class="fc" id="L385">                .tituloTema(solicitud.getTituloTema())</span>
+<span class="fc" id="L386">                .nombreEstudiante(nombreEstudiante)</span>
+<span class="fc" id="L387">                .nombreTutor(nombreTutor)</span>
+<span class="fc" id="L388">                .totalFases(fases.size())</span>
+<span class="fc" id="L389">                .fasesAprobadas(fasesAprobadas)</span>
+<span class="fc" id="L390">                .estadoTutoria(tutor.getEstado())</span>
+<span class="fc" id="L391">                .mensajesNoLeidos(mensajesNoLeidos)</span>
+<span class="fc" id="L392">                .solicitudSuspendida(solicitudSuspendida)</span>
+<span class="fc" id="L393">                .build();</span>
+    }
+
+    private TutoriaFaseDTO mapFaseConMensajes(TutoriaFase fase) {
+<span class="fc" id="L397">        List&lt;TutoriaMensajeDTO&gt; mensajes = tutoriaMensajeRepository</span>
+<span class="fc" id="L398">                .findByFaseIdOrderByFechaEnvioAsc(fase.getId()).stream()</span>
+<span class="fc" id="L399">                .map(this::mapMensaje)</span>
+<span class="fc" id="L400">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L402">        return TutoriaFaseDTO.builder()</span>
+<span class="fc" id="L403">                .id(fase.getId())</span>
+<span class="fc" id="L404">                .tutorId(fase.getTutor().getId())</span>
+<span class="fc" id="L405">                .numeroFase(fase.getNumeroFase())</span>
+<span class="fc" id="L406">                .estado(fase.getEstado())</span>
+<span class="fc" id="L407">                .fechaInicio(fase.getFechaInicio())</span>
+<span class="fc" id="L408">                .fechaAprobacion(fase.getFechaAprobacion())</span>
+<span class="fc" id="L409">                .archivoPdfEstudiante(fase.getArchivoPdfEstudiante())</span>
+<span class="fc" id="L410">                .tamanoPdfBytes(fase.getTamanoPdfBytes())</span>
+<span class="fc" id="L411">                .mensajes(mensajes)</span>
+<span class="fc" id="L412">                .build();</span>
+    }
+
+    private TutoriaMensajeDTO mapMensaje(TutoriaMensaje m) {
+<span class="fc" id="L416">        String nombreRemitente = m.getRemitente().getNombre() + &quot; &quot; + m.getRemitente().getApellido();</span>
+<span class="fc" id="L417">        return TutoriaMensajeDTO.builder()</span>
+<span class="fc" id="L418">                .id(m.getId())</span>
+<span class="fc" id="L419">                .faseId(m.getFase().getId())</span>
+<span class="fc" id="L420">                .remitenteId(m.getRemitente().getId())</span>
+<span class="fc" id="L421">                .nombreRemitente(nombreRemitente)</span>
+<span class="fc" id="L422">                .contenido(m.getContenido())</span>
+<span class="fc" id="L423">                .fechaEnvio(m.getFechaEnvio())</span>
+<span class="fc" id="L424">                .tipo(m.getTipo())</span>
+<span class="fc" id="L425">                .leido(m.getLeido())</span>
+<span class="fc" id="L426">                .build();</span>
+    }
+
+    private String calcularSha256YGuardar(MultipartFile archivo, Path destino) {
+        try {
+<span class="fc" id="L431">            MessageDigest digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="fc" id="L432">            try (InputStream is = archivo.getInputStream();</span>
+<span class="fc" id="L433">                 DigestInputStream dis = new DigestInputStream(is, digest)) {</span>
+<span class="fc" id="L434">                Files.copy(dis, destino, StandardCopyOption.REPLACE_EXISTING);</span>
+            }
+<span class="fc" id="L436">            return HexFormat.of().formatHex(digest.digest());</span>
+<span class="nc" id="L437">        } catch (NoSuchAlgorithmException | IOException e) {</span>
+<span class="nc" id="L438">            throw new RuntimeException(&quot;Error al calcular SHA-256 del archivo&quot;, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

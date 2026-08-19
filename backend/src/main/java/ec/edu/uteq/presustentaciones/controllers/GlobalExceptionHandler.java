@@ -5,11 +5,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * MethodArgumentNotValidException (fallo de @Valid en el body, p. ej. email vacío o
+     * password menor a 6 caracteres) no es una RuntimeException, así que sin este handler
+     * caía en el genérico de Exception y se reportaba como 500 en vez de 400 -- hallazgo real
+     * detectado al preparar los casos de "validación" de docs/postman/PFC-Collection.json
+     * (Fase 10).
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> errores = new LinkedHashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errores.put(error.getField(), error.getDefaultMessage());
+        }
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ResponseWrapper.error("Error de validación en los datos enviados", errores));
+    }
 
     /**
      * AccessDeniedException es una RuntimeException, así que sin este handler específico

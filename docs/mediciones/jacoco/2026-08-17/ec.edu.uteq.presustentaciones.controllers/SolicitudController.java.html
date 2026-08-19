@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SolicitudController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">SolicitudController.java</span></div><h1>SolicitudController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.SolicitudService;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/solicitudes&quot;)
+public class SolicitudController {
+
+    private final SolicitudService solicitudService;
+    private final UsuarioRepository usuarioRepository;
+
+<span class="nc" id="L23">    public SolicitudController(SolicitudService solicitudService, UsuarioRepository usuarioRepository) {</span>
+<span class="nc" id="L24">        this.solicitudService = solicitudService;</span>
+<span class="nc" id="L25">        this.usuarioRepository = usuarioRepository;</span>
+<span class="nc" id="L26">    }</span>
+
+    @PostMapping(&quot;/crear/{estudianteId}&quot;)
+    public Solicitud crear(@PathVariable Long estudianteId, @RequestBody Solicitud datos) {
+<span class="nc" id="L30">        return solicitudService.crearSolicitud(estudianteId, datos);</span>
+    }
+
+    /**
+     * Crear solicitud — el backend resuelve el usuario desde el JWT,
+     * ignorando el usuarioId del path para evitar inconsistencias.
+     */
+    @PostMapping(&quot;/crear-por-usuario/{usuarioId}&quot;)
+    public ResponseEntity&lt;?&gt; crearPorUsuario(@PathVariable Long usuarioId, @RequestBody Solicitud datos) {
+        try {
+            // Obtener email desde el JWT (más seguro que el id del path)
+<span class="nc" id="L41">            Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L42">            String email = auth.getName();</span>
+<span class="nc" id="L43">            Long realUsuarioId = usuarioRepository.findByEmail(email)</span>
+<span class="nc" id="L44">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado en el sistema&quot;))</span>
+<span class="nc" id="L45">                    .getId();</span>
+<span class="nc" id="L46">            return ResponseEntity.ok(solicitudService.crearSolicitudPorUsuario(realUsuarioId, datos));</span>
+<span class="nc" id="L47">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L48">            return ResponseEntity.badRequest().body(java.util.Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /**
+     * Listar MIS solicitudes — el backend obtiene el usuarioId desde el JWT,
+     * sin depender de ningún parámetro enviado por el cliente.
+     */
+    @GetMapping(&quot;/mis-solicitudes&quot;)
+    public ResponseEntity&lt;?&gt; listarMisSolicitudes() {
+        try {
+<span class="nc" id="L59">            Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L60">            String email = auth.getName(); // el subject del JWT es el email</span>
+<span class="nc" id="L61">            Long usuarioId = usuarioRepository.findByEmail(email)</span>
+<span class="nc" id="L62">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;))</span>
+<span class="nc" id="L63">                    .getId();</span>
+<span class="nc" id="L64">            return ResponseEntity.ok(solicitudService.listarPorUsuario(usuarioId));</span>
+<span class="nc" id="L65">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L66">            return ResponseEntity.ok(java.util.List.of());</span>
+        }
+    }
+
+    /** Listar solicitudes del usuario logueado (por usuarioId) — se mantiene por compatibilidad */
+    @GetMapping(&quot;/usuario/{usuarioId}&quot;)
+    public ResponseEntity&lt;?&gt; listarPorUsuario(@PathVariable Long usuarioId) {
+        try {
+<span class="nc" id="L74">            return ResponseEntity.ok(solicitudService.listarPorUsuario(usuarioId));</span>
+<span class="nc" id="L75">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L76">            return ResponseEntity.ok(java.util.List.of());</span>
+        }
+    }
+
+    @PostMapping(&quot;/enviar/{id}&quot;)
+    public Solicitud enviar(@PathVariable Long id) {
+<span class="nc" id="L82">        return solicitudService.enviarSolicitud(id);</span>
+    }
+
+    @PostMapping(&quot;/aprobar/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public Solicitud aprobar(@PathVariable Long id) {
+<span class="nc" id="L88">        return solicitudService.aprobarSolicitud(id);</span>
+    }
+
+    @PostMapping(&quot;/rechazar/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public Solicitud rechazar(@PathVariable Long id) {
+<span class="nc" id="L94">        return solicitudService.rechazarSolicitud(id);</span>
+    }
+
+    @PostMapping(&quot;/rechazar-con-observacion/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; rechazarConObservacion(
+            @PathVariable Long id,
+            @RequestBody java.util.Map&lt;String, String&gt; body) {
+        try {
+<span class="nc" id="L103">            String observacion = body.getOrDefault(&quot;observacion&quot;, &quot;&quot;);</span>
+<span class="nc" id="L104">            return ResponseEntity.ok(solicitudService.rechazarConObservacion(id, observacion));</span>
+<span class="nc" id="L105">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L106">            return ResponseEntity.badRequest().body(java.util.Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    @PostMapping(&quot;/suspender/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; suspender(
+            @PathVariable Long id,
+            @RequestBody Map&lt;String, String&gt; body) {
+        try {
+<span class="nc" id="L116">            String motivo = body.get(&quot;motivo&quot;);</span>
+<span class="nc" id="L117">            return ResponseEntity.ok(solicitudService.suspenderSolicitud(id, motivo));</span>
+<span class="nc" id="L118">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L119">            return ResponseEntity.badRequest().body(java.util.Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+
+    /** ADMIN, COORDINADOR y DOCENTE pueden ver TODAS las solicitudes */
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public List&lt;Solicitud&gt; listar() {
+<span class="nc" id="L127">        return solicitudService.listarSolicitudes();</span>
+    }
+
+    /**
+     * Versión paginada de {@link #listar()} — evita cargar miles de filas de una sola vez,
+     * que es lo que hacía colapsar la tabla de &quot;Gestionar Solicitudes&quot; en el frontend.
+     */
+    @GetMapping(&quot;/paginado&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;?&gt; listarPaginado(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size,
+            @RequestParam(required = false) String estado) {
+<span class="nc" id="L140">        Page&lt;Solicitud&gt; resultado = solicitudService.listarSolicitudesPaginado(page, size, estado);</span>
+<span class="nc" id="L141">        return ResponseEntity.ok(Map.of(</span>
+<span class="nc" id="L142">                &quot;content&quot;, resultado.getContent(),</span>
+<span class="nc" id="L143">                &quot;totalElements&quot;, resultado.getTotalElements(),</span>
+<span class="nc" id="L144">                &quot;totalPages&quot;, resultado.getTotalPages(),</span>
+<span class="nc" id="L145">                &quot;page&quot;, resultado.getNumber(),</span>
+<span class="nc" id="L146">                &quot;size&quot;, resultado.getSize()</span>
+        ));
+    }
+
+    /** Conteo de solicitudes por estado, para los contadores de las pestañas de filtro */
+    @GetMapping(&quot;/contar-por-estado&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Long&gt;&gt; contarPorEstado() {
+<span class="nc" id="L154">        return ResponseEntity.ok(solicitudService.contarPorEstado());</span>
+    }
+
+    @GetMapping(&quot;/estudiante/{estudianteId}&quot;)
+    public List&lt;Solicitud&gt; listarPorEstudiante(@PathVariable Long estudianteId) {
+<span class="nc" id="L159">        return solicitudService.listarPorEstudiante(estudianteId);</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Solicitud&gt; obtener(@PathVariable Long id) {
+<span class="nc" id="L164">        return solicitudService.obtenerPorId(id)</span>
+<span class="nc" id="L165">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L166">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

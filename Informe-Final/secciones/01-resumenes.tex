@@ -1,0 +1,61 @@
+\section*{Resumen}
+\addcontentsline{toc}{section}{Resumen}
+
+El proceso de pre-sustentación de trabajos de titulación en la Universidad Técnica Estatal de Quevedo
+(UTEQ) se gestionaba mediante trámites manuales y hojas de cálculo dispersas, sin trazabilidad
+verificable entre solicitud, jurado, cronograma, evaluación y acta. Este trabajo presenta el diseño,
+implementación y evaluación empírica de un sistema web (Spring Boot 3.2.1, Angular 21, PostgreSQL 15,
+Redis 7) que automatiza ese flujo de extremo a extremo, siguiendo la metodología Design Science Research
+de Peffers et al. El sistema implementa 12 requisitos funcionales verificados mediante 12 historias de
+usuario (formato Connextra) y 12 casos de uso (plantilla de Cockburn), con una matriz de trazabilidad
+bidireccional. La evaluación empírica combina estadística descriptiva e inferencial real: 5 corridas de
+carga con k6 (p95 de 7.4--80.9\,ms bajo 50 usuarios concurrentes), un test de Wilcoxon/Mann-Whitney con
+tamaño de efecto comparando caché fría y caliente de Redis (reducción de latencia de 13.9$\times$,
+$p < 0.001$), una auditoría de seguridad manual y automatizada contra OWASP Top~10 (find-sec-bugs, OWASP
+ZAP), y seis corridas de Lighthouse contra el build de producción. El proceso de desarrollo estuvo
+marcado por hallazgos reales que se corrigieron explícitamente en lugar de ocultarse: datos de usabilidad
+y evidencia de trazabilidad previamente fabricados fueron detectados y reemplazados por mediciones
+reales; un bug de migración de base de datos que impedía el despliegue desde cero fue identificado y
+corregido. Los resultados muestran un sistema funcional con brechas honestamente documentadas --- 5 de
+12 requisitos funcionales carecen de prueba automatizada dedicada, y la cobertura de código alcanza
+22.7\,\% --- que se declaran explícitamente como trabajo futuro en vez de maquillarse. Este informe
+documenta tanto los resultados positivos como las limitaciones reales del sistema y del proceso de
+desarrollo, priorizando la integridad de la evidencia sobre la completitud aparente.
+
+\textbf{Palabras clave:} ingeniería de requisitos; Design Science Research; evaluación empírica de
+software; seguridad de aplicaciones web; usabilidad; integridad de la investigación.
+
+\textbf{Categorías CCS (ACM Computing Classification System 2012):}
+Software and its engineering~Requirements analysis;
+Software and its engineering~Empirical software validation;
+Security and privacy~Web application security;
+Information systems~Web applications.
+
+\newpage
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+The pre-defense process for undergraduate thesis projects at Universidad Técnica Estatal de Quevedo
+(UTEQ) was managed through manual paperwork and scattered spreadsheets, with no verifiable traceability
+between requests, juries, schedules, evaluations, and minutes. This work presents the design,
+implementation, and empirical evaluation of a web system (Spring Boot 3.2.1, Angular 21, PostgreSQL 15,
+Redis 7) that automates this end-to-end workflow, following Peffers et al.'s Design Science Research
+methodology. The system implements 12 verified functional requirements through 12 user stories
+(Connextra format) and 12 use cases (Cockburn template), with a bidirectional traceability matrix.
+Empirical evaluation combines real descriptive and inferential statistics: five k6 load-testing runs
+(p95 of 7.4--80.9\,ms under 50 concurrent users), a Wilcoxon/Mann-Whitney test with effect size comparing
+cold and warm Redis cache states (13.9$\times$ latency reduction, $p < 0.001$), a manual and automated
+security audit against the OWASP Top~10 (find-sec-bugs, OWASP ZAP), and six Lighthouse runs against the
+production build. The development process was marked by real findings that were explicitly corrected
+rather than hidden: previously fabricated usability data and traceability evidence were detected and
+replaced with real measurements; a database migration bug that prevented deployment from a clean state
+was identified and fixed. Results show a functional system with honestly documented gaps --- 5 of 12
+functional requirements lack a dedicated automated test, and code coverage reaches 22.7\,\% --- which are
+explicitly declared as future work rather than papered over. This report documents both the positive
+results and the real limitations of the system and the development process, prioritizing evidence
+integrity over apparent completeness.
+
+\textbf{Keywords:} requirements engineering; Design Science Research; empirical software evaluation; web
+application security; usability; research integrity.
+\newpage
