@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CronogramaService } from '../../services/cronograma.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
@@ -19,6 +20,7 @@ export class MiHorarioComponent implements OnInit {
     constructor(
         private cronogramaService: CronogramaService,
         private authService: AuthService,
+        private notificationService: NotificationService,
         private cdr: ChangeDetectorRef
     ) {}
 
@@ -32,7 +34,11 @@ export class MiHorarioComponent implements OnInit {
         const usuarioId = this.authService.getUserId();
         this.cronogramaService.listarPorUsuario(usuarioId).subscribe({
             next: (data: any[]) => { this.cronogramas = data; this.cargando = false; this.cdr.markForCheck(); },
-            error: () => { this.cargando = false; this.cdr.markForCheck(); }
+            error: () => {
+                this.cargando = false;
+                this.notificationService.error("No se pudo cargar el horario. Intenta nuevamente.", "Error");
+                this.cdr.markForCheck();
+            }
         });
     }
 

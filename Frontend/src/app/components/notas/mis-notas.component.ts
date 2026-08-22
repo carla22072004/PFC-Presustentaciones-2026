@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EvaluacionService } from '../../services/evaluacion.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
@@ -20,6 +21,7 @@ export class MisNotasComponent implements OnInit {
     constructor(
         private evalService: EvaluacionService,
         private authService: AuthService,
+        private notificationService: NotificationService,
         private cdr: ChangeDetectorRef
     ) {}
 
@@ -33,7 +35,11 @@ export class MisNotasComponent implements OnInit {
         this.cargando = true;
         this.evalService.listarPorUsuario(this.estudianteId).subscribe({
             next: (data) => { this.evaluaciones = data; this.cargando = false; this.cdr.markForCheck(); },
-            error: () => { this.cargando = false; this.cdr.markForCheck(); }
+            error: () => {
+                this.cargando = false;
+                this.notificationService.error("No se pudieron cargar las notas. Intenta nuevamente.", "Error");
+                this.cdr.markForCheck();
+            }
         });
     }
 
