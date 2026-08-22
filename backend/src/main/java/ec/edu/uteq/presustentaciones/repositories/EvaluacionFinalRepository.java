@@ -22,4 +22,11 @@ public interface EvaluacionFinalRepository extends JpaRepository<EvaluacionFinal
 
     @Query(value = "SELECT * FROM presus.sp_calcular_promedio_evaluacion(:solicitudId)", nativeQuery = true)
     List<Object[]> calcularPromedioEvaluacionSp(@Param("solicitudId") Long solicitudId);
+
+    @Query("SELECT ef FROM EvaluacionFinal ef " +
+           "JOIN FETCH ef.solicitud s " +
+           "JOIN FETCH s.estudiante e " +
+           "JOIN FETCH e.usuario u " +
+           "LEFT JOIN FETCH ef.resultado r")
+    List<EvaluacionFinal> findAllWithRelationships();
 }

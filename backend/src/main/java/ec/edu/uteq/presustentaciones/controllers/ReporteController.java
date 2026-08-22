@@ -103,7 +103,7 @@ public class ReporteController {
     /** RF-11: PDF de estadísticas de evaluaciones */
     @GetMapping("/estadisticas/pdf")
     public ResponseEntity<byte[]> reporteEstadisticas() throws Exception {
-        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAll();
+        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAllWithRelationships();
 
         long total      = evals.size();
         long aprobados  = evals.stream().filter(e -> e.getResultado() != null && "APROBADO".equals(e.getResultado().getCodigo())).count();
@@ -173,7 +173,7 @@ public class ReporteController {
     /** RF-11: JSON de estadísticas para gráficas */
     @GetMapping("/estadisticas/json")
     public ResponseEntity<Map<String, Object>> estadisticasJson() {
-        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAll();
+        List<EvaluacionFinal> evals = evaluacionFinalRepo.findAllWithRelationships();
         long total      = evals.size();
         long aprobados  = evals.stream().filter(e -> e.getResultado() != null && "APROBADO".equals(e.getResultado().getCodigo())).count();
         long reprobados = evals.stream().filter(e -> e.getResultado() != null && "REPROBADO".equals(e.getResultado().getCodigo())).count();
