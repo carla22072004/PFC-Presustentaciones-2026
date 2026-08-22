@@ -54,11 +54,7 @@ public class ReporteController {
     /** RF-11: PDF del cronograma de pre-sustentaciones */
     @GetMapping("/cronograma/pdf")
     public ResponseEntity<byte[]> reporteCronograma() throws Exception {
-        List<Cronograma> lista = cronogramaRepo.findAll().stream()
-                .filter(c -> c.getEstado() != null && "ACTIVO".equalsIgnoreCase(c.getEstado().getCodigo()))
-                .sorted((a, b) -> a.getFechaInicio() != null && b.getFechaInicio() != null
-                        ? a.getFechaInicio().compareTo(b.getFechaInicio()) : 0)
-                .toList();
+        List<Cronograma> lista = cronogramaRepo.findReporteCronograma();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document doc = abrirDoc(baos);
