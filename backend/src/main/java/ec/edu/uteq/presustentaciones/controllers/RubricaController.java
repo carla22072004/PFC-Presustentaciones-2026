@@ -6,6 +6,7 @@ import ec.edu.uteq.presustentaciones.repositories.CriterioRubricaRepository;
 import ec.edu.uteq.presustentaciones.repositories.RubricaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,15 +34,18 @@ public class RubricaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public Rubrica crear(@RequestBody Rubrica rubrica) { return rubricaRepository.save(rubrica); }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         rubricaRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{rubricaId}/criterios")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> agregarCriterio(@PathVariable Long rubricaId,
                                               @RequestBody CriterioRubrica criterio) {
         Rubrica rubrica = rubricaRepository.findById(rubricaId)
@@ -63,6 +67,7 @@ public class RubricaController {
      *   Total máximo = 10 pts
      */
     @PostMapping("/{rubricaId}/inicializar-criterios")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> inicializarCriteriosInstitucionales(@PathVariable Long rubricaId) {
         Rubrica rubrica = rubricaRepository.findById(rubricaId)
                 .orElseThrow(() -> new RuntimeException("Rúbrica no encontrada"));

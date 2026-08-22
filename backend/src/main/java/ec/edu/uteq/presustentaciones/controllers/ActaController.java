@@ -5,6 +5,7 @@ import ec.edu.uteq.presustentaciones.services.ActaService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ActaController {
 
     /** RF-11: Genera el acta con PDF real */
     @PostMapping("/generar/{solicitudId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> generarActa(@PathVariable Long solicitudId) {
         try {
             Acta acta = actaService.generarActa(solicitudId);
@@ -39,6 +41,7 @@ public class ActaController {
      * rol: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR
      */
     @PostMapping("/firmar/{actaId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
     public ResponseEntity<?> firmarActa(
             @PathVariable Long actaId,
             @RequestParam String rol) {

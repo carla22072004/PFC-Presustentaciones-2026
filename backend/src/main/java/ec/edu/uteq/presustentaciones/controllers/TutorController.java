@@ -23,6 +23,7 @@ public class TutorController {
     }
 
     @PostMapping("/asignar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<Tutor> asignar(@RequestParam Long solicitudId,
                                          @RequestParam Long docenteId) {
         try {
@@ -45,6 +46,7 @@ public class TutorController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         tutorService.eliminarTutor(id);
         return ResponseEntity.noContent().build();
