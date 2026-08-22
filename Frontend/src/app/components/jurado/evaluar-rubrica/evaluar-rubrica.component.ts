@@ -90,6 +90,10 @@ export class EvaluarRubricaComponent implements OnInit {
                     this.rubrica = rubricas[0];
                     this.cdr.markForCheck();
                 }
+            },
+            error: () => {
+                this.notification.error("No se pudo cargar la rúbrica.", "Error");
+                this.cdr.markForCheck();
             }
         });
     }
@@ -122,6 +126,10 @@ export class EvaluarRubricaComponent implements OnInit {
         this.juryEvalService.obtenerTribunal(this.solicitudId).subscribe({
             next: (evals) => {
                 this.evaluacionesTribunal = evals;
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                this.notification.error("No se pudo cargar la información del tribunal.", "Error");
                 this.cdr.markForCheck();
             }
         });

@@ -38,7 +38,11 @@ export class MisAsignacionesComponent implements OnInit {
         const userId = this.authService.getUserId();
         this.docenteService.obtenerPorUsuario(userId).subscribe({
             next: (docente) => { this.docenteId = docente.id; this.cargarAsignaciones(docente.id); this.cdr.markForCheck(); },
-            error: () => { this.cargando = false; this.cdr.markForCheck(); }
+            error: () => {
+                this.cargando = false;
+                this.notificationService.error("No se pudo cargar la información del docente.", "Error");
+                this.cdr.markForCheck();
+            }
         });
     }
 
@@ -50,7 +54,11 @@ export class MisAsignacionesComponent implements OnInit {
                 this.cargando = false;
                 this.cdr.markForCheck();
             },
-            error: () => { this.cargando = false; this.cdr.markForCheck(); }
+            error: () => {
+                this.cargando = false;
+                this.notificationService.error("No se pudieron cargar las asignaciones de jurado.", "Error");
+                this.cdr.markForCheck();
+            }
         });
 
         this.juryService.listarTutoriasPorDocente(docenteId).subscribe({
