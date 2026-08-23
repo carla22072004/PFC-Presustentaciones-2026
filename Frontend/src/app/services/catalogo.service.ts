@@ -29,6 +29,54 @@ export interface AreaTematica {
     lineaInvestigacion: LineaInvestigacion;
 }
 
+export interface Facultad {
+    id: number;
+    codigo: string;
+    nombre: string;
+}
+
+export interface Carrera {
+    id: number;
+    codigo: string;
+    nombre: string;
+    modalidadEstudio?: string;
+    facultad?: Facultad;
+}
+
+export interface PeriodoAcademico {
+    id: number;
+    codigo: string;
+    nombre: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    activo: boolean;
+}
+
+export interface GuardarFacultadRequest {
+    codigo: string;
+    nombre: string;
+}
+
+export interface GuardarCarreraRequest {
+    codigo: string;
+    nombre: string;
+    facultadId: number;
+    modalidadEstudio?: string;
+}
+
+export interface GuardarModalidadRequest {
+    codigo: string;
+    nombre: string;
+}
+
+export interface GuardarPeriodoRequest {
+    codigo: string;
+    nombre: string;
+    fechaInicio: string;
+    fechaFin: string;
+    activo: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogoService {
     private apiUrl = 'http://localhost:8080/api/catalogos';
@@ -51,5 +99,67 @@ export class CatalogoService {
             ? `${this.apiUrl}/areas-tematicas?lineaId=${lineaId}`
             : `${this.apiUrl}/areas-tematicas`;
         return this.http.get<AreaTematica[]>(url);
+    }
+
+    listarCarreras(): Observable<Carrera[]> {
+        return this.http.get<Carrera[]>(`${this.apiUrl}/carreras`);
+    }
+
+    listarPeriodosAcademicos(): Observable<PeriodoAcademico[]> {
+        return this.http.get<PeriodoAcademico[]>(`${this.apiUrl}/periodos-academicos`);
+    }
+
+    // ── Gestión de Carreras (CRUD) ─────────────────────────────────────
+
+    listarFacultades(): Observable<Facultad[]> {
+        return this.http.get<Facultad[]>(`${this.apiUrl}/facultades`);
+    }
+
+    crearFacultad(req: GuardarFacultadRequest): Observable<Facultad> {
+        return this.http.post<Facultad>(`${this.apiUrl}/facultades`, req);
+    }
+
+    actualizarFacultad(id: number, req: GuardarFacultadRequest): Observable<Facultad> {
+        return this.http.put<Facultad>(`${this.apiUrl}/facultades/${id}`, req);
+    }
+
+    eliminarFacultad(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/facultades/${id}`);
+    }
+
+    crearCarrera(req: GuardarCarreraRequest): Observable<Carrera> {
+        return this.http.post<Carrera>(`${this.apiUrl}/carreras`, req);
+    }
+
+    actualizarCarrera(id: number, req: Partial<GuardarCarreraRequest>): Observable<Carrera> {
+        return this.http.put<Carrera>(`${this.apiUrl}/carreras/${id}`, req);
+    }
+
+    eliminarCarrera(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/carreras/${id}`);
+    }
+
+    crearModalidad(req: GuardarModalidadRequest): Observable<ModalidadTitulacion> {
+        return this.http.post<ModalidadTitulacion>(`${this.apiUrl}/modalidades`, req);
+    }
+
+    actualizarModalidad(id: number, req: GuardarModalidadRequest): Observable<ModalidadTitulacion> {
+        return this.http.put<ModalidadTitulacion>(`${this.apiUrl}/modalidades/${id}`, req);
+    }
+
+    eliminarModalidad(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/modalidades/${id}`);
+    }
+
+    crearPeriodo(req: GuardarPeriodoRequest): Observable<PeriodoAcademico> {
+        return this.http.post<PeriodoAcademico>(`${this.apiUrl}/periodos-academicos`, req);
+    }
+
+    actualizarPeriodo(id: number, req: Partial<GuardarPeriodoRequest>): Observable<PeriodoAcademico> {
+        return this.http.put<PeriodoAcademico>(`${this.apiUrl}/periodos-academicos/${id}`, req);
+    }
+
+    eliminarPeriodo(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/periodos-academicos/${id}`);
     }
 }

@@ -1,0 +1,207 @@
+<div class="crr-wrapper">
+    <div class="crr-header">
+        <div>
+            <h2 class="crr-title"><i class="bi bi-mortarboard me-2"></i>Gestión de Carreras</h2>
+            <p class="crr-subtitle">Administrar facultades, carreras, modalidades de titulación y períodos académicos</p>
+        </div>
+        <button class="crr-btn crr-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+
+    <div class="crr-tabs">
+        <button class="crr-tab" [class.crr-tab-activa]="tabActiva === 'facultad'" (click)="cambiarTab('facultad')">
+            <i class="bi bi-building me-1"></i>Facultades ({{ facultades.length }})
+        </button>
+        <button class="crr-tab" [class.crr-tab-activa]="tabActiva === 'carrera'" (click)="cambiarTab('carrera')">
+            <i class="bi bi-mortarboard-fill me-1"></i>Carreras ({{ carreras.length }})
+        </button>
+        <button class="crr-tab" [class.crr-tab-activa]="tabActiva === 'modalidad'" (click)="cambiarTab('modalidad')">
+            <i class="bi bi-award me-1"></i>Modalidades ({{ modalidades.length }})
+        </button>
+        <button class="crr-tab" [class.crr-tab-activa]="tabActiva === 'periodo'" (click)="cambiarTab('periodo')">
+            <i class="bi bi-calendar-range me-1"></i>Períodos ({{ periodos.length }})
+        </button>
+    </div>
+
+    <div class="crr-loading" *ngIf="cargando"><div class="crr-spinner"></div><p>Cargando catálogos...</p></div>
+
+    <div class="crr-panel" *ngIf="!cargando">
+
+        <!-- Facultades -->
+        <div *ngIf="tabActiva === 'facultad'">
+            <div class="crr-panel-actions">
+                <button class="crr-btn crr-btn-nuevo" (click)="abrirNuevo('facultad')"><i class="bi bi-plus-lg me-1"></i>Nueva Facultad</button>
+            </div>
+            <table class="crr-tabla">
+                <thead><tr><th>Código</th><th>Nombre</th><th class="crr-text-center">Acciones</th></tr></thead>
+                <tbody>
+                    <tr *ngFor="let f of facultades">
+                        <td><span class="crr-codigo">{{ f.codigo }}</span></td>
+                        <td>{{ f.nombre }}</td>
+                        <td class="crr-text-center">
+                            <button class="crr-icon-btn" title="Editar" (click)="abrirEditar('facultad', f)"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="crr-icon-btn crr-icon-danger" title="Eliminar" (click)="eliminar('facultad', f)"><i class="bi bi-trash3-fill"></i></button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="facultades.length === 0"><td colspan="3" class="crr-vacio">No hay facultades registradas.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Carreras -->
+        <div *ngIf="tabActiva === 'carrera'">
+            <div class="crr-panel-actions">
+                <button class="crr-btn crr-btn-nuevo" [disabled]="facultades.length === 0" (click)="abrirNuevo('carrera')" [title]="facultades.length === 0 ? 'Registra primero una facultad' : ''">
+                    <i class="bi bi-plus-lg me-1"></i>Nueva Carrera
+                </button>
+            </div>
+            <table class="crr-tabla">
+                <thead><tr><th>Código</th><th>Nombre</th><th>Facultad</th><th>Modalidad de estudio</th><th class="crr-text-center">Acciones</th></tr></thead>
+                <tbody>
+                    <tr *ngFor="let c of carreras">
+                        <td><span class="crr-codigo">{{ c.codigo }}</span></td>
+                        <td>{{ c.nombre }}</td>
+                        <td>{{ c.facultad?.nombre || '—' }}</td>
+                        <td>{{ c.modalidadEstudio || '—' }}</td>
+                        <td class="crr-text-center">
+                            <button class="crr-icon-btn" title="Editar" (click)="abrirEditar('carrera', c)"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="crr-icon-btn crr-icon-danger" title="Eliminar" (click)="eliminar('carrera', c)"><i class="bi bi-trash3-fill"></i></button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="carreras.length === 0"><td colspan="5" class="crr-vacio">No hay carreras registradas.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modalidades -->
+        <div *ngIf="tabActiva === 'modalidad'">
+            <div class="crr-panel-actions">
+                <button class="crr-btn crr-btn-nuevo" (click)="abrirNuevo('modalidad')"><i class="bi bi-plus-lg me-1"></i>Nueva Modalidad</button>
+            </div>
+            <table class="crr-tabla">
+                <thead><tr><th>Código</th><th>Nombre</th><th class="crr-text-center">Acciones</th></tr></thead>
+                <tbody>
+                    <tr *ngFor="let m of modalidades">
+                        <td><span class="crr-codigo">{{ m.codigo }}</span></td>
+                        <td>{{ m.nombre }}</td>
+                        <td class="crr-text-center">
+                            <button class="crr-icon-btn" title="Editar" (click)="abrirEditar('modalidad', m)"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="crr-icon-btn crr-icon-danger" title="Eliminar" (click)="eliminar('modalidad', m)"><i class="bi bi-trash3-fill"></i></button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="modalidades.length === 0"><td colspan="3" class="crr-vacio">No hay modalidades registradas.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Periodos académicos -->
+        <div *ngIf="tabActiva === 'periodo'">
+            <div class="crr-panel-actions">
+                <button class="crr-btn crr-btn-nuevo" (click)="abrirNuevo('periodo')"><i class="bi bi-plus-lg me-1"></i>Nuevo Período</button>
+            </div>
+            <table class="crr-tabla">
+                <thead><tr><th>Código</th><th>Nombre</th><th>Inicio</th><th>Fin</th><th>Estado</th><th class="crr-text-center">Acciones</th></tr></thead>
+                <tbody>
+                    <tr *ngFor="let p of periodos">
+                        <td><span class="crr-codigo">{{ p.codigo }}</span></td>
+                        <td>{{ p.nombre }}</td>
+                        <td>{{ p.fechaInicio }}</td>
+                        <td>{{ p.fechaFin }}</td>
+                        <td>
+                            <span class="crr-badge" [class.crr-badge-activo]="p.activo" [class.crr-badge-inactivo]="!p.activo">
+                                {{ p.activo ? 'Activo' : 'Inactivo' }}
+                            </span>
+                        </td>
+                        <td class="crr-text-center">
+                            <button class="crr-icon-btn" title="Editar" (click)="abrirEditar('periodo', p)"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="crr-icon-btn crr-icon-danger" title="Eliminar" (click)="eliminar('periodo', p)"><i class="bi bi-trash3-fill"></i></button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="periodos.length === 0"><td colspan="6" class="crr-vacio">No hay períodos académicos registrados.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal genérico -->
+    <div class="crr-modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
+        <div class="crr-modal" (click)="$event.stopPropagation()">
+            <h3>
+                <i class="bi" [ngClass]="modalModo === 'crear' ? 'bi-plus-lg' : 'bi-pencil-fill'"></i>
+                {{ modalModo === 'crear' ? 'Nueva' : 'Editar' }}
+                {{ modalTipo === 'facultad' ? 'Facultad' : modalTipo === 'carrera' ? 'Carrera' : modalTipo === 'modalidad' ? 'Modalidad de Titulación' : 'Período Académico' }}
+            </h3>
+
+            <ng-container *ngIf="modalTipo === 'facultad'">
+                <div class="crr-form-grupo">
+                    <label>Código</label>
+                    <input type="text" [(ngModel)]="formFacultad.codigo" placeholder="Ej: FCS" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Nombre</label>
+                    <input type="text" [(ngModel)]="formFacultad.nombre" placeholder="Ej: Facultad de Ciencias de la Salud" />
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="modalTipo === 'carrera'">
+                <div class="crr-form-grupo">
+                    <label>Código</label>
+                    <input type="text" [(ngModel)]="formCarrera.codigo" placeholder="Ej: ENF" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Nombre</label>
+                    <input type="text" [(ngModel)]="formCarrera.nombre" placeholder="Ej: Enfermería" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Facultad</label>
+                    <select [(ngModel)]="formCarrera.facultadId">
+                        <option *ngFor="let f of facultades" [ngValue]="f.id">{{ f.nombre }}</option>
+                    </select>
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Modalidad de estudio</label>
+                    <input type="text" [(ngModel)]="formCarrera.modalidadEstudio" placeholder="Ej: Presencial" />
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="modalTipo === 'modalidad'">
+                <div class="crr-form-grupo">
+                    <label>Código</label>
+                    <input type="text" [(ngModel)]="formModalidad.codigo" placeholder="Ej: TESIS" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Nombre</label>
+                    <input type="text" [(ngModel)]="formModalidad.nombre" placeholder="Ej: Tesis de Grado" />
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="modalTipo === 'periodo'">
+                <div class="crr-form-grupo">
+                    <label>Código</label>
+                    <input type="text" [(ngModel)]="formPeriodo.codigo" placeholder="Ej: PA-2026-1" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Nombre</label>
+                    <input type="text" [(ngModel)]="formPeriodo.nombre" placeholder="Ej: Periodo Académico 2026-1" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Fecha de inicio</label>
+                    <input type="date" [(ngModel)]="formPeriodo.fechaInicio" />
+                </div>
+                <div class="crr-form-grupo">
+                    <label>Fecha de fin</label>
+                    <input type="date" [(ngModel)]="formPeriodo.fechaFin" />
+                </div>
+                <div class="crr-form-grupo crr-form-check">
+                    <label><input type="checkbox" [(ngModel)]="formPeriodo.activo" /> Período activo</label>
+                </div>
+            </ng-container>
+
+            <div class="crr-modal-acciones">
+                <button class="crr-btn crr-btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+                <button class="crr-btn crr-btn-nuevo" [disabled]="guardando" (click)="guardar()">
+                    {{ guardando ? 'Guardando...' : 'Guardar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
