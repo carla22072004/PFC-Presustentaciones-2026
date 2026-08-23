@@ -143,8 +143,8 @@ public class CronogramaServiceImpl implements CronogramaService {
         List<String> rolesAsignados = juradoRepository.findBySolicitudId(solicitudId)
                 .stream().map(Jurado::getRol).toList();
         boolean tribunalCompleto = rolesAsignados.contains("PRESIDENTE")
-                && rolesAsignados.contains("VOCAL")
-                && rolesAsignados.contains("SECRETARIO");
+                && rolesAsignados.contains("VOCAL_1")
+                && rolesAsignados.contains("VOCAL_2");
         if (!tribunalCompleto) {
             throw new RuntimeException(
                     "No se puede programar la presentación: el tribunal no está completo. " +
