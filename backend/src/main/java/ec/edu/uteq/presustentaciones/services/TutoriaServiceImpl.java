@@ -39,6 +39,7 @@ public class TutoriaServiceImpl implements TutoriaService {
     private final TutoriaMensajeRepository tutoriaMensajeRepository;
     private final UsuarioRepository usuarioRepository;
     private final AnteproyectoRepository anteproyectoRepository;
+    private final NotificacionService notificacionService;
 
     @Value("${app.upload.dir.tutorias:uploads/tutorias}")
     private String uploadDir;
@@ -50,12 +51,14 @@ public class TutoriaServiceImpl implements TutoriaService {
                               TutoriaFaseRepository tutoriaFaseRepository,
                               TutoriaMensajeRepository tutoriaMensajeRepository,
                               UsuarioRepository usuarioRepository,
-                              AnteproyectoRepository anteproyectoRepository) {
+                              AnteproyectoRepository anteproyectoRepository,
+                              NotificacionService notificacionService) {
         this.tutorRepository = tutorRepository;
         this.tutoriaFaseRepository = tutoriaFaseRepository;
         this.tutoriaMensajeRepository = tutoriaMensajeRepository;
         this.usuarioRepository = usuarioRepository;
         this.anteproyectoRepository = anteproyectoRepository;
+        this.notificacionService = notificacionService;
     }
 
     // ── Resumen ───────────────────────────────────────────────────────────────
@@ -231,6 +234,14 @@ public class TutoriaServiceImpl implements TutoriaService {
                 .leido(false)
                 .build();
         tutoriaMensajeRepository.save(mensajeAprobacion);
+
+        try {
+            Long estudianteUsuarioId = fase.getTutor().getSolicitud().getEstudiante().getUsuario().getId();
+            notificacionService.crearNotificacion(estudianteUsuarioId,
+                    String.format("Tu tutor aprobó la fase %d de tutoría.", fase.getNumeroFase()));
+        } catch (Exception e) {
+            log.warn("No se pudo notificar la aprobación de fase {}: {}", fase.getId(), e.getMessage());
+        }
 
         // Si las 3 fases están APROBADAS, marcar tutor como COMPLETADA y actualizar el Anteproyecto
         Long tutorId = fase.getTutor().getId();

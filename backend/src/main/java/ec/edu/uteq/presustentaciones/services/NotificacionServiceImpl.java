@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -100,9 +99,8 @@ public class NotificacionServiceImpl implements NotificacionService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void marcarTodasLeidas(Long usuarioId) {
-        List<Notificacion> pendientes = notificacionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId);
-        pendientes.forEach(n -> n.setLeida(true));
-        notificacionRepository.saveAll(pendientes);
+        notificacionRepository.marcarTodasLeidasPorUsuario(usuarioId);
     }
 }

@@ -12,8 +12,12 @@ export class NotificacionService {
 
     constructor(private http: HttpClient) {}
 
-    listarPorUsuario(id: number): Observable<any[]> {
-        return this.http.get<any[]>(`${this.api}/usuario/${id}`);
+    listarPorUsuario(id: number, page: number = 0, size: number = 20): Observable<{
+        content: any[]; totalElements: number; totalPages: number; number: number; size: number;
+    }> {
+        return this.http.get<{ content: any[]; totalElements: number; totalPages: number; number: number; size: number; }>(
+            `${this.api}/usuario/${id}?page=${page}&size=${size}`
+        );
     }
 
     contarNoLeidas(id: number): Observable<{total: number}> {

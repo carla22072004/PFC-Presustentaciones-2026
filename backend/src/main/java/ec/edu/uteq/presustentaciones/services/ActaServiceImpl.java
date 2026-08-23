@@ -51,6 +51,7 @@ public class ActaServiceImpl implements ActaService {
     private final JuradoRepository juradoRepository;
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
     private final jakarta.persistence.EntityManager entityManager;
+    private final NotificacionService notificacionService;
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -119,16 +120,31 @@ public class ActaServiceImpl implements ActaService {
         // en memoria por el refresh() de arriba; solo falta recalcular el flag agregado.
         acta.actualizarEstadoFirma();
 
+        try {
+            Long estudianteUsuarioId = acta.getSolicitud().getEstudiante().getUsuario().getId();
+            notificacionService.crearNotificacion(estudianteUsuarioId,
+                    String.format("El %s firmó el acta de tu pre-sustentación.", rolNormalizado));
+        } catch (Exception e) {
+            log.warn("No se pudo notificar la firma del acta {} (rol {}): {}", actaId, rolNormalizado, e.getMessage());
+        }
+
         // Si el acta quedó completamente firmada, cambiar estado a COMPLETADA y regenerar PDF
         if (acta.isFirmada()) {
             Solicitud solicitud = acta.getSolicitud();
-            
+
             ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCompletada = estadoSolicitudRepository.findByCodigo("COMPLETADA")
                     .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
                             .codigo("COMPLETADA").nombre("Completada").build()));
             solicitud.setEstado(estadoCompletada);
             solicitudRepository.save(solicitud);
             log.info("Solicitud {} completada - todas las firmas del acta han sido aplicadas", solicitud.getId());
+
+            try {
+                notificacionService.crearNotificacion(solicitud.getEstudiante().getUsuario().getId(),
+                        "¡Tu acta de pre-sustentación fue firmada por todo el tribunal! El proceso ha finalizado.");
+            } catch (Exception e) {
+                log.warn("No se pudo notificar la finalización del acta {}: {}", actaId, e.getMessage());
+            }
 
             if (acta.getArchivoPdf() != null) {
                 Optional<EvaluacionFinal> evalOpt = evaluacionRepository.findBySolicitudId(solicitud.getId());
