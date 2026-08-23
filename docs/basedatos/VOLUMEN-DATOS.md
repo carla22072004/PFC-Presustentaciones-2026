@@ -1,32 +1,36 @@
 # VOLUMEN-DATOS.md — Volumen de datos (requisito: mínimo 1,000,000 de registros)
 
-## Estado (verificado 2026-08-21, contra el Postgres de desarrollo real, contenedor `amz-postgres` / BD `BdPresustentaciones`)
+## Estado (verificado 2026-08-23, contra el Postgres de desarrollo real, contenedor `amz-postgres` / BD `BdPresustentaciones`)
 
-**Total: 1,010,242 registros** en el esquema `presus`, distribuidos entre 42 tablas.
+**Total: 1,003,344 registros** en el esquema `presus`, distribuidos entre 41 tablas.
+
+Generado por [`scripts/generar-volumen-datos.sql`](../../scripts/generar-volumen-datos.sql) — ver ese archivo para la
+lógica de distribución (respeta las FKs y el embudo real del dominio: `solicitud` → `tutores` → `anteproyectos` →
+`cronograma` → `miembros_tribunal`/`evaluadores` → evaluaciones → `actas`). El volumen anterior (1,010,242 registros,
+17-21 ago 2026) se perdió el 22 ago 2026 al recrear el volumen de Docker por un problema de contraseña de Postgres
+(ver `docs/observaciones/INFORME-ERRORES-2026-08-22.md`) y **no tenía script de generación versionado** — no era
+reproducible, así que esta cifra reemplaza a la anterior en vez de intentar igualarla exactamente.
 
 Conteo exacto por tabla (no estimado — `SELECT count(*)` real sobre cada tabla):
 
 | Tabla | Filas | Tabla | Filas |
 |---|---:|---|---:|
 | tutoria_mensajes | 172,489 | evaluadores | 30,803 |
-| notificaciones | 105,131 | tutores | 30,801 |
+| notificaciones | 145,000 | tutores | 30,801 |
 | disponibilidad_sala | 95,040 | anteproyectos | 26,401 |
-| evaluaciones_criterio | 92,418 | cronograma | 24,201 |
+| evaluaciones_criterio | 92,409 | cronograma | 24,201 |
 | historial_estados_solicitud | 52,806 | evaluaciones_finales | 15,401 |
 | usuarios | 51,435 | evaluaciones | 15,400 |
 | tutoria_fases | 49,283 | actas | 10,780 |
 | miembros_tribunal | 46,203 | docente | 9,807 |
-| jurados* | 46,200 | historial_cronograma | 3,630 |
-| evaluaciones_jurado | 46,200 | areas_tematicas | 400 |
+| evaluaciones_jurado | 46,203 | historial_cronograma | 3,630 |
 | solicitud | 44,002 | criterios_rubrica | 120 |
-| estudiante | 41,001 | lineas_investigacion | 80 |
-| (resto: catálogos — carreras, sala, convocatorias, rubricas, estados_solicitud, periodos_academicos, facultades, bloques_horarios, roles_usuario, jornadas, etc.) | ~320 | | |
+| estudiante | 41,001 | (resto: catálogos — rubricas, sala, convocatorias, bloques_horarios, estados_solicitud, periodos_academicos, roles_jurado, etc.) | ~200 |
 
-\* `jurados` es una tabla remanente de un esquema anterior a la migración a
-`miembros_tribunal` (ver `docs/basedatos/CATALOGO-SP.md`, corrección del
-14-18 ago 2026). El código actual ya no la usa — no afecta el conteo del
-requisito, pero conviene poder explicarla si el jurado evaluador la nota al
-inspeccionar el modelo.
+**Nota sobre la tabla `jurados`:** la versión anterior de este documento la incluía (46,200 filas) como remanente de
+un esquema previo a la migración a `miembros_tribunal`. Esa tabla **ya no existe** en `V1__schema_inicial.sql` — se
+eliminó en una limpieza de esquema posterior. El volumen que le correspondía se compensó aumentando `notificaciones`
+(105,131 → 145,000) en la regeneración actual.
 
 ## Coherencia de la distribución
 
