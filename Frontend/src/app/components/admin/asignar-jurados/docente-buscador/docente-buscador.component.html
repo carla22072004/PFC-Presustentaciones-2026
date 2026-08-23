@@ -1,0 +1,26 @@
+<div class="db-wrapper">
+    <input
+        class="form-select db-input"
+        type="text"
+        [placeholder]="placeholder"
+        [disabled]="disabled"
+        [(ngModel)]="query"
+        (ngModelChange)="onInput()"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        autocomplete="off" />
+
+    <div class="db-dropdown" *ngIf="mostrarLista">
+        <div class="db-hint" *ngIf="query.trim().length < 2">Escribe al menos 2 letras para buscar...</div>
+        <div class="db-hint" *ngIf="query.trim().length >= 2 && cargando">Buscando...</div>
+        <div class="db-hint" *ngIf="query.trim().length >= 2 && !cargando && resultados.length === 0">
+            Sin coincidencias.
+        </div>
+        <div class="db-opcion" *ngFor="let d of resultados" (mousedown)="elegir(d)">
+            <span class="db-nombre">{{ nombreCompleto(d) }}</span>
+            <span class="db-detalle">
+                <ng-container *ngIf="d.areaEspecialidad">{{ d.areaEspecialidad }} — </ng-container>{{ d.cargaHorariaSemanal }}h
+            </span>
+        </div>
+    </div>
+</div>

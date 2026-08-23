@@ -108,14 +108,12 @@
 
         <div class="form-group">
           <label>Docente</label>
-          <select formControlName="docenteId" class="form-select" [attr.disabled]="!tutoriaCompletada ? '' : null">
-            <option value="">— Seleccione docente —</option>
-            <option *ngFor="let d of docentesDisponiblesParaJurado" [value]="d.id">
-              {{ getNombreDocente2(d) }}
-              <ng-container *ngIf="d.areaEspecialidad"> — {{ d.areaEspecialidad }}</ng-container>
-              ({{ d.cargaHorariaSemanal }}h)
-            </option>
-          </select>
+          <app-docente-buscador #buscadorJurado
+              placeholder="Buscar docente por nombre..."
+              [disabled]="!tutoriaCompletada"
+              [excludeIds]="idsExcluidosJurado"
+              (seleccionado)="onDocenteJuradoSeleccionado($event)">
+          </app-docente-buscador>
         </div>
 
         <button type="submit" class="btn-primary"
@@ -132,14 +130,11 @@
 
         <div class="form-group">
           <label>Docente tutor</label>
-          <select formControlName="docenteId" class="form-select">
-            <option value="">— Seleccione tutor —</option>
-            <option *ngFor="let d of docentesDisponiblesParaTutor" [value]="d.id">
-              {{ getNombreDocente2(d) }}
-              <ng-container *ngIf="d.areaEspecialidad"> — {{ d.areaEspecialidad }}</ng-container>
-              ({{ d.cargaHorariaSemanal }}h)
-            </option>
-          </select>
+          <app-docente-buscador #buscadorTutor
+              placeholder="Buscar docente por nombre..."
+              [excludeIds]="idsExcluidosTutor"
+              (seleccionado)="onDocenteTutorSeleccionado($event)">
+          </app-docente-buscador>
         </div>
 
         <button type="submit" class="btn-secondary"
@@ -162,10 +157,10 @@
               <span class="s-esp">{{ d.areaEspecialidad || 'General' }}</span>
             </div>
             <div class="s-actions">
-              <button class="btn-sug" (click)="seleccionarParaJurado(d.id)" title="Seleccionar como jurado">
+              <button class="btn-sug" (click)="seleccionarParaJurado(d)" title="Seleccionar como jurado">
                 <i class="bi bi-person-badge"></i> Jurado
               </button>
-              <button class="btn-sug btn-sug-tutor" (click)="seleccionarParaTutor(d.id)" title="Seleccionar como tutor">
+              <button class="btn-sug btn-sug-tutor" (click)="seleccionarParaTutor(d)" title="Seleccionar como tutor">
                 <i class="bi bi-person-check"></i> Tutor
               </button>
             </div>

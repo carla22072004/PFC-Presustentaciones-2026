@@ -25,10 +25,14 @@ public class DocenteController {
         return docenteRepository.findAll();
     }
 
-    /** Versión paginada -- misma convención que /api/v1/solicitudes/paginado y /api/v1/usuarios/paginado. */
+    /**
+     * Versión paginada -- misma convención que /api/v1/solicitudes/paginado y
+     * /api/v1/usuarios/paginado. ERR-02: agrega búsqueda de texto libre ("q") para
+     * alimentar un combobox con typeahead en vez de listar los 9,807 docentes de una vez.
+     */
     @GetMapping("/paginado")
-    public Page<Docente> listarPaginado(Pageable pageable) {
-        return docenteRepository.findAll(pageable);
+    public Page<Docente> listarPaginado(@RequestParam(required = false) String q, Pageable pageable) {
+        return docenteRepository.buscarPaginado(q, pageable);
     }
 
     @GetMapping("/disponibles")

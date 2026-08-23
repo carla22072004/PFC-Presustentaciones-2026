@@ -1,0 +1,29 @@
+.db-wrapper { position: relative; width: 100%; }
+.db-input { width: 100%; box-sizing: border-box; }
+
+.db-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1.5px solid #d0d8e4;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+}
+
+.db-hint { padding: 10px 12px; font-size: 0.82rem; color: #94a3b8; }
+
+.db-opcion { padding: 8px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.db-opcion:hover { background: #f1f5f9; }
+.db-nombre { font-size: 0.88rem; font-weight: 600; color: #1e293b; }
+.db-detalle { font-size: 0.75rem; color: #64748b; }
+
+body.dark-mode .db-dropdown { background: #161b22 !important; border-color: #30363d !important; }
+body.dark-mode .db-opcion:hover { background: #21262d !important; }
+body.dark-mode .db-nombre { color: #e6edf3 !important; }
+body.dark-mode .db-hint,
+body.dark-mode .db-detalle { color: #8b949e !important; }

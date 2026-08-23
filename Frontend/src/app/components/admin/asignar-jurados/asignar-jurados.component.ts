@@ -1,19 +1,19 @@
-import { Component, ViewEncapsulation, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { JuradoService } from '../../../services/jurado.service';
-import { DocenteService } from '../../../services/docente.service';
 import { SolicitudService } from '../../../services/solicitud.service';
 import { NotificationService } from '../../../services/notification.service';
 import { TutoriaService } from '../../../services/tutoria.service';
 import { AuthService } from '../../../services/auth.service';
+import { DocenteBuscadorComponent } from './docente-buscador/docente-buscador.component';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
     selector: 'app-asignar-jurados',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule],
+    imports: [CommonModule, ReactiveFormsModule, RouterModule, DocenteBuscadorComponent],
     templateUrl: './asignar-jurados.component.html',
     styleUrls: ['./asignar-jurados.component.css']
 })
@@ -23,7 +23,6 @@ export class AsignarJuradosComponent implements OnInit {
     jurados: any[] = [];
     tutor: any = null;
     docentesSugeridos: any[] = [];
-    todosDocentes: any[] = [];
     cargando = true;
     procesando = false;
     tutoriaCompletada: boolean | null = null;
@@ -32,6 +31,9 @@ export class AsignarJuradosComponent implements OnInit {
 
     formJurado!: FormGroup;
     formTutor!: FormGroup;
+
+    @ViewChild('buscadorJurado') buscadorJuradoRef?: DocenteBuscadorComponent;
+    @ViewChild('buscadorTutor') buscadorTutorRef?: DocenteBuscadorComponent;
 
     readonly ROLES = [
         { value: 'PRESIDENTE', label: 'Presidente del Tribunal' },
@@ -44,7 +46,6 @@ export class AsignarJuradosComponent implements OnInit {
         private router: Router,
         private fb: FormBuilder,
         private juradoService: JuradoService,
-        private docenteService: DocenteService,
         private solicitudService: SolicitudService,
         private notification: NotificationService,
         private tutoriaService: TutoriaService,
@@ -71,13 +72,10 @@ export class AsignarJuradosComponent implements OnInit {
             next: (s) => {
                 this.solicitud = s;
                 this.verificarTutoria(this.solicitudId);
+                this.cargando = false;
                 this.cdr.markForCheck();
             },
-            error: () => { this.tutoriaCompletada = false; this.cdr.markForCheck(); }
-        });
-        this.docenteService.listar().subscribe({
-            next: (d) => { this.todosDocentes = d; this.cargando = false; this.cdr.markForCheck(); },
-            error: () => { this.cargando = false; this.cdr.markForCheck(); }
+            error: () => { this.tutoriaCompletada = false; this.cargando = false; this.cdr.markForCheck(); }
         });
         this.cargarJurados();
         this.cargarSugerencias();
@@ -138,14 +136,15 @@ export class AsignarJuradosComponent implements OnInit {
         });
     }
 
-    get docentesDisponiblesParaJurado(): any[] {
-        const asignadosIds = this.jurados.map(j => j.docente?.id);
-        return this.todosDocentes.filter(d => !asignadosIds.includes(d.id));
+    /** IDs a excluir de los resultados del buscador de jurado (ya asignados a esta solicitud) */
+    get idsExcluidosJurado(): number[] {
+        return this.jurados.map(j => j.docente?.id).filter((id): id is number => id != null);
     }
 
-    get docentesDisponiblesParaTutor(): any[] {
+    /** IDs a excluir de los resultados del buscador de tutor (el tutor actual, si hay uno) */
+    get idsExcluidosTutor(): number[] {
         const tutorId = this.tutor?.docente?.id;
-        return this.todosDocentes.filter(d => d.id !== tutorId);
+        return tutorId != null ? [tutorId] : [];
     }
 
     get rolesDisponibles() {
@@ -157,11 +156,6 @@ export class AsignarJuradosComponent implements OnInit {
         return this.jurados.length >= 3;
     }
 
-    getNombreDocente2(d: any): string {
-        const u = d?.usuario;
-        return u ? `${u.nombre} ${u.apellido}` : `Docente #${d.id}`;
-    }
-
     asignarJurado(): void {
         if (this.formJurado.invalid) return;
         this.procesando = true;
@@ -170,6 +164,7 @@ export class AsignarJuradosComponent implements OnInit {
             next: () => {
                 this.notification.success(`Jurado asignado como ${rol}`, '✓ Asignado');
                 this.formJurado.reset();
+                this.buscadorJuradoRef?.limpiar();
                 this.cargarJurados();
                 this.cargarSugerencias();
                 this.procesando = false;
@@ -222,6 +217,7 @@ export class AsignarJuradosComponent implements OnInit {
             next: () => {
                 this.notification.success('Tutor asignado correctamente.', '✓ Asignado');
                 this.formTutor.reset();
+                this.buscadorTutorRef?.limpiar();
                 this.cargarSugerencias();
                 this.verificarTutoria(this.solicitudId);
                 this.procesando = false;
@@ -236,12 +232,22 @@ export class AsignarJuradosComponent implements OnInit {
         });
     }
 
-    seleccionarParaJurado(docenteId: number): void {
-        this.formJurado.patchValue({ docenteId });
+    onDocenteJuradoSeleccionado(d: any): void {
+        this.formJurado.patchValue({ docenteId: d?.id ?? '' });
     }
 
-    seleccionarParaTutor(docenteId: number): void {
-        this.formTutor.patchValue({ docenteId });
+    onDocenteTutorSeleccionado(d: any): void {
+        this.formTutor.patchValue({ docenteId: d?.id ?? '' });
+    }
+
+    seleccionarParaJurado(d: any): void {
+        this.formJurado.patchValue({ docenteId: d.id });
+        this.buscadorJuradoRef?.seleccionarExterno(d);
+    }
+
+    seleccionarParaTutor(d: any): void {
+        this.formTutor.patchValue({ docenteId: d.id });
+        this.buscadorTutorRef?.seleccionarExterno(d);
     }
 
     getRolLabel(rol: string): string {
