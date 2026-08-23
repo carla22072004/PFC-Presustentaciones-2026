@@ -1,8 +1,13 @@
-import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
-import { map } from 'rxjs';
+import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, map, throwError } from 'rxjs';
+import { NotificationService } from '../services/notification.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = localStorage.getItem('presus_token');
+  const router = inject(Router);
+  const notification = inject(NotificationService);
   let url = req.url;
 
   // 1. Versionado dinámico y centralizado: cambiar /api/ a /api/v1/ si no está ya versionado
@@ -41,6 +46,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
       return event;
+    }),
+    catchError((err: unknown) => {
+      // Sesión expirada o token inválido: en vez de dejar que cada componente
+      // muestre su propio mensaje generico ("No se pudo cargar..."), se limpia
+      // la sesión y se redirige al login con un aviso claro de por qué.
+      if (err instanceof HttpErrorResponse && err.status === 401 && !url.endsWith('/auth/login')) {
+        const habiaSesion = !!token;
+        localStorage.removeItem('presus_token');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_name');
+        localStorage.removeItem('email_noti_configurado');
+        if (habiaSesion && !router.url.includes('/login')) {
+          notification.error('Tu sesión expiró. Por favor, inicia sesión de nuevo.', 'Sesión expirada');
+          router.navigate(['/login']);
+        }
+      }
+      return throwError(() => err);
     })
   );
 };
