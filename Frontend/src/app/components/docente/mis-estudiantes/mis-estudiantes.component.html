@@ -1,0 +1,63 @@
+<div class="mie-wrapper">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title"><i class="bi bi-mortarboard-fill me-2"></i>Mis Estudiantes</h2>
+            <p class="page-subtitle">Estudiantes que tienes asignados como tutor</p>
+        </div>
+        <button class="mie-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+
+    <input class="mie-buscador" type="text" placeholder="Buscar por nombre, correo, expediente, carrera o tema..."
+           [(ngModel)]="filtroTexto" *ngIf="!cargando && estudiantes.length > 0" />
+
+    <div class="loading-state" *ngIf="cargando">
+        <div class="spinner"></div>
+        <p>Cargando tus estudiantes...</p>
+    </div>
+
+    <div class="mie-vacio" *ngIf="!cargando && estudiantes.length === 0">
+        <i class="bi bi-mortarboard"></i>
+        <p>Todavía no tienes estudiantes asignados como tutor.</p>
+    </div>
+
+    <div class="mie-grid" *ngIf="!cargando && estudiantes.length > 0">
+        <div class="mie-card" *ngFor="let e of estudiantesFiltrados">
+            <div class="mie-card-header">
+                <div class="mie-avatar">{{ e.nombre[0] }}</div>
+                <div class="mie-persona">
+                    <div class="mie-nombre">{{ e.nombre }} {{ e.apellido }}</div>
+                    <div class="mie-email">{{ e.email }}</div>
+                </div>
+                <span class="mie-badge"
+                      [class.mie-badge-activo]="e.estadoTutoria === 'ACTIVO'"
+                      [class.mie-badge-completa]="e.estadoTutoria === 'COMPLETADA' || e.estadoTutoria === 'FINALIZADO'"
+                      [class.mie-badge-reemplazado]="e.estadoTutoria === 'REEMPLAZADO'">
+                    {{ e.estadoTutoria === 'ACTIVO' ? 'En progreso' : e.estadoTutoria === 'COMPLETADA' ? 'Completada' : e.estadoTutoria === 'FINALIZADO' ? 'Finalizada' : e.estadoTutoria }}
+                </span>
+            </div>
+
+            <p class="mie-tema"><i class="bi bi-file-earmark-text me-1"></i>{{ e.tituloTema }}</p>
+
+            <div class="mie-datos">
+                <span><i class="bi bi-mortarboard me-1"></i>{{ e.carreraNombre || '—' }}</span>
+                <span><i class="bi bi-layers me-1"></i>Semestre {{ e.semestreActual }}</span>
+                <span><i class="bi bi-person-badge me-1"></i>{{ e.expedienteCodigo || '—' }}</span>
+                <span *ngIf="e.telefono"><i class="bi bi-telephone me-1"></i>{{ e.telefono }}</span>
+            </div>
+
+            <div class="mie-estados">
+                <span class="mie-tag">Estado académico: {{ e.estadoAcademicoNombre || '—' }}</span>
+                <span class="mie-tag">Solicitud: {{ e.estadoSolicitudNombre || '—' }}</span>
+            </div>
+
+            <button class="mie-btn-ver" (click)="verTutoria(e.tutorId)">
+                <i class="bi bi-eye me-1"></i>Ver Tutoría
+            </button>
+        </div>
+
+        <div class="mie-vacio" *ngIf="estudiantesFiltrados.length === 0">
+            <i class="bi bi-search"></i>
+            <p>No hay estudiantes que coincidan con la búsqueda.</p>
+        </div>
+    </div>
+</div>

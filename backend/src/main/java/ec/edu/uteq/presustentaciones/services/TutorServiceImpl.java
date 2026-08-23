@@ -1,6 +1,8 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.dto.MiEstudianteTutoradoDTO;
 import ec.edu.uteq.presustentaciones.entities.Docente;
+import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
 import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
@@ -92,6 +94,35 @@ public class TutorServiceImpl implements TutorService {
     @Override
     public void eliminarTutor(Long tutorId) {
         tutorRepository.deleteById(tutorId);
+    }
+
+    @Override
+    public List<MiEstudianteTutoradoDTO> misEstudiantes(Long usuarioIdDocente) {
+        return tutorRepository.findByDocenteUsuarioId(usuarioIdDocente).stream()
+                .map(tutor -> {
+                    Solicitud solicitud = tutor.getSolicitud();
+                    Estudiante estudiante = solicitud.getEstudiante();
+                    return MiEstudianteTutoradoDTO.builder()
+                            .tutorId(tutor.getId())
+                            .solicitudId(solicitud.getId())
+                            .estudianteUsuarioId(estudiante.getUsuario().getId())
+                            .nombre(estudiante.getUsuario().getNombre())
+                            .apellido(estudiante.getUsuario().getApellido())
+                            .email(estudiante.getUsuario().getEmail())
+                            .telefono(estudiante.getTelefono())
+                            .expedienteCodigo(estudiante.getExpedienteCodigo())
+                            .carreraNombre(estudiante.getCarreraEntidad() != null ? estudiante.getCarreraEntidad().getNombre() : estudiante.getCarrera())
+                            .semestreActual(estudiante.getSemestreActual())
+                            .estadoAcademicoCodigo(estudiante.getEstadoAcademico() != null ? estudiante.getEstadoAcademico().getCodigo() : null)
+                            .estadoAcademicoNombre(estudiante.getEstadoAcademico() != null ? estudiante.getEstadoAcademico().getNombre() : null)
+                            .tituloTema(solicitud.getTituloTema())
+                            .estadoSolicitudCodigo(solicitud.getEstado() != null ? solicitud.getEstado().getCodigo() : solicitud.getEstadoCodigo())
+                            .estadoSolicitudNombre(solicitud.getEstado() != null ? solicitud.getEstado().getNombre() : null)
+                            .estadoTutoria(tutor.getEstado())
+                            .fechaAsignacion(tutor.getFechaAsignacion())
+                            .build();
+                })
+                .toList();
     }
 
     @Override

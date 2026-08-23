@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.services;
 
+import ec.edu.uteq.presustentaciones.dto.MiEstudianteTutoradoDTO;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,4 +14,5 @@ public interface TutorService {
     Page<Tutor> listarTodos(Pageable pageable);
     void eliminarTutor(Long tutorId);
     List<Map<String, Object>> obtenerEstadisticasTutoresSP();
+    List<MiEstudianteTutoradoDTO> misEstudiantes(Long usuarioIdDocente);
 }

@@ -1,9 +1,14 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
+import ec.edu.uteq.presustentaciones.dto.MiEstudianteTutoradoDTO;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.TutorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,13 +22,26 @@ import org.springframework.data.domain.Pageable;
 public class TutorController {
 
     private final TutorService tutorService;
+    private final UsuarioRepository usuarioRepository;
 
-    public TutorController(TutorService tutorService) {
+    public TutorController(TutorService tutorService, UsuarioRepository usuarioRepository) {
         this.tutorService = tutorService;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    /** "Mis Estudiantes" (docente): roster de los estudiantes que el docente autenticado
+     * tiene asignados como tutor -- sin permiso dedicado porque cualquier DOCENTE debe
+     * poder consultar sus propios estudiantes (mismo criterio que /api/tutorias/docente/{id}). */
+    @GetMapping("/mis-estudiantes")
+    public ResponseEntity<List<MiEstudianteTutoradoDTO>> misEstudiantes() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario usuario = usuarioRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+        return ResponseEntity.ok(tutorService.misEstudiantes(usuario.getId()));
     }
 
     @PostMapping("/asignar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Tutor> asignar(@RequestParam Long solicitudId,
                                          @RequestParam Long docenteId) {
         try {
@@ -46,7 +64,7 @@ public class TutorController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         tutorService.eliminarTutor(id);
         return ResponseEntity.noContent().build();
@@ -58,7 +76,7 @@ public class TutorController {
      * Flujo: GET → TutorController → TutorService → TutorRepository → SP → PostgreSQL
      */
     @GetMapping("/estadisticas")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> estadisticas() {
         try {
             List<Map<String, Object>> stats = tutorService.obtenerEstadisticasTutoresSP();
