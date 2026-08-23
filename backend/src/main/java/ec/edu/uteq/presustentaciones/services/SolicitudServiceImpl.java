@@ -53,6 +53,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final PeriodoAcademicoRepository periodoAcademicoRepository;
     private final LineaInvestigacionRepository lineaInvestigacionRepository;
     private final AreaTematicaRepository areaTematicaRepository;
+    private final AuditoriaService auditoriaService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoAcademicoRepository estadoAcademicoRepository;
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -142,9 +144,10 @@ public class SolicitudServiceImpl implements SolicitudService {
         datos.setActualizadoPor(estudiante.getUsuario());
         datos.setFechaRegistro(LocalDateTime.now());
         datos.setActualizadoEn(LocalDateTime.now());
+        auditoriaService.marcarActorActual();
         return solicitudRepository.save(datos);
     }
- 
+
     @Override
     @Transactional
     @CacheEvict(value = "solicitudes", allEntries = true)
@@ -223,6 +226,9 @@ public class SolicitudServiceImpl implements SolicitudService {
         // de motor, así que dos altas concurrentes nunca reciben el mismo código.
         String expedienteCodigo = estudianteRepository.generarCodigoExpediente(null, null);
 
+        ec.edu.uteq.presustentaciones.entities.EstadoAcademico estadoActivo = estadoAcademicoRepository.findByCodigo("ACTIVO")
+                .orElseThrow(() -> new RuntimeException("Catálogo de estados académicos no sembrado"));
+
         Estudiante nuevoEstudiante = Estudiante.builder()
                 .usuario(usuario)
                 .carrera(carreraDefault.getNombre())
@@ -230,6 +236,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .semestreActual((short) 1)
                 .semestre("1ro")
                 .expedienteCodigo(expedienteCodigo)
+                .estadoAcademico(estadoActivo)
                 .build();
 
         return estudianteRepository.save(nuevoEstudiante);
@@ -279,6 +286,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud aprobarSolicitud(Long solicitudId) {
+        auditoriaService.marcarActorActual();
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
@@ -288,11 +296,11 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         s.setEstado(estadoAprobada);
         Solicitud guardada = solicitudRepository.save(s);
- 
+
         notificarEstudiante(s, String.format(
                 "✅ Tu solicitud \"%s\" ha sido APROBADA. Pronto se te asignará fecha y tribunal.",
                 s.getTituloTema()));
- 
+
         return guardada;
     }
  
@@ -307,6 +315,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud rechazarConObservacion(Long solicitudId, String observacion) {
+        auditoriaService.marcarActorActual();
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
@@ -379,6 +388,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     @CacheEvict(value = "solicitudes", allEntries = true)
     public Solicitud suspenderSolicitud(Long solicitudId, String motivo) {
+        auditoriaService.marcarActorActual();
         Solicitud s = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
  
@@ -399,7 +409,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         s.setEstado(estadoSuspendida);
         s.setMotivoSuspension(motivo);
         s.setSuspendidoEn(LocalDateTime.now());
- 
+
         Solicitud guardada = solicitudRepository.save(s);
         log.info("Solicitud {} suspendida desde estado {} por motivo: {}", solicitudId, codEstado, motivo);
  

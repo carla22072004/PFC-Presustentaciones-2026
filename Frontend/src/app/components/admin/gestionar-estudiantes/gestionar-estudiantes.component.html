@@ -1,0 +1,172 @@
+<div class="est-wrapper">
+    <div class="est-header">
+        <div>
+            <h2 class="est-title"><i class="bi bi-mortarboard-fill me-2"></i>Gestionar Estudiantes</h2>
+            <p class="est-subtitle">Registrar estudiantes y administrar carrera, semestre, período de ingreso y estado académico</p>
+        </div>
+        <div class="est-actions">
+            <button class="est-btn est-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+            <button class="est-btn est-btn-nuevo" (click)="abrirModalNuevo()"><i class="bi bi-person-plus-fill me-1"></i>Registrar Estudiante</button>
+        </div>
+    </div>
+
+    <input class="est-buscador" type="text" placeholder="Buscar por nombre, correo, expediente o carrera..."
+           [(ngModel)]="filtroTexto" (ngModelChange)="onBuscarChange()" />
+
+    <div class="est-loading" *ngIf="cargando"><div class="est-spinner"></div><p>Cargando estudiantes...</p></div>
+
+    <div class="est-table-card" *ngIf="!cargando">
+        <table class="est-tabla">
+            <thead>
+                <tr>
+                    <th>Estudiante</th>
+                    <th>Expediente</th>
+                    <th>Carrera</th>
+                    <th>Semestre</th>
+                    <th>Estado académico</th>
+                    <th>Proyecto</th>
+                    <th class="est-text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let e of estudiantes">
+                    <td>
+                        <div class="est-persona">
+                            <div class="est-avatar">{{ e.nombre[0] }}</div>
+                            <div>
+                                <div>{{ e.nombre }} {{ e.apellido }}</div>
+                                <div class="est-email">{{ e.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ e.expedienteCodigo || '—' }}</td>
+                    <td>{{ e.carreraNombre || '—' }}</td>
+                    <td class="est-text-center">{{ e.semestreActual }}</td>
+                    <td>
+                        <span class="est-badge"
+                              [class.est-badge-activo]="e.estadoAcademicoCodigo === 'ACTIVO'"
+                              [class.est-badge-egresado]="e.estadoAcademicoCodigo === 'EGRESADO' || e.estadoAcademicoCodigo === 'GRADUADO'"
+                              [class.est-badge-inactivo]="e.estadoAcademicoCodigo === 'RETIRADO' || e.estadoAcademicoCodigo === 'SUSPENDIDO'">
+                            {{ e.estadoAcademicoNombre }}
+                        </span>
+                    </td>
+                    <td>
+                        <span *ngIf="e.proyectoTitulo" class="est-proyecto" [title]="e.proyectoTitulo">{{ e.proyectoTitulo }}</span>
+                        <span *ngIf="!e.proyectoTitulo" class="est-sin-proyecto">Sin proyecto</span>
+                    </td>
+                    <td class="est-text-center">
+                        <button class="est-icon-btn" title="Editar carrera, semestre y estado"
+                                (click)="abrirModalEditar(e)">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="estudiantes.length === 0">
+                    <td colspan="7" class="est-vacio">No se encontraron estudiantes.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="est-paginacion" *ngIf="totalPaginas > 1">
+            <span class="est-paginacion-info">Página {{ paginaActual + 1 }} de {{ totalPaginas }} — {{ totalElementos | number }} estudiantes</span>
+            <div class="est-paginacion-controles">
+                <button class="est-pag-btn" [disabled]="paginaActual === 0" (click)="irAPagina(0)" title="Primera"><i class="bi bi-chevron-bar-left"></i></button>
+                <button class="est-pag-btn" [disabled]="paginaActual === 0" (click)="paginaAnterior()" title="Anterior"><i class="bi bi-chevron-left"></i></button>
+                <button *ngFor="let p of paginasVisibles" class="est-pag-btn est-pag-num" [class.est-pag-activo]="p === paginaActual" (click)="irAPagina(p)">{{ p + 1 }}</button>
+                <button class="est-pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="paginaSiguiente()" title="Siguiente"><i class="bi bi-chevron-right"></i></button>
+                <button class="est-pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="irAPagina(totalPaginas - 1)" title="Última"><i class="bi bi-chevron-bar-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: registrar estudiante -->
+    <div class="est-modal-overlay" *ngIf="modalNuevoAbierto" (click)="cerrarModalNuevo()">
+        <div class="est-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-person-plus-fill me-1"></i>Registrar Estudiante</h3>
+            <div class="est-form-grupo">
+                <label>Nombre</label>
+                <input type="text" [(ngModel)]="nuevoEstudiante.nombre" placeholder="Nombre" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Apellido</label>
+                <input type="text" [(ngModel)]="nuevoEstudiante.apellido" placeholder="Apellido" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Correo institucional</label>
+                <input type="email" [(ngModel)]="nuevoEstudiante.email" placeholder="usuario@uteq.edu.ec" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Contraseña</label>
+                <input type="password" [(ngModel)]="nuevoEstudiante.password" placeholder="Contraseña temporal" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Teléfono</label>
+                <input type="text" [(ngModel)]="nuevoEstudiante.telefono" placeholder="Teléfono (opcional)" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Carrera</label>
+                <select [(ngModel)]="nuevoEstudiante.carreraId">
+                    <option [ngValue]="0" disabled>Selecciona una carrera</option>
+                    <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+                </select>
+            </div>
+            <div class="est-form-grupo">
+                <label>Período de ingreso</label>
+                <select [(ngModel)]="nuevoEstudiante.periodoIngresoId">
+                    <option [ngValue]="undefined">Sin especificar</option>
+                    <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
+                </select>
+            </div>
+            <div class="est-form-grupo">
+                <label>Semestre actual</label>
+                <input type="number" min="1" max="12" [(ngModel)]="nuevoEstudiante.semestreActual" />
+            </div>
+            <div class="est-modal-acciones">
+                <button class="est-btn est-btn-cancelar" (click)="cerrarModalNuevo()">Cancelar</button>
+                <button class="est-btn est-btn-nuevo" [disabled]="guardando" (click)="crearEstudiante()">
+                    {{ guardando ? 'Registrando...' : 'Registrar Estudiante' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: editar estudiante -->
+    <div class="est-modal-overlay" *ngIf="modalEditarAbierto" (click)="cerrarModalEditar()">
+        <div class="est-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-pencil-fill me-1"></i>Editar Estudiante</h3>
+            <div class="est-form-grupo">
+                <label>Carrera</label>
+                <select [(ngModel)]="edicion.carreraId">
+                    <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+                </select>
+            </div>
+            <div class="est-form-grupo">
+                <label>Período de ingreso</label>
+                <select [(ngModel)]="edicion.periodoIngresoId">
+                    <option [ngValue]="undefined">Sin especificar</option>
+                    <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
+                </select>
+            </div>
+            <div class="est-form-grupo">
+                <label>Semestre actual</label>
+                <input type="number" min="1" max="12" [(ngModel)]="edicion.semestreActual" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Teléfono</label>
+                <input type="text" [(ngModel)]="edicion.telefono" placeholder="Teléfono" />
+            </div>
+            <div class="est-form-grupo">
+                <label>Estado académico</label>
+                <select [(ngModel)]="edicion.estadoAcademicoCodigo">
+                    <option *ngFor="let ea of estadosAcademicos" [value]="ea.codigo">{{ ea.nombre }}</option>
+                </select>
+            </div>
+            <div class="est-modal-acciones">
+                <button class="est-btn est-btn-cancelar" (click)="cerrarModalEditar()">Cancelar</button>
+                <button class="est-btn est-btn-nuevo" [disabled]="guardandoEdicion" (click)="guardarEdicion()">
+                    {{ guardandoEdicion ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
