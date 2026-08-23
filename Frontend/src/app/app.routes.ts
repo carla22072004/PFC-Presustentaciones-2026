@@ -61,6 +61,31 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/admin/gestion-usuarios/gestion-usuarios.component').then(m => m.GestionUsuariosComponent),
                 canActivate: [roleGuard(['ADMIN'])]
             },
+            {
+                path: 'admin/roles',
+                loadComponent: () => import('./components/admin/gestionar-roles/gestionar-roles.component').then(m => m.GestionarRolesComponent),
+                canActivate: [roleGuard(['ADMIN'])]
+            },
+            {
+                path: 'admin/permisos',
+                loadComponent: () => import('./components/admin/gestionar-permisos/gestionar-permisos.component').then(m => m.GestionarPermisosComponent),
+                canActivate: [roleGuard(['ADMIN'])]
+            },
+            {
+                path: 'admin/auditoria',
+                loadComponent: () => import('./components/admin/gestionar-auditoria/gestionar-auditoria.component').then(m => m.GestionarAuditoriaComponent),
+                canActivate: [roleGuard(['ADMIN'])]
+            },
+            {
+                path: 'admin/estudiantes',
+                loadComponent: () => import('./components/admin/gestionar-estudiantes/gestionar-estudiantes.component').then(m => m.GestionarEstudiantesComponent),
+                canActivate: [roleGuard(['ADMIN', 'COORDINADOR'])]
+            },
+            {
+                path: 'admin/carreras',
+                loadComponent: () => import('./components/admin/gestionar-carreras/gestionar-carreras.component').then(m => m.GestionarCarrerasComponent),
+                canActivate: [roleGuard(['ADMIN'])]
+            },
             // ── Coordinador (COORDINADOR) ─────────────────────────────────────
             {
                 path: 'admin/revisar-solicitudes',
@@ -108,6 +133,11 @@ export const routes: Routes = [
                 path: 'docente/firmar-acta/:id',
                 loadComponent: () => import('./components/docente/firmar-acta/firmar-acta-docente.component').then(m => m.FirmarActaDocenteComponent),
                 canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR', 'DOCENTE'])]
+            },
+            {
+                path: 'docente/mis-estudiantes',
+                loadComponent: () => import('./components/docente/mis-estudiantes/mis-estudiantes.component').then(m => m.MisEstudiantesComponent),
+                canActivate: [authGuard, roleGuard(['DOCENTE'])]
             },
             // ── Tutorías ────────────────────────────────────────────────────
             {
