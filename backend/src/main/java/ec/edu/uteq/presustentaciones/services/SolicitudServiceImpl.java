@@ -364,7 +364,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
  
     @Override
-    @Cacheable(value = "solicitudes", key = "#id", unless = "#result == null or !#result.isPresent()")
+    @Cacheable(value = "solicitudes", key = "#id", unless = "#result == null")
     public Optional<Solicitud> obtenerPorId(Long id) {
         return solicitudRepository.findById(id);
     }

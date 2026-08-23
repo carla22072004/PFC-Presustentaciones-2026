@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,4 +25,10 @@ public class EstadoCronograma {
 
     @Column(name = "nombre", nullable = false, length = 80)
     private String nombre;
+
+    /** Contraparte de @JsonValue: ver RolUsuario.fromCodigo para el motivo (round-trip vía caché Redis). */
+    @JsonCreator
+    public static EstadoCronograma fromCodigo(String codigo) {
+        return EstadoCronograma.builder().codigo(codigo).build();
+    }
 }

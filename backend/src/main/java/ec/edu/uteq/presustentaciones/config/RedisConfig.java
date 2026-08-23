@@ -1,7 +1,9 @@
 package ec.edu.uteq.presustentaciones.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -30,9 +32,20 @@ public class RedisConfig {
         // @Cacheable. Bug real detectado: /api/v1/solicitudes/mis-solicitudes devolvía
         // silenciosamente una lista vacía (el controlador atajaba la excepción) aunque
         // el estudiante sí tenía solicitudes registradas en la base de datos.
+        // A diferencia del constructor sin argumentos de GenericJackson2JsonRedisSerializer,
+        // pasar un ObjectMapper propio NO activa el "default typing" (metadata de tipo
+        // embebida en el JSON) automáticamente. Sin esto, un cache-hit deserializa a
+        // LinkedHashMap en vez de al tipo real (ej. Solicitud), y el controlador revienta
+        // con ClassCastException al intentar usarlo. Bug real reproducido: la 2a llamada a
+        // GET /api/v1/solicitudes/{id} fallaba con "LinkedHashMap cannot be cast to Solicitud"
+        // mientras la 1a (cache-miss) funcionaba bien.
         ObjectMapper redisObjectMapper = new ObjectMapper();
         redisObjectMapper.registerModule(new JavaTimeModule());
         redisObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        redisObjectMapper.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
         GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
 
         // Configuración por defecto: 5 minutos

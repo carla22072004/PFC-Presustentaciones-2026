@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,4 +25,17 @@ public class RolUsuario {
 
     @Column(name = "nombre", nullable = false, length = 80)
     private String nombre;
+
+    /**
+     * Contraparte de @JsonValue: sin esto, Jackson serializa RolUsuario como el string
+     * plano de su código pero no puede reconstruirlo de vuelta -- rompía la deserialización
+     * al leer un Usuario cacheado en Redis ("Cannot construct instance of RolUsuario...
+     * no String-argument constructor"). Solo repuebla el código; id/nombre quedan null,
+     * pero eso es invisible para el cliente porque @JsonValue vuelve a colapsar la
+     * respuesta al string de todos modos.
+     */
+    @JsonCreator
+    public static RolUsuario fromCodigo(String codigo) {
+        return RolUsuario.builder().codigo(codigo).build();
+    }
 }

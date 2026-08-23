@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,4 +28,10 @@ public class EstadoSolicitud {
 
     @Column(name = "orden", nullable = false)
     private Short orden;
+
+    /** Contraparte de @JsonValue: ver RolUsuario.fromCodigo para el motivo (round-trip vía caché Redis). */
+    @JsonCreator
+    public static EstadoSolicitud fromCodigo(String codigo) {
+        return EstadoSolicitud.builder().codigo(codigo).build();
+    }
 }
