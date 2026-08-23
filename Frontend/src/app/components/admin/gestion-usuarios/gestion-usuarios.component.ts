@@ -5,6 +5,7 @@ import { Subject, Subscription, debounceTime } from 'rxjs';
 import { UsuarioService, Usuario } from '../../../services/usuario.service';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationService } from '../../../services/notification.service';
+import { RolService } from '../../../services/rol.service';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
@@ -21,6 +22,10 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
     modalAbierto = false;
     guardando = false;
 
+    modalEditarAbierto = false;
+    usuarioEditando: Usuario | null = null;
+    guardandoEdicion = false;
+
     // La tabla de usuarios reales llega a decenas de miles de filas (datos de carga k6) — siempre pagina server-side.
     paginaActual = 0;
     tamanioPagina = 20;
@@ -29,7 +34,9 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
     private busquedaSub = new Subject<string>();
     private subs = new Subscription();
 
-    readonly roles: Usuario['rol'][] = ['ADMIN', 'COORDINADOR', 'DOCENTE', 'ESTUDIANTE'];
+    // Traído de Gestionar Roles en vez de fijo en código -- un rol nuevo creado ahí queda
+    // disponible aquí para asignarlo sin tener que tocar el frontend.
+    roles: string[] = ['ADMIN', 'COORDINADOR', 'DOCENTE', 'ESTUDIANTE'];
 
     nuevoUsuario: Usuario = this.usuarioVacio();
 
@@ -37,10 +44,15 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
         private usuarioService: UsuarioService,
         private authService: AuthService,
         private notification: NotificationService,
+        private rolService: RolService,
         private cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
+        this.rolService.listarRoles().subscribe({
+            next: (roles) => { this.roles = roles.map(r => r.codigo); this.cdr.markForCheck(); },
+            error: () => { /* se queda con el fallback de los 4 roles base */ }
+        });
         this.cargar();
         this.subs.add(
             this.busquedaSub.pipe(debounceTime(350)).subscribe(() => {
@@ -141,7 +153,49 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
         });
     }
 
-    async cambiarRol(usuario: Usuario, nuevoRol: Usuario['rol']): Promise<void> {
+    abrirModalEditar(usuario: Usuario): void {
+        this.usuarioEditando = { ...usuario };
+        this.modalEditarAbierto = true;
+    }
+
+    cerrarModalEditar(): void {
+        this.modalEditarAbierto = false;
+        this.usuarioEditando = null;
+    }
+
+    guardarEdicion(): void {
+        const u = this.usuarioEditando;
+        if (!u || !u.id) return;
+        if (!u.nombre || !u.apellido || !u.email) {
+            this.notification.error('Completa todos los campos obligatorios.', 'Campos requeridos');
+            return;
+        }
+        this.guardandoEdicion = true;
+        this.usuarioService.actualizar(u.id, u).subscribe({
+            next: (actualizado) => {
+                this.guardandoEdicion = false;
+                this.modalEditarAbierto = false;
+                const original = this.usuarios.find(x => x.id === u.id);
+                if (original) {
+                    original.nombre = actualizado.nombre;
+                    original.apellido = actualizado.apellido;
+                    original.email = actualizado.email;
+                    original.telefono = actualizado.telefono;
+                }
+                this.usuarioEditando = null;
+                this.notification.success('Usuario actualizado correctamente.', '✓ Actualizado');
+                this.cdr.markForCheck();
+            },
+            error: (err) => {
+                this.guardandoEdicion = false;
+                const msg = err?.error?.mensaje || err?.error?.error || 'No se pudo actualizar el usuario.';
+                this.notification.error(msg, 'Error');
+                this.cdr.markForCheck();
+            }
+        });
+    }
+
+    async cambiarRol(usuario: Usuario, nuevoRol: string): Promise<void> {
         if (usuario.rol === nuevoRol || !usuario.id) return;
         const rolAnterior = usuario.rol;
         const Swal = await this.swal();

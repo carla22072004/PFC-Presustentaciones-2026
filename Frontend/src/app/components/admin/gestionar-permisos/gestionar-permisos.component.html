@@ -1,0 +1,51 @@
+<div class="perm-wrapper">
+    <div class="perm-header">
+        <div>
+            <h2 class="perm-title"><i class="bi bi-key-fill me-2"></i>Gestionar Permisos</h2>
+            <p class="perm-subtitle">Marca o desmarca una casilla para dar o quitar ese permiso al rol — el cambio aplica de inmediato, sin necesidad de que el usuario vuelva a iniciar sesión</p>
+        </div>
+        <div class="perm-actions">
+            <button class="perm-btn perm-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+            <a class="perm-btn perm-btn-refresh" routerLink="/dashboard/admin/roles" title="Ir a Gestionar Roles"><i class="bi bi-shield-lock-fill me-1"></i>Roles</a>
+        </div>
+    </div>
+
+    <div class="perm-loading" *ngIf="cargando"><div class="perm-spinner"></div><p>Cargando permisos...</p></div>
+
+    <div class="perm-matrix-card" *ngIf="!cargando">
+        <table class="perm-tabla">
+            <thead>
+                <tr>
+                    <th class="perm-col-permiso">Permiso</th>
+                    <th class="perm-col-rol" *ngFor="let r of roles">
+                        {{ r.nombre }}
+                        <span class="perm-rol-codigo">{{ r.codigo }}</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <ng-container *ngFor="let cat of categorias">
+                    <tr class="perm-fila-categoria">
+                        <td [attr.colspan]="roles.length + 1">{{ cat }}</td>
+                    </tr>
+                    <tr *ngFor="let p of permisosDeCategoria(cat)">
+                        <td class="perm-nombre-cell">
+                            <span class="perm-nombre">{{ p.nombre }}</span>
+                            <span class="perm-descripcion">{{ p.descripcion }}</span>
+                        </td>
+                        <td class="perm-check-cell" *ngFor="let r of roles">
+                            <input type="checkbox"
+                                   class="perm-checkbox"
+                                   [checked]="tienePermiso(r.id!, p.codigo)"
+                                   [disabled]="celdaGuardando(r.id!, p.codigo)"
+                                   (change)="toggle(r, p, $event)" />
+                        </td>
+                    </tr>
+                </ng-container>
+                <tr *ngIf="roles.length === 0">
+                    <td class="perm-vacio" [attr.colspan]="1">No hay roles registrados.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

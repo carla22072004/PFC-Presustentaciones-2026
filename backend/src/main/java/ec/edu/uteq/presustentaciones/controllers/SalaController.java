@@ -27,11 +27,11 @@ public class SalaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SALA_GESTIONAR')")
     public Sala crear(@RequestBody Sala sala) { return salaRepository.save(sala); }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SALA_GESTIONAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         salaRepository.deleteById(id);
         return ResponseEntity.noContent().build();

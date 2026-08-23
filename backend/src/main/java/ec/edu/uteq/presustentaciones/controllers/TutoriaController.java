@@ -84,7 +84,7 @@ public class TutoriaController {
     // ── Operaciones sobre fases ───────────────────────────────────────────────
 
     @PostMapping("/{tutorId}/nueva-fase")
-    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TUTORIA_GESTIONAR')")
     public ResponseEntity<?> crearFaseConObservacion(@PathVariable Long tutorId,
                                                      @RequestParam String observacion,
                                                      @RequestParam(required = false) Long tutorUsuarioId) {
@@ -111,7 +111,7 @@ public class TutoriaController {
     }
 
     @PostMapping("/fases/{faseId}/aprobar")
-    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TUTORIA_GESTIONAR')")
     public ResponseEntity<?> aprobarFase(@PathVariable Long faseId,
                                          @RequestParam(required = false) Long tutorUsuarioId,
                                          @RequestParam(required = false) String comentario) {
@@ -176,7 +176,7 @@ public class TutoriaController {
      * Body: { "numeroFase": 1, "archivoPdf": "archivo.pdf", "tamanoBytes": 12345, "sha256": "abc..." }
      */
     @PostMapping("/{tutorId}/registrar-avance")
-    @PreAuthorize("hasAnyRole('ESTUDIANTE', 'ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TUTORIA_AVANCE_ESTUDIANTE')")
     public ResponseEntity<?> registrarAvanceSP(
             @PathVariable Long tutorId,
             @RequestBody Map<String, Object> body) {

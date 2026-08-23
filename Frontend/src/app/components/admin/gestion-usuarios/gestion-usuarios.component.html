@@ -47,6 +47,10 @@
                         </span>
                     </td>
                     <td class="usr-text-center">
+                        <button class="usr-icon-btn" title="Editar datos"
+                                (click)="abrirModalEditar(u)">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
                         <button class="usr-icon-btn" [title]="u.activo ? 'Desactivar' : 'Activar'"
                                 [disabled]="esUsuarioActual(u)" (click)="toggleActivo(u)">
                             <i class="bi" [ngClass]="u.activo ? 'bi-toggle2-on' : 'bi-toggle2-off'"></i>
@@ -105,6 +109,35 @@
                 <button class="usr-btn usr-btn-cancelar" (click)="cerrarModal()">Cancelar</button>
                 <button class="usr-btn usr-btn-nuevo" [disabled]="guardando" (click)="crearUsuario()">
                     {{ guardando ? 'Creando...' : 'Crear Usuario' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: editar usuario -->
+    <div class="usr-modal-overlay" *ngIf="modalEditarAbierto && usuarioEditando" (click)="cerrarModalEditar()">
+        <div class="usr-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-pencil-fill me-1"></i>Editar Usuario</h3>
+            <div class="usr-form-grupo">
+                <label>Nombre</label>
+                <input type="text" [(ngModel)]="usuarioEditando.nombre" placeholder="Nombre" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Apellido</label>
+                <input type="text" [(ngModel)]="usuarioEditando.apellido" placeholder="Apellido" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Correo institucional</label>
+                <input type="email" [(ngModel)]="usuarioEditando.email" placeholder="usuario@uteq.edu.ec" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Teléfono</label>
+                <input type="text" [(ngModel)]="usuarioEditando.telefono" placeholder="Teléfono (opcional)" />
+            </div>
+            <div class="usr-modal-acciones">
+                <button class="usr-btn usr-btn-cancelar" (click)="cerrarModalEditar()">Cancelar</button>
+                <button class="usr-btn usr-btn-nuevo" [disabled]="guardandoEdicion" (click)="guardarEdicion()">
+                    {{ guardandoEdicion ? 'Guardando...' : 'Guardar Cambios' }}
                 </button>
             </div>
         </div>

@@ -87,19 +87,19 @@ public class SolicitudController {
     }
 
     @PostMapping("/aprobar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public Solicitud aprobar(@PathVariable Long id) {
         return solicitudService.aprobarSolicitud(id);
     }
 
     @PostMapping("/rechazar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public Solicitud rechazar(@PathVariable Long id) {
         return solicitudService.rechazarSolicitud(id);
     }
 
     @PostMapping("/rechazar-con-observacion/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> rechazarConObservacion(
             @PathVariable Long id,
             @RequestBody java.util.Map<String, String> body) {
@@ -112,7 +112,7 @@ public class SolicitudController {
     }
 
     @PostMapping("/suspender/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_SUSPENDER')")
     public ResponseEntity<?> suspender(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
@@ -126,7 +126,7 @@ public class SolicitudController {
 
     /** ADMIN, COORDINADOR y DOCENTE pueden ver TODAS las solicitudes */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public List<Solicitud> listar() {
         return solicitudService.listarSolicitudes();
     }
@@ -138,7 +138,7 @@ public class SolicitudController {
      * estado, mismo patrón que GET /api/v1/usuarios/paginado.
      */
     @GetMapping("/paginado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> listarPaginado(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -158,7 +158,7 @@ public class SolicitudController {
 
     /** Conteo de solicitudes por estado, para los contadores de las pestañas de filtro */
     @GetMapping("/contar-por-estado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<Map<String, Long>> contarPorEstado() {
         return ResponseEntity.ok(solicitudService.contarPorEstado());
     }
@@ -183,7 +183,7 @@ public class SolicitudController {
      * @param carrera nombre o parte del nombre de la carrera (búsqueda ILIKE)
      */
     @GetMapping("/reporte-defensas")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> reporteDefensas(
             @RequestParam(defaultValue = "") String carrera) {
         try {

@@ -33,6 +33,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/reportes")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'REPORTES_VER')")
 public class ReporteController {
 
     private final CronogramaRepository cronogramaRepo;

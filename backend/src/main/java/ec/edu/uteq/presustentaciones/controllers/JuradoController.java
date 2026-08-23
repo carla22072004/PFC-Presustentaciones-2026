@@ -29,7 +29,7 @@ public class JuradoController {
 
     /** Asignar un jurado manualmente a una solicitud */
     @PostMapping("/asignar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarJurado(
             @RequestParam Long solicitudId,
             @RequestParam Long docenteId,
@@ -44,7 +44,7 @@ public class JuradoController {
 
     /** Asignación automática de los 3 jurados (PRESIDENTE, VOCAL_1, VOCAL_2) */
     @PostMapping("/asignar-automatico/{solicitudId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarAutomaticamente(@PathVariable Long solicitudId) {
         try {
             juradoService.asignarJuradosAutomaticamente(solicitudId);
@@ -69,7 +69,7 @@ public class JuradoController {
 
     /** Eliminar un jurado */
     @DeleteMapping("/{juradoId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Void> eliminarJurado(@PathVariable Long juradoId) {
         juradoService.eliminarJurado(juradoId);
         return ResponseEntity.noContent().build();
@@ -77,7 +77,7 @@ public class JuradoController {
 
     /** Sugerir docentes disponibles para asignar (sin los ya asignados) */
     @GetMapping("/sugerencias/{solicitudId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public List<Docente> sugerirDocentes(
             @PathVariable Long solicitudId,
             @RequestParam(defaultValue = "5") int cantidad) {
@@ -88,7 +88,7 @@ public class JuradoController {
 
     /** Asignar tutor a una solicitud */
     @PostMapping("/tutor/asignar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarTutor(
             @RequestParam Long solicitudId,
             @RequestParam Long docenteId) {
@@ -110,7 +110,7 @@ public class JuradoController {
 
     /** Eliminar tutor */
     @DeleteMapping("/tutor/{tutorId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Void> eliminarTutor(@PathVariable Long tutorId) {
         juradoService.eliminarTutor(tutorId);
         return ResponseEntity.noContent().build();
@@ -158,7 +158,7 @@ public class JuradoController {
      * Body esperado: { "solicitudIds": [1,2,3], "docenteIds": [4,5,6], "rol": "PRESIDENTE" }
      */
     @PostMapping("/asignar-masivo")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarMasivo(@RequestBody Map<String, Object> body) {
         try {
             @SuppressWarnings("unchecked")

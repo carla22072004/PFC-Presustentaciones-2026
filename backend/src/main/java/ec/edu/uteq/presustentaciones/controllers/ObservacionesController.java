@@ -12,6 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/observaciones")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class ObservacionesController {
 
     private final RubricaEvaluacionService rubricaEvaluacionService;

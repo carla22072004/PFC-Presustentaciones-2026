@@ -33,7 +33,7 @@ public class UsuarioController {
     private final UsuarioRepository usuarioRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar todos los usuarios (solo ADMIN) — sin paginar, uso interno/pequeñas instalaciones")
     public ResponseEntity<List<Usuario>> listarTodos() {
         log.info("GET /api/usuarios - Listando todos los usuarios");
@@ -42,7 +42,7 @@ public class UsuarioController {
 
     /** La tabla puede tener decenas de miles de filas (datos de carga k6) — el panel de admin siempre usa este endpoint paginado. */
     @GetMapping("/paginado")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar usuarios paginado, con búsqueda opcional (solo ADMIN)")
     public ResponseEntity<?> listarPaginado(
             @RequestParam(defaultValue = "0") int page,
@@ -73,7 +73,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Buscar usuario por email (solo ADMIN)")
     public ResponseEntity<Usuario> buscarPorEmail(@PathVariable String email) {
         log.info("GET /api/usuarios/email/{} - Buscando usuario", email);
@@ -83,7 +83,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/activos")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar usuarios activos (solo ADMIN)")
     public ResponseEntity<List<Usuario>> listarActivos() {
         log.info("GET /api/usuarios/activos - Listando usuarios activos");
@@ -91,7 +91,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Crear nuevo usuario (solo ADMIN)")
     public ResponseEntity<Usuario> crear(@RequestBody Usuario usuario) {
         log.info("POST /api/usuarios - Creando usuario: {}", usuario.getEmail());
@@ -100,7 +100,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Actualizar usuario, incluido su rol (solo ADMIN)")
     public ResponseEntity<Usuario> actualizar(
             @PathVariable Long id,
@@ -112,7 +112,7 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/activar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Activar usuario (solo ADMIN)")
     public ResponseEntity<Void> activar(@PathVariable Long id) {
         log.info("PATCH /api/usuarios/{}/activar", id);
@@ -121,7 +121,7 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/desactivar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Desactivar usuario (solo ADMIN)")
     public ResponseEntity<Void> desactivar(@PathVariable Long id) {
         log.info("PATCH /api/usuarios/{}/desactivar", id);
@@ -148,7 +148,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Eliminar usuario (solo ADMIN)")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/usuarios/{}", id);

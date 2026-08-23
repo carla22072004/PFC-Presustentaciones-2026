@@ -23,7 +23,7 @@ public class CronogramaController {
 
     /** Manual con validación de conflictos */
     @PostMapping("/crear")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'CRONOGRAMA_GESTIONAR')")
     public ResponseEntity<?> crear(@RequestParam Long solicitudId,
                                    @RequestParam Long salaId,
                                    @RequestParam LocalDate fecha,
@@ -37,7 +37,7 @@ public class CronogramaController {
 
     /** RF-04: Asignación automática sin conflictos */
     @PostMapping("/auto/{solicitudId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'CRONOGRAMA_GESTIONAR')")
     public ResponseEntity<?> asignarAutomatico(@PathVariable Long solicitudId) {
         try {
             return ResponseEntity.ok(cronogramaService.asignarAutomatico(solicitudId));
@@ -73,7 +73,7 @@ public class CronogramaController {
         return cronogramaService.buscarPorSolicitud(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'CRONOGRAMA_GESTIONAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         cronogramaService.eliminar(id); return ResponseEntity.noContent().build();
     }

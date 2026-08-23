@@ -26,7 +26,7 @@ public class ActaController {
 
     /** RF-11: Genera el acta con PDF real */
     @PostMapping("/generar/{solicitudId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTA_GENERAR')")
     public ResponseEntity<?> generarActa(@PathVariable Long solicitudId) {
         try {
             Acta acta = actaService.generarActa(solicitudId);
@@ -41,7 +41,7 @@ public class ActaController {
      * rol: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR
      */
     @PostMapping("/firmar/{actaId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTA_FIRMAR')")
     public ResponseEntity<?> firmarActa(
             @PathVariable Long actaId,
             @RequestParam String rol,

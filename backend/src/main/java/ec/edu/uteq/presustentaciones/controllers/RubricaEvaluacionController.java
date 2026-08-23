@@ -17,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/rubrica-evaluacion")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class RubricaEvaluacionController {
 
     private final RubricaEvaluacionService service;
@@ -24,6 +25,7 @@ public class RubricaEvaluacionController {
 
     /** RF-07: Jurado registra sus escalas por criterio */
     @PostMapping("/registrar")
+    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> registrar(@RequestBody EvaluacionRubricaRequest request) {
         try {
             EvaluacionRubricaResponse resp = service.registrarEvaluacion(request);

@@ -14,8 +14,15 @@ import lombok.*;
 @Builder
 public class RolUsuario {
 
+    /**
+     * Sin @GeneratedValue a propósito: los 4 roles base se siembran con id explícito vía SQL
+     * crudo (fuera de Hibernate, ver PreSustentacionesApplication / migración V13), y mezclar
+     * eso con GenerationType.AUTO sobre un Short produjo ids corruptos (negativos) la primera
+     * vez que se creó un rol nuevo desde "Gestionar Roles" -- el generador hi/lo de Hibernate
+     * no tenía forma de saber que esos ids ya estaban tomados. RolController.crear() asigna
+     * el siguiente id disponible a mano, mismo patrón que Permiso.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Short id;
 

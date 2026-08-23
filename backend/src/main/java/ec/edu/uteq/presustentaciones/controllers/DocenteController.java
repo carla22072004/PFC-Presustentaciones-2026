@@ -12,6 +12,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/docentes")
+@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class DocenteController {
 
     private final DocenteRepository docenteRepository;

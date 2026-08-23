@@ -78,13 +78,13 @@ public class AnteproyectoController {
     }
 
     @PostMapping("/aprobar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ANTEPROYECTO_REVISAR')")
     public ResponseEntity<Anteproyecto> aprobar(@PathVariable Long id, @RequestParam String observaciones) {
         return ResponseEntity.ok(anteproyectoService.aprobarAnteproyecto(id, observaciones));
     }
 
     @PostMapping("/rechazar/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ANTEPROYECTO_REVISAR')")
     public ResponseEntity<Anteproyecto> rechazar(@PathVariable Long id, @RequestParam String observaciones) {
         return ResponseEntity.ok(anteproyectoService.rechazarAnteproyecto(id, observaciones));
     }

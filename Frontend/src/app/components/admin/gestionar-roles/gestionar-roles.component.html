@@ -1,0 +1,95 @@
+<div class="usr-wrapper">
+    <div class="usr-header">
+        <div>
+            <h2 class="usr-title"><i class="bi bi-shield-lock-fill me-2"></i>Gestionar Roles</h2>
+            <p class="usr-subtitle">Catálogo de roles del sistema — cada rol se compone de los permisos que le asignes en Gestionar Permisos</p>
+        </div>
+        <div class="usr-actions">
+            <button class="usr-btn usr-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+            <a class="usr-btn usr-btn-refresh" routerLink="/dashboard/admin/permisos" title="Ir a Gestionar Permisos"><i class="bi bi-key-fill me-1"></i>Permisos</a>
+            <button class="usr-btn usr-btn-nuevo" (click)="abrirModalNuevo()"><i class="bi bi-shield-plus me-1"></i>Nuevo Rol</button>
+        </div>
+    </div>
+
+    <div class="usr-loading" *ngIf="cargando"><div class="usr-spinner"></div><p>Cargando roles...</p></div>
+
+    <div class="usr-table-card" *ngIf="!cargando">
+        <table class="usr-tabla">
+            <thead>
+                <tr>
+                    <th>Rol</th>
+                    <th>Código</th>
+                    <th>Usuarios asignados</th>
+                    <th>Permisos</th>
+                    <th class="usr-text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let r of roles">
+                    <td>{{ r.nombre }}</td>
+                    <td>
+                        <span class="rol-codigo">{{ r.codigo }}</span>
+                        <span class="rol-tag-base" *ngIf="esRolProtegido(r)">Base del sistema</span>
+                    </td>
+                    <td>{{ r.usuariosAsignados | number }}</td>
+                    <td>{{ (r.permisos?.length || 0) }} de permisos asignados</td>
+                    <td class="usr-text-center">
+                        <button class="usr-icon-btn" title="Renombrar" (click)="abrirModalEditar(r)">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="usr-icon-btn usr-icon-danger" title="Eliminar"
+                                [disabled]="esRolProtegido(r)" (click)="eliminar(r)">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="roles.length === 0">
+                    <td colspan="5" class="usr-vacio">No hay roles registrados.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal: nuevo rol -->
+    <div class="usr-modal-overlay" *ngIf="modalNuevoAbierto" (click)="cerrarModalNuevo()">
+        <div class="usr-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-shield-plus me-1"></i>Nuevo Rol</h3>
+            <div class="usr-form-grupo">
+                <label>Código (interno, sin espacios)</label>
+                <input type="text" [(ngModel)]="nuevoCodigo" placeholder="Ej: SECRETARIA" />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Nombre visible</label>
+                <input type="text" [(ngModel)]="nuevoNombre" placeholder="Ej: Secretaría Académica" />
+            </div>
+            <p class="rol-hint">El rol nuevo no tendrá ningún permiso al crearse — asígnalos después en Gestionar Permisos.</p>
+            <div class="usr-modal-acciones">
+                <button class="usr-btn usr-btn-cancelar" (click)="cerrarModalNuevo()">Cancelar</button>
+                <button class="usr-btn usr-btn-nuevo" [disabled]="guardandoNuevo" (click)="crearRol()">
+                    {{ guardandoNuevo ? 'Creando...' : 'Crear Rol' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: editar rol -->
+    <div class="usr-modal-overlay" *ngIf="modalEditarAbierto && rolEditando" (click)="cerrarModalEditar()">
+        <div class="usr-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-pencil-fill me-1"></i>Renombrar Rol</h3>
+            <div class="usr-form-grupo">
+                <label>Código</label>
+                <input type="text" [value]="rolEditando.codigo" disabled />
+            </div>
+            <div class="usr-form-grupo">
+                <label>Nombre visible</label>
+                <input type="text" [(ngModel)]="rolEditando.nombre" placeholder="Nombre" />
+            </div>
+            <div class="usr-modal-acciones">
+                <button class="usr-btn usr-btn-cancelar" (click)="cerrarModalEditar()">Cancelar</button>
+                <button class="usr-btn usr-btn-nuevo" [disabled]="guardandoEdicion" (click)="guardarEdicion()">
+                    {{ guardandoEdicion ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

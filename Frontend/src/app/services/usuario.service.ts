@@ -8,7 +8,8 @@ export interface Usuario {
     apellido: string;
     email: string;
     password?: string;
-    rol: 'ADMIN' | 'COORDINADOR' | 'DOCENTE' | 'ESTUDIANTE';
+    /** Código del rol (ADMIN/DOCENTE/COORDINADOR/ESTUDIANTE o cualquier rol creado desde Gestionar Roles) */
+    rol: string;
     activo?: boolean;
     telefono?: string;
     emailNotificaciones?: string;

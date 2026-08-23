@@ -180,7 +180,7 @@ public class AuthController {
 
     /** Provisión de cuentas: solo un ADMIN puede crear usuarios (incluye poder asignar cualquier rol). */
     @PostMapping("/register")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Registrar nuevo usuario", description = "Permite a un administrador crear nuevos usuarios en el sistema.")
     public ResponseEntity<?> register(@RequestBody Usuario usuario) {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {

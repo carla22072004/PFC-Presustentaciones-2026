@@ -19,7 +19,7 @@ public class EvaluacionJuradoController {
     private final EvaluacionJuradoService service;
 
     @PostMapping("/guardar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> guardar(@RequestBody Map<String, Object> request) {
         try {
             Long solicitudId = Long.valueOf(request.get("solicitudId").toString());

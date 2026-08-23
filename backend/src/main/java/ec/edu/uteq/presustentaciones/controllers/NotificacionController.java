@@ -21,31 +21,37 @@ public class NotificacionController {
     }
 
     @PostMapping("/crear")
+    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'NOTIFICACIONES_ENVIAR')")
     public Notificacion crear(@RequestParam Long usuarioId, @RequestParam String mensaje) {
         return notificacionService.crearNotificacion(usuarioId, mensaje);
     }
 
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'NOTIFICACIONES_GLOBAL_VER')")
     public ResponseEntity<Page<Notificacion>> listar(Pageable pageable) {
         return ResponseEntity.ok(notificacionService.listarNotificaciones(pageable));
     }
 
     @GetMapping("/usuario/{usuarioId}")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<Notificacion>> listarPorUsuario(@PathVariable Long usuarioId, Pageable pageable) {
         return ResponseEntity.ok(notificacionService.listarPorUsuario(usuarioId, pageable));
     }
 
     @GetMapping("/usuario/{usuarioId}/no-leidas")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Long>> contarNoLeidas(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(Map.of("total", notificacionService.contarNoLeidas(usuarioId)));
     }
 
     @PatchMapping("/{id}/marcar-leida")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public ResponseEntity<Notificacion> marcarLeida(@PathVariable Long id) {
         return ResponseEntity.ok(notificacionService.marcarComoLeida(id));
     }
 
     @PatchMapping("/usuario/{usuarioId}/marcar-todas-leidas")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> marcarTodasLeidas(@PathVariable Long usuarioId) {
         notificacionService.marcarTodasLeidas(usuarioId);
         return ResponseEntity.noContent().build();

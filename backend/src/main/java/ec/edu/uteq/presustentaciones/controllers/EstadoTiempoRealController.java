@@ -16,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/estado")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class EstadoTiempoRealController {
 
     private final SolicitudRepository solicitudRepo;
