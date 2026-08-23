@@ -1,10 +1,14 @@
 package ec.edu.uteq.presustentaciones.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import ec.edu.uteq.presustentaciones.security.RateLimitingFilter;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,6 +19,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -60,11 +65,28 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
+                // Sin esto, Spring Security responde 403 (AccessDeniedException del usuario anónimo)
+                // tanto para "no autenticado / token expirado" como para "autenticado pero sin permiso",
+                // y el frontend solo sabe redirigir a /login cuando ve 401 -- con un JWT vencido la app
+                // se quedaba mostrando un error genérico en vez de pedir iniciar sesión de nuevo.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()))
                 // Añadir filtros de Rate Limiting y JWT (Requisitos Rate Limiting & Blacklist)
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return (request, response, authException) -> {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(objectMapper.writeValueAsString(
+                    ResponseWrapper.error("No autenticado. Inicia sesión de nuevo.")));
+        };
     }
 
     @Bean
