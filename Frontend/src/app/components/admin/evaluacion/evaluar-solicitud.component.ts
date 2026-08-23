@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -52,7 +52,8 @@ export class EvaluarSolicitudComponent implements OnInit {
     private juradoService: JuradoService,
     private actaService: ActaService,
     private juryEvalService: JuryEvaluationService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -66,12 +67,17 @@ export class EvaluarSolicitudComponent implements OnInit {
   }
 
   cargarDatos(): void {
-    this.rubricaService.listar().subscribe(r => this.rubricas = r);
-    this.solicitudService.obtenerPorId(this.solicitudId).subscribe(s => this.solicitud = s);
-    this.juradoService.listarPorSolicitud(this.solicitudId).subscribe({ next: j => this.jurados = j, error: () => {} });
-    this.juradoService.obtenerTutor(this.solicitudId).subscribe({ next: t => this.tutor = t, error: () => {} });
-    this.evalService.porSolicitud(this.solicitudId).subscribe({ next: e => this.evaluacionExistente = e, error: () => {} });
-    this.actaService.porSolicitud(this.solicitudId).subscribe({ next: a => this.acta = a, error: () => {} });
+    // ERR-03: este componente no llamaba a ChangeDetectorRef.markForCheck() en ningún
+    // callback asíncrono (a diferencia del resto del codebase, donde es obligatorio --
+    // ver docente-buscador.component.ts). Sin esto, los datos llegaban correctamente
+    // pero la vista nunca se refrescaba: jurados, rúbricas, tutor, etc. quedaban
+    // permanentemente vacíos en pantalla aunque el backend respondiera bien.
+    this.rubricaService.listar().subscribe(r => { this.rubricas = r; this.cdr.markForCheck(); });
+    this.solicitudService.obtenerPorId(this.solicitudId).subscribe(s => { this.solicitud = s; this.cdr.markForCheck(); });
+    this.juradoService.listarPorSolicitud(this.solicitudId).subscribe({ next: j => { this.jurados = j; this.cdr.markForCheck(); }, error: () => {} });
+    this.juradoService.obtenerTutor(this.solicitudId).subscribe({ next: t => { this.tutor = t; this.cdr.markForCheck(); }, error: () => {} });
+    this.evalService.porSolicitud(this.solicitudId).subscribe({ next: e => { this.evaluacionExistente = e; this.cdr.markForCheck(); }, error: () => {} });
+    this.actaService.porSolicitud(this.solicitudId).subscribe({ next: a => { this.acta = a; this.cdr.markForCheck(); }, error: () => {} });
     this.cargarNotaTribunal();
   }
 
@@ -87,6 +93,7 @@ export class EvaluarSolicitudComponent implements OnInit {
           this.notaTribunalPromedio = null;
           this.tribunalCompleto = false;
         }
+        this.cdr.markForCheck();
       },
       error: () => {}
     });
@@ -164,12 +171,14 @@ export class EvaluarSolicitudComponent implements OnInit {
           '✓ Evaluado'
         );
         this.enviando = false;
+        this.cdr.markForCheck();
         this.generarActaAutomatica();
       },
       error: (err) => {
         const msg = err.error?.error || 'No se pudo registrar la evaluación.';
         this.notification.error(msg, 'Error');
         this.enviando = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -179,6 +188,7 @@ export class EvaluarSolicitudComponent implements OnInit {
       next: (a) => {
         this.acta = a;
         this.notification.success('Acta generada automáticamente.', '📄 Acta lista');
+        this.cdr.markForCheck();
       },
       error: () => {}
     });
@@ -193,11 +203,13 @@ export class EvaluarSolicitudComponent implements OnInit {
         const msg = a.firmada ? '¡Acta completamente firmada por todos los actores!' : `Firma de ${rol} registrada.`;
         this.notification.success(msg, '✍️ Firmado');
         this.firmandoActa = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         const msg = err.error?.error || 'No se pudo registrar la firma.';
         this.notification.error(msg, 'Error');
         this.firmandoActa = false;
+        this.cdr.markForCheck();
       }
     });
   }

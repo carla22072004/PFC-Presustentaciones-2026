@@ -59,32 +59,47 @@ public class JuradoServiceImpl implements JuradoService {
             throw new RuntimeException("El docente ya está asignado como jurado en esta solicitud.");
         }
 
-        List<String> rolesValidos = List.of("PRESIDENTE", "VOCAL", "SECRETARIO");
-        if (!rolesValidos.contains(rol.toUpperCase())) {
-            throw new RuntimeException("Rol inválido. Use: PRESIDENTE, VOCAL o SECRETARIO");
+        // ERR-03: el docente ya asignado como tutor de esta misma solicitud no puede
+        // además ser miembro del tribunal (conflicto de interés).
+        if (tutor.getDocente() != null && tutor.getDocente().getId().equals(docenteId)) {
+            throw new RuntimeException("El docente ya es el tutor de esta solicitud y no puede además ser jurado (conflicto de interés).");
         }
- 
+
+        if (docente.getDisponible() != null && !docente.getDisponible()) {
+            throw new RuntimeException("El docente no está disponible para ser asignado como jurado.");
+        }
+
+        // ERR-03: normalizado una sola vez -- se usa tanto para validar como para guardar,
+        // así el chequeo de "rol duplicado" compara contra el mismo código que quedará en BD
+        // (antes comparaba el string crudo de entrada contra un código ya colapsado distinto,
+        // por lo que nunca coincidían).
+        String rolNormalizado = rol == null ? null : rol.trim().toUpperCase();
+        List<String> rolesValidos = List.of("PRESIDENTE", "VOCAL_1", "VOCAL_2");
+        if (rolNormalizado == null || !rolesValidos.contains(rolNormalizado)) {
+            throw new RuntimeException("Rol inválido. Use: PRESIDENTE, VOCAL_1 o VOCAL_2");
+        }
+
         boolean rolOcupado = juradoRepository.findBySolicitudId(solicitudId).stream()
-                .anyMatch(j -> j.getRol() != null && j.getRol().equalsIgnoreCase(rol));
+                .anyMatch(j -> rolNormalizado.equalsIgnoreCase(j.getRol()));
         if (rolOcupado) {
-            throw new RuntimeException("El rol '" + rol + "' ya está asignado en esta solicitud.");
+            throw new RuntimeException("El rol '" + rolNormalizado + "' ya está asignado en esta solicitud.");
         }
- 
-        Jurado guardado = crearJuradoSinNotificar(solicitud, docente, rol);
- 
+
+        Jurado guardado = crearJuradoSinNotificar(solicitud, docente, rolNormalizado);
+
         // Cambiar estado a EVALUACION
         ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEvaluacion = estadoSolicitudRepository.findByCodigo("EVALUACION")
                 .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
                         .codigo("EVALUACION").nombre("Evaluacion").build()));
- 
+
         solicitud.setEstado(estadoEvaluacion);
         solicitudRepository.save(solicitud);
 
         // Notificar al docente asignado como jurado
-        notificarDocenteJurado(docente, solicitud, rol);
+        notificarDocenteJurado(docente, solicitud, rolNormalizado);
 
         // Notificar al estudiante que se le asignó un jurado
-        notificarEstudianteJurado(solicitud, docente, rol);
+        notificarEstudianteJurado(solicitud, docente, rolNormalizado);
 
         return guardado;
     }
@@ -200,22 +215,31 @@ public class JuradoServiceImpl implements JuradoService {
 
         List<String> rolesOcupados = juradoRepository.findBySolicitudId(solicitudId)
                 .stream().map(Jurado::getRol).collect(Collectors.toList());
-        List<String> rolesFaltantes = new ArrayList<>(List.of("PRESIDENTE", "VOCAL", "SECRETARIO"))
+        List<String> rolesFaltantes = new ArrayList<>(List.of("PRESIDENTE", "VOCAL_1", "VOCAL_2"))
                 .stream().filter(r -> !rolesOcupados.contains(r)).collect(Collectors.toList());
- 
+
         if (rolesFaltantes.isEmpty()) return;
- 
+
         List<Docente> sugeridos = sugerirDocentes(solicitudId, rolesFaltantes.size());
         if (sugeridos.size() < rolesFaltantes.size()) {
             throw new RuntimeException(
                     "No hay suficientes docentes para asignar automáticamente. " +
                             "Disponibles: " + sugeridos.size() + ", requeridos: " + rolesFaltantes.size());
         }
- 
+
         // Asignar sin notificar al estudiante en cada iteración
         for (int i = 0; i < rolesFaltantes.size(); i++) {
             Docente docente = sugeridos.get(i);
             String rol = rolesFaltantes.get(i);
+            // ERR-03: sugerirDocentes() ya excluye al tutor de esta solicitud de idsOcupados,
+            // así que el conflicto de interés tutor==jurado no puede ocurrir aquí. El pool de
+            // respaldo (findTodosOrdenadosPorCarga) ignora "disponible" a propósito -- es el
+            // fallback para cuando no hay suficientes docentes disponibles y completar el
+            // tribunal es preferible a fallar -- pero se deja constancia en el log.
+            if (docente.getDisponible() != null && !docente.getDisponible()) {
+                log.warn("Asignación automática de jurado usó un docente no disponible (id={}) " +
+                        "por falta de suficientes docentes disponibles para la solicitud {}.", docente.getId(), solicitudId);
+            }
             crearJuradoSinNotificar(solicitud, docente, rol);
             notificarDocenteJurado(docente, solicitud, rol);  // cada docente es destinatario distinto
         }
@@ -263,15 +287,18 @@ public class JuradoServiceImpl implements JuradoService {
 
     // ── Helpers internos ─────────────────────────────────────────────────────
 
-    /** Guarda el jurado y actualiza la carga del docente. No envía ninguna notificación. */
+    /**
+     * Guarda el jurado y actualiza la carga del docente. No envía ninguna notificación.
+     * ERR-03: antes colapsaba cualquier rol que empezara con "VOCAL" al código genérico
+     * "VOCAL" antes de guardar, así que VOCAL_1/VOCAL_2 nunca quedaban en BD tal cual --
+     * rompía la pantalla de Evaluar (busca literalmente esos códigos) y el chequeo de rol
+     * duplicado. Se guarda el código ya normalizado por el llamador, sin transformarlo.
+     */
     private Jurado crearJuradoSinNotificar(Solicitud solicitud, Docente docente, String rol) {
         docente.setCargaHorariaSemanal(docente.getCargaHorariaSemanal() + 1);
         docenteRepository.save(docente);
-        
+
         String codigoRol = rol.toUpperCase();
-        if (codigoRol.startsWith("VOCAL")) {
-            codigoRol = "VOCAL";
-        }
         final String finalCodigoRol = codigoRol;
         ec.edu.uteq.presustentaciones.entities.RolJurado rolJurado = rolJuradoRepository.findByCodigo(codigoRol)
                 .orElseGet(() -> {
