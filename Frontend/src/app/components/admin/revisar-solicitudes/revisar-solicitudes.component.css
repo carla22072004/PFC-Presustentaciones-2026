@@ -4,6 +4,13 @@
 .page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
 .filtros-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
 .buscador { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; }
+.filtro-fecha-bar { display: flex; align-items: center; gap: 8px; margin: -12px 0 20px; flex-wrap: wrap; }
+.filtro-fecha-label { font-size: 0.8rem; font-weight: 600; color: #64748b; }
+.filtro-fecha-input { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; color: #1e293b; }
+.filtro-fecha-btn { background: white; border: 1px solid #e2e8f0; padding: 7px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: #1a5c2e; cursor: pointer; transition: all 0.2s; }
+.filtro-fecha-btn:hover { background: #1a5c2e; color: white; border-color: #1a5c2e; }
+.filtro-fecha-limpiar { color: #dc2626; }
+.filtro-fecha-limpiar:hover { background: #dc2626; color: white; border-color: #dc2626; }
 .filtro-btn { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
 .filtro-btn.activo, .filtro-btn:hover { background: #1a5c2e; color: white; border-color: #1a5c2e; }
 .loading-state { display: flex; flex-direction: column; align-items: center; padding: 60px; color: #64748b; gap: 16px; }
@@ -65,6 +72,12 @@ body.dark-mode .paginacion-info { color: #8b949e !important; }
 body.dark-mode .pag-btn { background: #161b22 !important; border-color: #30363d !important; color: #c9d1d9 !important; }
 body.dark-mode .pag-btn:hover:not(:disabled) { background: #21262d !important; }
 body.dark-mode .pag-btn.pag-num.activo { background: #238636 !important; border-color: #238636 !important; color: white !important; }
+body.dark-mode .filtro-fecha-label { color: #8b949e !important; }
+body.dark-mode .filtro-fecha-input { background: #161b22 !important; border-color: #30363d !important; color: #c9d1d9 !important; }
+body.dark-mode .filtro-fecha-btn { background: #161b22 !important; border-color: #30363d !important; color: #3fb950 !important; }
+body.dark-mode .filtro-fecha-btn:hover { background: #238636 !important; color: white !important; }
+body.dark-mode .filtro-fecha-limpiar { color: #f85149 !important; }
+body.dark-mode .filtro-fecha-limpiar:hover { background: #da3633 !important; color: white !important; }
 
 /* Flujo del coordinador */
 .flujo-bar {

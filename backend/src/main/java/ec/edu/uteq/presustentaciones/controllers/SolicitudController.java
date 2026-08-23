@@ -143,8 +143,10 @@ public class SolicitudController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String estado,
-            @RequestParam(required = false) String q) {
-        Page<Solicitud> resultado = solicitudService.listarSolicitudesPaginado(page, size, estado, q);
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaDesde,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaHasta) {
+        Page<Solicitud> resultado = solicitudService.listarSolicitudesPaginado(page, size, estado, q, fechaDesde, fechaHasta);
         return ResponseEntity.ok(Map.of(
                 "content", resultado.getContent(),
                 "totalElements", resultado.getTotalElements(),

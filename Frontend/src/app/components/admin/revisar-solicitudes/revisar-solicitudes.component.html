@@ -47,6 +47,20 @@
     <input class="buscador" type="text" placeholder="Buscar por título del tema o nombre del estudiante..."
            [(ngModel)]="filtroTexto" (ngModelChange)="onBuscarChange()" />
 
+    <!-- Filtro por fecha de registro -->
+    <div class="filtro-fecha-bar">
+        <label class="filtro-fecha-label" for="fechaDesde"><i class="bi bi-calendar3 me-1"></i>Desde</label>
+        <input id="fechaDesde" class="filtro-fecha-input" type="date"
+               [(ngModel)]="filtroFechaDesde" (ngModelChange)="onFechaChange()" />
+        <label class="filtro-fecha-label" for="fechaHasta">Hasta</label>
+        <input id="fechaHasta" class="filtro-fecha-input" type="date"
+               [(ngModel)]="filtroFechaHasta" (ngModelChange)="onFechaChange()" />
+        <button class="filtro-fecha-btn" (click)="filtrarHoy()">Hoy</button>
+        <button class="filtro-fecha-btn filtro-fecha-limpiar" *ngIf="filtroFechaDesde || filtroFechaHasta" (click)="limpiarFiltroFecha()">
+            <i class="bi bi-x-circle"></i> Limpiar
+        </button>
+    </div>
+
     <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando...</p></div>
 
     <div class="table-card" *ngIf="!cargando">

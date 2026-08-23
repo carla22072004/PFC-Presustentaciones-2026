@@ -13,12 +13,14 @@ export class SolicitudService {
     listarSolicitudes(): Observable<any[]> {
         return this.http.get<any[]>(this.apiUrl);
     }
-    listarSolicitudesPaginado(page: number, size: number, estado?: string, q?: string): Observable<{
+    listarSolicitudesPaginado(page: number, size: number, estado?: string, q?: string, fechaDesde?: string, fechaHasta?: string): Observable<{
         content: any[]; totalElements: number; totalPages: number; page: number; size: number;
     }> {
         let params = `page=${page}&size=${size}`;
         if (estado) params += `&estado=${encodeURIComponent(estado)}`;
         if (q) params += `&q=${encodeURIComponent(q)}`;
+        if (fechaDesde) params += `&fechaDesde=${fechaDesde}`;
+        if (fechaHasta) params += `&fechaHasta=${fechaHasta}`;
         return this.http.get<{ content: any[]; totalElements: number; totalPages: number; page: number; size: number; }>(
             `${this.apiUrl}/paginado?${params}`
         );

@@ -28,6 +28,16 @@ export class RevisarSolicitudesComponent implements OnInit, OnDestroy {
     private busquedaSub = new Subject<string>();
     private subs = new Subscription();
 
+    // Filtro por rango de fecha de registro (formato yyyy-MM-dd, el que produce <input type="date">)
+    filtroFechaDesde = '';
+    filtroFechaHasta = '';
+    private fechaSub = new Subject<void>();
+
+    // Se incrementa en cada cargar(): si dos peticiones quedan en vuelo a la vez (p.ej. cambiar
+    // "Desde" y luego "Hasta" rápido) y la más vieja responde después que la más nueva, se
+    // ignora su resultado en vez de pisar la tabla con datos obsoletos.
+    private cargaToken = 0;
+
     // Paginación server-side — con miles de solicitudes no se puede cargar todo de una vez
     paginaActual = 0; // 0-indexed, como Spring Pageable
     tamanioPagina = 20;
@@ -64,6 +74,12 @@ export class RevisarSolicitudesComponent implements OnInit, OnDestroy {
                 this.cargar();
             })
         );
+        this.subs.add(
+            this.fechaSub.pipe(debounceTime(300)).subscribe(() => {
+                this.paginaActual = 0;
+                this.cargar();
+            })
+        );
         // Safety: stop spinner after 10s even if backend unreachable
         setTimeout(() => { if (this.cargando) this.cargando = false; }, 10000);
     }
@@ -72,19 +88,49 @@ export class RevisarSolicitudesComponent implements OnInit, OnDestroy {
 
     onBuscarChange(): void { this.busquedaSub.next(this.filtroTexto); }
 
+    onFechaChange(): void {
+        if (this.filtroFechaDesde && this.filtroFechaHasta && this.filtroFechaDesde > this.filtroFechaHasta) {
+            this.filtroFechaHasta = this.filtroFechaDesde;
+        }
+        this.fechaSub.next();
+    }
+
+    filtrarHoy(): void {
+        const hoy = new Date().toISOString().slice(0, 10);
+        this.filtroFechaDesde = hoy;
+        this.filtroFechaHasta = hoy;
+        this.paginaActual = 0;
+        this.cargar();
+    }
+
+    limpiarFiltroFecha(): void {
+        this.filtroFechaDesde = '';
+        this.filtroFechaHasta = '';
+        this.paginaActual = 0;
+        this.cargar();
+    }
+
     cargar(): void {
         this.cargando = true;
+        const token = ++this.cargaToken;
         this.solicitudService.listarSolicitudesPaginado(
-            this.paginaActual, this.tamanioPagina, this.filtroEstado || undefined, this.filtroTexto || undefined
+            this.paginaActual, this.tamanioPagina, this.filtroEstado || undefined, this.filtroTexto || undefined,
+            this.filtroFechaDesde || undefined, this.filtroFechaHasta || undefined
         ).subscribe({
             next: (data) => {
+                if (token !== this.cargaToken) return; // respuesta obsoleta, ya hay una petición más nueva en curso
                 this.solicitudes = data.content;
                 this.totalElementos = data.totalElements;
                 this.totalPaginas = data.totalPages;
                 this.cargando = false;
                 this.cdr.markForCheck();
             },
-            error: () => { this.cargando = false; this.notification.error('Error al cargar solicitudes.', 'Error'); this.cdr.markForCheck(); }
+            error: () => {
+                if (token !== this.cargaToken) return;
+                this.cargando = false;
+                this.notification.error('Error al cargar solicitudes.', 'Error');
+                this.cdr.markForCheck();
+            }
         });
     }
 

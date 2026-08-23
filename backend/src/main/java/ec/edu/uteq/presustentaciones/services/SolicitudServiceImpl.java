@@ -29,6 +29,7 @@ import org.springframework.cache.annotation.CacheEvict;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -335,11 +336,20 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     @Override
-    public Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto) {
+    public Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto,
+                                                       LocalDate fechaDesde, LocalDate fechaHasta) {
         int paginaSegura = Math.max(pagina, 0);
         int tamanioSeguro = Math.min(Math.max(tamanio, 1), 100);
         PageRequest pageRequest = PageRequest.of(paginaSegura, tamanioSeguro, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
-        return solicitudRepository.buscarConFiltros(estado, texto, pageRequest);
+        // fechaRegistro es timestamp -- se acota al día completo (00:00:00 a 23:59:59.999999999)
+        // para que filtrar por "hoy" o por un día puntual incluya todas las horas de ese día.
+        // Se usan centinelas (1900/2999) en vez de pasar null al JPQL: Hibernate no logra
+        // inferir el tipo SQL de un parámetro null reutilizado dentro de "x IS NULL OR campo >= x"
+        // contra Postgres (falla con "cannot cast type bytea to timestamp"), así que en vez de
+        // ese patrón se acota siempre a un rango concreto, sin importar si el usuario filtró o no.
+        LocalDateTime desde = fechaDesde != null ? fechaDesde.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
+        LocalDateTime hasta = fechaHasta != null ? fechaHasta.atTime(LocalTime.MAX) : LocalDateTime.of(2999, 12, 31, 23, 59, 59);
+        return solicitudRepository.buscarConFiltros(estado, texto, desde, hasta, pageRequest);
     }
 
     @Override

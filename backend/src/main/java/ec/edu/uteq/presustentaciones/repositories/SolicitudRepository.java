@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,24 +30,30 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
     /**
      * Página de solicitudes con estudiante+usuario precargados — evita traer las 44k filas de
-     * una vez. Combina el filtro de estado (pestañas) con búsqueda de texto libre por título
+     * una vez. Combina el filtro de estado (pestañas), búsqueda de texto libre por título
      * del tema o nombre/apellido del estudiante (ERR-01: el listado del coordinador solo
-     * filtraba por estado, sin buscador). Ambos parámetros son opcionales e independientes
-     * entre sí -- mismo patrón que UsuarioRepository.buscarPaginado.
+     * filtraba por estado, sin buscador), y un rango de fechaRegistro (para poder acotar a
+     * "hoy" o a un día concreto desde el frontend). Todos los parámetros son opcionales e
+     * independientes entre sí -- mismo patrón que UsuarioRepository.buscarPaginado.
      */
     @Query(value = "SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u " +
            "WHERE (:estado IS NULL OR :estado = '' OR s.estado.codigo = :estado) " +
            "AND (:texto IS NULL OR :texto = '' " +
            "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :texto, '%')) " +
            "     OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) " +
-           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%')))",
+           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%'))) " +
+           "AND s.fechaRegistro >= :fechaDesde AND s.fechaRegistro <= :fechaHasta",
            countQuery = "SELECT count(s) FROM Solicitud s JOIN s.estudiante e JOIN e.usuario u " +
            "WHERE (:estado IS NULL OR :estado = '' OR s.estado.codigo = :estado) " +
            "AND (:texto IS NULL OR :texto = '' " +
            "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :texto, '%')) " +
            "     OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) " +
-           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%')))")
-    Page<Solicitud> buscarConFiltros(@Param("estado") String estado, @Param("texto") String texto, Pageable pageable);
+           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%'))) " +
+           "AND s.fechaRegistro >= :fechaDesde AND s.fechaRegistro <= :fechaHasta")
+    Page<Solicitud> buscarConFiltros(@Param("estado") String estado, @Param("texto") String texto,
+                                      @Param("fechaDesde") LocalDateTime fechaDesde,
+                                      @Param("fechaHasta") LocalDateTime fechaHasta,
+                                      Pageable pageable);
 
     @Query("SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE e.id = :estudianteId ORDER BY s.fechaRegistro DESC")
     List<Solicitud> findByEstudianteId(@Param("estudianteId") Long estudianteId);

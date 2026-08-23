@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +16,8 @@ public interface SolicitudService {
     Solicitud rechazarSolicitud(Long solicitudId);
     Solicitud rechazarConObservacion(Long solicitudId, String observacion);
     List<Solicitud> listarSolicitudes();
-    Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto);
+    Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto,
+                                               LocalDate fechaDesde, LocalDate fechaHasta);
     Map<String, Long> contarPorEstado();
     List<Solicitud> listarPorEstudiante(Long estudianteId);
     List<Solicitud> listarPorUsuario(Long usuarioId);
