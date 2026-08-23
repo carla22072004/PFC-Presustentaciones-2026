@@ -24,6 +24,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final RolUsuarioRepository rolUsuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
 
     /** rol (string) y rolUsuario (FK a roles_usuario) son dos columnas paralelas para el mismo dato — hay que mantenerlas sincronizadas. */
     private RolUsuario resolverRol(String codigoRol) {
@@ -47,6 +48,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new RuntimeException("Ya existe un usuario con el email: " + usuario.getEmail());
         }
 
+        auditoriaService.marcarActorActual();
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRolUsuario(resolverRol(usuario.getRol()));
         return usuarioRepository.save(usuario);
@@ -56,6 +58,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public Usuario actualizar(Long id, Usuario usuario) {
         log.info("Actualizando usuario con ID: {}", id);
 
+        auditoriaService.marcarActorActual();
         Usuario existente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
 
@@ -81,6 +84,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new RuntimeException("Usuario no encontrado con ID: " + id);
         }
 
+        auditoriaService.marcarActorActual();
         usuarioRepository.deleteById(id);
     }
 
@@ -116,6 +120,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     public void activar(Long id) {
+        auditoriaService.marcarActorActual();
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
 
@@ -125,6 +130,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     public void desactivar(Long id) {
+        auditoriaService.marcarActorActual();
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
 

@@ -1,0 +1,81 @@
+<div class="aud-wrapper">
+    <div class="aud-header">
+        <div>
+            <h2 class="aud-title"><i class="bi bi-clock-history me-2"></i>Auditoría</h2>
+            <p class="aud-subtitle">Quién creó, modificó, aprobó o eliminó información, y cuándo — registrado automáticamente por triggers de base de datos</p>
+        </div>
+        <button class="aud-btn aud-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+
+    <input class="aud-buscador" type="text" placeholder="Buscar por usuario o tabla..."
+           [(ngModel)]="filtroTexto" (ngModelChange)="onBuscarChange()" />
+
+    <div class="aud-filtros-bar">
+        <span class="aud-filtros-label">Tabla:</span>
+        <button class="aud-filtro-btn" *ngFor="let t of tablas" [class.activo]="filtroTabla===t" (click)="setFiltroTabla(t)">{{ t }}</button>
+    </div>
+    <div class="aud-filtros-bar">
+        <span class="aud-filtros-label">Acción:</span>
+        <button class="aud-filtro-btn" *ngFor="let a of acciones" [class.activo]="filtroAccion===a" (click)="setFiltroAccion(a)">{{ accionLabel(a) }}</button>
+    </div>
+
+    <div class="aud-loading" *ngIf="cargando"><div class="aud-spinner"></div><p>Cargando auditoría...</p></div>
+
+    <div class="aud-table-card" *ngIf="!cargando">
+        <table class="aud-tabla">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Tabla</th>
+                    <th>Registro</th>
+                    <th class="aud-text-center">Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <ng-container *ngFor="let r of registros">
+                    <tr class="aud-fila" (click)="toggleExpandir(r.id)">
+                        <td>{{ r.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                        <td>{{ r.usuarioNombre || 'Sistema / sin identificar' }}</td>
+                        <td><span class="aud-badge" [ngClass]="accionBadgeClase(r.accion)">{{ accionLabel(r.accion) }}</span></td>
+                        <td><span class="aud-tabla-nombre">{{ r.tabla }}</span></td>
+                        <td>#{{ r.registroId }}</td>
+                        <td class="aud-text-center">
+                            <i class="bi" [ngClass]="expandido === r.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        </td>
+                    </tr>
+                    <tr class="aud-fila-detalle" *ngIf="expandido === r.id">
+                        <td colspan="6">
+                            <div class="aud-detalle-card" *ngIf="cambios(r).length > 0">
+                                <table class="aud-tabla-cambios">
+                                    <thead><tr><th>Campo</th><th>Antes</th><th></th><th>Después</th></tr></thead>
+                                    <tbody>
+                                        <tr *ngFor="let c of cambios(r)">
+                                            <td class="aud-campo">{{ c.campo }}</td>
+                                            <td class="aud-valor-antes">{{ formatoValor(c.antes) }}</td>
+                                            <td class="aud-flecha"><i class="bi bi-arrow-right"></i></td>
+                                            <td class="aud-valor-despues">{{ formatoValor(c.despues) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="aud-sin-cambios" *ngIf="cambios(r).length === 0">Sin cambios de columnas para mostrar.</p>
+                        </td>
+                    </tr>
+                </ng-container>
+                <tr *ngIf="registros.length === 0">
+                    <td colspan="6" class="aud-vacio">No hay registros de auditoría con este filtro.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="aud-paginacion" *ngIf="totalPaginas > 1">
+            <span class="aud-paginacion-info">Página {{ paginaActual + 1 }} de {{ totalPaginas }} — {{ totalElementos | number }} registros</span>
+            <div class="aud-paginacion-controles">
+                <button class="aud-pag-btn" [disabled]="paginaActual === 0" (click)="paginaAnterior()" title="Anterior"><i class="bi bi-chevron-left"></i></button>
+                <button class="aud-pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="paginaSiguiente()" title="Siguiente"><i class="bi bi-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+</div>

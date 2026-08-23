@@ -52,6 +52,7 @@ public class ActaServiceImpl implements ActaService {
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
     private final jakarta.persistence.EntityManager entityManager;
     private final NotificacionService notificacionService;
+    private final AuditoriaService auditoriaService;
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -100,6 +101,7 @@ public class ActaServiceImpl implements ActaService {
     @Override
     @Transactional
     public Acta firmarActa(Long actaId, String rol, String observacion) {
+        auditoriaService.marcarActorActual();
         Acta acta = actaRepository.findById(actaId)
                 .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
 

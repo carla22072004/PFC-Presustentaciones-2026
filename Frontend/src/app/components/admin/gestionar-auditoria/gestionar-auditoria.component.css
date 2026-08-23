@@ -1,0 +1,63 @@
+.aud-wrapper { padding: 24px; max-width: 1300px; margin: 0 auto; }
+
+.aud-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.aud-title { font-size: 1.4rem; font-weight: 700; color: #1e293b; margin: 0; }
+.aud-subtitle { color: #64748b; margin: 4px 0 0; font-size: 0.88rem; max-width: 640px; }
+.aud-btn { border: none; border-radius: 8px; padding: 10px 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.aud-btn-refresh { background: #eef2ff; color: #4338ca; }
+
+.aud-buscador { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem; }
+
+.aud-filtros-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.aud-filtros-label { font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-right: 4px; }
+.aud-filtro-btn { background: #fff; border: 1px solid #e2e8f0; padding: 5px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; color: #64748b; cursor: pointer; }
+.aud-filtro-btn.activo { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+.aud-loading { text-align: center; padding: 40px 0; color: #64748b; }
+.aud-spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; margin: 0 auto 12px; animation: aud-spin 0.8s linear infinite; }
+@keyframes aud-spin { to { transform: rotate(360deg); } }
+
+.aud-table-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow-x: auto; margin-top: 12px; }
+.aud-tabla { width: 100%; border-collapse: collapse; min-width: 720px; }
+.aud-tabla th { text-align: left; padding: 12px 16px; background: #f8fafc; color: #475569; font-size: 0.78rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+.aud-tabla td { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; color: #1e293b; }
+.aud-text-center { text-align: center; }
+.aud-vacio { text-align: center; color: #94a3b8; padding: 32px 0; }
+
+.aud-fila { cursor: pointer; }
+.aud-fila:hover { background: #f8fafc; }
+.aud-fila-detalle td { background: #f8fafc; padding: 0; }
+
+.aud-tabla-nombre { font-family: monospace; font-size: 0.8rem; color: #475569; }
+
+.aud-badge { padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.aud-badge-crear { background: #dcfce7; color: #15803d; }
+.aud-badge-modificar { background: #dbeafe; color: #1d4ed8; }
+.aud-badge-eliminar { background: #fee2e2; color: #b91c1c; }
+
+.aud-detalle-card { padding: 12px 16px 16px; }
+.aud-tabla-cambios { width: 100%; border-collapse: collapse; }
+.aud-tabla-cambios th { text-align: left; padding: 6px 10px; font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; }
+.aud-tabla-cambios td { padding: 6px 10px; font-size: 0.82rem; border-bottom: 1px solid #e2e8f0; word-break: break-word; max-width: 260px; }
+.aud-campo { font-weight: 700; color: #475569; font-family: monospace; }
+.aud-valor-antes { color: #b91c1c; text-decoration: line-through; }
+.aud-valor-despues { color: #15803d; font-weight: 600; }
+.aud-flecha { color: #94a3b8; width: 24px; text-align: center; }
+.aud-sin-cambios { padding: 12px 16px; color: #94a3b8; font-size: 0.82rem; margin: 0; }
+
+.aud-paginacion { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 16px; border-top: 1px solid #f1f5f9; }
+.aud-paginacion-info { font-size: 0.82rem; color: #64748b; }
+.aud-paginacion-controles { display: flex; gap: 4px; }
+.aud-pag-btn { border: 1px solid #e2e8f0; background: #fff; color: #475569; border-radius: 6px; min-width: 32px; height: 32px; cursor: pointer; }
+.aud-pag-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+body.dark-mode .aud-title { color: #e2e8f0; }
+body.dark-mode .aud-table-card { background: #1e293b; }
+body.dark-mode .aud-tabla th { background: #0f172a; color: #94a3b8; border-color: #334155; }
+body.dark-mode .aud-tabla td { color: #e2e8f0; border-color: #334155; }
+body.dark-mode .aud-fila:hover { background: #0f172a; }
+body.dark-mode .aud-fila-detalle td { background: #0f172a; }
+body.dark-mode .aud-buscador { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .aud-filtro-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+body.dark-mode .aud-campo { color: #cbd5e1; }
+body.dark-mode .aud-tabla-nombre { color: #94a3b8; }
