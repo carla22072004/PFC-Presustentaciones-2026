@@ -59,36 +59,37 @@ export class VerAnteproyectoComponent implements OnInit {
 
     abrirPdf(): void {
         this.cargando = true;
-        const token = this.authService.getToken();
-        fetch(this.anteproyectoService.getUrlVisualizacion(this.solicitudId), {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
-            .then(blob => {
+        this.anteproyectoService.obtenerPdfBlob(this.solicitudId).subscribe({
+            next: (res) => {
+                const blob = res.body!;
                 this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
                 this.mostrarPdf = true;
                 this.cargando = false;
                 this.cdr.markForCheck();
-            })
-            .catch(() => {
+            },
+            error: () => {
                 this.error = 'No se pudo cargar el PDF. Verifica que el archivo exista.';
                 this.cargando = false;
                 this.cdr.markForCheck();
-            });
+            }
+        });
     }
 
     descargarPdf(): void {
-        const token = this.authService.getToken();
-        fetch(this.anteproyectoService.getUrlVisualizacion(this.solicitudId), {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.blob())
-            .then(blob => {
+        this.anteproyectoService.obtenerPdfBlob(this.solicitudId).subscribe({
+            next: (res) => {
+                const blob = res.body!;
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
                 a.download = `anteproyecto_solicitud_${this.solicitudId}.pdf`;
                 a.click();
-            });
+                URL.revokeObjectURL(a.href);
+            },
+            error: () => {
+                this.error = 'No se pudo descargar el PDF. Verifica que el archivo exista.';
+                this.cdr.markForCheck();
+            }
+        });
     }
 
     getBadgeClass(estado: string): string {

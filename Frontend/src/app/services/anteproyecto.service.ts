@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -7,6 +7,21 @@ export class AnteproyectoService {
   private apiUrl = 'http://localhost:8080/api/anteproyectos';
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * ERR-04: el visor y la descarga de PDF usaban fetch() nativo apuntando a esta misma
+   * URL sin pasar por el interceptor (que reescribe /api/ -> /api/v1/), así que le
+   * pegaban a una ruta que el backend ya no expone y siempre fallaban. Usar HttpClient
+   * aquí para que la reescritura y el header Authorization se apliquen igual que en el
+   * resto del servicio. observe: 'response' expone el status code para poder distinguir
+   * un PDF real de una respuesta de error antes de descargarlo.
+   */
+  obtenerPdfBlob(solicitudId: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.apiUrl}/ver/${solicitudId}`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
 
   enviarAnteproyecto(solicitudId: number, archivo: File): Observable<any> {
     const formData = new FormData();
@@ -16,10 +31,6 @@ export class AnteproyectoService {
 
   obtenerPorSolicitud(solicitudId: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/solicitud/${solicitudId}`);
-  }
-
-  getUrlVisualizacion(solicitudId: number): string {
-    return `${this.apiUrl}/ver/${solicitudId}`;
   }
 
   /** RF-02: Verificar integridad SHA-256 del archivo */
