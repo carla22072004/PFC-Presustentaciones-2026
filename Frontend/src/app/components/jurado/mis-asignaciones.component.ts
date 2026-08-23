@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { JuradoService } from '../../services/jurado.service';
 import { AuthService } from '../../services/auth.service';
 import { DocenteService } from '../../services/docente.service';
-import { EvaluacionService } from '../../services/evaluacion.service';
+import { JuryEvaluationService } from '../../services/jury-evaluation.service';
 import { NotificationService } from '../../services/notification.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -22,13 +22,16 @@ export class MisAsignacionesComponent implements OnInit {
     asignacionesTutor: any[] = [];
     cargando = true;
     docenteId: number | null = null;
-    solicitudesEvaluadas = new Set<number>();
+    /** IDs de miembro_tribunal (jurado) donde el docente autenticado YA registró su propia nota
+     * para esa asignación en particular -- un mismo docente puede tener roles distintos en
+     * distintas solicitudes (ej. Vocal 2 en una, Vocal 1 en otra), cada una con su propio estado. */
+    juradosEvaluados = new Set<number>();
 
     constructor(
         private juryService: JuradoService,
         private docenteService: DocenteService,
         private authService: AuthService,
-        private evaluacionService: EvaluacionService,
+        private juryEvalService: JuryEvaluationService,
         private notificationService: NotificationService,
         private cdr: ChangeDetectorRef
     ) {}
@@ -50,7 +53,7 @@ export class MisAsignacionesComponent implements OnInit {
         this.juryService.listarPorDocente(docenteId).subscribe({
             next: (data: any[]) => {
                 this.asignaciones = data;
-                this.verificarEvaluacionesFinal(data.map((j: any) => j.solicitud?.id).filter(Boolean));
+                this.verificarEvaluacionesPersonales(data);
                 this.cargando = false;
                 this.cdr.markForCheck();
             },
@@ -67,24 +70,25 @@ export class MisAsignacionesComponent implements OnInit {
         });
     }
 
-    verificarEvaluacionesFinal(solicitudIds: number[]): void {
-        if (solicitudIds.length === 0) return;
+    verificarEvaluacionesPersonales(asignaciones: any[]): void {
+        const conSolicitud = asignaciones.filter(a => a?.id && a.solicitud?.id);
+        if (conSolicitud.length === 0) return;
 
-        const checks = solicitudIds.map(id =>
-            this.evaluacionService.porSolicitud(id).pipe(
-                map(eval_ => ({ id, existe: !!eval_?.notaFinal })),
-                catchError(() => of({ id, existe: false }))
+        const checks = conSolicitud.map(a =>
+            this.juryEvalService.obtenerEvaluacion(a.solicitud.id, a.id).pipe(
+                map(ev => ({ juradoId: a.id, existe: !!ev })),
+                catchError(() => of({ juradoId: a.id, existe: false }))
             )
         );
 
         forkJoin(checks).subscribe(resultados => {
-            resultados.forEach(r => { if (r.existe) this.solicitudesEvaluadas.add(r.id); });
+            resultados.forEach(r => { if (r.existe) this.juradosEvaluados.add(r.juradoId); });
             this.cdr.markForCheck();
         });
     }
 
-    yaEvaluada(solicitudId: number): boolean {
-        return this.solicitudesEvaluadas.has(solicitudId);
+    yaEvaluadaPersonal(juradoId: number): boolean {
+        return this.juradosEvaluados.has(juradoId);
     }
 
     /**

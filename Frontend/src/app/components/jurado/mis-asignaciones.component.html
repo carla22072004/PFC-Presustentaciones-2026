@@ -44,15 +44,17 @@
               <i class="bi bi-file-earmark-pdf"></i> Ver PDF
             </a>
 
-            <!-- Evaluar - deshabilitado si ya evaluó o está suspendida -->
+            <!-- Evaluar - la etiqueta refleja SI TÚ ya calificaste esta asignación en particular
+                 (no si el tribunal completo terminó); sigue siendo navegable para poder ver/editar
+                 tu propia nota, salvo que la solicitud esté suspendida -->
             <a class="btn-card btn-evaluar"
-               [class.btn-disabled]="yaEvaluada(a.solicitud?.id) || estaSuspendida(a.solicitud)"
-               [routerLink]="(yaEvaluada(a.solicitud?.id) || estaSuspendida(a.solicitud)) ? null : ['/dashboard/jurado/evaluar-rubrica', a.solicitud?.id]"
-               [title]="yaEvaluada(a.solicitud?.id) ? 'La evaluación final ya fue registrada' : (estaSuspendida(a.solicitud) ? 'Solicitud suspendida' : 'Evaluar rúbrica')"
+               [class.btn-disabled]="estaSuspendida(a.solicitud)"
+               [routerLink]="estaSuspendida(a.solicitud) ? null : ['/dashboard/jurado/evaluar-rubrica', a.solicitud?.id]"
+               [title]="estaSuspendida(a.solicitud) ? 'Solicitud suspendida' : (yaEvaluadaPersonal(a.id) ? 'Ver o editar tu evaluación' : 'Evaluar rúbrica')"
                (click)="verificarSuspension(a.solicitud) && $event.preventDefault()">
-              <i class="bi" [class.bi-check-circle-fill]="yaEvaluada(a.solicitud?.id)"
-                            [class.bi-star-half]="!yaEvaluada(a.solicitud?.id)"></i>
-              {{ yaEvaluada(a.solicitud?.id) ? 'Evaluado' : 'Evaluar' }}
+              <i class="bi" [class.bi-check-circle-fill]="yaEvaluadaPersonal(a.id)"
+                            [class.bi-star-half]="!yaEvaluadaPersonal(a.id)"></i>
+              {{ yaEvaluadaPersonal(a.id) ? 'Evaluado' : 'Evaluar' }}
             </a>
 
             <!-- Firmar Acta - deshabilitado si está suspendida -->
