@@ -335,15 +335,11 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     @Override
-    public Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado) {
+    public Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto) {
         int paginaSegura = Math.max(pagina, 0);
         int tamanioSeguro = Math.min(Math.max(tamanio, 1), 100);
         PageRequest pageRequest = PageRequest.of(paginaSegura, tamanioSeguro, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
-
-        if (estado != null && !estado.isBlank()) {
-            return solicitudRepository.findAllWithEstudianteByEstadoCodigo(estado, pageRequest);
-        }
-        return solicitudRepository.findAllWithEstudiante(pageRequest);
+        return solicitudRepository.buscarConFiltros(estado, texto, pageRequest);
     }
 
     @Override

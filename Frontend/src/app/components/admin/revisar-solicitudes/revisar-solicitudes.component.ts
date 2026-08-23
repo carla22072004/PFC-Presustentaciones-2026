@@ -1,7 +1,8 @@
-import { Component, ViewEncapsulation, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import { ReporteService } from '../../../services/reporte.service';
 import { SolicitudService } from '../../../services/solicitud.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -14,12 +15,18 @@ import { NotificationService } from '../../../services/notification.service';
     templateUrl: './revisar-solicitudes.component.html',
     styleUrls: ['./revisar-solicitudes.component.css']
 })
-export class RevisarSolicitudesComponent implements OnInit {
+export class RevisarSolicitudesComponent implements OnInit, OnDestroy {
     solicitudes: any[] = [];
     cargando = true;
     filtroEstado = '';
     modalObs: string | null = null;
     modalTitulo = '';
+
+    // ERR-01: búsqueda de texto libre (título del tema o nombre/apellido del estudiante),
+    // combinada con el filtro de pestaña activo — mismo patrón que GestionUsuariosComponent.
+    filtroTexto = '';
+    private busquedaSub = new Subject<string>();
+    private subs = new Subscription();
 
     // Paginación server-side — con miles de solicitudes no se puede cargar todo de una vez
     paginaActual = 0; // 0-indexed, como Spring Pageable
@@ -51,13 +58,25 @@ export class RevisarSolicitudesComponent implements OnInit {
     ngOnInit(): void {
         this.cargarConteos();
         this.cargar();
+        this.subs.add(
+            this.busquedaSub.pipe(debounceTime(300)).subscribe(() => {
+                this.paginaActual = 0;
+                this.cargar();
+            })
+        );
         // Safety: stop spinner after 10s even if backend unreachable
         setTimeout(() => { if (this.cargando) this.cargando = false; }, 10000);
     }
 
+    ngOnDestroy(): void { this.subs.unsubscribe(); }
+
+    onBuscarChange(): void { this.busquedaSub.next(this.filtroTexto); }
+
     cargar(): void {
         this.cargando = true;
-        this.solicitudService.listarSolicitudesPaginado(this.paginaActual, this.tamanioPagina, this.filtroEstado || undefined).subscribe({
+        this.solicitudService.listarSolicitudesPaginado(
+            this.paginaActual, this.tamanioPagina, this.filtroEstado || undefined, this.filtroTexto || undefined
+        ).subscribe({
             next: (data) => {
                 this.solicitudes = data.content;
                 this.totalElementos = data.totalElements;

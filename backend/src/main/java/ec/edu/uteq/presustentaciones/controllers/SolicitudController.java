@@ -134,14 +134,17 @@ public class SolicitudController {
     /**
      * Versión paginada de {@link #listar()} — evita cargar miles de filas de una sola vez,
      * que es lo que hacía colapsar la tabla de "Gestionar Solicitudes" en el frontend.
+     * ERR-01: agrega búsqueda de texto libre (parámetro "q") combinable con el filtro de
+     * estado, mismo patrón que GET /api/v1/usuarios/paginado.
      */
     @GetMapping("/paginado")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
     public ResponseEntity<?> listarPaginado(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String estado) {
-        Page<Solicitud> resultado = solicitudService.listarSolicitudesPaginado(page, size, estado);
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String q) {
+        Page<Solicitud> resultado = solicitudService.listarSolicitudesPaginado(page, size, estado, q);
         return ResponseEntity.ok(Map.of(
                 "content", resultado.getContent(),
                 "totalElements", resultado.getTotalElements(),

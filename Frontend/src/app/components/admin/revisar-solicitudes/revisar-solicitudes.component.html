@@ -44,6 +44,9 @@
         <button class="filtro-btn" [class.activo]="filtroEstado==='CREADA'"    (click)="setFiltro('CREADA')">Borradores ({{ contar('CREADA') }})</button>
     </div>
 
+    <input class="buscador" type="text" placeholder="Buscar por título del tema o nombre del estudiante..."
+           [(ngModel)]="filtroTexto" (ngModelChange)="onBuscarChange()" />
+
     <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando...</p></div>
 
     <div class="table-card" *ngIf="!cargando">
@@ -71,7 +74,7 @@
                     </div>
                 </td>
                 <td class="titulo-cell" [title]="s.tituloTema">{{ s.tituloTema }}</td>
-                <td><span class="modalidad-tag">{{ s.modalidad }}</span></td>
+                <td><span class="modalidad-tag">{{ s.modalidadTitulacion?.nombre }}</span></td>
                 <td>{{ s.fechaRegistro | date:'dd/MM/yy' }}</td>
                 <td><span class="badge" [ngClass]="getBadge(s.estado)">{{ s.estado }}</span></td>
                 <td>

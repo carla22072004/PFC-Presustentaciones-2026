@@ -27,14 +27,26 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
     @Query("SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u ORDER BY s.fechaRegistro DESC")
     List<Solicitud> findAllWithEstudiante();
 
-    /** Página de solicitudes con estudiante+usuario precargados — evita traer las 44k filas de una vez */
-    @Query(value = "SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u",
-           countQuery = "SELECT count(s) FROM Solicitud s")
-    Page<Solicitud> findAllWithEstudiante(Pageable pageable);
-
-    @Query(value = "SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE s.estado.codigo = :codigo",
-           countQuery = "SELECT count(s) FROM Solicitud s WHERE s.estado.codigo = :codigo")
-    Page<Solicitud> findAllWithEstudianteByEstadoCodigo(@Param("codigo") String codigo, Pageable pageable);
+    /**
+     * Página de solicitudes con estudiante+usuario precargados — evita traer las 44k filas de
+     * una vez. Combina el filtro de estado (pestañas) con búsqueda de texto libre por título
+     * del tema o nombre/apellido del estudiante (ERR-01: el listado del coordinador solo
+     * filtraba por estado, sin buscador). Ambos parámetros son opcionales e independientes
+     * entre sí -- mismo patrón que UsuarioRepository.buscarPaginado.
+     */
+    @Query(value = "SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u " +
+           "WHERE (:estado IS NULL OR :estado = '' OR s.estado.codigo = :estado) " +
+           "AND (:texto IS NULL OR :texto = '' " +
+           "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :texto, '%')) " +
+           "     OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) " +
+           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%')))",
+           countQuery = "SELECT count(s) FROM Solicitud s JOIN s.estudiante e JOIN e.usuario u " +
+           "WHERE (:estado IS NULL OR :estado = '' OR s.estado.codigo = :estado) " +
+           "AND (:texto IS NULL OR :texto = '' " +
+           "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :texto, '%')) " +
+           "     OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) " +
+           "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :texto, '%')))")
+    Page<Solicitud> buscarConFiltros(@Param("estado") String estado, @Param("texto") String texto, Pageable pageable);
 
     @Query("SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE e.id = :estudianteId ORDER BY s.fechaRegistro DESC")
     List<Solicitud> findByEstudianteId(@Param("estudianteId") Long estudianteId);

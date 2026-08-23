@@ -43,7 +43,7 @@
             </div>
           </td>
           <td class="titulo-cell" [title]="s.tituloTema">{{ s.tituloTema }}</td>
-          <td><span class="mod-chip">{{ s.modalidad }}</span></td>
+          <td><span class="mod-chip">{{ s.modalidadTitulacion?.nombre }}</span></td>
           <td>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</td>
           <td><span class="badge" [ngClass]="getBadge(s.estado)">{{ s.estado }}</span></td>
           <td>

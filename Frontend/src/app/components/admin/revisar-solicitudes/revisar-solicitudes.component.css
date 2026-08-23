@@ -3,6 +3,7 @@
 .page-title { font-size: 1.8rem; font-weight: 800; color: #1a5c2e; margin: 0 0 4px; }
 .page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
 .filtros-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.buscador { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; }
 .filtro-btn { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
 .filtro-btn.activo, .filtro-btn:hover { background: #1a5c2e; color: white; border-color: #1a5c2e; }
 .loading-state { display: flex; flex-direction: column; align-items: center; padding: 60px; color: #64748b; gap: 16px; }

@@ -15,7 +15,7 @@ public interface SolicitudService {
     Solicitud rechazarSolicitud(Long solicitudId);
     Solicitud rechazarConObservacion(Long solicitudId, String observacion);
     List<Solicitud> listarSolicitudes();
-    Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado);
+    Page<Solicitud> listarSolicitudesPaginado(int pagina, int tamanio, String estado, String texto);
     Map<String, Long> contarPorEstado();
     List<Solicitud> listarPorEstudiante(Long estudianteId);
     List<Solicitud> listarPorUsuario(Long usuarioId);
