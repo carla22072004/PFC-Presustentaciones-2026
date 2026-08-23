@@ -64,7 +64,10 @@ export class ProgramarCronogramaComponent implements OnInit {
     }
 
     cargarDatos(): void {
-        this.salaService.listar().subscribe(s => { this.salas = s; this.cdr.markForCheck(); });
+        this.salaService.listar().subscribe({
+            next: (s) => { this.salas = s; this.cdr.markForCheck(); },
+            error: () => { this.notification.error('No se pudieron cargar las salas.', 'Error'); }
+        });
         this.cronogramaService.porSolicitud(this.solicitudId).subscribe({
             next: (c) => { this.cronogramaExistente = c; this.cdr.markForCheck(); },
             error: () => { this.cronogramaExistente = null; this.cdr.markForCheck(); }
@@ -188,7 +191,8 @@ export class ProgramarCronogramaComponent implements OnInit {
     eliminarCronograma(): void {
         if (!this.cronogramaExistente) return;
         this.cronogramaService.eliminar(this.cronogramaExistente.id).subscribe({
-            next: () => { this.cronogramaExistente = null; this.notification.success('Cronograma eliminado.', 'Eliminado'); this.cdr.markForCheck(); }
+            next: () => { this.cronogramaExistente = null; this.notification.success('Cronograma eliminado.', 'Eliminado'); this.cdr.markForCheck(); },
+            error: () => { this.notification.error('No se pudo eliminar el cronograma.', 'Error'); }
         });
     }
 

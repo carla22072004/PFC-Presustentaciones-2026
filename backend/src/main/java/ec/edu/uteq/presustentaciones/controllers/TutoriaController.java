@@ -168,6 +168,41 @@ public class TutoriaController {
 
     // ── Helpers de seguridad ──────────────────────────────────────────────────
 
+    /**
+     * SP (Fase 3): Registra o actualiza el avance de una fase de tutoría vía stored procedure.
+     * Llama a presus.sp_registrar_tutoria_avance(p_tutor_id, p_numero_fase, p_archivo_pdf, p_tamano_bytes, p_sha256)
+     * Flujo: POST → TutoriaController → TutoriaService → TutoriaFaseRepository → SP → PostgreSQL
+     *
+     * Body: { "numeroFase": 1, "archivoPdf": "archivo.pdf", "tamanoBytes": 12345, "sha256": "abc..." }
+     */
+    @PostMapping("/{tutorId}/registrar-avance")
+    @PreAuthorize("hasAnyRole('ESTUDIANTE', 'ADMIN', 'COORDINADOR')")
+    public ResponseEntity<?> registrarAvanceSP(
+            @PathVariable Long tutorId,
+            @RequestBody Map<String, Object> body) {
+        try {
+            Integer numeroFase = (Integer) body.get("numeroFase");
+            String archivoPdf = (String) body.get("archivoPdf");
+            Long tamanoBytes = body.get("tamanoBytes") instanceof Number
+                    ? ((Number) body.get("tamanoBytes")).longValue() : null;
+            String sha256 = (String) body.get("sha256");
+
+            if (numeroFase == null || archivoPdf == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Se requieren 'numeroFase' y 'archivoPdf'"));
+            }
+
+            tutoriaService.registrarAvanceSP(tutorId, numeroFase, archivoPdf, tamanoBytes, sha256);
+            return ResponseEntity.ok(Map.of(
+                    "mensaje", "Avance de fase registrado correctamente vía stored procedure",
+                    "tutorId", tutorId,
+                    "numeroFase", numeroFase
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     private Usuario obtenerUsuarioAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {

@@ -172,4 +172,23 @@ public class SolicitudController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    /**
+     * SP (Fase 3): Reporte consolidado de defensas por carrera.
+     * Llama a presus.sp_generar_reporte_defensas(p_carrera)
+     * Flujo: GET → SolicitudController → SolicitudService → SolicitudRepository → SP → PostgreSQL
+     *
+     * @param carrera nombre o parte del nombre de la carrera (búsqueda ILIKE)
+     */
+    @GetMapping("/reporte-defensas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'COORDINADOR')")
+    public ResponseEntity<?> reporteDefensas(
+            @RequestParam(defaultValue = "") String carrera) {
+        try {
+            List<Map<String, Object>> reporte = solicitudService.generarReporteDefensasSP(carrera);
+            return ResponseEntity.ok(reporte);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

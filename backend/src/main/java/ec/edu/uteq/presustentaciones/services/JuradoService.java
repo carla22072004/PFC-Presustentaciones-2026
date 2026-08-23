@@ -39,4 +39,5 @@ public interface JuradoService {
     List<Jurado> listarPorDocente(Long docenteId);
     List<Tutor> listarTutoriasPorDocente(Long docenteId);
     Optional<Jurado> obtenerInfoJurado(Long solicitudId, Long usuarioId);
+    void asignarJuradoMasivoSP(Long[] solicitudIds, Long[] docenteIds, String rol);
 }

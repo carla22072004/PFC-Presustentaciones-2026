@@ -51,4 +51,11 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
            "WHERE j.solicitud.id = :solicitudId AND u.id = :usuarioId")
     Optional<Jurado> findBySolicitudIdAndUsuarioId(@Param("solicitudId") Long solicitudId, 
                                                     @Param("usuarioId") Long usuarioId);
+
+    @org.springframework.data.jpa.repository.query.Procedure(procedureName = "presus.sp_asignar_jurado_masivo")
+    void spAsignarJuradoMasivo(
+            @Param("p_solicitud_ids") Long[] solicitudIds,
+            @Param("p_docente_ids") Long[] docenteIds,
+            @Param("p_rol") String rol
+    );
 }

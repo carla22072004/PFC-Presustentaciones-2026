@@ -65,49 +65,49 @@ export const routes: Routes = [
             {
                 path: 'admin/revisar-solicitudes',
                 loadComponent: () => import('./components/admin/revisar-solicitudes/revisar-solicitudes.component').then(m => m.RevisarSolicitudesComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             {
                 path: 'admin/cronograma/:id',
                 loadComponent: () => import('./components/admin/cronograma/programar-cronograma.component').then(m => m.ProgramarCronogramaComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             {
                 path: 'admin/asignar-jurados/:id',
                 loadComponent: () => import('./components/admin/asignar-jurados/asignar-jurados.component').then(m => m.AsignarJuradosComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             {
                 path: 'admin/evaluar/:id',
                 loadComponent: () => import('./components/admin/evaluacion/evaluar-solicitud.component').then(m => m.EvaluarSolicitudComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             // ★ Nueva ruta: vista de solo lectura de la rúbrica para el coordinador
             {
                 path: 'admin/ver-rubrica/:id',
                 loadComponent: () => import('./components/admin/ver-rubrica-tribunal/ver-rubrica-tribunal.component').then(m => m.VerRubricaTribunalComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             // ── Jurado / Docente ────────────────────────────────────────────
             {
                 path: 'jurado/mis-asignaciones',
                 loadComponent: () => import('./components/jurado/mis-asignaciones.component').then(m => m.MisAsignacionesComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR', 'DOCENTE'])]
             },
             {
                 path: 'jurado/evaluar-rubrica/:id',
                 loadComponent: () => import('./components/jurado/evaluar-rubrica/evaluar-rubrica.component').then(m => m.EvaluarRubricaComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR', 'DOCENTE'])]
             },
             {
                 path: 'docente/anteproyecto/:id',
                 loadComponent: () => import('./components/docente/ver-anteproyecto/ver-anteproyecto.component').then(m => m.VerAnteproyectoComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR', 'DOCENTE'])]
             },
             {
                 path: 'docente/firmar-acta/:id',
                 loadComponent: () => import('./components/docente/firmar-acta/firmar-acta-docente.component').then(m => m.FirmarActaDocenteComponent),
-                canActivate: [authGuard]
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR', 'DOCENTE'])]
             },
             // ── Tutorías ────────────────────────────────────────────────────
             {

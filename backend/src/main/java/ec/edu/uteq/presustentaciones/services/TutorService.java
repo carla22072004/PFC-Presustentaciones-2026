@@ -3,6 +3,8 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.Tutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface TutorService {
@@ -10,4 +12,5 @@ public interface TutorService {
     Optional<Tutor> buscarPorSolicitud(Long solicitudId);
     Page<Tutor> listarTodos(Pageable pageable);
     void eliminarTutor(Long tutorId);
+    List<Map<String, Object>> obtenerEstadisticasTutoresSP();
 }

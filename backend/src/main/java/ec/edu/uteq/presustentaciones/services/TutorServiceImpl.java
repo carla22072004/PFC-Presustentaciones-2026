@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,5 +92,21 @@ public class TutorServiceImpl implements TutorService {
     @Override
     public void eliminarTutor(Long tutorId) {
         tutorRepository.deleteById(tutorId);
+    }
+
+    @Override
+    public List<Map<String, Object>> obtenerEstadisticasTutoresSP() {
+        List<Object[]> res = tutorRepository.obtenerEstadisticasTutoresSp();
+        List<Map<String, Object>> list = new java.util.ArrayList<>();
+        for (Object[] row : res) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("tutorDocenteId", row[0]);
+            map.put("tutorNombre", row[1]);
+            map.put("tutoriasActivas", row[2]);
+            map.put("tutoriasCompletadas", row[3]);
+            map.put("totalFasesAprobadas", row[4]);
+            list.add(map);
+        }
+        return list;
     }
 }

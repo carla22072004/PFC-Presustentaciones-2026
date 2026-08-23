@@ -35,4 +35,16 @@ public interface CronogramaRepository extends JpaRepository<Cronograma, Long> {
     /** Todos los cronogramas activos de una fecha */
     @Query("SELECT c FROM Cronograma c WHERE c.estado.codigo = 'PROGRAMADO' AND CAST(c.fechaInicio AS date) = CAST(:fecha AS date)")
     List<Cronograma> findActivosPorFecha(@Param("fecha") LocalDateTime fecha);
+
+    @Query("SELECT c FROM Cronograma c " +
+           "JOIN FETCH c.solicitud s " +
+           "JOIN FETCH s.estudiante e " +
+           "JOIN FETCH e.usuario u " +
+           "JOIN FETCH c.sala sa " +
+           "JOIN FETCH c.estado es " +
+           "JOIN FETCH c.convocatoria co " +
+           "LEFT JOIN FETCH c.bloque b " +
+           "WHERE es.codigo = 'PROGRAMADO' " +
+           "ORDER BY c.fechaInicio ASC")
+    List<Cronograma> findReporteCronograma();
 }

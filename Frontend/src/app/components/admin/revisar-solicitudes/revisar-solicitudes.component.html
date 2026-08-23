@@ -88,12 +88,17 @@
                 <td>
                     <div class="acciones-cell">
 
-                        <!-- ENVIADA → Paso 1: Aprobar / Rechazar / Suspender -->
+                        <!-- ENVIADA → Paso 1: Aprobar / Rechazar / Suspender / Tribunal (asignar tutor sin esperar aprobar) -->
                         <button class="btn-accion btn-aprobar"  *ngIf="s.estado==='ENVIADA'" (click)="aprobar(s.id)">
                             <i class="bi bi-check-circle-fill"></i> Aprobar
                         </button>
                         <button class="btn-accion btn-rechazar" *ngIf="s.estado==='ENVIADA'" (click)="abrirModalRechazo(s.id)">
                             <i class="bi bi-x-circle-fill"></i> Rechazar
+                        </button>
+                        <button class="btn-accion btn-tribunal" *ngIf="s.estado==='ENVIADA'"
+                                [routerLink]="['/dashboard/admin/asignar-jurados', s.id]"
+                                title="Asignar Tutor (aprueba automáticamente la solicitud)">
+                            <i class="bi bi-people-fill"></i> Tribunal
                         </button>
                         <button class="btn-accion btn-ver-pdf" *ngIf="s.estado==='ENVIADA'"
                                 [routerLink]="['/dashboard/docente/anteproyecto', s.id]">
