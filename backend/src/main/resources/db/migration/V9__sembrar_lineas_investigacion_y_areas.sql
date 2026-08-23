@@ -10,6 +10,17 @@
 -- CommandLineRunner de arranque, ver PreSustentacionesApplication.initDemoData()).
 -- =============================================================================
 
+-- La FK facultad_id -> facultades depende de la fila id=1 que
+-- PreSustentacionesApplication.initDemoData() siembra en el arranque de la app --
+-- pero eso corre DESPUÉS de las migraciones de Flyway, así que en una base de datos
+-- recién migrada esa fila todavía no existe. Se siembra aquí con el mismo criterio
+-- idempotente (OVERRIDING SYSTEM VALUE + ON CONFLICT DO NOTHING) para que esta
+-- migración no falle por la FK; initDemoData() sigue corriendo sin problema porque
+-- su propio INSERT también es no-op si la fila ya existe.
+INSERT INTO presus.facultades (id, codigo, nombre) OVERRIDING SYSTEM VALUE VALUES
+    (1, 'FCI', 'Facultad de Ciencias de la Ingeniería')
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO presus.lineas_investigacion (facultad_id, codigo, nombre, descripcion) VALUES
     (1, 'ISW-CAL', 'Ingeniería de Software y Calidad', 'Procesos, arquitectura, pruebas y calidad de software.'),
     (1, 'ISW-IA', 'Inteligencia Artificial y Ciencia de Datos', 'Aprendizaje automático, minería de datos y sistemas inteligentes.'),

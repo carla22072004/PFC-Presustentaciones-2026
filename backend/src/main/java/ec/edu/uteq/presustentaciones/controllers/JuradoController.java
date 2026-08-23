@@ -55,31 +55,6 @@ public class JuradoController {
         }
     }
 
-    /**
-     * Asignación masiva de jurados vía procedimiento almacenado sp_asignar_jurado_masivo.
-     * Ejemplo de body: {"solicitudIds":[1,2,3],"docenteIds":[10,11,12],"rolCodigo":"VOCAL"}
-     * Toda la operación es una única transacción: si un par falla, se revierte el lote completo.
-     */
-    @PostMapping("/asignar-masivo")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
-    public ResponseEntity<?> asignarJuradoMasivo(@RequestBody Map<String, Object> body) {
-        try {
-            @SuppressWarnings("unchecked")
-            List<Number> solicitudIdsRaw = (List<Number>) body.get("solicitudIds");
-            @SuppressWarnings("unchecked")
-            List<Number> docenteIdsRaw = (List<Number>) body.get("docenteIds");
-            String rolCodigo = (String) body.get("rolCodigo");
-
-            List<Long> solicitudIds = solicitudIdsRaw.stream().map(Number::longValue).toList();
-            List<Long> docenteIds = docenteIdsRaw.stream().map(Number::longValue).toList();
-
-            juradoService.asignarJuradoMasivo(solicitudIds, docenteIds, rolCodigo);
-            return ResponseEntity.ok(Map.of("asignados", solicitudIds.size()));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
     /** Listar jurados de una solicitud */
     @GetMapping("/solicitud/{solicitudId}")
     public List<Jurado> listarPorSolicitud(@PathVariable Long solicitudId) {
