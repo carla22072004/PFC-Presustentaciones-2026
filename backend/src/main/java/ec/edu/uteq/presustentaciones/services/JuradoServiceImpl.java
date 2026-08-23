@@ -386,4 +386,10 @@ public class JuradoServiceImpl implements JuradoService {
             log.warn("No se pudo notificar al estudiante sobre tutor: {}", e.getMessage());
         }
     }
+
+    @Override
+    @Transactional
+    public void asignarJuradoMasivoSP(Long[] solicitudIds, Long[] docenteIds, String rol) {
+        juradoRepository.spAsignarJuradoMasivo(solicitudIds, docenteIds, rol);
+    }
 }

@@ -241,6 +241,10 @@ export class DetalleTutoriaComponent implements OnInit {
             this.fases   = fases;
             const actualizada = fases.find(f => f.id === faseId) ?? null;
             if (actualizada) this.seleccionarFase(actualizada);
+          },
+          error: () => {
+            this.notificationService.error("No se pudo recargar la información de la tutoría.", "Error");
+            this.cdr.markForCheck();
           }
         });
       },
@@ -293,6 +297,10 @@ export class DetalleTutoriaComponent implements OnInit {
             } else {
               this.notificationService.success(`Fase ${this.faseSeleccionada?.numeroFase} aprobada correctamente.`, '¡Aprobada!');
             }
+          },
+          error: () => {
+            this.notificationService.error("No se pudo recargar la información de la tutoría.", "Error");
+            this.cdr.markForCheck();
           }
         });
       },

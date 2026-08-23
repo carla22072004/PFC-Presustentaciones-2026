@@ -403,4 +403,23 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         return guardada;
     }
+
+    @Override
+    public List<Map<String, Object>> generarReporteDefensasSP(String carrera) {
+        List<Object[]> res = solicitudRepository.generarReporteDefensasSp(carrera);
+        List<Map<String, Object>> list = new java.util.ArrayList<>();
+        for (Object[] row : res) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("solicitudId", row[0]);
+            map.put("estudianteNombre", row[1]);
+            map.put("expediente", row[2]);
+            map.put("tituloTema", row[3]);
+            map.put("estadoSolicitud", row[4]);
+            map.put("fechaDefensa", row[5]);
+            map.put("salaNombre", row[6]);
+            map.put("notaFinal", row[7]);
+            list.add(map);
+        }
+        return list;
+    }
 }

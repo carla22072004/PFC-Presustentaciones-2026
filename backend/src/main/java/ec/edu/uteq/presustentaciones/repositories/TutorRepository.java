@@ -2,6 +2,8 @@ package ec.edu.uteq.presustentaciones.repositories;
 
 import ec.edu.uteq.presustentaciones.entities.Tutor;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,7 @@ public interface TutorRepository extends JpaRepository<Tutor, Long> {
 
     List<Tutor> findBySolicitudEstudianteUsuarioId(Long usuarioId);
     List<Tutor> findByDocenteUsuarioId(Long usuarioId);
+
+    @Query(value = "SELECT * FROM presus.sp_obtener_estadisticas_tutores()", nativeQuery = true)
+    List<Object[]> obtenerEstadisticasTutoresSp();
 }

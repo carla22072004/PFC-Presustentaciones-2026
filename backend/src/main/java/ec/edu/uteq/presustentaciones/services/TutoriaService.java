@@ -29,4 +29,6 @@ public interface TutoriaService {
     List<TutoriaResumenDTO> obtenerTutoriasEstudiante(Long estudianteUsuarioId);
 
     List<TutoriaResumenDTO> obtenerTutoriasDocente(Long docenteUsuarioId);
+
+    void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256);
 }

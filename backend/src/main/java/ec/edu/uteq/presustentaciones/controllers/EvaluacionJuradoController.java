@@ -4,6 +4,7 @@ import ec.edu.uteq.presustentaciones.dto.EvaluacionJuradoDTO;
 import ec.edu.uteq.presustentaciones.services.EvaluacionJuradoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class EvaluacionJuradoController {
     private final EvaluacionJuradoService service;
 
     @PostMapping("/guardar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR', 'DOCENTE')")
     public ResponseEntity<?> guardar(@RequestBody Map<String, Object> request) {
         try {
             Long solicitudId = Long.valueOf(request.get("solicitudId").toString());

@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 import ec.edu.uteq.presustentaciones.entities.Cronograma;
 import ec.edu.uteq.presustentaciones.services.CronogramaService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class CronogramaController {
 
     /** Manual con validación de conflictos */
     @PostMapping("/crear")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> crear(@RequestParam Long solicitudId,
                                    @RequestParam Long salaId,
                                    @RequestParam LocalDate fecha,
@@ -35,6 +37,7 @@ public class CronogramaController {
 
     /** RF-04: Asignación automática sin conflictos */
     @PostMapping("/auto/{solicitudId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
     public ResponseEntity<?> asignarAutomatico(@PathVariable Long solicitudId) {
         try {
             return ResponseEntity.ok(cronogramaService.asignarAutomatico(solicitudId));
@@ -69,7 +72,9 @@ public class CronogramaController {
     @GetMapping("/solicitud/{id}") public ResponseEntity<Cronograma> porSolicitud(@PathVariable Long id) {
         return cronogramaService.buscarPorSolicitud(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
-    @DeleteMapping("/{id}") public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COORDINADOR')")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         cronogramaService.eliminar(id); return ResponseEntity.noContent().build();
     }
 }

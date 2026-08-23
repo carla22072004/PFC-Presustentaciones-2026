@@ -54,4 +54,7 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
         String getCodigo();
         Long getTotal();
     }
+
+    @Query(value = "SELECT * FROM presus.sp_generar_reporte_defensas(:carrera)", nativeQuery = true)
+    List<Object[]> generarReporteDefensasSp(@Param("carrera") String carrera);
 }

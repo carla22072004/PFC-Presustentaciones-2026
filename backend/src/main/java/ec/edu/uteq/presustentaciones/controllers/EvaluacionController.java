@@ -79,15 +79,17 @@ public class EvaluacionController {
     }
 
     /**
-     * Calcula y persiste la nota final ponderada agregando las notas del tribunal vía
-     * sp_calcular_promedio_evaluacion (Fase 3 / Criterio P1, categoría "cálculos agregados").
+     * RF-09 (SP): Calcula la nota ponderada final vía stored procedure
+     * presus.sp_calcular_promedio_evaluacion(p_solicitud_id)
+     * Flujo: GET → EvaluacionController → EvaluacionService → EvaluacionFinalRepository → SP → PostgreSQL
      */
-    @PostMapping("/{solicitudId}/calcular-promedio")
+    @PostMapping("/calcular-promedio/{solicitudId}")
     public ResponseEntity<?> calcularPromedio(@PathVariable Long solicitudId) {
         try {
-            return ResponseEntity.ok(evaluacionService.calcularPromedioSp(solicitudId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            Map<String, Object> resultado = evaluacionService.calcularPromedioSP(solicitudId);
+            return ResponseEntity.ok(resultado);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
     }
 }

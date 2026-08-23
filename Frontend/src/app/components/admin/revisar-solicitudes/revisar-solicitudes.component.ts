@@ -72,7 +72,7 @@ export class RevisarSolicitudesComponent implements OnInit {
     cargarConteos(): void {
         this.solicitudService.contarPorEstado().subscribe({
             next: (data) => { this.conteos = data; this.cdr.markForCheck(); },
-            error: () => {}
+            error: () => { this.notification.error('Error al obtener conteos por estado.', 'Error'); }
         });
     }
 
