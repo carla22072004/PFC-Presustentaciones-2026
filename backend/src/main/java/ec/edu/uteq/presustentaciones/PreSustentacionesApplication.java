@@ -113,6 +113,49 @@ public class PreSustentacionesApplication implements CommandLineRunner {
                 log.info("Usuario de demostración inicial verificado.");
             }
 
+            ec.edu.uteq.presustentaciones.entities.RolUsuario docenteRol = rolUsuarioRepository.findByCodigo("DOCENTE").orElse(null);
+            ec.edu.uteq.presustentaciones.entities.RolUsuario estudianteRol = rolUsuarioRepository.findByCodigo("ESTUDIANTE").orElse(null);
+
+            // Usuario Docente / Tutor / Jurado
+            if (!usuarioRepository.existsByEmail("docente@uteq.edu.ec")) {
+                Usuario docenteUser = Usuario.builder()
+                    .nombre("Docente")
+                    .apellido("Tutor")
+                    .email("docente@uteq.edu.ec")
+                    .password(passwordEncoder.encode("docente123"))
+                    .rol("DOCENTE")
+                    .rolUsuario(docenteRol)
+                    .activo(true)
+                    .build();
+                Usuario savedDocente = usuarioRepository.save(docenteUser);
+                jdbcTemplate.update(
+                    "INSERT INTO presus.docente (usuario_id, facultad_id, area_especialidad, carga_horaria_semanal, disponible, creado_en) " +
+                    "VALUES (?, 1, 'Ingeniería de Software', 20, true, now()) ON CONFLICT (usuario_id) DO NOTHING",
+                    savedDocente.getId()
+                );
+                log.info("Usuario docente inicial verificado.");
+            }
+
+            // Usuario Estudiante
+            if (!usuarioRepository.existsByEmail("estudiante@uteq.edu.ec")) {
+                Usuario estUser = Usuario.builder()
+                    .nombre("Estudiante")
+                    .apellido("Pregrado")
+                    .email("estudiante@uteq.edu.ec")
+                    .password(passwordEncoder.encode("estudiante123"))
+                    .rol("ESTUDIANTE")
+                    .rolUsuario(estudianteRol)
+                    .activo(true)
+                    .build();
+                Usuario savedEst = usuarioRepository.save(estUser);
+                jdbcTemplate.update(
+                    "INSERT INTO presus.estudiante (usuario_id, carrera_id, carrera, semestre, semestre_actual, expediente_codigo, telefono, creado_en) " +
+                    "VALUES (?, 1, 'Ingeniería en Software', '8vo', 8, 'EXP-2026-001', '0999999999', now()) ON CONFLICT (usuario_id) DO NOTHING",
+                    savedEst.getId()
+                );
+                log.info("Usuario estudiante inicial verificado.");
+            }
+
         } catch (Exception e) {
             log.error("Error al inicializar datos base: {}", e.getMessage());
         }
