@@ -4,7 +4,7 @@
 
 `presusDb_full_1M.dump` es un respaldo **completo** de `BdPresustentaciones` (esquema `presus`),
 generado con `pg_dump -Fc -Z 9` (formato custom, comprimido) contra el volumen real de datos del
-proyecto: **1,005,144 registros** en 41 tablas, ~179 MB sin comprimir → **12.8 MB comprimido**.
+proyecto: **1,005,152 registros** en 41 tablas, ~179 MB sin comprimir → **12.8 MB comprimido**.
 
 Ver [`docs/basedatos/VOLUMEN-DATOS.md`](../docs/basedatos/VOLUMEN-DATOS.md) para el desglose exacto
 por tabla y cómo se generó ese volumen (script reproducible en
@@ -39,7 +39,7 @@ FROM (
     )))[1]::text::bigint AS filas
   FROM pg_tables r WHERE r.schemaname = 'presus'
 ) x;
--- Debe devolver 1,005,144 (o el total vigente si este archivo se regenera después)
+-- Debe devolver 1,005,152 (o el total vigente si este archivo se regenera después)
 ```
 
 ## Por qué un `.dump` binario y no un `.sql` plano
