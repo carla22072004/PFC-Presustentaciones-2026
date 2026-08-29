@@ -22,6 +22,14 @@ export class ListarSolicitudesComponent implements OnInit, OnDestroy {
     modalObs: string | null = null;
     modalTitulo = '';
 
+    // Paginación server-side para la vista de admin/docente/coordinador: con el volumen real
+    // (44k+ solicitudes) el endpoint sin paginar devuelve ~93 MB y la página nunca renderiza.
+    // El estudiante sigue viendo sus propias solicitudes sin paginar (son pocas).
+    paginaActual = 0; // 0-indexed, como Spring Pageable
+    tamanioPagina = 20;
+    totalElementos = 0;
+    totalPaginas = 0;
+
     constructor(
         private solicitudService: SolicitudService,
         private notification: NotificationService,
@@ -60,16 +68,56 @@ export class ListarSolicitudesComponent implements OnInit, OnDestroy {
 
     cargar(): void {
         this.cargando = true;
-        const rol = this.authService.getRole()?.toUpperCase();
-        const obs$ = rol === 'ESTUDIANTE'
-            ? this.solicitudService.listarMisSolicitudes()
-            : this.solicitudService.listarSolicitudes();
 
-        obs$.subscribe({
-            next: (data) => { this.solicitudes = data; this.iniciarPolling(); this.cargando = false; this.cdr.markForCheck(); },
+        if (this.esEstudiante()) {
+            this.solicitudService.listarMisSolicitudes().subscribe({
+                next: (data) => {
+                    this.solicitudes = data || [];
+                    this.totalElementos = this.solicitudes.length;
+                    this.totalPaginas = 1;
+                    this.iniciarPolling();
+                    this.cargando = false;
+                    this.cdr.markForCheck();
+                },
+                error: () => { this.notification.error('No se pudieron cargar las solicitudes.', 'Error'); this.cargando = false; this.cdr.markForCheck(); }
+            });
+            return;
+        }
+
+        // Admin / docente / coordinador: página del servidor (nunca todas las filas de golpe).
+        this.solicitudService.listarSolicitudesPaginado(this.paginaActual, this.tamanioPagina).subscribe({
+            next: (data) => {
+                this.solicitudes = data.content || [];
+                this.totalElementos = data.totalElements;
+                this.totalPaginas = data.totalPages;
+                this.iniciarPolling();
+                this.cargando = false;
+                this.cdr.markForCheck();
+            },
             error: () => { this.notification.error('No se pudieron cargar las solicitudes.', 'Error'); this.cargando = false; this.cdr.markForCheck(); }
         });
     }
+
+    get paginasVisibles(): number[] {
+        const total = this.totalPaginas;
+        const actual = this.paginaActual;
+        const maxBotones = 7;
+        if (total <= maxBotones) return Array.from({ length: total }, (_, i) => i);
+        let inicio = Math.max(0, actual - 3);
+        let fin = Math.min(total - 1, inicio + maxBotones - 1);
+        inicio = Math.max(0, fin - maxBotones + 1);
+        const paginas: number[] = [];
+        for (let i = inicio; i <= fin; i++) paginas.push(i);
+        return paginas;
+    }
+
+    irAPagina(pagina: number): void {
+        if (pagina < 0 || pagina >= this.totalPaginas || pagina === this.paginaActual) return;
+        this.paginaActual = pagina;
+        this.cargar();
+    }
+    paginaAnterior(): void { this.irAPagina(this.paginaActual - 1); }
+    paginaSiguiente(): void { this.irAPagina(this.paginaActual + 1); }
 
     enviar(id: number): void {
         this.solicitudService.enviarSolicitud(id).subscribe({

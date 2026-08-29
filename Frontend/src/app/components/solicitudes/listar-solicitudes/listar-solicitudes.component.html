@@ -141,6 +141,33 @@
         </tr>
       </tbody>
     </table>
+
+    <div class="paginacion-bar" *ngIf="!esEstudiante() && totalPaginas > 1">
+      <span class="paginacion-info">
+        Página {{ paginaActual + 1 }} de {{ totalPaginas }} — {{ totalElementos | number }} solicitudes
+      </span>
+      <div class="paginacion-controles">
+        <button class="pag-btn" [disabled]="paginaActual === 0" (click)="irAPagina(0)" title="Primera">
+          <i class="bi bi-chevron-bar-left"></i>
+        </button>
+        <button class="pag-btn" [disabled]="paginaActual === 0" (click)="paginaAnterior()" title="Anterior">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button
+                *ngFor="let p of paginasVisibles"
+                class="pag-btn pag-num"
+                [class.activo]="p === paginaActual"
+                (click)="irAPagina(p)">
+          {{ p + 1 }}
+        </button>
+        <button class="pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="paginaSiguiente()" title="Siguiente">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+        <button class="pag-btn" [disabled]="paginaActual >= totalPaginas - 1" (click)="irAPagina(totalPaginas - 1)" title="Última">
+          <i class="bi bi-chevron-bar-right"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

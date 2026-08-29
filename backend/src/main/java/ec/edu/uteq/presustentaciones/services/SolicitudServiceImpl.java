@@ -338,10 +338,16 @@ public class SolicitudServiceImpl implements SolicitudService {
         return guardada;
     }
  
+    /** Cota dura del endpoint sin paginar: solo las solicitudes más recientes. Con el volumen
+     *  real (44k+ solicitudes) traerlas todas son ~93 MB de JSON que congelan el navegador y
+     *  llenan Redis. El listado completo navegable es GET /api/v1/solicitudes/paginado. */
+    private static final int LIMITE_LISTADO_SIN_PAGINAR = 500;
+
     @Override
     @Cacheable(value = "solicitudes", key = "'all'")
     public List<Solicitud> listarSolicitudes() {
-        return solicitudRepository.findAllWithEstudiante();
+        return solicitudRepository.findAllWithEstudiante(
+                PageRequest.of(0, LIMITE_LISTADO_SIN_PAGINAR));
     }
 
     @Override

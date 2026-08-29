@@ -494,3 +494,16 @@ body.dark-mode .btn-ver-mas      { color: #58a6ff !important; }
 body.dark-mode .empty-state      { color: #484f58 !important; }
 body.dark-mode .btn-nueva        { background: #238636 !important; color: #fff !important; }
 body.dark-mode .btn-refresh      { background: #21262d !important; border-color: #30363d !important; color: #8b949e !important; }
+
+/* Paginación (misma apariencia que el panel "Gestionar Solicitudes") */
+.paginacion-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-top: 1px solid #f1f5f9; }
+.paginacion-info { font-size: 0.82rem; color: #64748b; }
+.paginacion-controles { display: flex; align-items: center; gap: 4px; }
+.pag-btn { min-width: 34px; height: 34px; padding: 0 8px; border: 1px solid #e2e8f0; background: #fff; color: #475569; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.pag-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
+.pag-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pag-btn.pag-num.activo { background: #1a5c2e; border-color: #1a5c2e; color: #fff; }
+body.dark-mode .paginacion-bar { border-color: #21262d !important; }
+body.dark-mode .paginacion-info { color: #8b949e !important; }
+body.dark-mode .pag-btn { background: #161b22 !important; border-color: #30363d !important; color: #c9d1d9 !important; }
+body.dark-mode .pag-btn.pag-num.activo { background: #238636 !important; border-color: #238636 !important; color: #fff !important; }

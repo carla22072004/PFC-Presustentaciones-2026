@@ -29,6 +29,17 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
     List<Solicitud> findAllWithEstudiante();
 
     /**
+     * Igual que {@link #findAllWithEstudiante()} pero acotada por {@link Pageable}. El endpoint
+     * sin paginar ({@code GET /api/v1/solicitudes}) NUNCA debe devolver las 44k+ filas del volumen
+     * real de una sola vez: son ~93 MB de JSON que congelan el navegador y llenan Redis (la lista
+     * está cacheada). El listado completo navegable es {@code GET /api/v1/solicitudes/paginado}.
+     * Como {@code estudiante} y {@code usuario} son asociaciones @ManyToOne (a-uno), Hibernate
+     * pagina en SQL sin el warning de "collection fetch + firstResult/maxResults en memoria".
+     */
+    @Query("SELECT s FROM Solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u ORDER BY s.fechaRegistro DESC")
+    List<Solicitud> findAllWithEstudiante(Pageable pageable);
+
+    /**
      * Página de solicitudes con estudiante+usuario precargados — evita traer las 44k filas de
      * una vez. Combina el filtro de estado (pestañas), búsqueda de texto libre por título
      * del tema o nombre/apellido del estudiante (ERR-01: el listado del coordinador solo
