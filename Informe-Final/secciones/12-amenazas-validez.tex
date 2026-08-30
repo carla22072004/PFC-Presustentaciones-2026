@@ -9,11 +9,17 @@ declarada, no eficiencia real de tarea (tiempo para completar un flujo).
 
 \subsection{Validez interna}
 Las mediciones de rendimiento y Lighthouse se ejecutaron en la máquina de desarrollo personal de un
-integrante del equipo, con otras aplicaciones activas (Discord, Steam, Brave), confirmado con
-\texttt{Get-Process | Sort CPU}. Esto es una amenaza real y documentada, no hipotética: el First
-Contentful Paint medido (2.9--5.9\,s) es alto para un bundle de $\sim$100\,KB transferido servido en
-localhost sin latencia de red real, lo que sugiere contención de CPU no relacionada con la aplicación
-misma, no un problema de rendimiento intrínseco del sistema.
+integrante del equipo. El First Contentful Paint medido (2.8--6.1\,s) es alto para un bundle de
+$\sim$100\,KB transferido servido en localhost sin latencia de red real; los audits que sí miden trabajo
+real de la aplicación (\texttt{server-response-time}, \texttt{bootup-time},
+\texttt{mainthread-work-breakdown}, Total Blocking Time) puntúan perfecto, así que la causa no está en el
+código de la aplicación. La hipótesis inicial (2026-08-17) fue contención de CPU por aplicaciones de
+escritorio activas (Discord, Steam, Brave), confirmadas corriendo con \texttt{Get-Process | Sort CPU}.
+\textbf{Esa hipótesis se puso a prueba el 2026-08-30} en vez de repetirse sin verificar: se cerraron esas
+aplicaciones y se remidió --- el promedio de Performance no cambió de forma apreciable (65/61 vs. 64/61).
+La amenaza a la validez interna sigue siendo real (algo en el entorno de medición local infla FCP/LCP de
+forma no representativa de un despliegue real), pero la causa concreta ya no puede afirmarse como
+``aplicaciones de escritorio'' con la evidencia disponible; queda declarada como no identificada.
 
 \subsection{Validez externa}
 Los 50 usuarios concurrentes de k6 son un valor fijado por el RNF-01, no derivado de datos reales de uso

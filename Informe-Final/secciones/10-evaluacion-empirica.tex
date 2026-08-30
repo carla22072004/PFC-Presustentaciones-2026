@@ -8,9 +8,13 @@ trazable a un archivo crudo y un comando de reproducción documentado en
 \subsection{Rendimiento}
 
 \subsubsection{Carga bajo 50 usuarios concurrentes}
-Cinco corridas independientes de k6 (\texttt{k6/load-test.js}, perfil de carga: rampa a 20 usuarios en
-30s, sostenido en 50 usuarios por 1 minuto, rampa a 0) dan un p95 de \texttt{http\_req\_duration} entre
-7.4\,ms y 80.9\,ms según la corrida, muy por debajo del umbral RNF-01 de 500\,ms.
+Cinco corridas independientes válidas de k6 (\texttt{k6/load-test.js}, perfil de carga: rampa a 20
+usuarios en 30s, sostenido en 50 usuarios por 1 minuto, rampa a 0; \texttt{run3}--\texttt{run7}) dan un
+p95 de \texttt{http\_req\_duration} entre 6.17\,ms y 8.53\,ms según la corrida (media 7.45\,ms), muy por
+debajo del umbral RNF-01 de 500\,ms. Dos corridas anteriores (\texttt{run1}/\texttt{run2}, metodología
+distinta con login repetido en cada iteración) se conservan como evidencia de una corrida inválida
+(100\,\% de fallos en su check principal) pero se excluyen de esta cifra --- ver
+\texttt{k6/README.md}.
 
 \subsubsection{Efecto de la caché Redis (estadística descriptiva e inferencial)}
 Se midieron 30 muestras de latencia del endpoint \texttt{/api/v1/universidades} en estado de caché fría
@@ -70,11 +74,15 @@ porque no existe ninguna medición real que reportar.
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 61 pruebas automatizadas reales: 20.26\,\% de instrucciones (3,290/16,237), 24.63\,\% de
-líneas (743/3,017) --- por debajo del umbral RNF-04 de 60\,\%. El porcentaje bajó respecto a una medición
-intermedia del 17-08 (23.33\,\%/28.45\,\%) porque se agregó código de producción real sin tests
-proporcionales en el mismo periodo; el número absoluto de instrucciones/líneas cubiertas subió
-(\texttt{docs/mediciones/jacoco/COVERAGE.md}).
+JaCoCo sobre 109 pruebas automatizadas reales: 33.18\,\% de instrucciones (5,388/16,237), 37.06\,\% de
+líneas (1,118/3,017), 23.06\,\% de ramas (255/1,106) --- por debajo del umbral RNF-04 de 60\,\%. El
+porcentaje había bajado respecto a una medición intermedia del 17-08 (23.33\,\%/28.45\,\%) porque se
+agregó código de producción real sin tests proporcionales en ese periodo; se recuperó y superó agregando
+48 tests reales nuevos (2026-08-29) para 5 clases de servicio con lógica de negocio real y 0\,\% de
+cobertura previa, incluyendo las tres que invocan procedimientos almacenados sin prueba dedicada
+(\texttt{sp\_calcular\_promedio\_evaluacion}, \texttt{sp\_generar\_reporte\_defensas},
+\texttt{sp\_firmar\_acta\_digital} vía \texttt{ActaServiceImpl.generarActa()} --- ver
+Sección~\ref{sec:arquitectura}) (\texttt{docs/mediciones/jacoco/COVERAGE.md}).
 
 \subsection{Calidad web (Lighthouse)}
 
@@ -87,19 +95,23 @@ desarrollo, corrección metodológica de una medición anterior que sí usaba \t
 \toprule
 \textbf{Perfil} & \textbf{Performance (media, $n=3$)} & \textbf{Accesibilidad} & \textbf{Buenas Prácticas} & \textbf{SEO} \\
 \midrule
-Desktop & 64 & 89 & 100 & 91 \\
-Mobile & 61 & 89 & 100 & 91 \\
+Desktop & 65 & 100 & 100 & 91 \\
+Mobile & 61 & 100 & 100 & 91 \\
 \bottomrule
 \end{tabular}
-\caption{Lighthouse, media de 3 corridas por perfil.}
+\caption{Lighthouse, media de 3 corridas por perfil (2026-08-30; Accesibilidad subió de 89 a 100 tras corregir contraste de color y un landmark \texttt{<main>} faltante).}
 \end{table}
 
 Con $n=3$ por perfil, no se reporta una prueba de hipótesis formal entre desktop y mobile --- el tamaño
 de muestra es insuficiente para una inferencia estadística significativa; se reporta solo la diferencia
-descriptiva (3 puntos). Performance sigue bajo el umbral de 80/100 en ambos perfiles. El Total Blocking
-Time (0\,ms) y el Cumulative Layout Shift ($\sim$0.01--0.03) ya son ideales; el cuello de botella es
-First Contentful Paint, medido en una máquina de desarrollo personal con otras aplicaciones activas
-(Discord, Steam, Brave) --- ver la nota metodológica completa en
-\texttt{docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md} y la discusión de esta limitación en
-Sección~\ref{sec:amenazas-validez}.
+descriptiva (4 puntos). Performance sigue bajo el umbral de 80/100 en ambos perfiles. El Total Blocking
+Time (0\,ms), el Cumulative Layout Shift ($\sim$0.01--0.03), el tiempo de respuesta del servidor y el
+trabajo de hilo principal ya son ideales (score 1 en los 4 audits); el cuello de botella es First
+Contentful Paint. La hipótesis original (contención de CPU por aplicaciones de escritorio activas) se
+puso a prueba de verdad el 2026-08-30: se cerraron Discord/Brave/Epic Games Launcher (confirmados
+corriendo con \texttt{Get-Process}) y se repitió la medición --- el promedio de Performance prácticamente
+no cambió, refutando esa hipótesis en vez de solo repetirla. La causa real del FCP elevado queda
+declarada como no identificada, en vez de atribuida a una explicación no verificada --- ver la nota
+metodológica completa en \texttt{docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md} y la discusión de
+esta limitación en Sección~\ref{sec:amenazas-validez}.
 \newpage
