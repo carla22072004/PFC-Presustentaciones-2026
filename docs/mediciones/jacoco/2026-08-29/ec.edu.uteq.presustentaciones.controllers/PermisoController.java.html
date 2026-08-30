@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PermisoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">PermisoController.java</span></div><h1>PermisoController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Permiso;
+import ec.edu.uteq.presustentaciones.entities.RolUsuario;
+import ec.edu.uteq.presustentaciones.repositories.PermisoRepository;
+import ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.AuditoriaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Catálogo de permisos del sistema y asignación de permisos a roles
+ * (&quot;Gestionar Permisos&quot; en el panel de administrador). Reemplaza los
+ * hasRole/hasAnyRole fijos en código -- ver PermisoService.tienePermiso,
+ * invocado desde @PreAuthorize en cada controlador protegido.
+ */
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/permisos&quot;)
+<span class="nc" id="L26">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'ROLES_PERMISOS_GESTIONAR')&quot;)
+public class PermisoController {
+
+    private final PermisoRepository permisoRepository;
+    private final RolUsuarioRepository rolUsuarioRepository;
+    private final AuditoriaService auditoriaService;
+
+    /** Catálogo completo de permisos disponibles, agrupado por categoría en el frontend. */
+    @GetMapping
+    public List&lt;Permiso&gt; listar() {
+<span class="nc" id="L37">        return permisoRepository.findAllByOrderByCategoriaAscNombreAsc();</span>
+    }
+
+    /**
+     * Reemplaza por completo el conjunto de permisos de un rol (checkbox matrix en el
+     * frontend: se envía la lista final de códigos marcados, no un delta).
+     * Salvaguarda: si el resultado dejaría a NINGÚN rol en el sistema con
+     * ROLES_PERMISOS_GESTIONAR, se rechaza -- de lo contrario un admin podría quitarse
+     * a sí mismo (y a todos) el acceso para volver a corregirlo, sin salida salvo tocar
+     * la base de datos directamente.
+     */
+    @PutMapping(&quot;/rol/{rolId}&quot;)
+    @Transactional
+    public ResponseEntity&lt;?&gt; actualizarPermisosDeRol(@PathVariable Short rolId, @RequestBody List&lt;String&gt; codigosPermisos) {
+<span class="nc" id="L51">        RolUsuario rol = rolUsuarioRepository.findById(rolId).orElse(null);</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (rol == null) {</span>
+<span class="nc" id="L53">            return ResponseEntity.notFound().build();</span>
+        }
+
+<span class="nc" id="L56">        List&lt;Permiso&gt; permisos = permisoRepository.findByCodigoIn(codigosPermisos);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (permisos.size() != codigosPermisos.stream().distinct().count()) {</span>
+<span class="nc" id="L58">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Uno o más códigos de permiso no existen.&quot;));</span>
+        }
+
+<span class="nc" id="L61">        boolean incluyeGestionPermisos = codigosPermisos.contains(&quot;ROLES_PERMISOS_GESTIONAR&quot;);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (!incluyeGestionPermisos) {</span>
+<span class="nc" id="L63">            List&lt;Short&gt; otrosRolesConEsePermiso = permisoRepository.findRolIdsConPermiso(&quot;ROLES_PERMISOS_GESTIONAR&quot;)</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                    .stream().filter(id -&gt; !id.equals(rolId)).toList();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            if (otrosRolesConEsePermiso.isEmpty()) {</span>
+<span class="nc" id="L66">                return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;,</span>
+                        &quot;No se puede quitar 'Gestionar roles y permisos' de este rol: ningún otro rol lo tendría, &quot; +
+                        &quot;y nadie podría volver a asignarlo desde la interfaz.&quot;));
+            }
+        }
+
+<span class="nc" id="L72">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L73">        permisoRepository.eliminarPermisosDeRol(rolId);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        for (Permiso p : permisos) {</span>
+<span class="nc" id="L75">            permisoRepository.asignarPermiso(rolId, p.getId());</span>
+<span class="nc" id="L76">        }</span>
+<span class="nc" id="L77">        return ResponseEntity.ok(permisoRepository.findCodigosPorRol(rolId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

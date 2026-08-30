@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CatalogoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">CatalogoController.java</span></div><h1>CatalogoController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.dto.GuardarCarreraRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarFacultadRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarModalidadRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarPeriodoRequest;
+import ec.edu.uteq.presustentaciones.entities.AreaTematica;
+import ec.edu.uteq.presustentaciones.entities.Carrera;
+import ec.edu.uteq.presustentaciones.entities.ConvocatoriaTitulacion;
+import ec.edu.uteq.presustentaciones.entities.Facultad;
+import ec.edu.uteq.presustentaciones.entities.LineaInvestigacion;
+import ec.edu.uteq.presustentaciones.entities.ModalidadTitulacion;
+import ec.edu.uteq.presustentaciones.entities.PeriodoAcademico;
+import ec.edu.uteq.presustentaciones.repositories.AreaTematicaRepository;
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
+import ec.edu.uteq.presustentaciones.repositories.ConvocatoriaTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.FacultadRepository;
+import ec.edu.uteq.presustentaciones.repositories.LineaInvestigacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.PeriodoAcademicoRepository;
+import ec.edu.uteq.presustentaciones.services.AuditoriaService;
+import ec.edu.uteq.presustentaciones.services.CatalogoAdminService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/catalogos&quot;)
+<span class="nc" id="L37">@RequiredArgsConstructor</span>
+@org.springframework.security.access.prepost.PreAuthorize(&quot;isAuthenticated()&quot;)
+public class CatalogoController {
+
+    private static final String PERMISO_GESTIONAR = &quot;@permisoService.tienePermiso(authentication, 'CARRERAS_GESTIONAR')&quot;;
+
+    private final ModalidadTitulacionRepository modalidadRepo;
+    private final ConvocatoriaTitulacionRepository convocatoriaRepo;
+    private final LineaInvestigacionRepository lineaInvestigacionRepo;
+    private final AreaTematicaRepository areaTematicaRepo;
+    private final CarreraRepository carreraRepo;
+    private final PeriodoAcademicoRepository periodoAcademicoRepo;
+    private final FacultadRepository facultadRepo;
+    private final AuditoriaService auditoriaService;
+    private final CatalogoAdminService catalogoAdminService;
+
+    /** Lista todas las modalidades de titulación disponibles */
+    @GetMapping(&quot;/modalidades&quot;)
+    public ResponseEntity&lt;List&lt;ModalidadTitulacion&gt;&gt; listarModalidades() {
+<span class="nc" id="L56">        return ResponseEntity.ok(modalidadRepo.findAll());</span>
+    }
+
+    /** Lista todas las líneas de investigación institucionales disponibles */
+    @GetMapping(&quot;/lineas-investigacion&quot;)
+    public ResponseEntity&lt;List&lt;LineaInvestigacion&gt;&gt; listarLineasInvestigacion() {
+<span class="nc" id="L62">        return ResponseEntity.ok(lineaInvestigacionRepo.findAll());</span>
+    }
+
+    /**
+     * Lista las áreas temáticas. Si se pasa lineaId, filtra solo las de esa línea
+     * (uso típico: poblar el segundo dropdown dependiente del formulario de registro de tema).
+     */
+    @GetMapping(&quot;/areas-tematicas&quot;)
+    public ResponseEntity&lt;List&lt;AreaTematica&gt;&gt; listarAreasTematicas(
+            @RequestParam(required = false) Integer lineaId) {
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (lineaId != null) {</span>
+<span class="nc" id="L73">            return ResponseEntity.ok(areaTematicaRepo.findByLineaInvestigacionId(lineaId));</span>
+        }
+<span class="nc" id="L75">        return ResponseEntity.ok(areaTematicaRepo.findAll());</span>
+    }
+
+    /** Lista todas las convocatorias activas */
+    @GetMapping(&quot;/convocatorias&quot;)
+    public ResponseEntity&lt;List&lt;ConvocatoriaTitulacion&gt;&gt; listarConvocatoriasActivas() {
+<span class="nc" id="L81">        return ResponseEntity.ok(convocatoriaRepo.findByActivaTrue());</span>
+    }
+
+    /** Retorna la convocatoria activa actual (para autocompletar en el formulario) */
+    @GetMapping(&quot;/convocatoria-activa&quot;)
+    public ResponseEntity&lt;?&gt; convocatoriaActiva() {
+<span class="nc" id="L87">        return convocatoriaRepo.findFirstByActivaTrue()</span>
+<span class="nc" id="L88">                .&lt;ResponseEntity&lt;?&gt;&gt;map(ResponseEntity::ok)</span>
+<span class="nc" id="L89">                .orElse(ResponseEntity.ok(Map.of(&quot;error&quot;, &quot;No hay convocatoria activa&quot;)));</span>
+    }
+
+    /** Lista todas las carreras -- usado por Gestión de Estudiantes para elegir la carrera al registrar/editar */
+    @GetMapping(&quot;/carreras&quot;)
+    public ResponseEntity&lt;List&lt;Carrera&gt;&gt; listarCarreras() {
+<span class="nc" id="L95">        return ResponseEntity.ok(carreraRepo.findAll());</span>
+    }
+
+    /** Lista todos los períodos académicos -- usado por Gestión de Estudiantes para el período de ingreso */
+    @GetMapping(&quot;/periodos-academicos&quot;)
+    public ResponseEntity&lt;List&lt;PeriodoAcademico&gt;&gt; listarPeriodosAcademicos() {
+<span class="nc" id="L101">        return ResponseEntity.ok(periodoAcademicoRepo.findAll());</span>
+    }
+
+    // ── Gestión de Carreras (CARRERAS_GESTIONAR, solo ADMIN) ──────────────────────
+    // CRUD de la estructura académica base: facultades, carreras, modalidades de
+    // titulación y períodos académicos. Los GET de arriba quedan abiertos a cualquier
+    // autenticado (@PreAuthorize de clase); estos métodos lo sobrescriben con el
+    // permiso dedicado porque en Spring Security el @PreAuthorize de método reemplaza
+    // -- no combina con -- el de clase.
+
+    @GetMapping(&quot;/facultades&quot;)
+    public ResponseEntity&lt;List&lt;Facultad&gt;&gt; listarFacultades() {
+<span class="nc" id="L113">        return ResponseEntity.ok(facultadRepo.findAll());</span>
+    }
+
+    @PostMapping(&quot;/facultades&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; crearFacultad(@RequestBody GuardarFacultadRequest req) {
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        String codigo = req.getCodigo() == null ? &quot;&quot; : req.getCodigo().trim().toUpperCase();</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        if (codigo.isEmpty() || nombre.isEmpty()) {</span>
+<span class="nc" id="L123">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Código y nombre son obligatorios.&quot;));</span>
+        }
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (facultadRepo.findByCodigo(codigo).isPresent()) {</span>
+<span class="nc" id="L126">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Ya existe una facultad con ese código.&quot;));</span>
+        }
+<span class="nc" id="L128">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L129">        Facultad facultad = facultadRepo.save(Facultad.builder().codigo(codigo).nombre(nombre).build());</span>
+<span class="nc" id="L130">        return ResponseEntity.ok(facultad);</span>
+    }
+
+    @PutMapping(&quot;/facultades/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; actualizarFacultad(@PathVariable Integer id, @RequestBody GuardarFacultadRequest req) {
+<span class="nc" id="L137">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L138">        Facultad facultad = facultadRepo.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (facultad == null) {</span>
+<span class="nc" id="L140">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        if (nombre.isEmpty()) {</span>
+<span class="nc" id="L144">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;El nombre no puede estar vacío.&quot;));</span>
+        }
+<span class="nc" id="L146">        facultad.setNombre(nombre);</span>
+<span class="nc" id="L147">        return ResponseEntity.ok(facultadRepo.save(facultad));</span>
+    }
+
+    @DeleteMapping(&quot;/facultades/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    public ResponseEntity&lt;?&gt; eliminarFacultad(@PathVariable Integer id) {
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (!facultadRepo.existsById(id)) {</span>
+<span class="nc" id="L154">            return ResponseEntity.notFound().build();</span>
+        }
+        try {
+<span class="nc" id="L157">            catalogoAdminService.eliminarFacultad(id);</span>
+<span class="nc" id="L158">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L159">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L160">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;No se pudo eliminar: hay carreras u otros registros asociados a esta facultad.&quot;));</span>
+        }
+    }
+
+    @PostMapping(&quot;/carreras&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; crearCarrera(@RequestBody GuardarCarreraRequest req) {
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        String codigo = req.getCodigo() == null ? &quot;&quot; : req.getCodigo().trim().toUpperCase();</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L170" title="All 6 branches missed.">        if (codigo.isEmpty() || nombre.isEmpty() || req.getFacultadId() == null) {</span>
+<span class="nc" id="L171">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Código, nombre y facultad son obligatorios.&quot;));</span>
+        }
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (carreraRepo.findByCodigo(codigo).isPresent()) {</span>
+<span class="nc" id="L174">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Ya existe una carrera con ese código.&quot;));</span>
+        }
+<span class="nc" id="L176">        Facultad facultad = facultadRepo.findById(req.getFacultadId()).orElse(null);</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if (facultad == null) {</span>
+<span class="nc" id="L178">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Facultad no encontrada.&quot;));</span>
+        }
+<span class="nc" id="L180">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L181">        Carrera carrera = carreraRepo.save(Carrera.builder()</span>
+<span class="nc" id="L182">                .codigo(codigo).nombre(nombre).facultad(facultad)</span>
+<span class="nc" id="L183">                .modalidadEstudio(req.getModalidadEstudio())</span>
+<span class="nc" id="L184">                .build());</span>
+<span class="nc" id="L185">        return ResponseEntity.ok(carrera);</span>
+    }
+
+    @PutMapping(&quot;/carreras/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; actualizarCarrera(@PathVariable Integer id, @RequestBody GuardarCarreraRequest req) {
+<span class="nc" id="L192">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L193">        Carrera carrera = carreraRepo.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (carrera == null) {</span>
+<span class="nc" id="L195">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (nombre.isEmpty()) {</span>
+<span class="nc" id="L199">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;El nombre no puede estar vacío.&quot;));</span>
+        }
+<span class="nc" id="L201">        carrera.setNombre(nombre);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (req.getModalidadEstudio() != null) {</span>
+<span class="nc" id="L203">            carrera.setModalidadEstudio(req.getModalidadEstudio());</span>
+        }
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (req.getFacultadId() != null) {</span>
+<span class="nc" id="L206">            Facultad facultad = facultadRepo.findById(req.getFacultadId()).orElse(null);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            if (facultad == null) {</span>
+<span class="nc" id="L208">                return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Facultad no encontrada.&quot;));</span>
+            }
+<span class="nc" id="L210">            carrera.setFacultad(facultad);</span>
+        }
+<span class="nc" id="L212">        return ResponseEntity.ok(carreraRepo.save(carrera));</span>
+    }
+
+    @DeleteMapping(&quot;/carreras/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    public ResponseEntity&lt;?&gt; eliminarCarrera(@PathVariable Integer id) {
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        if (!carreraRepo.existsById(id)) {</span>
+<span class="nc" id="L219">            return ResponseEntity.notFound().build();</span>
+        }
+        try {
+<span class="nc" id="L222">            catalogoAdminService.eliminarCarrera(id);</span>
+<span class="nc" id="L223">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L224">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L225">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;No se pudo eliminar: hay estudiantes u otros registros asociados a esta carrera.&quot;));</span>
+        }
+    }
+
+    @PostMapping(&quot;/modalidades&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; crearModalidad(@RequestBody GuardarModalidadRequest req) {
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        String codigo = req.getCodigo() == null ? &quot;&quot; : req.getCodigo().trim().toUpperCase().replaceAll(&quot;\\s+&quot;, &quot;_&quot;);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L235" title="All 4 branches missed.">        if (codigo.isEmpty() || nombre.isEmpty()) {</span>
+<span class="nc" id="L236">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Código y nombre son obligatorios.&quot;));</span>
+        }
+<span class="nc bnc" id="L238" title="All 2 branches missed.">        if (modalidadRepo.findByCodigo(codigo).isPresent()) {</span>
+<span class="nc" id="L239">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Ya existe una modalidad con ese código.&quot;));</span>
+        }
+<span class="nc" id="L241">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L242">        ModalidadTitulacion modalidad = modalidadRepo.save(ModalidadTitulacion.builder().codigo(codigo).nombre(nombre).build());</span>
+<span class="nc" id="L243">        return ResponseEntity.ok(modalidad);</span>
+    }
+
+    @PutMapping(&quot;/modalidades/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; actualizarModalidad(@PathVariable Short id, @RequestBody GuardarModalidadRequest req) {
+<span class="nc" id="L250">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L251">        ModalidadTitulacion modalidad = modalidadRepo.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        if (modalidad == null) {</span>
+<span class="nc" id="L253">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (nombre.isEmpty()) {</span>
+<span class="nc" id="L257">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;El nombre no puede estar vacío.&quot;));</span>
+        }
+<span class="nc" id="L259">        modalidad.setNombre(nombre);</span>
+<span class="nc" id="L260">        return ResponseEntity.ok(modalidadRepo.save(modalidad));</span>
+    }
+
+    @DeleteMapping(&quot;/modalidades/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    public ResponseEntity&lt;?&gt; eliminarModalidad(@PathVariable Short id) {
+<span class="nc bnc" id="L266" title="All 2 branches missed.">        if (!modalidadRepo.existsById(id)) {</span>
+<span class="nc" id="L267">            return ResponseEntity.notFound().build();</span>
+        }
+        try {
+<span class="nc" id="L270">            catalogoAdminService.eliminarModalidad(id);</span>
+<span class="nc" id="L271">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L272">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L273">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;No se pudo eliminar: hay solicitudes u otros registros asociados a esta modalidad.&quot;));</span>
+        }
+    }
+
+    @PostMapping(&quot;/periodos-academicos&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; crearPeriodo(@RequestBody GuardarPeriodoRequest req) {
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        String codigo = req.getCodigo() == null ? &quot;&quot; : req.getCodigo().trim().toUpperCase();</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L283" title="All 8 branches missed.">        if (codigo.isEmpty() || nombre.isEmpty() || req.getFechaInicio() == null || req.getFechaFin() == null) {</span>
+<span class="nc" id="L284">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Código, nombre, fecha de inicio y fecha de fin son obligatorios.&quot;));</span>
+        }
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (!req.getFechaFin().isAfter(req.getFechaInicio())) {</span>
+<span class="nc" id="L287">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;La fecha de fin debe ser posterior a la fecha de inicio.&quot;));</span>
+        }
+<span class="nc bnc" id="L289" title="All 2 branches missed.">        if (periodoAcademicoRepo.findByCodigo(codigo).isPresent()) {</span>
+<span class="nc" id="L290">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Ya existe un período académico con ese código.&quot;));</span>
+        }
+<span class="nc" id="L292">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L293">        PeriodoAcademico periodo = periodoAcademicoRepo.save(PeriodoAcademico.builder()</span>
+<span class="nc" id="L294">                .codigo(codigo).nombre(nombre)</span>
+<span class="nc" id="L295">                .fechaInicio(req.getFechaInicio()).fechaFin(req.getFechaFin())</span>
+<span class="nc bnc" id="L296" title="All 4 branches missed.">                .activo(req.getActivo() != null &amp;&amp; req.getActivo())</span>
+<span class="nc" id="L297">                .build());</span>
+<span class="nc" id="L298">        return ResponseEntity.ok(periodo);</span>
+    }
+
+    @PutMapping(&quot;/periodos-academicos/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    @Transactional
+    public ResponseEntity&lt;?&gt; actualizarPeriodo(@PathVariable Integer id, @RequestBody GuardarPeriodoRequest req) {
+<span class="nc" id="L305">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L306">        PeriodoAcademico periodo = periodoAcademicoRepo.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">        if (periodo == null) {</span>
+<span class="nc" id="L308">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        String nombre = req.getNombre() == null ? &quot;&quot; : req.getNombre().trim();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">        if (nombre.isEmpty()) {</span>
+<span class="nc" id="L312">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;El nombre no puede estar vacío.&quot;));</span>
+        }
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        LocalDate inicio = req.getFechaInicio() != null ? req.getFechaInicio() : periodo.getFechaInicio();</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">        LocalDate fin = req.getFechaFin() != null ? req.getFechaFin() : periodo.getFechaFin();</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (!fin.isAfter(inicio)) {</span>
+<span class="nc" id="L317">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;La fecha de fin debe ser posterior a la fecha de inicio.&quot;));</span>
+        }
+<span class="nc" id="L319">        periodo.setNombre(nombre);</span>
+<span class="nc" id="L320">        periodo.setFechaInicio(inicio);</span>
+<span class="nc" id="L321">        periodo.setFechaFin(fin);</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (req.getActivo() != null) {</span>
+<span class="nc" id="L323">            periodo.setActivo(req.getActivo());</span>
+        }
+<span class="nc" id="L325">        return ResponseEntity.ok(periodoAcademicoRepo.save(periodo));</span>
+    }
+
+    @DeleteMapping(&quot;/periodos-academicos/{id}&quot;)
+    @PreAuthorize(PERMISO_GESTIONAR)
+    public ResponseEntity&lt;?&gt; eliminarPeriodo(@PathVariable Integer id) {
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (!periodoAcademicoRepo.existsById(id)) {</span>
+<span class="nc" id="L332">            return ResponseEntity.notFound().build();</span>
+        }
+        try {
+<span class="nc" id="L335">            catalogoAdminService.eliminarPeriodo(id);</span>
+<span class="nc" id="L336">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L337">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L338">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;No se pudo eliminar: hay estudiantes o convocatorias asociadas a este período.&quot;));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

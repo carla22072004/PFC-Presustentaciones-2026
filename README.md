@@ -4,10 +4,36 @@
 [![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
 [![CI](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![JaCoCo Coverage](https://img.shields.io/badge/coverage-28.5%25-orange.svg)](docs/mediciones/jacoco/COVERAGE.md)
+[![JaCoCo Coverage](https://img.shields.io/badge/coverage-24.6%25_lines-orange.svg)](docs/mediciones/jacoco/COVERAGE.md)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP-revisión_manual-yellow.svg)](docs/mediciones/sec/owasp/OWASP-AUDIT.md)
 
 Sistema web para la automatización, gestión y evaluación de pre-sustentaciones de trabajos de titulación de la **Universidad Técnica Estatal de Quevedo (UTEQ)**.
+
+---
+
+## Requisitos Previos
+
+Verificados de verdad en la máquina donde se generó esta evidencia (no una lista aspiracional) — ver
+[`docs/entorno/versions.txt`](docs/entorno/versions.txt) para las versiones exactas y
+[`scripts/gen-versions.sh`](scripts/gen-versions.sh) para regenerarlas. Solo el bloque "Despliegue
+Rápido" (Docker + Node) es obligatorio para levantar el sistema; el resto solo hace falta para
+`make all`/pasos individuales de verificación.
+
+| Herramienta | Para qué | Versión usada al generar esta evidencia |
+|---|---|---|
+| **Docker Engine + Docker Compose** | Levantar Postgres/Redis/backend/nginx | 29.6.1 / v5.3.0 |
+| **Node.js + npm** | Compilar el frontend Angular (`ng build`) | v24.12.0 / 11.6.2 |
+| **JDK 17+** | Compilar el backend (Maven Wrapper trae Maven, no necesitas instalarlo aparte) | OpenJDK 21 (compila con `--release 17`, compatible) |
+| **GNU Make** | Correr los objetivos `make *` documentados abajo | **No viene con Git Bash / Git for Windows** — instalar con `choco install make`, usar WSL, o ejecutar manualmente el comando de cada objetivo del [`Makefile`](Makefile) (cada uno es una sola línea de shell) |
+| **k6** | `make bench` (pruebas de carga) | v2.2.0 |
+| **LaTeX con `latexmk`** (MiKTeX o TeX Live) | `make pdf` (compila el Informe Final y el SRS) | MiKTeX, latexmk 4.88 |
+| **Python 3 + matplotlib** | `make docs` (regenera las figuras de `docs/mediciones/perf/figuras/`) | 3.14.0 |
+| **`gh` CLI** (opcional) | Solo si vas a interactuar con GitHub Issues/PRs desde la terminal | — |
+
+**Nota Windows:** todos los comandos de este README se probaron en Git Bash (MINGW64) en Windows 11.
+`make` específicamente **no está instalado por defecto** ahí — si `make all` falla con
+`command not found`, instala GNU Make (`choco install make` con [Chocolatey](https://chocolatey.org/),
+o usa WSL) o ejecuta el cuerpo de cada objetivo del `Makefile` directamente en la terminal.
 
 ---
 
@@ -51,6 +77,31 @@ make all
 Ver [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) para el guion del
 video de demostración de este comando (⏳ video pendiente de grabar).
 
+## Comandos Disponibles
+
+`make all` corre todo en orden (`build → up → wait-backend → test → bench → audit → docs → pdf`), pero
+cada paso también se puede correr por separado — útil para verificar un paso puntual, o si `make` no
+está disponible (ver "Requisitos Previos" arriba: en ese caso, corre el comando de la columna derecha
+directamente).
+
+| `make ...` | Qué hace | Comando equivalente sin `make` |
+|---|---|---|
+| `up` | Levanta Postgres, Redis, backend y nginx con Docker Compose | `docker compose up -d --build` |
+| `down` / `clean` | Detiene los contenedores (`clean` además borra volúmenes) | `docker compose down` / `docker compose down -v --remove-orphans` |
+| `build` | Compila el backend y el build de producción del frontend | `cd backend && ./mvnw -q compile && cd ../Frontend && npx ng build --configuration production` |
+| `test` | Corre la suite de tests del backend (genera el reporte JaCoCo) | `cd backend && ./mvnw test` |
+| `wait-backend` | Espera a que `/actuator/health` responda `UP` (confirma que las migraciones Flyway se aplicaron) tras `make up` | `curl -sf http://localhost:8080/actuator/health` en un loop hasta ver `"status":"UP"` |
+| `bench` | Corre `k6/load-test.js` contra el backend levantado | `cd k6 && BASE_URL=http://localhost:8080/api/v1 k6 run --quiet --summary-export=runN-summary.json load-test.js` (backend debe estar arriba primero) |
+| `audit` | SpotBugs/find-sec-bugs (SQL dinámico) + `npm audit` del frontend | `./scripts/audit-sql-dynamic.sh && cd Frontend && npm audit` |
+| `docs` | Regenera las figuras de rendimiento y valida la matriz de trazabilidad | `python scripts/gen-figuras.py && ./scripts/validate-traceability.sh` |
+| `pdf` | Compila `Informe-Final/informe-final.tex` a PDF | `cd Informe-Final && latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex` |
+
+Para compilar además el SRS (`docs/requisitos/SRS-v1.0.0.tex`, no cubierto por `make pdf`):
+`cd docs/requisitos && latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.0.tex`.
+
+Para re-correr el escaneo OWASP ZAP (no cubierto por `make audit`, requiere Docker):
+`cd docs/mediciones/sec/zap && docker run --rm -v "$(pwd):/zap/wrk:rw" -t zaproxy/zap-stable zap.sh -cmd -autorun /zap/wrk/zap.yaml` (con el stack de `make up` corriendo). **En Git Bash/MINGW64 en Windows**, antepone `MSYS_NO_PATHCONV=1` a ese comando — si no, Git Bash reescribe la ruta `/zap/wrk/...` del argumento como si fuera una ruta de Windows y el contenedor no encuentra el archivo.
+
 ## Despliegue Público (Producción)
 
 **Estado:** el sistema **aún no está desplegado públicamente** — ver
@@ -76,10 +127,10 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 | **Observaciones 1A & 1B** | [`docs/observaciones/OBSERVACIONES.md`](docs/observaciones/OBSERVACIONES.md) | Criterios, decisiones y hashes de commits de corrección. Etiquetas `v0.7.0` y `v0.7.1`. |
 | **Catálogo de SP / SQL** | [`docs/basedatos/CATALOGO-SP.md`](docs/basedatos/CATALOGO-SP.md) | Documentación de procedimientos almacenados PL/pgSQL y funciones puras. |
 | **Especificación SRS v1.0.0** | [`docs/requisitos/SRS-v1.0.0.pdf`](docs/requisitos/SRS-v1.0.0.pdf) / [`.tex`](docs/requisitos/SRS-v1.0.0.tex) | ISO/IEC/IEEE 29148:2018, 12 HU ([`historias/`](docs/requisitos/historias/)) + 12 CU Cockburn ([`casos-de-uso/`](docs/requisitos/casos-de-uso/)). Versión anterior en [`historico/`](docs/requisitos/historico/) afirmaba "15 HUs, 15 CUs" sin que existieran — corregido. |
-| **Matriz Trazabilidad** | [`docs/trazabilidad/matriz.csv`](docs/trazabilidad/matriz.csv) | Requisito → HU → Módulo → Endpoint → Prioridad MoSCoW → Test real → Evidencia. 5/8 Must verificados con test real (62.5%), no el 100% — declarado explícitamente. |
+| **Matriz Trazabilidad** | [`docs/trazabilidad/matriz.csv`](docs/trazabilidad/matriz.csv) | Requisito → HU → Módulo → Endpoint → Prioridad MoSCoW → Test real → Evidencia. 7/8 Must verificados con test real (87.5%, actualizado 2026-08-29 tras `SolicitudServiceImplTest`/`CronogramaServiceImplTest`), no el 100% — declarado explícitamente. |
 | **Checklist INCOSE + elicitación** | [`docs/checklists/INCOSE-REQUIREMENTS.md`](docs/checklists/INCOSE-REQUIREMENTS.md) / [`docs/requisitos/elicitacion/`](docs/requisitos/elicitacion/) | 9 características INCOSE × 12 RF + 6 de conjunto; evidencia real de técnicas de elicitación (2/5 con evidencia documentada). |
 | **Bitácora de requisitos** | [`docs/requisitos/CHANGELOG-REQ.md`](docs/requisitos/CHANGELOG-REQ.md) | Cambios entre SRS v0.9.0-rc y v1.0.0, tasa de estabilidad calculada. |
-| **Despliegue & Docker** | [`Makefile`](Makefile) / [`docker-compose.yml`](docker-compose.yml) | `make up/down/restart/logs/ps/clean` + `make build/test/bench/audit/docs/pdf`, y **`make all`**: el objetivo de reproducibilidad end-to-end del Criterio R1 (Fase 10) — desde una clonación limpia levanta todos los contenedores, espera a que las migraciones Flyway se apliquen, corre tests + benchmarks + auditoría + reportes, y compila el PDF final, saliendo con código 0 solo si todo funcionó. Verificado real: `docker compose down -v && docker compose up -d --build` sobre un volumen de Postgres limpio llega a healthy, y `make pdf` compila el informe de 36 páginas sin errores. Imágenes ancladas por digest SHA-256. Guion para el video de demostración: [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) (⏳ video pendiente de grabar). |
+| **Despliegue & Docker** | [`Makefile`](Makefile) / [`docker-compose.yml`](docker-compose.yml) | `make up/down/restart/logs/ps/clean` + `make build/test/bench/audit/docs/pdf`, y **`make all`**: el objetivo de reproducibilidad end-to-end del Criterio R1 (Fase 10) — desde una clonación limpia levanta todos los contenedores, espera a que las migraciones Flyway se apliquen, corre tests + benchmarks + auditoría + reportes, y compila el PDF final, saliendo con código 0 solo si todo funcionó. Verificado real: `docker compose down -v && docker compose up -d --build` sobre un volumen de Postgres limpio llega a healthy, y `make pdf` compila el informe de 37 páginas sin errores. Imágenes ancladas por digest SHA-256. Guion para el video de demostración: [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) (⏳ video pendiente de grabar). |
 | **Despliegue en producción** | [`docs/despliegue/`](docs/despliegue/) | `DEPLOYMENT.md` (proveedor y procedimiento), `RUNBOOK.md` (arranque/apagado/rotación), `BACKUP.md` (respaldo diario automatizado vía GitHub Actions). Estado real: aún no desplegado — ver detalle. |
 | **Procedencia de datos** | [`docs/mediciones/DATA-PROVENANCE.md`](docs/mediciones/DATA-PROVENANCE.md) | Mapea cada cifra citada en el informe a su archivo crudo y comando de origen. |
 | **Versiones del entorno** | [`docs/entorno/versions.txt`](docs/entorno/versions.txt) | Versiones exactas de Docker, JDK, Node, Angular CLI y k6 usadas para generar la evidencia. Regenerable con [`scripts/gen-versions.sh`](scripts/gen-versions.sh); el job `entorno` de [`ci.yml`](.github/workflows/ci.yml) publica su propia copia como artefacto en cada push. |
@@ -87,9 +138,9 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 | **DOI del software (Zenodo)** | [`docs/ZENODO.md`](docs/ZENODO.md) / [`docs/ZENODO-DATASET.md`](docs/ZENODO-DATASET.md) | ✅ **Archivado en Zenodo** — DOI oficial: [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) (`v1.0.0`, licencia MIT). El dataset de mediciones se deposita por separado siguiendo el principio de citación independiente (`docs/ZENODO-DATASET.md`). |
 | **Scripts de análisis** | [`scripts/`](scripts/) | Notebooks reales y ejecutados (`perf-analysis.ipynb`, `sus-analysis.ipynb`) + `validate-traceability.sh`, `audit-sql-dynamic.sh`, `gen-figuras.py`. |
 | **Pruebas de Carga k6** | [`k6/`](k6/) | Script k6, 5 corridas reales (`run1`-`run5`) y análisis estadístico caché fría/caliente (Wilcoxon, IC 95%, tamaño de efecto). |
-| **Auditoría OWASP** | [`docs/mediciones/sec/owasp/OWASP-AUDIT.md`](docs/mediciones/sec/owasp/OWASP-AUDIT.md) | Revisión manual de 6 controles OWASP Top 10 + herramientas automáticas reales: OWASP ZAP (0 FAIL, 4 hallazgos corregidos), SpotBugs/find-sec-bugs (0 SQL dinámico, 1 timing-attack corregido), `npm audit` (41 deps vulnerables detectadas). |
-| **Escaneo OWASP ZAP** | [`docs/mediciones/sec/zap/`](docs/mediciones/sec/zap/) | Reporte HTML/JSON de la corrida real `zap-baseline.py`. |
-| **Análisis estático** | [`docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md`](docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md) | SpotBugs + find-sec-bugs: 189 hallazgos reales, 0 de SQL dinámico. |
+| **Auditoría OWASP** | [`docs/mediciones/sec/owasp/OWASP-AUDIT.md`](docs/mediciones/sec/owasp/OWASP-AUDIT.md) | Revisión manual de 6 controles OWASP Top 10 + herramientas automáticas reales: OWASP ZAP (0 FAIL, 0 High; 5 hallazgos corregidos en total — 4 headers + 1 `@angular/core` vulnerable), SpotBugs/find-sec-bugs (0 SQL dinámico, 1 timing-attack corregido), `npm audit` (14 deps vulnerables, todas en tooling de build de íconos — bajó de 41 tras actualizar Angular). |
+| **Escaneo OWASP ZAP** | [`docs/mediciones/sec/zap/`](docs/mediciones/sec/zap/) | Reporte HTML/JSON de la corrida real (plan de automatización `zap.yaml`), re-verificada 2026-08-29; corrida anterior conservada como `*.PREVIOUS.*`. |
+| **Análisis estático** | [`docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md`](docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md) | SpotBugs + find-sec-bugs: 233 hallazgos reales (actualizado 2026-08-29; 189 en la corrida del 17-08), 0 de SQL dinámico. |
 | **Usabilidad SUS** | [`docs/mediciones/sus/SUS-RESULTS.md`](docs/mediciones/sus/SUS-RESULTS.md) | Instrumento SUS listo; pendiente de aplicar a usuarios reales. |
 | **Lighthouse Frontend** | [`docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md`](docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md) | 6 corridas reales contra build de producción (3 desktop + 3 mobile): Rendimiento 64/61, Accesibilidad 89, Buenas Prácticas 100, SEO 91. Rendimiento aún bajo el umbral de 80 (ver nota metodológica sobre contención de CPU). |
 | **Arquitectura C4** | [`docs/arquitectura/README.md`](docs/arquitectura/README.md) | Diagramas de Arquitectura Modelo C4 (Niveles 1 Contexto, 2 Contenedores, 3 Componentes). |

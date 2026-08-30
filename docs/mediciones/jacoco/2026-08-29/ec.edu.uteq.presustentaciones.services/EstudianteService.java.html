@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EstudianteService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">EstudianteService.java</span></div><h1>EstudianteService.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.dto.ActualizarEstudianteRequest;
+import ec.edu.uteq.presustentaciones.dto.CrearEstudianteRequest;
+import ec.edu.uteq.presustentaciones.dto.EstudianteDTO;
+import ec.edu.uteq.presustentaciones.entities.*;
+import ec.edu.uteq.presustentaciones.repositories.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * &quot;Gestión de estudiantes&quot; -- antes de esto, un Estudiante solo se creaba como
+ * efecto secundario de la primera solicitud (SolicitudServiceImpl.crearPerfilEstudiante),
+ * con la primera carrera del catálogo y semestre fijo en 1, sin forma de corregirlo
+ * después. Este servicio agrega el alta explícita (admin/coordinador) y la edición de
+ * carrera, semestre, período de ingreso y estado académico.
+ */
+@Service
+<span class="nc" id="L27">@RequiredArgsConstructor</span>
+@Transactional
+public class EstudianteService {
+
+    private final EstudianteRepository estudianteRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final RolUsuarioRepository rolUsuarioRepository;
+    private final CarreraRepository carreraRepository;
+    private final PeriodoAcademicoRepository periodoAcademicoRepository;
+    private final EstadoAcademicoRepository estadoAcademicoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
+
+    @Transactional(readOnly = true)
+    public Page&lt;EstudianteDTO&gt; listarPaginado(int page, int size, String q) {
+<span class="nc" id="L42">        int paginaSegura = Math.max(page, 0);</span>
+<span class="nc" id="L43">        int tamanioSeguro = Math.min(Math.max(size, 1), 100);</span>
+<span class="nc" id="L44">        Page&lt;Estudiante&gt; pagina = estudianteRepository.buscarPaginado(q, PageRequest.of(paginaSegura, tamanioSeguro));</span>
+
+<span class="nc" id="L46">        List&lt;Long&gt; ids = pagina.getContent().stream().map(Estudiante::getId).toList();</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        Map&lt;Long, Object[]&gt; proyectos = ids.isEmpty() ? Map.of() : estudianteRepository</span>
+<span class="nc" id="L48">                .findUltimoProyectoPorEstudianteIds(ids).stream()</span>
+<span class="nc" id="L49">                .collect(Collectors.toMap(r -&gt; ((Number) r[0]).longValue(), r -&gt; r));</span>
+
+<span class="nc" id="L51">        return pagina.map(e -&gt; toDto(e, proyectos.get(e.getId())));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public EstudianteDTO obtenerPorId(Long id) {
+<span class="nc" id="L56">        Estudiante e = estudianteRepository.findByIdWithUsuario(id)</span>
+<span class="nc" id="L57">                .orElseThrow(() -&gt; new RuntimeException(&quot;Estudiante no encontrado&quot;));</span>
+<span class="nc" id="L58">        List&lt;Object[]&gt; proyectos = estudianteRepository.findUltimoProyectoPorEstudianteIds(List.of(id));</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        return toDto(e, proyectos.isEmpty() ? null : proyectos.get(0));</span>
+    }
+
+    /** Registra el usuario (rol ESTUDIANTE) y su perfil académico en un solo paso. */
+    public EstudianteDTO crear(CrearEstudianteRequest req) {
+<span class="nc" id="L64">        auditoriaService.marcarActorActual();</span>
+
+<span class="nc bnc" id="L66" title="All 4 branches missed.">        if (req.getNombre() == null || req.getNombre().isBlank()</span>
+<span class="nc bnc" id="L67" title="All 4 branches missed.">                || req.getApellido() == null || req.getApellido().isBlank()</span>
+<span class="nc bnc" id="L68" title="All 4 branches missed.">                || req.getEmail() == null || req.getEmail().isBlank()</span>
+<span class="nc bnc" id="L69" title="All 4 branches missed.">                || req.getPassword() == null || req.getPassword().isBlank()</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">                || req.getCarreraId() == null) {</span>
+<span class="nc" id="L71">            throw new RuntimeException(&quot;Nombre, apellido, email, contraseña y carrera son obligatorios.&quot;);</span>
+        }
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (usuarioRepository.existsByEmail(req.getEmail())) {</span>
+<span class="nc" id="L74">            throw new RuntimeException(&quot;Ya existe un usuario con el email: &quot; + req.getEmail());</span>
+        }
+
+<span class="nc" id="L77">        Carrera carrera = carreraRepository.findById(req.getCarreraId())</span>
+<span class="nc" id="L78">                .orElseThrow(() -&gt; new RuntimeException(&quot;Carrera no encontrada&quot;));</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        PeriodoAcademico periodo = req.getPeriodoIngresoId() != null</span>
+<span class="nc" id="L80">                ? periodoAcademicoRepository.findById(req.getPeriodoIngresoId())</span>
+<span class="nc" id="L81">                        .orElseThrow(() -&gt; new RuntimeException(&quot;Período académico no encontrado&quot;))</span>
+<span class="nc" id="L82">                : null;</span>
+<span class="nc" id="L83">        EstadoAcademico activo = estadoAcademicoRepository.findByCodigo(&quot;ACTIVO&quot;)</span>
+<span class="nc" id="L84">                .orElseThrow(() -&gt; new RuntimeException(&quot;Catálogo de estados académicos no sembrado&quot;));</span>
+<span class="nc" id="L85">        RolUsuario rolEstudiante = rolUsuarioRepository.findByCodigo(&quot;ESTUDIANTE&quot;)</span>
+<span class="nc" id="L86">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rol ESTUDIANTE no existe en el catálogo&quot;));</span>
+
+<span class="nc" id="L88">        Usuario usuario = Usuario.builder()</span>
+<span class="nc" id="L89">                .nombre(req.getNombre())</span>
+<span class="nc" id="L90">                .apellido(req.getApellido())</span>
+<span class="nc" id="L91">                .email(req.getEmail())</span>
+<span class="nc" id="L92">                .password(passwordEncoder.encode(req.getPassword()))</span>
+<span class="nc" id="L93">                .telefono(req.getTelefono())</span>
+<span class="nc" id="L94">                .rol(&quot;ESTUDIANTE&quot;)</span>
+<span class="nc" id="L95">                .rolUsuario(rolEstudiante)</span>
+<span class="nc" id="L96">                .activo(true)</span>
+<span class="nc" id="L97">                .build();</span>
+<span class="nc" id="L98">        usuario = usuarioRepository.save(usuario);</span>
+
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        short semestreActual = req.getSemestreActual() != null ? req.getSemestreActual() : (short) 1;</span>
+<span class="nc" id="L101">        String expedienteCodigo = estudianteRepository.generarCodigoExpediente(null, null);</span>
+
+<span class="nc" id="L103">        Estudiante estudiante = Estudiante.builder()</span>
+<span class="nc" id="L104">                .usuario(usuario)</span>
+<span class="nc" id="L105">                .carrera(carrera.getNombre())</span>
+<span class="nc" id="L106">                .carreraEntidad(carrera)</span>
+<span class="nc" id="L107">                .periodoIngreso(periodo)</span>
+<span class="nc" id="L108">                .semestreActual(semestreActual)</span>
+<span class="nc" id="L109">                .semestre(semestreActual + &quot;&quot;)</span>
+<span class="nc" id="L110">                .telefono(req.getTelefono())</span>
+<span class="nc" id="L111">                .expedienteCodigo(expedienteCodigo)</span>
+<span class="nc" id="L112">                .estadoAcademico(activo)</span>
+<span class="nc" id="L113">                .build();</span>
+<span class="nc" id="L114">        estudiante = estudianteRepository.save(estudiante);</span>
+
+<span class="nc" id="L116">        return toDto(estudiante, null);</span>
+    }
+
+    public EstudianteDTO actualizar(Long id, ActualizarEstudianteRequest req) {
+<span class="nc" id="L120">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L121">        Estudiante e = estudianteRepository.findById(id)</span>
+<span class="nc" id="L122">                .orElseThrow(() -&gt; new RuntimeException(&quot;Estudiante no encontrado&quot;));</span>
+
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (req.getCarreraId() != null) {</span>
+<span class="nc" id="L125">            Carrera carrera = carreraRepository.findById(req.getCarreraId())</span>
+<span class="nc" id="L126">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Carrera no encontrada&quot;));</span>
+<span class="nc" id="L127">            e.setCarreraEntidad(carrera);</span>
+<span class="nc" id="L128">            e.setCarrera(carrera.getNombre());</span>
+        }
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (req.getPeriodoIngresoId() != null) {</span>
+<span class="nc" id="L131">            PeriodoAcademico periodo = periodoAcademicoRepository.findById(req.getPeriodoIngresoId())</span>
+<span class="nc" id="L132">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Período académico no encontrado&quot;));</span>
+<span class="nc" id="L133">            e.setPeriodoIngreso(periodo);</span>
+        }
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (req.getSemestreActual() != null) {</span>
+<span class="nc" id="L136">            e.setSemestreActual(req.getSemestreActual());</span>
+<span class="nc" id="L137">            e.setSemestre(req.getSemestreActual() + &quot;&quot;);</span>
+        }
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (req.getTelefono() != null) {</span>
+<span class="nc" id="L140">            e.setTelefono(req.getTelefono());</span>
+        }
+<span class="nc bnc" id="L142" title="All 4 branches missed.">        if (req.getEstadoAcademicoCodigo() != null &amp;&amp; !req.getEstadoAcademicoCodigo().isBlank()) {</span>
+<span class="nc" id="L143">            EstadoAcademico estado = estadoAcademicoRepository.findByCodigo(req.getEstadoAcademicoCodigo())</span>
+<span class="nc" id="L144">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Estado académico inválido: &quot; + req.getEstadoAcademicoCodigo()));</span>
+<span class="nc" id="L145">            e.setEstadoAcademico(estado);</span>
+        }
+
+<span class="nc" id="L148">        Estudiante guardado = estudianteRepository.save(e);</span>
+<span class="nc" id="L149">        return toDto(guardado, null);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;EstadoAcademico&gt; listarEstadosAcademicos() {
+<span class="nc" id="L154">        return estadoAcademicoRepository.findAll();</span>
+    }
+
+    private EstudianteDTO toDto(Estudiante e, Object[] proyecto) {
+<span class="nc" id="L158">        Usuario u = e.getUsuario();</span>
+<span class="nc" id="L159">        return EstudianteDTO.builder()</span>
+<span class="nc" id="L160">                .id(e.getId())</span>
+<span class="nc" id="L161">                .usuarioId(u.getId())</span>
+<span class="nc" id="L162">                .nombre(u.getNombre())</span>
+<span class="nc" id="L163">                .apellido(u.getApellido())</span>
+<span class="nc" id="L164">                .email(u.getEmail())</span>
+<span class="nc" id="L165">                .activo(u.getActivo())</span>
+<span class="nc" id="L166">                .telefono(e.getTelefono())</span>
+<span class="nc" id="L167">                .expedienteCodigo(e.getExpedienteCodigo())</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                .carreraId(e.getCarreraEntidad() != null ? e.getCarreraEntidad().getId() : null)</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">                .carreraNombre(e.getCarreraEntidad() != null ? e.getCarreraEntidad().getNombre() : e.getCarrera())</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">                .periodoIngresoId(e.getPeriodoIngreso() != null ? e.getPeriodoIngreso().getId() : null)</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                .periodoIngresoNombre(e.getPeriodoIngreso() != null ? e.getPeriodoIngreso().getNombre() : null)</span>
+<span class="nc" id="L172">                .semestreActual(e.getSemestreActual())</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">                .estadoAcademicoCodigo(e.getEstadoAcademico() != null ? e.getEstadoAcademico().getCodigo() : null)</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                .estadoAcademicoNombre(e.getEstadoAcademico() != null ? e.getEstadoAcademico().getNombre() : null)</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">                .proyectoTitulo(proyecto != null ? (String) proyecto[1] : null)</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">                .proyectoEstado(proyecto != null ? (String) proyecto[2] : null)</span>
+<span class="nc" id="L177">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

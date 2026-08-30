@@ -25,9 +25,17 @@ OUT_DIR = os.path.join(REPO_ROOT, "docs", "mediciones", "perf", "figuras")
 
 
 def fig_k6_p95():
-    """p95 de http_req_duration por corrida k6 (run1-run5)."""
+    """p95 de http_req_duration por corrida k6 valida (run3-run7).
+
+    run1/run2 se excluyen a proposito: usaban una metodologia distinta e
+    incompatible (login en cada iteracion, endpoint /catalogos/carreras
+    inexistente) y no cumplen el umbral http_req_failed<1% (ver k6/README.md,
+    seccion "Corridas invalidas conservadas como evidencia") -- mezclarlas en
+    el mismo grafico que las 5 corridas validas presentaria datos no
+    comparables como si fueran mediciones de rendimiento validas.
+    """
     runs, p95s = [], []
-    for n in range(1, 6):
+    for n in range(3, 8):
         path = os.path.join(K6_DIR, f"run{n}-summary.json")
         if not os.path.exists(path):
             print(f"[aviso] falta {path}, se omite del grafico")

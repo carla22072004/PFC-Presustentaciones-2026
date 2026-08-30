@@ -1,5 +1,10 @@
 # Cobertura de pruebas (JaCoCo) — datos reales
 
+> ⚠️ **Documento superado.** Este es el primer punto de datos (2026-08-12, 3 archivos de test) de una
+> serie histórica. La cifra vigente y el historial completo están en
+> [`docs/mediciones/jacoco/COVERAGE.md`](jacoco/COVERAGE.md) — ese es el archivo que enlaza el badge de
+> `README.md`. Se conserva este archivo sin borrar como evidencia del punto de partida real.
+
 **Cómo se generó:** `cd backend && ./mvnw test`, luego `backend/target/site/jacoco/jacoco.csv` (reporte generado localmente, no versionado — se regenera en cada corrida).
 
 Una versión anterior de este documento (y el badge de `README.md`) afirmaba `>60%` de cobertura sin que existiera ni una sola clase de prueba en el repositorio. Esa cifra era falsa. Estos son los números reales tras ejecutar la suite de pruebas:

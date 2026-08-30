@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AnteproyectoServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">AnteproyectoServiceImpl.java</span></div><h1>AnteproyectoServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.entities.Anteproyecto;
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+<span class="fc" id="L30">@Slf4j</span>
+public class AnteproyectoServiceImpl implements AnteproyectoService {
+
+    private final AnteproyectoRepository anteproyectoRepository;
+    private final SolicitudRepository solicitudRepository;
+    private final NotificacionService notificacionService;
+    private final UsuarioRepository usuarioRepository;
+
+    @Value(&quot;${app.upload.dir:uploads/anteproyectos}&quot;)
+    private String uploadDir;
+
+    public AnteproyectoServiceImpl(AnteproyectoRepository ar, SolicitudRepository sr,
+<span class="fc" id="L42">                                   NotificacionService ns, UsuarioRepository ur) {</span>
+<span class="fc" id="L43">        this.anteproyectoRepository = ar;</span>
+<span class="fc" id="L44">        this.solicitudRepository = sr;</span>
+<span class="fc" id="L45">        this.notificacionService = ns;</span>
+<span class="fc" id="L46">        this.usuarioRepository = ur;</span>
+<span class="fc" id="L47">    }</span>
+
+    @Override
+    public Anteproyecto enviarAnteproyecto(Long solicitudId, MultipartFile archivo) {
+<span class="fc" id="L51">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L52">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+
+<span class="pc bpc" id="L54" title="1 of 4 branches missed.">        if (solicitud.getEstado() != null &amp;&amp; &quot;SUSPENDIDA&quot;.equalsIgnoreCase(solicitud.getEstado().getCodigo())) {</span>
+<span class="fc" id="L55">            throw new RuntimeException(&quot;Tu trabajo ha sido suspendido y no puedes subir archivos. Motivo: &quot; + solicitud.getMotivoSuspension());</span>
+        }
+
+<span class="fc" id="L58">        String contentType = archivo.getContentType();</span>
+<span class="pc bpc" id="L59" title="1 of 4 branches missed.">        if (contentType == null || !contentType.equals(&quot;application/pdf&quot;)) {</span>
+<span class="fc" id="L60">            throw new RuntimeException(&quot;Solo se permiten archivos PDF&quot;);</span>
+        }
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (archivo.getSize() &gt; 10L * 1024 * 1024) {</span>
+<span class="nc" id="L63">            throw new RuntimeException(&quot;El archivo no puede superar los 10 MB&quot;);</span>
+        }
+
+<span class="fc" id="L66">        Path dirPath = Paths.get(uploadDir);</span>
+<span class="pc" id="L67">        try { Files.createDirectories(dirPath); } catch (IOException e) {</span>
+<span class="nc" id="L68">            throw new RuntimeException(&quot;No se pudo crear el directorio de uploads&quot;, e);</span>
+<span class="fc" id="L69">        }</span>
+
+<span class="fc" id="L71">        String nombreArchivo = &quot;solicitud_&quot; + solicitudId + &quot;_&quot; + UUID.randomUUID() + &quot;.pdf&quot;;</span>
+<span class="fc" id="L72">        Path rutaArchivo = dirPath.resolve(nombreArchivo);</span>
+<span class="fc" id="L73">        String sha256 = calcularSha256YGuardar(archivo, rutaArchivo);</span>
+
+<span class="fc" id="L75">        Anteproyecto anteproyecto = anteproyectoRepository</span>
+<span class="fc" id="L76">                .findBySolicitudId(solicitudId).orElse(null);</span>
+
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (anteproyecto != null</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">                &amp;&amp; anteproyecto.getArchivoPdf() != null</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">                &amp;&amp; !&quot;RECHAZADO&quot;.equals(anteproyecto.getEstado())) {</span>
+<span class="nc" id="L81">            throw new RuntimeException(</span>
+                    &quot;No puedes reemplazar el PDF. El coordinador debe rechazar el anteproyecto para permitir una nueva carga.&quot;);
+        }
+
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (anteproyecto == null) anteproyecto = new Anteproyecto();</span>
+
+<span class="fc" id="L87">        anteproyecto.setArchivoPdf(nombreArchivo);</span>
+<span class="fc" id="L88">        anteproyecto.setFechaEnvio(LocalDate.now());</span>
+<span class="fc" id="L89">        anteproyecto.setEstado(&quot;ENVIADO&quot;);</span>
+<span class="fc" id="L90">        anteproyecto.setSolicitud(solicitud);</span>
+<span class="fc" id="L91">        anteproyecto.setSha256Hash(sha256);</span>
+<span class="fc" id="L92">        anteproyecto.setTamanoBytes(archivo.getSize());</span>
+
+<span class="fc" id="L94">        Anteproyecto guardado = anteproyectoRepository.save(anteproyecto);</span>
+
+        // Notificar a los admins que hay un anteproyecto nuevo para revisar
+<span class="fc" id="L97">        notificarAdminsNuevoAnteproyecto(solicitud);</span>
+
+<span class="fc" id="L99">        return guardado;</span>
+    }
+
+    private String calcularSha256YGuardar(MultipartFile archivo, Path destino) {
+        try {
+<span class="fc" id="L104">            MessageDigest digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="fc" id="L105">            try (InputStream is = archivo.getInputStream();</span>
+<span class="fc" id="L106">                 DigestInputStream dis = new DigestInputStream(is, digest)) {</span>
+<span class="fc" id="L107">                Files.copy(dis, destino, StandardCopyOption.REPLACE_EXISTING);</span>
+            }
+<span class="fc" id="L109">            return HexFormat.of().formatHex(digest.digest());</span>
+<span class="nc" id="L110">        } catch (NoSuchAlgorithmException | IOException e) {</span>
+<span class="nc" id="L111">            throw new RuntimeException(&quot;Error al calcular SHA-256 del archivo&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public boolean verificarIntegridad(Long solicitudId) {
+<span class="nc" id="L117">        Anteproyecto ap = anteproyectoRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L118">                .orElseThrow(() -&gt; new RuntimeException(&quot;Anteproyecto no encontrado&quot;));</span>
+
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (ap.getSha256Hash() == null) return false;</span>
+
+<span class="nc" id="L122">        Path rutaArchivo = Paths.get(uploadDir).resolve(ap.getArchivoPdf()).normalize();</span>
+        try {
+<span class="nc" id="L124">            MessageDigest digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="nc" id="L125">            byte[] bytes = Files.readAllBytes(rutaArchivo);</span>
+<span class="nc" id="L126">            byte[] hashActual = digest.digest(bytes);</span>
+<span class="nc" id="L127">            byte[] hashEsperado = HexFormat.of().parseHex(ap.getSha256Hash());</span>
+            // Comparacion en tiempo constante para evitar timing attacks (find-sec-bugs: UNSAFE_HASH_EQUALS)
+<span class="nc" id="L129">            return MessageDigest.isEqual(hashActual, hashEsperado);</span>
+<span class="nc" id="L130">        } catch (Exception e) {</span>
+<span class="nc" id="L131">            return false;</span>
+        }
+    }
+
+    @Override
+    public Anteproyecto aprobarAnteproyecto(Long id, String obs) {
+<span class="fc" id="L137">        Anteproyecto ap = anteproyectoRepository.findById(id)</span>
+<span class="pc" id="L138">                .orElseThrow(() -&gt; new RuntimeException(&quot;Anteproyecto no encontrado&quot;));</span>
+<span class="fc" id="L139">        ap.setEstado(&quot;APROBADO&quot;);</span>
+<span class="fc" id="L140">        ap.setObservaciones(obs);</span>
+<span class="fc" id="L141">        Anteproyecto guardado = anteproyectoRepository.save(ap);</span>
+
+        // Notificar al estudiante
+<span class="fc" id="L144">        notificarEstudianteAnteproyecto(ap, true, obs);</span>
+
+<span class="fc" id="L146">        return guardado;</span>
+    }
+
+    @Override
+    public Anteproyecto rechazarAnteproyecto(Long id, String obs) {
+<span class="fc" id="L151">        Anteproyecto ap = anteproyectoRepository.findById(id)</span>
+<span class="pc" id="L152">                .orElseThrow(() -&gt; new RuntimeException(&quot;Anteproyecto no encontrado&quot;));</span>
+<span class="fc" id="L153">        ap.setEstado(&quot;RECHAZADO&quot;);</span>
+<span class="fc" id="L154">        ap.setObservaciones(obs);</span>
+<span class="fc" id="L155">        Anteproyecto guardado = anteproyectoRepository.save(ap);</span>
+
+        // Notificar al estudiante
+<span class="fc" id="L158">        notificarEstudianteAnteproyecto(ap, false, obs);</span>
+
+<span class="fc" id="L160">        return guardado;</span>
+    }
+
+    @Override
+    public Optional&lt;Anteproyecto&gt; buscarPorSolicitud(Long solicitudId) {
+<span class="nc" id="L165">        return anteproyectoRepository.findBySolicitudId(solicitudId);</span>
+    }
+
+    // ── Helpers de notificación ───────────────────────────────────────────────
+
+    private void notificarAdminsNuevoAnteproyecto(Solicitud solicitud) {
+        try {
+<span class="fc" id="L172">            List&lt;Usuario&gt; admins = usuarioRepository.findByRol(&quot;ADMIN&quot;);</span>
+<span class="fc" id="L173">            String nombreEst = solicitud.getEstudiante().getUsuario().getNombre()</span>
+<span class="fc" id="L174">                    + &quot; &quot; + solicitud.getEstudiante().getUsuario().getApellido();</span>
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">            for (Usuario admin : admins) {</span>
+<span class="nc" id="L176">                notificacionService.crearNotificacion(admin.getId(),</span>
+<span class="nc" id="L177">                        String.format(&quot;📄 El estudiante %s ha subido el PDF del anteproyecto \&quot;%s\&quot;. &quot; +</span>
+                                        &quot;Está pendiente de revisión y aprobación.&quot;,
+<span class="nc" id="L179">                                nombreEst, solicitud.getTituloTema()));</span>
+<span class="nc" id="L180">            }</span>
+<span class="nc" id="L181">        } catch (Exception e) {</span>
+<span class="nc" id="L182">            log.warn(&quot;No se pudo notificar a admins sobre nuevo anteproyecto: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L183">        }</span>
+<span class="fc" id="L184">    }</span>
+
+    private void notificarEstudianteAnteproyecto(Anteproyecto ap, boolean aprobado, String obs) {
+        try {
+<span class="fc" id="L188">            Long usuarioId = ap.getSolicitud().getEstudiante().getUsuario().getId();</span>
+<span class="fc" id="L189">            String titulo  = ap.getSolicitud().getTituloTema();</span>
+            String msg;
+<span class="fc bfc" id="L191" title="All 2 branches covered.">            if (aprobado) {</span>
+<span class="fc" id="L192">                msg = String.format(&quot;✅ Tu anteproyecto \&quot;%s\&quot; ha sido APROBADO. &quot; +</span>
+                        &quot;Ya puedes proceder con el siguiente paso del proceso.&quot;, titulo);
+            } else {
+<span class="fc" id="L195">                msg = String.format(&quot;❌ Tu anteproyecto \&quot;%s\&quot; ha sido RECHAZADO. &quot; +</span>
+                        &quot;Debes corregirlo y volver a cargarlo.&quot;, titulo);
+            }
+<span class="pc bpc" id="L198" title="2 of 4 branches missed.">            if (obs != null &amp;&amp; !obs.isBlank()) {</span>
+<span class="fc" id="L199">                msg += &quot; Observaciones del coordinador: &quot; + obs;</span>
+            }
+<span class="fc" id="L201">            notificacionService.crearNotificacion(usuarioId, msg);</span>
+<span class="nc" id="L202">        } catch (Exception e) {</span>
+<span class="nc" id="L203">            log.warn(&quot;No se pudo notificar al estudiante sobre anteproyecto: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L204">        }</span>
+<span class="fc" id="L205">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TutorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">TutorController.java</span></div><h1>TutorController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.dto.MiEstudianteTutoradoDTO;
+import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.TutorService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/tutores&quot;)
+public class TutorController {
+
+    private final TutorService tutorService;
+    private final UsuarioRepository usuarioRepository;
+
+<span class="nc" id="L27">    public TutorController(TutorService tutorService, UsuarioRepository usuarioRepository) {</span>
+<span class="nc" id="L28">        this.tutorService = tutorService;</span>
+<span class="nc" id="L29">        this.usuarioRepository = usuarioRepository;</span>
+<span class="nc" id="L30">    }</span>
+
+    /** &quot;Mis Estudiantes&quot; (docente): roster de los estudiantes que el docente autenticado
+     * tiene asignados como tutor -- sin permiso dedicado porque cualquier DOCENTE debe
+     * poder consultar sus propios estudiantes (mismo criterio que /api/tutorias/docente/{id}). */
+    @GetMapping(&quot;/mis-estudiantes&quot;)
+    public ResponseEntity&lt;List&lt;MiEstudianteTutoradoDTO&gt;&gt; misEstudiantes() {
+<span class="nc" id="L37">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L38">        Usuario usuario = usuarioRepository.findByEmail(auth.getName())</span>
+<span class="nc" id="L39">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario autenticado no encontrado&quot;));</span>
+<span class="nc" id="L40">        return ResponseEntity.ok(tutorService.misEstudiantes(usuario.getId()));</span>
+    }
+
+    @PostMapping(&quot;/asignar&quot;)
+    @PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')&quot;)
+    public ResponseEntity&lt;Tutor&gt; asignar(@RequestParam Long solicitudId,
+                                         @RequestParam Long docenteId) {
+        try {
+<span class="nc" id="L48">            return ResponseEntity.ok(tutorService.asignarTutor(solicitudId, docenteId));</span>
+<span class="nc" id="L49">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L50">            return ResponseEntity.badRequest().build();</span>
+        }
+    }
+
+    @GetMapping(&quot;/solicitud/{solicitudId}&quot;)
+    public ResponseEntity&lt;Tutor&gt; porSolicitud(@PathVariable Long solicitudId) {
+<span class="nc" id="L56">        return tutorService.buscarPorSolicitud(solicitudId)</span>
+<span class="nc" id="L57">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L58">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;Page&lt;Tutor&gt;&gt; listar(Pageable pageable) {
+<span class="nc" id="L63">        return ResponseEntity.ok(tutorService.listarTodos(pageable));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')&quot;)
+    public ResponseEntity&lt;Void&gt; eliminar(@PathVariable Long id) {
+<span class="nc" id="L69">        tutorService.eliminarTutor(id);</span>
+<span class="nc" id="L70">        return ResponseEntity.noContent().build();</span>
+    }
+
+    /**
+     * SP (Fase 3): Estadísticas consolidadas del desempeño de tutores.
+     * Llama a presus.sp_obtener_estadisticas_tutores()
+     * Flujo: GET → TutorController → TutorService → TutorRepository → SP → PostgreSQL
+     */
+    @GetMapping(&quot;/estadisticas&quot;)
+    @PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')&quot;)
+    public ResponseEntity&lt;?&gt; estadisticas() {
+        try {
+<span class="nc" id="L82">            List&lt;Map&lt;String, Object&gt;&gt; stats = tutorService.obtenerEstadisticasTutoresSP();</span>
+<span class="nc" id="L83">            return ResponseEntity.ok(stats);</span>
+<span class="nc" id="L84">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L85">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, e.getMessage()));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

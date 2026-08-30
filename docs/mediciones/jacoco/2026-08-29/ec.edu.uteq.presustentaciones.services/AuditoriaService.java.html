@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditoriaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">AuditoriaService.java</span></div><h1>AuditoriaService.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+/**
+ * Identifica al &quot;quién&quot; para los triggers de auditoría (V15__auditoria.sql). Se llama
+ * al inicio de cada método @Transactional que hace una escritura auditable, ANTES del
+ * save()/delete() que dispara el trigger -- set_config(..., true) fija el GUC solo para
+ * la transacción/conexión actual, así que tiene que correr en la misma transacción que
+ * la escritura para que el trigger lo vea (por eso no se puede hacer una sola vez por
+ * request en un filtro: el filtro corre antes de que Spring abra la transacción).
+ *
+ * IMPORTANTE -- debe ser literalmente la PRIMERA operación del método, antes de mutar
+ * cualquier entidad ya gestionada (ej. antes de solicitud.setEstado(...)): esta llamada
+ * ejecuta una query nativa, y Hibernate hace auto-flush de los cambios pendientes ANTES
+ * de correr cualquier query nativa (no puede saber si esa query depende de ellos). Si el
+ * set_config corre después de modificar la entidad, el flush -- y el trigger -- ya
+ * dispararon con el GUC todavía sin fijar, y la fila de auditoría queda sin autor.
+ */
+@Service
+<span class="nc" id="L28">@RequiredArgsConstructor</span>
+<span class="fc" id="L29">@Slf4j</span>
+public class AuditoriaService {
+
+    private final UsuarioRepository usuarioRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public void marcarActorActual() {
+<span class="nc" id="L38">        Long usuarioId = resolverUsuarioIdActual();</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        String valor = usuarioId != null ? usuarioId.toString() : &quot;&quot;;</span>
+        try {
+<span class="nc" id="L41">            entityManager.createNativeQuery(&quot;SELECT set_config('presus.usuario_actual', :valor, true)&quot;)</span>
+<span class="nc" id="L42">                    .setParameter(&quot;valor&quot;, valor)</span>
+<span class="nc" id="L43">                    .getSingleResult();</span>
+<span class="nc" id="L44">        } catch (Exception e) {</span>
+<span class="nc" id="L45">            log.warn(&quot;No se pudo fijar el actor de auditoría: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L46">        }</span>
+<span class="nc" id="L47">    }</span>
+
+    private Long resolverUsuarioIdActual() {
+        try {
+<span class="nc" id="L51">            Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc bnc" id="L52" title="All 6 branches missed.">            if (auth == null || !auth.isAuthenticated() || &quot;anonymousUser&quot;.equals(String.valueOf(auth.getPrincipal()))) {</span>
+<span class="nc" id="L53">                return null;</span>
+            }
+<span class="nc" id="L55">            return usuarioRepository.findByEmail(auth.getName()).map(u -&gt; u.getId()).orElse(null);</span>
+<span class="nc" id="L56">        } catch (Exception e) {</span>
+<span class="nc" id="L57">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

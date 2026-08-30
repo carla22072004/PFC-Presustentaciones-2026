@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReporteController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">ReporteController.java</span></div><h1>ReporteController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
+import ec.edu.uteq.presustentaciones.entities.Cronograma;
+import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
+import ec.edu.uteq.presustentaciones.repositories.CronogramaRepository;
+import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/reportes&quot;)
+<span class="nc" id="L35">@RequiredArgsConstructor</span>
+@org.springframework.security.access.prepost.PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'REPORTES_VER')&quot;)
+public class ReporteController {
+
+    private final CronogramaRepository cronogramaRepo;
+    private final EvaluacionFinalRepository evaluacionFinalRepo;
+    private final SolicitudRepository solicitudRepo;
+
+    // ── Colores — siempre new DeviceRgb para evitar conflicto con Color.WHITE ──
+<span class="nc" id="L44">    private static DeviceRgb BLUE()       { return new DeviceRgb(0,   56,  101); }</span>
+<span class="nc" id="L45">    private static DeviceRgb GOLD()       { return new DeviceRgb(204, 153, 0);   }</span>
+<span class="nc" id="L46">    private static DeviceRgb WHITE()      { return new DeviceRgb(255, 255, 255); }</span>
+<span class="nc" id="L47">    private static DeviceRgb LIGHT_BG()   { return new DeviceRgb(240, 243, 248); }</span>
+<span class="nc" id="L48">    private static DeviceRgb GRAY_TEXT()  { return new DeviceRgb(120, 120, 120); }</span>
+<span class="nc" id="L49">    private static DeviceRgb DARK_TEXT()  { return new DeviceRgb(80,  80,  80);  }</span>
+<span class="nc" id="L50">    private static DeviceRgb GREEN()      { return new DeviceRgb(21,  128, 61);  }</span>
+<span class="nc" id="L51">    private static DeviceRgb RED()        { return new DeviceRgb(185, 28,  28);  }</span>
+
+<span class="nc" id="L53">    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+
+    /** RF-11: PDF del cronograma de pre-sustentaciones */
+    @GetMapping(&quot;/cronograma/pdf&quot;)
+    public ResponseEntity&lt;byte[]&gt; reporteCronograma() throws Exception {
+<span class="nc" id="L58">        List&lt;Cronograma&gt; lista = cronogramaRepo.findReporteCronograma();</span>
+
+<span class="nc" id="L60">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L61">        Document doc = abrirDoc(baos);</span>
+<span class="nc" id="L62">        PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);</span>
+<span class="nc" id="L63">        PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);</span>
+
+<span class="nc" id="L65">        encabezado(doc, bold, regular,</span>
+                &quot;Cronograma de Pre-Sustentaciones&quot;,
+                &quot;Trabajo de Integración Curricular — Décimo Semestre&quot;);
+
+<span class="nc" id="L69">        Table table = new Table(UnitValue.createPercentArray(new float[]{4, 18, 16, 12, 8}))</span>
+<span class="nc" id="L70">                .useAllAvailableWidth();</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        for (String h : new String[]{&quot;#&quot;, &quot;Estudiante / Tema&quot;, &quot;Fecha y Hora&quot;, &quot;Sala&quot;, &quot;Estado&quot;}) {</span>
+<span class="nc" id="L72">            table.addHeaderCell(new Cell()</span>
+<span class="nc" id="L73">                    .add(new Paragraph(h).setFont(bold).setFontSize(9).setFontColor(WHITE()))</span>
+<span class="nc" id="L74">                    .setBackgroundColor(BLUE()).setTextAlignment(TextAlignment.CENTER));</span>
+        }
+
+<span class="nc" id="L77">        int i = 1;</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        for (Cronograma c : lista) {</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            DeviceRgb bg = (i % 2 == 0) ? LIGHT_BG() : WHITE();</span>
+<span class="nc" id="L80">            String est = &quot;—&quot;, tema = &quot;—&quot;;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (c.getSolicitud() != null) {</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                var u = c.getSolicitud().getEstudiante() != null</span>
+<span class="nc" id="L83">                        ? c.getSolicitud().getEstudiante().getUsuario() : null;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                if (u != null) est = u.getNombre() + &quot; &quot; + u.getApellido();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                if (c.getSolicitud().getTituloTema() != null) tema = c.getSolicitud().getTituloTema();</span>
+            }
+<span class="nc" id="L87">            table.addCell(celda(String.valueOf(i++), regular, bg, TextAlignment.CENTER));</span>
+<span class="nc" id="L88">            table.addCell(new Cell()</span>
+<span class="nc" id="L89">                    .add(new Paragraph(est).setFont(bold).setFontSize(8))</span>
+<span class="nc" id="L90">                    .add(new Paragraph(tema).setFont(regular).setFontSize(7).setFontColor(DARK_TEXT()))</span>
+<span class="nc" id="L91">                    .setBackgroundColor(bg));</span>
+<span class="nc" id="L92">            table.addCell(celda(c.getFechaInicio().format(FMT), regular, bg, TextAlignment.CENTER));</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            table.addCell(celda(c.getSala() != null ? c.getSala().getNombre() : &quot;—&quot;, regular, bg, TextAlignment.CENTER));</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            table.addCell(celda(c.getEstado() != null ? c.getEstado().getNombre() : &quot;—&quot;, regular, bg, TextAlignment.CENTER));</span>
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">        doc.add(table);</span>
+<span class="nc" id="L97">        doc.add(new Paragraph(&quot;Total: &quot; + lista.size() + &quot; pre-sustentación(es) programadas.&quot;)</span>
+<span class="nc" id="L98">                 .setFont(bold).setFontSize(9).setMarginTop(10));</span>
+<span class="nc" id="L99">        doc.close();</span>
+
+<span class="nc" id="L101">        return pdfResponse(baos, &quot;cronograma_presustentaciones.pdf&quot;);</span>
+    }
+
+    /** RF-11: PDF de estadísticas de evaluaciones */
+    @GetMapping(&quot;/estadisticas/pdf&quot;)
+    public ResponseEntity&lt;byte[]&gt; reporteEstadisticas() throws Exception {
+<span class="nc" id="L107">        List&lt;EvaluacionFinal&gt; evals = evaluacionFinalRepo.findAllWithRelationships();</span>
+
+<span class="nc" id="L109">        long total      = evals.size();</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">        long aprobados  = evals.stream().filter(e -&gt; e.getResultado() != null &amp;&amp; &quot;APROBADO&quot;.equals(e.getResultado().getCodigo())).count();</span>
+<span class="nc bnc" id="L111" title="All 4 branches missed.">        long reprobados = evals.stream().filter(e -&gt; e.getResultado() != null &amp;&amp; &quot;REPROBADO&quot;.equals(e.getResultado().getCodigo())).count();</span>
+<span class="nc" id="L112">        double promedio = evals.stream()</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                .mapToDouble(e -&gt; e.getNotaFinal() != null ? e.getNotaFinal() : 0)</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                .filter(n -&gt; n &gt; 0).average().orElse(0);</span>
+
+<span class="nc" id="L116">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L117">        Document doc = abrirDoc(baos);</span>
+<span class="nc" id="L118">        PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);</span>
+<span class="nc" id="L119">        PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);</span>
+
+<span class="nc" id="L121">        encabezado(doc, bold, regular,</span>
+                &quot;Estadísticas de Evaluaciones&quot;,
+                &quot;Pre-Sustentaciones TIC II — Carrera Software&quot;);
+
+        // Resumen en 4 celdas
+<span class="nc" id="L126">        Table resumen = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1})).useAllAvailableWidth();</span>
+<span class="nc" id="L127">        celdaStat(resumen, &quot;Total evaluados&quot;, String.valueOf(total),      bold, regular, BLUE());</span>
+<span class="nc" id="L128">        celdaStat(resumen, &quot;Aprobados&quot;,       String.valueOf(aprobados),  bold, regular, GREEN());</span>
+<span class="nc" id="L129">        celdaStat(resumen, &quot;Reprobados&quot;,      String.valueOf(reprobados), bold, regular, RED());</span>
+<span class="nc" id="L130">        celdaStat(resumen, &quot;Nota promedio&quot;,   String.format(&quot;%.2f&quot;, promedio), bold, regular, GOLD());</span>
+<span class="nc" id="L131">        doc.add(resumen);</span>
+<span class="nc" id="L132">        doc.add(new Paragraph(&quot; &quot;).setMarginBottom(16));</span>
+
+        // Tabla detalle
+<span class="nc" id="L135">        Table tabla = new Table(UnitValue.createPercentArray(new float[]{3, 14, 5, 5, 5, 5})).useAllAvailableWidth();</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        for (String h : new String[]{&quot;#&quot;, &quot;Estudiante / Tema&quot;, &quot;Nota Inst.&quot;, &quot;Nota Trib.&quot;, &quot;Nota Final&quot;, &quot;Resultado&quot;}) {</span>
+<span class="nc" id="L137">            tabla.addHeaderCell(new Cell()</span>
+<span class="nc" id="L138">                    .add(new Paragraph(h).setFont(bold).setFontSize(8).setFontColor(WHITE()))</span>
+<span class="nc" id="L139">                    .setBackgroundColor(BLUE()).setTextAlignment(TextAlignment.CENTER));</span>
+        }
+
+<span class="nc" id="L142">        int idx = 1;</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        for (EvaluacionFinal e : evals) {</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            DeviceRgb bg = (idx % 2 == 0) ? LIGHT_BG() : WHITE();</span>
+<span class="nc" id="L145">            String est = &quot;—&quot;, tema = &quot;—&quot;;</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            if (e.getSolicitud() != null) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                var u = e.getSolicitud().getEstudiante() != null</span>
+<span class="nc" id="L148">                        ? e.getSolicitud().getEstudiante().getUsuario() : null;</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                if (u != null) est = u.getNombre() + &quot; &quot; + u.getApellido();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                if (e.getSolicitud().getTituloTema() != null) tema = e.getSolicitud().getTituloTema();</span>
+            }
+<span class="nc" id="L152">            tabla.addCell(celda(String.valueOf(idx++), regular, bg, TextAlignment.CENTER));</span>
+<span class="nc" id="L153">            tabla.addCell(new Cell()</span>
+<span class="nc" id="L154">                    .add(new Paragraph(est).setFont(bold).setFontSize(8))</span>
+<span class="nc" id="L155">                    .add(new Paragraph(tema).setFont(regular).setFontSize(7).setFontColor(DARK_TEXT()))</span>
+<span class="nc" id="L156">                    .setBackgroundColor(bg));</span>
+<span class="nc" id="L157">            tabla.addCell(celda(fmt(e.getNotaInstructor()), regular, bg, TextAlignment.CENTER));</span>
+<span class="nc" id="L158">            tabla.addCell(celda(fmt(e.getNotaJuradoPromedio()), regular, bg, TextAlignment.CENTER));</span>
+<span class="nc" id="L159">            tabla.addCell(celda(fmt(e.getNotaFinal()),      bold,    bg, TextAlignment.CENTER));</span>
+            
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            String resCod = e.getResultado() != null ? e.getResultado().getCodigo() : &quot;&quot;;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            DeviceRgb rc = &quot;APROBADO&quot;.equals(resCod) ? GREEN() : RED();</span>
+<span class="nc" id="L163">            tabla.addCell(new Cell()</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">                    .add(new Paragraph(e.getResultado() != null ? e.getResultado().getNombre() : &quot;—&quot;)</span>
+<span class="nc" id="L165">                            .setFont(bold).setFontSize(8).setFontColor(rc))</span>
+<span class="nc" id="L166">                    .setBackgroundColor(bg).setTextAlignment(TextAlignment.CENTER));</span>
+<span class="nc" id="L167">        }</span>
+<span class="nc" id="L168">        doc.add(tabla);</span>
+<span class="nc" id="L169">        doc.close();</span>
+
+<span class="nc" id="L171">        return pdfResponse(baos, &quot;estadisticas_evaluaciones.pdf&quot;);</span>
+    }
+
+    /**
+     * Reporte consolidado de defensas por carrera vía sp_generar_reporte_defensas
+     * (Fase 3 / Criterio P1, categoría &quot;consultas multi-tabla&quot;). @Transactional es
+     * necesario aquí: el procedimiento devuelve un REFCURSOR y Postgres solo lo mantiene
+     * abierto dentro de la misma transacción que lo abrió -- sin esto, Hibernate hace el
+     * fetch del cursor en una transacción/conexión ya cerrada (&quot;cursor ... does not exist&quot;).
+     */
+    @GetMapping(&quot;/defensas&quot;)
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity&lt;List&lt;ec.edu.uteq.presustentaciones.dto.ReporteDefensaResult&gt;&gt; reporteDefensas(
+            @RequestParam String carrera) {
+<span class="nc" id="L185">        return ResponseEntity.ok(solicitudRepo.generarReporteDefensas(carrera));</span>
+    }
+
+    /** RF-11: JSON de estadísticas para gráficas */
+    @GetMapping(&quot;/estadisticas/json&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; estadisticasJson() {
+<span class="nc" id="L191">        List&lt;EvaluacionFinal&gt; evals = evaluacionFinalRepo.findAllWithRelationships();</span>
+<span class="nc" id="L192">        long total      = evals.size();</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">        long aprobados  = evals.stream().filter(e -&gt; e.getResultado() != null &amp;&amp; &quot;APROBADO&quot;.equals(e.getResultado().getCodigo())).count();</span>
+<span class="nc bnc" id="L194" title="All 4 branches missed.">        long reprobados = evals.stream().filter(e -&gt; e.getResultado() != null &amp;&amp; &quot;REPROBADO&quot;.equals(e.getResultado().getCodigo())).count();</span>
+<span class="nc" id="L195">        double promedio = evals.stream()</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">                .mapToDouble(e -&gt; e.getNotaFinal() != null ? e.getNotaFinal() : 0)</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                .filter(n -&gt; n &gt; 0).average().orElse(0);</span>
+<span class="nc" id="L198">        long pendientes = solicitudRepo.countByEstadoCodigo(&quot;APROBADA&quot;);</span>
+
+<span class="nc" id="L200">        return ResponseEntity.ok(Map.of(</span>
+<span class="nc" id="L201">                &quot;totalEvaluados&quot;,       total,</span>
+<span class="nc" id="L202">                &quot;aprobados&quot;,            aprobados,</span>
+<span class="nc" id="L203">                &quot;reprobados&quot;,           reprobados,</span>
+<span class="nc" id="L204">                &quot;notaPromedio&quot;,         Math.round(promedio * 100.0) / 100.0,</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                &quot;tasaAprobacion&quot;,       total &gt; 0 ? Math.round((double) aprobados / total * 100) : 0,</span>
+<span class="nc" id="L206">                &quot;solicitudesPendientes&quot;, pendientes</span>
+        ));
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private Document abrirDoc(ByteArrayOutputStream baos) throws Exception {
+<span class="nc" id="L213">        PdfDocument pdf = new PdfDocument(new PdfWriter(baos));</span>
+<span class="nc" id="L214">        return new Document(pdf);</span>
+    }
+
+    private void encabezado(Document doc, PdfFont bold, PdfFont regular,
+                            String titulo, String subtitulo) throws Exception {
+<span class="nc" id="L219">        doc.add(new Paragraph(&quot;UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO&quot;)</span>
+<span class="nc" id="L220">                .setFont(bold).setFontSize(13).setFontColor(BLUE())</span>
+<span class="nc" id="L221">                .setTextAlignment(TextAlignment.CENTER));</span>
+<span class="nc" id="L222">        doc.add(new Paragraph(titulo)</span>
+<span class="nc" id="L223">                .setFont(bold).setFontSize(11).setFontColor(GOLD())</span>
+<span class="nc" id="L224">                .setTextAlignment(TextAlignment.CENTER));</span>
+<span class="nc" id="L225">        doc.add(new Paragraph(subtitulo)</span>
+<span class="nc" id="L226">                .setFont(regular).setFontSize(9).setFontColor(GRAY_TEXT())</span>
+<span class="nc" id="L227">                .setTextAlignment(TextAlignment.CENTER));</span>
+<span class="nc" id="L228">        doc.add(new Paragraph(&quot;Generado: &quot; + LocalDateTime.now().format(FMT))</span>
+<span class="nc" id="L229">                .setFont(regular).setFontSize(8).setFontColor(GRAY_TEXT())</span>
+<span class="nc" id="L230">                .setTextAlignment(TextAlignment.CENTER).setMarginBottom(16));</span>
+<span class="nc" id="L231">    }</span>
+
+    private Cell celda(String txt, PdfFont font, DeviceRgb bg, TextAlignment align) {
+<span class="nc" id="L234">        return new Cell()</span>
+<span class="nc" id="L235">                .add(new Paragraph(txt).setFont(font).setFontSize(8))</span>
+<span class="nc" id="L236">                .setBackgroundColor(bg).setTextAlignment(align);</span>
+    }
+
+    private void celdaStat(Table t, String label, String val,
+                           PdfFont bold, PdfFont regular, DeviceRgb color) {
+<span class="nc" id="L241">        t.addCell(new Cell()</span>
+<span class="nc" id="L242">                .add(new Paragraph(val).setFont(bold).setFontSize(20)</span>
+<span class="nc" id="L243">                        .setFontColor(color).setTextAlignment(TextAlignment.CENTER))</span>
+<span class="nc" id="L244">                .add(new Paragraph(label).setFont(regular).setFontSize(8)</span>
+<span class="nc" id="L245">                        .setFontColor(DARK_TEXT()).setTextAlignment(TextAlignment.CENTER))</span>
+<span class="nc" id="L246">                .setPadding(10));</span>
+<span class="nc" id="L247">    }</span>
+
+    private ResponseEntity&lt;byte[]&gt; pdfResponse(ByteArrayOutputStream baos, String filename) {
+<span class="nc" id="L250">        return ResponseEntity.ok()</span>
+<span class="nc" id="L251">                .contentType(MediaType.APPLICATION_PDF)</span>
+<span class="nc" id="L252">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L253">                .body(baos.toByteArray());</span>
+    }
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">    private String fmt(Double v) { return v != null ? String.format(&quot;%.2f&quot;, v) : &quot;—&quot;; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

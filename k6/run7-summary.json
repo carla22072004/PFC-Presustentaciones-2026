@@ -1,0 +1,143 @@
+{
+    "setup_data": {
+        "token": "eyJhbGciOiJIUzUxMiJ9.eyJqdGkiOiIwZDI5NDA0My04NjFjLTRjNDItOWUyZC05NzVhNzgwYmYxZTYiLCJpc3MiOiJQRkMtUHJlc3VzdGVudGFjaW9uZXMtVVRFUSIsInN1YiI6ImFkbWluQHV0ZXEuZWR1LmVjIiwiYXVkIjpbIlBGQy1Gcm9udGVuZC1Bbmd1bGFyIl0sImlhdCI6MTc4ODA1MjY5NCwibmJmIjoxNzg4MDUyNjk0LCJleHAiOjE3ODgwNTYyOTR9.t6Cd9mkm4hK4mWpP8hsfm9FvyDV8uhAnq2cieCTZtDrnjYoY_rgZGopv7QvJgfdkR0IjZ5_woFZ35vqxV2TNXw"
+    },
+    "root_group": {
+        "groups": {},
+        "checks": {
+                "catalogos status is 200": {
+                    "id": "a8051716b980dbe59508c152c032a33e",
+                    "passes": 3135,
+                    "fails": 0,
+                    "name": "catalogos status is 200",
+                    "path": "::catalogos status is 200"
+                },
+                "universidades status is 200": {
+                    "name": "universidades status is 200",
+                    "path": "::universidades status is 200",
+                    "id": "61f70fb479d096a7d1fcacbc86e7293f",
+                    "passes": 3135,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "metrics": {
+        "data_received": {
+            "rate": 202607.1224998777,
+            "count": 24527933
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(95)": 6.1686,
+            "avg": 3.8708113060118015,
+            "min": 1.5548,
+            "med": 3.511,
+            "max": 78.5732,
+            "p(90)": 5.0627
+        },
+        "http_req_blocked": {
+            "max": 10.9739,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.012539913889331844,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0
+        },
+        "data_sent": {
+            "count": 2997251,
+            "rate": 24758.074825134307
+        },
+        "checks": {
+            "passes": 6270,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_waiting": {
+            "med": 3.471,
+            "max": 78.0679,
+            "p(90)": 4.9455,
+            "p(95)": 6.0952,
+            "avg": 3.803955286238241,
+            "min": 1.533
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 6271,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "iteration_duration": {
+            "p(95)": 1013.22376,
+            "avg": 1008.281348931419,
+            "min": 1004.8278,
+            "med": 1007.4785,
+            "max": 1038.5964,
+            "p(90)": 1010.47912
+        },
+        "http_req_sending": {
+            "p(95)": 0,
+            "avg": 0.006424110987083399,
+            "min": 0,
+            "med": 0,
+            "max": 2.0165,
+            "p(90)": 0
+        },
+        "http_req_receiving": {
+            "p(95)": 0.5237,
+            "avg": 0.060431908786477494,
+            "min": 0,
+            "med": 0,
+            "max": 8.7841,
+            "p(90)": 0.3325
+        },
+        "http_reqs": {
+            "count": 6271,
+            "rate": 51.80009523006823
+        },
+        "vus_max": {
+            "value": 50,
+            "min": 50,
+            "max": 50
+        },
+        "http_req_duration": {
+            "max": 78.5732,
+            "p(90)": 5.0627,
+            "p(95)": 6.1686,
+            "avg": 3.8708113060118015,
+            "min": 1.5548,
+            "med": 3.511,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_connecting": {
+            "avg": 0.008322149577419868,
+            "min": 0,
+            "med": 0,
+            "max": 5.4403,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 50
+        },
+        "iterations": {
+            "count": 3135,
+            "rate": 25.895917484653786
+        }
+    }
+}

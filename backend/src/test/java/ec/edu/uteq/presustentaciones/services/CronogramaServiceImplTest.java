@@ -60,10 +60,12 @@ class CronogramaServiceImplTest {
 
         presidente = Jurado.builder().id(1L).solicitud(solicitud).docente(docente)
                 .rolJurado(RolJurado.builder().codigo("PRESIDENTE").build()).build();
+        // El tribunal real solo tiene 3 roles: PRESIDENTE, VOCAL_1, VOCAL_2 (sin secretario) --
+        // ver JuradoServiceImpl.rolesValidos y CronogramaServiceImpl.validarPrerequisitosParaCronograma.
         vocal = Jurado.builder().id(2L).solicitud(solicitud).docente(docente)
-                .rolJurado(RolJurado.builder().codigo("VOCAL").build()).build();
+                .rolJurado(RolJurado.builder().codigo("VOCAL_1").build()).build();
         secretario = Jurado.builder().id(3L).solicitud(solicitud).docente(docente)
-                .rolJurado(RolJurado.builder().codigo("SECRETARIO").build()).build();
+                .rolJurado(RolJurado.builder().codigo("VOCAL_2").build()).build();
 
         tutorCompletado = Tutor.builder().id(1L).solicitud(solicitud).estado("COMPLETADA").build();
     }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RateLimiterService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.security</a> &gt; <span class="el_source">RateLimiterService.java</span></div><h1>RateLimiterService.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.security;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+
+@Service
+<span class="fc" id="L10">@RequiredArgsConstructor</span>
+public class RateLimiterService {
+
+    private final StringRedisTemplate redisTemplate;
+
+    public boolean isAllowed(String ipAddress) {
+<span class="fc" id="L16">        String key = &quot;ratelimit:login:&quot; + ipAddress;</span>
+<span class="fc" id="L17">        String currentVal = redisTemplate.opsForValue().get(key);</span>
+        
+<span class="fc bfc" id="L19" title="All 2 branches covered.">        if (currentVal == null) {</span>
+            // Primer intento, inicializa con expiración de 60 segundos
+<span class="fc" id="L21">            redisTemplate.opsForValue().set(key, &quot;1&quot;, 60, TimeUnit.SECONDS);</span>
+<span class="fc" id="L22">            return true;</span>
+        }
+        
+<span class="fc" id="L25">        int attempts = Integer.parseInt(currentVal);</span>
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">        if (attempts &gt;= 6) {</span>
+<span class="fc" id="L27">            return false; // Bloquea si ya superó los 6 intentos por minuto</span>
+        }
+        
+<span class="nc" id="L30">        redisTemplate.opsForValue().increment(key);</span>
+<span class="nc" id="L31">        return true;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

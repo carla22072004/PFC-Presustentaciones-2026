@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UsuarioServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">UsuarioServiceImpl.java</span></div><h1>UsuarioServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.entities.RolUsuario;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L19">@RequiredArgsConstructor</span>
+@Transactional
+<span class="fc" id="L21">@Slf4j</span>
+public class UsuarioServiceImpl implements IUsuarioService {
+
+    private final UsuarioRepository usuarioRepository;
+    private final RolUsuarioRepository rolUsuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
+
+    /** rol (string) y rolUsuario (FK a roles_usuario) son dos columnas paralelas para el mismo dato — hay que mantenerlas sincronizadas. */
+    private RolUsuario resolverRol(String codigoRol) {
+<span class="fc" id="L31">        return rolUsuarioRepository.findByCodigo(codigoRol)</span>
+<span class="pc" id="L32">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rol inválido: &quot; + codigoRol));</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page&lt;Usuario&gt; listarPaginado(int page, int size, String q) {
+<span class="nc" id="L38">        int paginaSegura = Math.max(page, 0);</span>
+<span class="nc" id="L39">        int tamanioSeguro = Math.min(Math.max(size, 1), 100);</span>
+<span class="nc" id="L40">        return usuarioRepository.buscarPaginado(q, PageRequest.of(paginaSegura, tamanioSeguro));</span>
+    }
+
+    @Override
+    public Usuario crear(Usuario usuario) {
+<span class="fc" id="L45">        log.info(&quot;Creando usuario con email: {}&quot;, usuario.getEmail());</span>
+
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if (existePorEmail(usuario.getEmail())) {</span>
+<span class="fc" id="L48">            throw new RuntimeException(&quot;Ya existe un usuario con el email: &quot; + usuario.getEmail());</span>
+        }
+
+<span class="fc" id="L51">        auditoriaService.marcarActorActual();</span>
+<span class="fc" id="L52">        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));</span>
+<span class="fc" id="L53">        usuario.setRolUsuario(resolverRol(usuario.getRol()));</span>
+<span class="fc" id="L54">        return usuarioRepository.save(usuario);</span>
+    }
+
+    @Override
+    public Usuario actualizar(Long id, Usuario usuario) {
+<span class="fc" id="L59">        log.info(&quot;Actualizando usuario con ID: {}&quot;, id);</span>
+
+<span class="fc" id="L61">        auditoriaService.marcarActorActual();</span>
+<span class="fc" id="L62">        Usuario existente = usuarioRepository.findById(id)</span>
+<span class="pc" id="L63">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id));</span>
+
+<span class="fc" id="L65">        existente.setNombre(usuario.getNombre());</span>
+<span class="fc" id="L66">        existente.setApellido(usuario.getApellido());</span>
+<span class="fc" id="L67">        existente.setEmail(usuario.getEmail());</span>
+<span class="pc bpc" id="L68" title="2 of 4 branches missed.">        if (usuario.getRol() != null &amp;&amp; !usuario.getRol().equals(existente.getRol())) {</span>
+<span class="fc" id="L69">            existente.setRol(usuario.getRol());</span>
+<span class="fc" id="L70">            existente.setRolUsuario(resolverRol(usuario.getRol()));</span>
+        }
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (usuario.getTelefono() != null) {</span>
+<span class="nc" id="L73">            existente.setTelefono(usuario.getTelefono());</span>
+        }
+
+<span class="fc" id="L76">        return usuarioRepository.save(existente);</span>
+    }
+
+    @Override
+    public void eliminar(Long id) {
+<span class="nc" id="L81">        log.info(&quot;Eliminando usuario con ID: {}&quot;, id);</span>
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (!usuarioRepository.existsById(id)) {</span>
+<span class="nc" id="L84">            throw new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id);</span>
+        }
+
+<span class="nc" id="L87">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L88">        usuarioRepository.deleteById(id);</span>
+<span class="nc" id="L89">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional&lt;Usuario&gt; obtenerPorId(Long id) {
+<span class="fc" id="L94">        return usuarioRepository.findById(id);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional&lt;Usuario&gt; obtenerPorEmail(String email) {
+<span class="nc" id="L100">        return usuarioRepository.findByEmail(email);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Usuario&gt; listarTodos() {
+<span class="fc" id="L106">        return usuarioRepository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Usuario&gt; listarActivos() {
+<span class="nc" id="L112">        return usuarioRepository.findByActivoTrue();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existePorEmail(String email) {
+<span class="fc" id="L118">        return usuarioRepository.existsByEmail(email);</span>
+    }
+
+    @Override
+    public void activar(Long id) {
+<span class="fc" id="L123">        auditoriaService.marcarActorActual();</span>
+<span class="fc" id="L124">        Usuario usuario = usuarioRepository.findById(id)</span>
+<span class="pc" id="L125">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id));</span>
+
+<span class="fc" id="L127">        usuario.setActivo(true);</span>
+<span class="fc" id="L128">        usuarioRepository.save(usuario);</span>
+<span class="fc" id="L129">    }</span>
+
+    @Override
+    public void desactivar(Long id) {
+<span class="fc" id="L133">        auditoriaService.marcarActorActual();</span>
+<span class="fc" id="L134">        Usuario usuario = usuarioRepository.findById(id)</span>
+<span class="pc" id="L135">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id));</span>
+
+<span class="fc" id="L137">        usuario.setActivo(false);</span>
+<span class="fc" id="L138">        usuarioRepository.save(usuario);</span>
+<span class="fc" id="L139">    }</span>
+
+    @Override
+    @Transactional
+    public Usuario actualizarPerfil(Long id, String emailNotificaciones, String telefono) {
+<span class="nc" id="L144">        int updated = usuarioRepository.actualizarPerfil(id, emailNotificaciones, telefono);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (updated == 0) {</span>
+<span class="nc" id="L146">            throw new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id);</span>
+        }
+<span class="nc" id="L148">        return usuarioRepository.findById(id)</span>
+<span class="nc" id="L149">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado con ID: &quot; + id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

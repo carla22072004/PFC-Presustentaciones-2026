@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RolController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">RolController.java</span></div><h1>RolController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.dto.RolDTO;
+import ec.edu.uteq.presustentaciones.entities.RolUsuario;
+import ec.edu.uteq.presustentaciones.repositories.PermisoRepository;
+import ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.AuditoriaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * CRUD de roles del sistema. La asignación de permisos a cada rol vive en
+ * PermisoController -- aquí solo se administra el catálogo de roles en sí
+ * (codigo, nombre) y su eliminación.
+ */
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/roles&quot;)
+<span class="nc" id="L28">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'ROLES_PERMISOS_GESTIONAR')&quot;)
+public class RolController {
+
+    private final RolUsuarioRepository rolUsuarioRepository;
+    private final PermisoRepository permisoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
+
+    /** Los 4 roles con los que arranca el sistema -- no se pueden eliminar ni renombrar
+     * el código porque el resto de la aplicación (frontend roleGuard, Usuario.rol,
+     * flujos de negocio) todavía distingue casos por estos 4 nombres exactos. Roles
+     * nuevos que se creen desde aquí sí se pueden eliminar libremente. */
+<span class="nc" id="L41">    private static final Set&lt;String&gt; ROLES_PROTEGIDOS = Set.of(&quot;ADMIN&quot;, &quot;DOCENTE&quot;, &quot;COORDINADOR&quot;, &quot;ESTUDIANTE&quot;);</span>
+
+    @GetMapping
+    public List&lt;RolDTO&gt; listar() {
+<span class="nc" id="L45">        return rolUsuarioRepository.findAll().stream()</span>
+<span class="nc" id="L46">                .map(this::toDto)</span>
+<span class="nc" id="L47">                .toList();</span>
+    }
+
+    @PostMapping
+    @Transactional
+    public ResponseEntity&lt;?&gt; crear(@RequestBody Map&lt;String, String&gt; body) {
+<span class="nc" id="L53">        String codigo = body.getOrDefault(&quot;codigo&quot;, &quot;&quot;).trim().toUpperCase().replaceAll(&quot;\\s+&quot;, &quot;_&quot;);</span>
+<span class="nc" id="L54">        String nombre = body.getOrDefault(&quot;nombre&quot;, &quot;&quot;).trim();</span>
+<span class="nc bnc" id="L55" title="All 4 branches missed.">        if (codigo.isEmpty() || nombre.isEmpty()) {</span>
+<span class="nc" id="L56">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Código y nombre son obligatorios.&quot;));</span>
+        }
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (rolUsuarioRepository.findByCodigo(codigo).isPresent()) {</span>
+<span class="nc" id="L59">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;Ya existe un rol con ese código.&quot;));</span>
+        }
+<span class="nc" id="L61">        short siguienteId = (short) (rolUsuarioRepository.findAll().stream()</span>
+<span class="nc" id="L62">                .mapToInt(RolUsuario::getId).max().orElse(0) + 1);</span>
+<span class="nc" id="L63">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L64">        RolUsuario rol = rolUsuarioRepository.save(</span>
+<span class="nc" id="L65">                RolUsuario.builder().id(siguienteId).codigo(codigo).nombre(nombre).build());</span>
+<span class="nc" id="L66">        return ResponseEntity.ok(toDto(rol));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @Transactional
+    public ResponseEntity&lt;?&gt; renombrar(@PathVariable Short id, @RequestBody Map&lt;String, String&gt; body) {
+<span class="nc" id="L72">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L73">        RolUsuario rol = rolUsuarioRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (rol == null) {</span>
+<span class="nc" id="L75">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc" id="L77">        String nombre = body.getOrDefault(&quot;nombre&quot;, &quot;&quot;).trim();</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (nombre.isEmpty()) {</span>
+<span class="nc" id="L79">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;El nombre no puede estar vacío.&quot;));</span>
+        }
+        // El código (usado por @PreAuthorize y por el rol legado en Usuario.rol) no se
+        // renombra para no dejar huérfanas las referencias existentes -- solo el nombre visible.
+<span class="nc" id="L83">        rol.setNombre(nombre);</span>
+<span class="nc" id="L84">        return ResponseEntity.ok(toDto(rolUsuarioRepository.save(rol)));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @Transactional
+    public ResponseEntity&lt;?&gt; eliminar(@PathVariable Short id) {
+<span class="nc" id="L90">        RolUsuario rol = rolUsuarioRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (rol == null) {</span>
+<span class="nc" id="L92">            return ResponseEntity.notFound().build();</span>
+        }
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (ROLES_PROTEGIDOS.contains(rol.getCodigo())) {</span>
+<span class="nc" id="L95">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;,</span>
+<span class="nc" id="L96">                    &quot;El rol &quot; + rol.getCodigo() + &quot; es uno de los 4 roles base del sistema y no se puede eliminar.&quot;));</span>
+        }
+<span class="nc" id="L98">        long usuariosConEsteRol = usuarioRepository.findByRol(rol.getCodigo()).size();</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (usuariosConEsteRol &gt; 0) {</span>
+<span class="nc" id="L100">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;,</span>
+                    &quot;No se puede eliminar: hay &quot; + usuariosConEsteRol + &quot; usuario(s) con este rol asignado.&quot;));
+        }
+        try {
+<span class="nc" id="L104">            auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L105">            rolUsuarioRepository.delete(rol);</span>
+<span class="nc" id="L106">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L107">        } catch (DataIntegrityViolationException e) {</span>
+<span class="nc" id="L108">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;No se pudo eliminar el rol: tiene referencias asociadas.&quot;));</span>
+        }
+    }
+
+    private RolDTO toDto(RolUsuario rol) {
+<span class="nc" id="L113">        return RolDTO.builder()</span>
+<span class="nc" id="L114">                .id(rol.getId())</span>
+<span class="nc" id="L115">                .codigo(rol.getCodigo())</span>
+<span class="nc" id="L116">                .nombre(rol.getNombre())</span>
+<span class="nc" id="L117">                .usuariosAsignados(usuarioRepository.findByRol(rol.getCodigo()).size())</span>
+<span class="nc" id="L118">                .permisos(permisoRepository.findCodigosPorRol(rol.getId()))</span>
+<span class="nc" id="L119">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

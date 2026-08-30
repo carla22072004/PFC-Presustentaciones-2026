@@ -148,9 +148,9 @@ estado de verificación real.
 \midrule
 \endhead
 RF-01 & Autenticación segura & Must & Auth & \textcolor{green!50!black}{Verificado (test real)} \\
-RF-02 & Registro de solicitud & Must & Solicitudes & \textcolor{red}{No verificado} \\
+RF-02 & Registro de solicitud & Must & Solicitudes & \textcolor{green!50!black}{Verificado (test real)} \\
 RF-03 & Asignación de jurados & Must & Jurados & \textcolor{green!50!black}{Verificado (test real)} \\
-RF-04 & Programación de cronograma & Must & Cronograma & \textcolor{red}{No verificado} \\
+RF-04 & Programación de cronograma & Must & Cronograma & \textcolor{green!50!black}{Verificado (test real)} \\
 RF-05 & Evaluación por rúbrica & Must & Evaluaciones & \textcolor{green!50!black}{Verificado (test real)} \\
 RF-06 & Generación de actas & Must & Actas & \textcolor{red}{No verificado} \\
 RF-07 & Firma digital de actas & Should & Actas/Firmas & \textcolor{red}{No verificado} \\
@@ -164,11 +164,14 @@ RF-12 & Carga de anteproyecto & Must & Anteproyectos & \textcolor{green!50!black
 \end{longtable}
 
 \textbf{Estado real del criterio D0R (100\% de los Must verificados):} de los 8 requisitos con
-prioridad \textbf{Must}, \textbf{5 tienen prueba automatizada real (62.5\%)}, no el 100\% que exige el
-criterio. Esta cifra se calculó ejecutando \texttt{scripts/validate-traceability.sh} contra el
-repositorio real, no se estimó. Los 3 Must sin verificación automatizada (RF-02, RF-04, RF-06) están
-implementados y funcionan (verificado manualmente / con Postman), pero carecen de un test automatizado
-dedicado en el repositorio. Se declara esta brecha explícitamente en vez de forzar un 100\% falso.
+prioridad \textbf{Must}, \textbf{7 tienen prueba automatizada real (87.5\%, actualizado 2026-08-29)},
+no el 100\% que exige el criterio. Esta cifra se calculó ejecutando
+\texttt{scripts/validate-traceability.sh} contra el repositorio real, no se estimó. La cifra mejoró
+desde el 5/8 (62.5\%) original de la Fase 6 tras añadir \texttt{SolicitudServiceImplTest.java} (RF-02)
+y \texttt{CronogramaServiceImplTest.java} (RF-04) en la Fase 10. Solo RF-06 sigue sin verificación
+automatizada: está implementado y funciona (verificado manualmente / con Postman), pero carece de un
+test automatizado dedicado en el repositorio. Se declara esta brecha explícitamente en vez de forzar
+un 100\% falso.
 
 \subsection{Requisitos no funcionales}
 
@@ -179,9 +182,9 @@ dedicado en el repositorio. Se declara esta brecha explícitamente en vez de for
 \textbf{RNF} & \textbf{Categoría} & \textbf{Descripción y estado real} \\
 \midrule
 RNF-01 & Rendimiento & Peticiones REST $<$ 500ms bajo 50 usuarios concurrentes. \textbf{Verificado}: p95 real de 7.4--80.9ms en 5 corridas k6 (\texttt{k6/README.md}). \\
-RNF-02 & Seguridad & Protección OWASP Top 10. \textbf{Verificado parcialmente}: 0 hallazgos de SQL dinámico (find-sec-bugs), 0 FAIL en OWASP ZAP, 41 dependencias vulnerables sin corregir (\texttt{npm audit}). \\
+RNF-02 & Seguridad & Protección OWASP Top 10. \textbf{Verificado parcialmente}: 0 hallazgos de SQL dinámico (find-sec-bugs), 0 FAIL y 0 High en OWASP ZAP (corregido 2026-08-29), 14 dependencias vulnerables sin corregir en tooling de build (\texttt{npm audit}, bajó de 41 tras corregir \texttt{@angular/core}). \\
 RNF-03 & Usabilidad & Puntaje SUS $>$ 75/100. \textbf{No verificado}: instrumento listo, sin aplicar a usuarios reales (\texttt{docs/mediciones/sus/SUS-RESULTS.md}). \\
-RNF-04 & Mantenibilidad & Cobertura JaCoCo $\geq$ 60\%. \textbf{No cumplido}: 22.70\% de líneas real, en progreso desde 2.83\% (\texttt{docs/mediciones/jacoco/COVERAGE.md}). \\
+RNF-04 & Mantenibilidad & Cobertura JaCoCo $\geq$ 60\%. \textbf{No cumplido}: 24.63\% de líneas real (2026-08-29), en progreso desde 2.83\% (\texttt{docs/mediciones/jacoco/COVERAGE.md}). \\
 \bottomrule
 \end{tabular}
 \end{table}

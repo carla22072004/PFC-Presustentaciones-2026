@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EstadoTiempoRealController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">EstadoTiempoRealController.java</span></div><h1>EstadoTiempoRealController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.repositories.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * RF-03: Endpoint de polling para estado en tiempo real.
+ * El frontend consulta cada N segundos para reflejar cambios sin WebSocket.
+ */
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/api/estado&quot;)
+<span class="nc" id="L18">@RequiredArgsConstructor</span>
+@org.springframework.security.access.prepost.PreAuthorize(&quot;isAuthenticated()&quot;)
+public class EstadoTiempoRealController {
+
+    private final SolicitudRepository solicitudRepo;
+    private final AnteproyectoRepository anteproyectoRepo;
+    private final CronogramaRepository cronogramaRepo;
+    private final ActaRepository actaRepo;
+    private final EvaluacionRepository evaluacionRepo;
+
+    /**
+     * Devuelve el estado completo de una solicitud en un solo request.
+     * Incluye: estado solicitud, anteproyecto, cronograma, evaluación, acta.
+     * Pensado para polling cada 15s en el frontend.
+     */
+    @GetMapping(&quot;/solicitud/{id}&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; estadoSolicitud(@PathVariable Long id) {
+<span class="nc" id="L35">        Map&lt;String, Object&gt; estado = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L37">        solicitudRepo.findById(id).ifPresent(s -&gt; {</span>
+<span class="nc" id="L38">            estado.put(&quot;solicitudEstado&quot;, s.getEstado());</span>
+<span class="nc" id="L39">            estado.put(&quot;solicitudId&quot;, s.getId());</span>
+<span class="nc" id="L40">        });</span>
+
+<span class="nc" id="L42">        anteproyectoRepo.findBySolicitudId(id).ifPresent(a -&gt; {</span>
+<span class="nc" id="L43">            estado.put(&quot;anteproyectoEstado&quot;, a.getEstado());</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">            estado.put(&quot;anteproyectoSha256&quot;, a.getSha256Hash() != null ? a.getSha256Hash() : null);</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">            estado.put(&quot;anteproyectoIntegridadVerificada&quot;, a.getSha256Hash() != null);</span>
+<span class="nc" id="L46">        });</span>
+
+<span class="nc" id="L48">        cronogramaRepo.findBySolicitudId(id).ifPresent(c -&gt; {</span>
+<span class="nc" id="L49">            estado.put(&quot;cronogramaFecha&quot;, c.getFechaInicio());</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">            estado.put(&quot;cronogramaSala&quot;, c.getSala() != null ? c.getSala().getNombre() : null);</span>
+<span class="nc" id="L51">            estado.put(&quot;cronogramaEstado&quot;, c.getEstado());</span>
+<span class="nc" id="L52">        });</span>
+
+<span class="nc" id="L54">        evaluacionRepo.findBySolicitudId(id).ifPresent(e -&gt; {</span>
+<span class="nc" id="L55">            estado.put(&quot;evaluacionNota&quot;, e.getNotaFinal());</span>
+<span class="nc" id="L56">            estado.put(&quot;evaluacionResultado&quot;, e.getResultado());</span>
+<span class="nc" id="L57">        });</span>
+
+<span class="nc" id="L59">        actaRepo.findBySolicitudId(id).ifPresent(a -&gt; {</span>
+<span class="nc" id="L60">            estado.put(&quot;actaGenerada&quot;, true);</span>
+<span class="nc" id="L61">            estado.put(&quot;actaFirmadaPresidente&quot;, a.isFirmadaPresidente());</span>
+<span class="nc" id="L62">            estado.put(&quot;actaFirmadaVocal1&quot;, a.isFirmadaVocal1());</span>
+<span class="nc" id="L63">            estado.put(&quot;actaFirmadaVocal2&quot;, a.isFirmadaVocal2());</span>
+<span class="nc" id="L64">            estado.put(&quot;actaFirmadaTutor&quot;, a.isFirmadaTutor());</span>
+<span class="nc" id="L65">            estado.put(&quot;actaCompleta&quot;, a.isFirmada());</span>
+<span class="nc" id="L66">        });</span>
+
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (!estado.containsKey(&quot;actaGenerada&quot;)) estado.put(&quot;actaGenerada&quot;, false);</span>
+<span class="nc" id="L69">        estado.put(&quot;timestamp&quot;, System.currentTimeMillis());</span>
+
+<span class="nc" id="L71">        return ResponseEntity.ok(estado);</span>
+    }
+
+    /**
+     * Estado resumido para la lista de mis-asignaciones del docente.
+     * Devuelve el estado de múltiples solicitudes en un solo request.
+     */
+    @PostMapping(&quot;/solicitudes/batch&quot;)
+    public ResponseEntity&lt;Map&lt;Long, Map&lt;String, Object&gt;&gt;&gt; estadoBatch(
+            @RequestBody java.util.List&lt;Long&gt; solicitudIds) {
+<span class="nc" id="L81">        Map&lt;Long, Map&lt;String, Object&gt;&gt; resultado = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        for (Long id : solicitudIds) {</span>
+<span class="nc" id="L83">            Map&lt;String, Object&gt; est = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L84">            solicitudRepo.findById(id).ifPresent(s -&gt; est.put(&quot;estado&quot;, s.getEstado()));</span>
+<span class="nc" id="L85">            evaluacionRepo.findBySolicitudId(id).ifPresent(e -&gt; est.put(&quot;evaluada&quot;, true));</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if (!est.containsKey(&quot;evaluada&quot;)) est.put(&quot;evaluada&quot;, false);</span>
+<span class="nc" id="L87">            resultado.put(id, est);</span>
+<span class="nc" id="L88">        }</span>
+<span class="nc" id="L89">        return ResponseEntity.ok(resultado);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

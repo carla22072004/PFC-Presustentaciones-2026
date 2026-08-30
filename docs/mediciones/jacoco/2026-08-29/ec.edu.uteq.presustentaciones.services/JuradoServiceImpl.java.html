@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JuradoServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">JuradoServiceImpl.java</span></div><h1>JuradoServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.entities.Docente;
+import ec.edu.uteq.presustentaciones.entities.Jurado;
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
+import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L24">@RequiredArgsConstructor</span>
+<span class="fc" id="L25">@Slf4j</span>
+public class JuradoServiceImpl implements JuradoService {
+
+    private final JuradoRepository juradoRepository;
+    private final TutorRepository tutorRepository;
+    private final DocenteRepository docenteRepository;
+    private final SolicitudRepository solicitudRepository;
+    private final NotificacionService notificacionService;
+    private final EmailService emailService;
+    private final ec.edu.uteq.presustentaciones.repositories.RolJuradoRepository rolJuradoRepository;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
+
+    // ── Jurados ───────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public Jurado asignarJurado(Long solicitudId, Long docenteId, String rol) {
+<span class="fc" id="L42">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L43">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+<span class="fc" id="L44">        Docente docente = docenteRepository.findById(docenteId)</span>
+<span class="pc" id="L45">                .orElseThrow(() -&gt; new RuntimeException(&quot;Docente no encontrado: &quot; + docenteId));</span>
+
+        // Validar que la tutoría esté COMPLETADA antes de asignar tribunal
+<span class="fc" id="L48">        Tutor tutor = tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="pc" id="L49">                .orElseThrow(() -&gt; new RuntimeException(</span>
+                        &quot;No puedes asignar tribunal: esta solicitud no tiene tutor asignado&quot;));
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (!&quot;COMPLETADA&quot;.equals(tutor.getEstado())) {</span>
+<span class="fc" id="L52">            throw new RuntimeException(</span>
+                    &quot;No puedes asignar tribunal: la tutoría aún no ha completado las 3 revisiones obligatorias&quot;);
+        }
+
+<span class="fc" id="L56">        boolean yaAsignado = juradoRepository.findBySolicitudId(solicitudId).stream()</span>
+<span class="fc" id="L57">                .anyMatch(j -&gt; j.getDocente().getId().equals(docenteId));</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (yaAsignado) {</span>
+<span class="fc" id="L59">            throw new RuntimeException(&quot;El docente ya está asignado como jurado en esta solicitud.&quot;);</span>
+        }
+
+        // ERR-03: el docente ya asignado como tutor de esta misma solicitud no puede
+        // además ser miembro del tribunal (conflicto de interés).
+<span class="pc bpc" id="L64" title="2 of 4 branches missed.">        if (tutor.getDocente() != null &amp;&amp; tutor.getDocente().getId().equals(docenteId)) {</span>
+<span class="nc" id="L65">            throw new RuntimeException(&quot;El docente ya es el tutor de esta solicitud y no puede además ser jurado (conflicto de interés).&quot;);</span>
+        }
+
+<span class="pc bpc" id="L68" title="2 of 4 branches missed.">        if (docente.getDisponible() != null &amp;&amp; !docente.getDisponible()) {</span>
+<span class="nc" id="L69">            throw new RuntimeException(&quot;El docente no está disponible para ser asignado como jurado.&quot;);</span>
+        }
+
+        // ERR-03: normalizado una sola vez -- se usa tanto para validar como para guardar,
+        // así el chequeo de &quot;rol duplicado&quot; compara contra el mismo código que quedará en BD
+        // (antes comparaba el string crudo de entrada contra un código ya colapsado distinto,
+        // por lo que nunca coincidían).
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        String rolNormalizado = rol == null ? null : rol.trim().toUpperCase();</span>
+<span class="fc" id="L77">        List&lt;String&gt; rolesValidos = List.of(&quot;PRESIDENTE&quot;, &quot;VOCAL_1&quot;, &quot;VOCAL_2&quot;);</span>
+<span class="pc bpc" id="L78" title="2 of 4 branches missed.">        if (rolNormalizado == null || !rolesValidos.contains(rolNormalizado)) {</span>
+<span class="nc" id="L79">            throw new RuntimeException(&quot;Rol inválido. Use: PRESIDENTE, VOCAL_1 o VOCAL_2&quot;);</span>
+        }
+
+<span class="fc" id="L82">        boolean rolOcupado = juradoRepository.findBySolicitudId(solicitudId).stream()</span>
+<span class="pc" id="L83">                .anyMatch(j -&gt; rolNormalizado.equalsIgnoreCase(j.getRol()));</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (rolOcupado) {</span>
+<span class="nc" id="L85">            throw new RuntimeException(&quot;El rol '&quot; + rolNormalizado + &quot;' ya está asignado en esta solicitud.&quot;);</span>
+        }
+
+<span class="fc" id="L88">        Jurado guardado = crearJuradoSinNotificar(solicitud, docente, rolNormalizado);</span>
+
+        // Cambiar estado a EVALUACION
+<span class="fc" id="L91">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEvaluacion = estadoSolicitudRepository.findByCodigo(&quot;EVALUACION&quot;)</span>
+<span class="fc" id="L92">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="fc" id="L93">                        .codigo(&quot;EVALUACION&quot;).nombre(&quot;Evaluacion&quot;).build()));</span>
+
+<span class="fc" id="L95">        solicitud.setEstado(estadoEvaluacion);</span>
+<span class="fc" id="L96">        solicitudRepository.save(solicitud);</span>
+
+        // Notificar al docente asignado como jurado
+<span class="fc" id="L99">        notificarDocenteJurado(docente, solicitud, rolNormalizado);</span>
+
+        // Notificar al estudiante que se le asignó un jurado
+<span class="fc" id="L102">        notificarEstudianteJurado(solicitud, docente, rolNormalizado);</span>
+
+<span class="fc" id="L104">        return guardado;</span>
+    }
+
+    @Override
+    public List&lt;Jurado&gt; listarPorSolicitud(Long solicitudId) {
+<span class="nc" id="L109">        return juradoRepository.findBySolicitudId(solicitudId);</span>
+    }
+
+    @Override
+    public Page&lt;Jurado&gt; listarTodos(Pageable pageable) {
+<span class="nc" id="L114">        return juradoRepository.findAll(pageable);</span>
+    }
+
+    @Override
+    @Transactional
+    public void eliminarJurado(Long juradoId) {
+<span class="fc" id="L120">        Jurado jurado = juradoRepository.findById(juradoId)</span>
+<span class="pc" id="L121">                .orElseThrow(() -&gt; new RuntimeException(&quot;Jurado no encontrado: &quot; + juradoId));</span>
+<span class="fc" id="L122">        Docente docente = jurado.getDocente();</span>
+<span class="fc" id="L123">        int nuevaCarga = Math.max(0, docente.getCargaHorariaSemanal() - 1);</span>
+<span class="fc" id="L124">        docente.setCargaHorariaSemanal(nuevaCarga);</span>
+<span class="fc" id="L125">        docenteRepository.save(docente);</span>
+<span class="fc" id="L126">        juradoRepository.deleteById(juradoId);</span>
+<span class="fc" id="L127">    }</span>
+
+    // ── Tutor ─────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public Tutor asignarTutor(Long solicitudId, Long docenteId) {
+<span class="fc" id="L134">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L135">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+<span class="fc" id="L136">        Docente docente = docenteRepository.findById(docenteId)</span>
+<span class="pc" id="L137">                .orElseThrow(() -&gt; new RuntimeException(&quot;Docente no encontrado: &quot; + docenteId));</span>
+
+<span class="fc" id="L139">        Tutor tutor = tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="fc" id="L140">                .orElse(Tutor.builder().solicitud(solicitud).build());</span>
+
+<span class="fc" id="L142">        tutor.setDocente(docente);</span>
+<span class="fc" id="L143">        tutor.setEstado(&quot;ACTIVO&quot;);</span>
+
+        // Re-fetch tras save para garantizar que todas las asociaciones estén cargadas
+<span class="fc" id="L146">        Tutor guardado = tutorRepository.findById(tutorRepository.save(tutor).getId())</span>
+<span class="pc" id="L147">                .orElseThrow(() -&gt; new RuntimeException(&quot;Error al recuperar el tutor guardado&quot;));</span>
+
+        // Cambiar estado a TUTORIA
+<span class="fc" id="L150">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoTutoria = estadoSolicitudRepository.findByCodigo(&quot;TUTORIA&quot;)</span>
+<span class="fc" id="L151">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="fc" id="L152">                        .codigo(&quot;TUTORIA&quot;).nombre(&quot;Tutoria&quot;).build()));</span>
+ 
+<span class="fc" id="L154">        solicitud.setEstado(estadoTutoria);</span>
+<span class="fc" id="L155">        solicitudRepository.save(solicitud);</span>
+
+        // Notificar al docente asignado como tutor
+<span class="fc" id="L158">        notificarDocenteTutor(docente, solicitud);</span>
+
+        // Notificar al estudiante que tiene tutor asignado
+<span class="fc" id="L161">        notificarEstudianteTutor(solicitud, docente);</span>
+
+<span class="fc" id="L163">        return guardado;</span>
+    }
+
+    @Override
+    public Optional&lt;Tutor&gt; obtenerTutorDeSolicitud(Long solicitudId) {
+<span class="nc" id="L168">        return tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L169">                .filter(t -&gt; &quot;ACTIVO&quot;.equals(t.getEstado()));</span>
+    }
+
+    @Override
+    @Transactional
+    public void eliminarTutor(Long tutorId) {
+<span class="nc" id="L175">        tutorRepository.deleteById(tutorId);</span>
+<span class="nc" id="L176">    }</span>
+
+    // ── Sugerencia automática ─────────────────────────────────────────────────
+
+    @Override
+    public List&lt;Docente&gt; sugerirDocentes(Long solicitudId, int cantidad) {
+<span class="nc" id="L182">        List&lt;Long&gt; idsOcupados = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L183">        juradoRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L184">                .forEach(j -&gt; idsOcupados.add(j.getDocente().getId()));</span>
+<span class="nc" id="L185">        tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L186">                .ifPresent(t -&gt; idsOcupados.add(t.getDocente().getId()));</span>
+
+<span class="nc" id="L188">        List&lt;Docente&gt; candidatos = docenteRepository.findDisponiblesOrdenadosPorCarga().stream()</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                .filter(d -&gt; !idsOcupados.contains(d.getId()))</span>
+<span class="nc" id="L190">                .collect(Collectors.toList());</span>
+
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        if (candidatos.size() &lt; cantidad) {</span>
+<span class="nc" id="L193">            candidatos = docenteRepository.findTodosOrdenadosPorCarga().stream()</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">                    .filter(d -&gt; !idsOcupados.contains(d.getId()))</span>
+<span class="nc" id="L195">                    .collect(Collectors.toList());</span>
+        }
+
+<span class="nc" id="L198">        return candidatos.stream().limit(cantidad).collect(Collectors.toList());</span>
+    }
+
+    @Override
+    @Transactional
+    public void asignarJuradosAutomaticamente(Long solicitudId) {
+        // Validar tutoría completada (asignarJurado ya no se llama, validamos aquí)
+<span class="nc" id="L205">        Tutor tutor = tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L206">                .orElseThrow(() -&gt; new RuntimeException(</span>
+                        &quot;No puedes asignar tribunal: esta solicitud no tiene tutor asignado&quot;));
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (!&quot;COMPLETADA&quot;.equals(tutor.getEstado())) {</span>
+<span class="nc" id="L209">            throw new RuntimeException(</span>
+                    &quot;No puedes asignar tribunal: la tutoría aún no ha completado las 3 revisiones obligatorias&quot;);
+        }
+
+<span class="nc" id="L213">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="nc" id="L214">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+
+<span class="nc" id="L216">        List&lt;String&gt; rolesOcupados = juradoRepository.findBySolicitudId(solicitudId)</span>
+<span class="nc" id="L217">                .stream().map(Jurado::getRol).collect(Collectors.toList());</span>
+<span class="nc" id="L218">        List&lt;String&gt; rolesFaltantes = new ArrayList&lt;&gt;(List.of(&quot;PRESIDENTE&quot;, &quot;VOCAL_1&quot;, &quot;VOCAL_2&quot;))</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                .stream().filter(r -&gt; !rolesOcupados.contains(r)).collect(Collectors.toList());</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        if (rolesFaltantes.isEmpty()) return;</span>
+
+<span class="nc" id="L223">        List&lt;Docente&gt; sugeridos = sugerirDocentes(solicitudId, rolesFaltantes.size());</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        if (sugeridos.size() &lt; rolesFaltantes.size()) {</span>
+<span class="nc" id="L225">            throw new RuntimeException(</span>
+                    &quot;No hay suficientes docentes para asignar automáticamente. &quot; +
+<span class="nc" id="L227">                            &quot;Disponibles: &quot; + sugeridos.size() + &quot;, requeridos: &quot; + rolesFaltantes.size());</span>
+        }
+
+        // Asignar sin notificar al estudiante en cada iteración
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        for (int i = 0; i &lt; rolesFaltantes.size(); i++) {</span>
+<span class="nc" id="L232">            Docente docente = sugeridos.get(i);</span>
+<span class="nc" id="L233">            String rol = rolesFaltantes.get(i);</span>
+            // ERR-03: sugerirDocentes() ya excluye al tutor de esta solicitud de idsOcupados,
+            // así que el conflicto de interés tutor==jurado no puede ocurrir aquí. El pool de
+            // respaldo (findTodosOrdenadosPorCarga) ignora &quot;disponible&quot; a propósito -- es el
+            // fallback para cuando no hay suficientes docentes disponibles y completar el
+            // tribunal es preferible a fallar -- pero se deja constancia en el log.
+<span class="nc bnc" id="L239" title="All 4 branches missed.">            if (docente.getDisponible() != null &amp;&amp; !docente.getDisponible()) {</span>
+<span class="nc" id="L240">                log.warn(&quot;Asignación automática de jurado usó un docente no disponible (id={}) &quot; +</span>
+<span class="nc" id="L241">                        &quot;por falta de suficientes docentes disponibles para la solicitud {}.&quot;, docente.getId(), solicitudId);</span>
+            }
+<span class="nc" id="L243">            crearJuradoSinNotificar(solicitud, docente, rol);</span>
+<span class="nc" id="L244">            notificarDocenteJurado(docente, solicitud, rol);  // cada docente es destinatario distinto</span>
+        }
+ 
+        // Cambiar estado a EVALUACION
+<span class="nc" id="L248">        ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoEvaluacion = estadoSolicitudRepository.findByCodigo(&quot;EVALUACION&quot;)</span>
+<span class="nc" id="L249">                .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="nc" id="L250">                        .codigo(&quot;EVALUACION&quot;).nombre(&quot;Evaluacion&quot;).build()));</span>
+ 
+<span class="nc" id="L252">        solicitud.setEstado(estadoEvaluacion);</span>
+<span class="nc" id="L253">        solicitudRepository.save(solicitud);</span>
+
+        // Una sola notificación + correo agrupado al estudiante
+<span class="nc" id="L256">        List&lt;Jurado&gt; todosJurados = juradoRepository.findBySolicitudId(solicitudId);</span>
+<span class="nc" id="L257">        notificarEstudianteTribunalCompleto(solicitud, todosJurados);</span>
+<span class="nc" id="L258">    }</span>
+
+    // ── Asignación masiva vía procedimiento almacenado ──────────────────────────
+
+    @Override
+    @Transactional
+    public void asignarJuradoMasivo(List&lt;Long&gt; solicitudIds, List&lt;Long&gt; docenteIds, String rolCodigo) {
+<span class="nc bnc" id="L265" title="All 6 branches missed.">        if (solicitudIds == null || docenteIds == null || solicitudIds.size() != docenteIds.size()) {</span>
+<span class="nc" id="L266">            throw new RuntimeException(&quot;Los arreglos de solicitudes y docentes deben tener la misma longitud&quot;);</span>
+        }
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        for (int i = 0; i &lt; solicitudIds.size(); i++) {</span>
+<span class="nc" id="L269">            juradoRepository.spAsignarJuradoMasivo(solicitudIds.get(i), docenteIds.get(i), rolCodigo);</span>
+        }
+<span class="nc" id="L271">    }</span>
+
+    @Override
+    public List&lt;Jurado&gt; listarPorDocente(Long docenteId) {
+<span class="nc" id="L275">        return juradoRepository.findByDocenteId(docenteId);</span>
+    }
+
+    @Override
+    public List&lt;Tutor&gt; listarTutoriasPorDocente(Long docenteId) {
+<span class="nc" id="L280">        return tutorRepository.findByDocenteId(docenteId);</span>
+    }
+
+    @Override
+    public Optional&lt;Jurado&gt; obtenerInfoJurado(Long solicitudId, Long usuarioId) {
+<span class="nc" id="L285">        return juradoRepository.findBySolicitudIdAndUsuarioId(solicitudId, usuarioId);</span>
+    }
+
+    // ── Helpers internos ─────────────────────────────────────────────────────
+
+    /**
+     * Guarda el jurado y actualiza la carga del docente. No envía ninguna notificación.
+     * ERR-03: antes colapsaba cualquier rol que empezara con &quot;VOCAL&quot; al código genérico
+     * &quot;VOCAL&quot; antes de guardar, así que VOCAL_1/VOCAL_2 nunca quedaban en BD tal cual --
+     * rompía la pantalla de Evaluar (busca literalmente esos códigos) y el chequeo de rol
+     * duplicado. Se guarda el código ya normalizado por el llamador, sin transformarlo.
+     */
+    private Jurado crearJuradoSinNotificar(Solicitud solicitud, Docente docente, String rol) {
+<span class="fc" id="L298">        docente.setCargaHorariaSemanal(docente.getCargaHorariaSemanal() + 1);</span>
+<span class="fc" id="L299">        docenteRepository.save(docente);</span>
+
+<span class="fc" id="L301">        String codigoRol = rol.toUpperCase();</span>
+<span class="fc" id="L302">        final String finalCodigoRol = codigoRol;</span>
+<span class="fc" id="L303">        ec.edu.uteq.presustentaciones.entities.RolJurado rolJurado = rolJuradoRepository.findByCodigo(codigoRol)</span>
+<span class="fc" id="L304">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L305">                    return rolJuradoRepository.save(ec.edu.uteq.presustentaciones.entities.RolJurado.builder()</span>
+<span class="nc" id="L306">                            .codigo(finalCodigoRol)</span>
+<span class="nc" id="L307">                            .nombre(finalCodigoRol.substring(0, 1).toUpperCase() + finalCodigoRol.substring(1).toLowerCase())</span>
+<span class="nc" id="L308">                            .build());</span>
+                });
+
+<span class="fc" id="L311">        return juradoRepository.save(Jurado.builder()</span>
+<span class="fc" id="L312">                .solicitud(solicitud)</span>
+<span class="fc" id="L313">                .docente(docente)</span>
+<span class="fc" id="L314">                .rolJurado(rolJurado)</span>
+<span class="fc" id="L315">                .confirmado(false)</span>
+<span class="fc" id="L316">                .build());</span>
+    }
+
+    /** Una sola notificación en BD + un solo correo al estudiante con el tribunal completo. */
+    private void notificarEstudianteTribunalCompleto(Solicitud solicitud, List&lt;Jurado&gt; jurados) {
+        try {
+<span class="nc" id="L322">            String presidente = jurados.stream().filter(j -&gt; &quot;PRESIDENTE&quot;.equals(j.getRol()))</span>
+<span class="nc" id="L323">                    .map(j -&gt; j.getDocente().getUsuario().getNombre() + &quot; &quot; + j.getDocente().getUsuario().getApellido())</span>
+<span class="nc" id="L324">                    .findFirst().orElse(&quot;-&quot;);</span>
+<span class="nc" id="L325">            String vocal1 = jurados.stream().filter(j -&gt; &quot;VOCAL_1&quot;.equals(j.getRol()))</span>
+<span class="nc" id="L326">                    .map(j -&gt; j.getDocente().getUsuario().getNombre() + &quot; &quot; + j.getDocente().getUsuario().getApellido())</span>
+<span class="nc" id="L327">                    .findFirst().orElse(&quot;-&quot;);</span>
+<span class="nc" id="L328">            String vocal2 = jurados.stream().filter(j -&gt; &quot;VOCAL_2&quot;.equals(j.getRol()))</span>
+<span class="nc" id="L329">                    .map(j -&gt; j.getDocente().getUsuario().getNombre() + &quot; &quot; + j.getDocente().getUsuario().getApellido())</span>
+<span class="nc" id="L330">                    .findFirst().orElse(&quot;-&quot;);</span>
+
+<span class="nc" id="L332">            String mensaje = String.format(</span>
+                    &quot;⚖️ Se ha asignado tu tribunal completo para tu pre-sustentación \&quot;%s\&quot;. &quot; +
+                    &quot;Presidente: %s, Vocal 1: %s, Vocal 2: %s. Tu solicitud ahora está en fase de evaluación.&quot;,
+<span class="nc" id="L335">                    solicitud.getTituloTema(), presidente, vocal1, vocal2);</span>
+
+<span class="nc" id="L337">            Long estudianteUsuarioId = solicitud.getEstudiante().getUsuario().getId();</span>
+<span class="nc" id="L338">            notificacionService.crearNotificacion(estudianteUsuarioId, mensaje);</span>
+
+<span class="nc" id="L340">            String email = solicitud.getEstudiante().getUsuario().getEmailNotificaciones();</span>
+<span class="nc bnc" id="L341" title="All 4 branches missed.">            if (email == null || email.isBlank()) {</span>
+<span class="nc" id="L342">                email = solicitud.getEstudiante().getUsuario().getEmail();</span>
+            }
+<span class="nc" id="L344">            emailService.enviarNotificacion(email, mensaje);</span>
+<span class="nc" id="L345">        } catch (Exception e) {</span>
+<span class="nc" id="L346">            log.warn(&quot;No se pudo notificar al estudiante sobre tribunal completo: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L347">        }</span>
+<span class="nc" id="L348">    }</span>
+
+    // ── Helpers de notificación ───────────────────────────────────────────────
+
+    private void notificarDocenteJurado(Docente docente, Solicitud solicitud, String rol) {
+        try {
+<span class="pc bpc" id="L354" title="3 of 4 branches missed.">            String rolLabel = switch (rol.toUpperCase()) {</span>
+<span class="fc" id="L355">                case &quot;PRESIDENTE&quot; -&gt; &quot;Presidente del tribunal&quot;;</span>
+<span class="nc" id="L356">                case &quot;VOCAL_1&quot;    -&gt; &quot;Vocal 1 del tribunal&quot;;</span>
+<span class="nc" id="L357">                case &quot;VOCAL_2&quot;    -&gt; &quot;Vocal 2 del tribunal&quot;;</span>
+<span class="pc" id="L358">                default           -&gt; rol;</span>
+            };
+<span class="fc" id="L360">            notificacionService.crearNotificacion(docente.getUsuario().getId(),</span>
+<span class="fc" id="L361">                    String.format(&quot;⚖️ Has sido asignado como %s para evaluar la pre-sustentación \&quot;%s\&quot; &quot; +</span>
+                                    &quot;del estudiante %s %s. Por favor ingresa al sistema para confirmar tu participación.&quot;,
+                            rolLabel,
+<span class="fc" id="L364">                            solicitud.getTituloTema(),</span>
+<span class="fc" id="L365">                            solicitud.getEstudiante().getUsuario().getNombre(),</span>
+<span class="fc" id="L366">                            solicitud.getEstudiante().getUsuario().getApellido()));</span>
+<span class="nc" id="L367">        } catch (Exception e) {</span>
+<span class="nc" id="L368">            log.warn(&quot;No se pudo notificar al docente jurado: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L369">        }</span>
+<span class="fc" id="L370">    }</span>
+
+    private void notificarEstudianteJurado(Solicitud solicitud, Docente docente, String rol) {
+        try {
+<span class="pc bpc" id="L374" title="3 of 4 branches missed.">            String rolLabel = switch (rol.toUpperCase()) {</span>
+<span class="fc" id="L375">                case &quot;PRESIDENTE&quot; -&gt; &quot;Presidente&quot;;</span>
+<span class="nc" id="L376">                case &quot;VOCAL_1&quot;    -&gt; &quot;Vocal 1&quot;;</span>
+<span class="nc" id="L377">                case &quot;VOCAL_2&quot;    -&gt; &quot;Vocal 2&quot;;</span>
+<span class="pc" id="L378">                default           -&gt; rol;</span>
+            };
+<span class="fc" id="L380">            notificacionService.crearNotificacion(solicitud.getEstudiante().getUsuario().getId(),</span>
+<span class="fc" id="L381">                    String.format(&quot;👨‍🏫 Se ha asignado al docente %s %s como %s del tribunal para tu pre-sustentación \&quot;%s\&quot;.&quot;,</span>
+<span class="fc" id="L382">                            docente.getUsuario().getNombre(),</span>
+<span class="fc" id="L383">                            docente.getUsuario().getApellido(),</span>
+                            rolLabel,
+<span class="fc" id="L385">                            solicitud.getTituloTema()));</span>
+<span class="nc" id="L386">        } catch (Exception e) {</span>
+<span class="nc" id="L387">            log.warn(&quot;No se pudo notificar al estudiante sobre jurado: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L388">        }</span>
+<span class="fc" id="L389">    }</span>
+
+    private void notificarDocenteTutor(Docente docente, Solicitud solicitud) {
+        try {
+<span class="fc" id="L393">            notificacionService.crearNotificacion(docente.getUsuario().getId(),</span>
+<span class="fc" id="L394">                    String.format(&quot;📚 Has sido asignado como tutor del anteproyecto \&quot;%s\&quot; &quot; +</span>
+                                    &quot;del estudiante %s %s. Ingresa al sistema para revisar los detalles.&quot;,
+<span class="fc" id="L396">                            solicitud.getTituloTema(),</span>
+<span class="fc" id="L397">                            solicitud.getEstudiante().getUsuario().getNombre(),</span>
+<span class="fc" id="L398">                            solicitud.getEstudiante().getUsuario().getApellido()));</span>
+<span class="nc" id="L399">        } catch (Exception e) {</span>
+<span class="nc" id="L400">            log.warn(&quot;No se pudo notificar al docente tutor: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L401">        }</span>
+<span class="fc" id="L402">    }</span>
+
+    private void notificarEstudianteTutor(Solicitud solicitud, Docente docente) {
+        try {
+<span class="fc" id="L406">            notificacionService.crearNotificacion(solicitud.getEstudiante().getUsuario().getId(),</span>
+<span class="fc" id="L407">                    String.format(&quot;🎓 El docente %s %s ha sido asignado como tu tutor para el anteproyecto \&quot;%s\&quot;. &quot; +</span>
+                                    &quot;Tu solicitud ahora está en fase de tutoría. Puedes ponerte en contacto con él a través del sistema.&quot;,
+<span class="fc" id="L409">                            docente.getUsuario().getNombre(),</span>
+<span class="fc" id="L410">                            docente.getUsuario().getApellido(),</span>
+<span class="fc" id="L411">                            solicitud.getTituloTema()));</span>
+<span class="nc" id="L412">        } catch (Exception e) {</span>
+<span class="nc" id="L413">            log.warn(&quot;No se pudo notificar al estudiante sobre tutor: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L414">        }</span>
+<span class="fc" id="L415">    }</span>
+
+    @Override
+    @Transactional
+    public void asignarJuradoMasivoSP(Long[] solicitudIds, Long[] docenteIds, String rol) {
+<span class="nc" id="L420">        juradoRepository.spAsignarJuradoMasivo(solicitudIds, docenteIds, rol);</span>
+<span class="nc" id="L421">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

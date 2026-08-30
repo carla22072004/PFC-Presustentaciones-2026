@@ -1,0 +1,143 @@
+{
+    "metrics": {
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 6255,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 5.000110519584315,
+            "min": 2.1504,
+            "med": 4.3647,
+            "max": 625.8671,
+            "p(90)": 6.67936,
+            "p(95)": 8.531139999999995
+        },
+        "data_received": {
+            "count": 24465349,
+            "rate": 203485.67680386768
+        },
+        "checks": {
+            "passes": 6254,
+            "fails": 0,
+            "value": 1
+        },
+        "iterations": {
+            "rate": 26.008200878953097,
+            "count": 3127
+        },
+        "data_sent": {
+            "count": 2989603,
+            "rate": 24865.42864480998
+        },
+        "http_req_connecting": {
+            "avg": 0.007361886490807352,
+            "min": 0,
+            "med": 0,
+            "max": 2.3979,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "iteration_duration": {
+            "max": 1699.0779,
+            "p(90)": 1013.9978,
+            "p(95)": 1017.65027,
+            "avg": 1010.5147801726907,
+            "min": 1005.431,
+            "med": 1009.2638
+        },
+        "http_req_duration": {
+            "min": 2.1504,
+            "med": 4.3647,
+            "max": 625.8671,
+            "p(90)": 6.67936,
+            "p(95)": 8.531139999999995,
+            "avg": 5.000110519584315,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "vus": {
+            "value": 2,
+            "min": 1,
+            "max": 50
+        },
+        "http_reqs": {
+            "rate": 52.02471905911469,
+            "count": 6255
+        },
+        "vus_max": {
+            "max": 50,
+            "value": 50,
+            "min": 50
+        },
+        "http_req_receiving": {
+            "avg": 0.07431239008792973,
+            "min": 0,
+            "med": 0,
+            "max": 8.5875,
+            "p(90)": 0.5077600000000001,
+            "p(95)": 0.5286
+        },
+        "http_req_sending": {
+            "avg": 0.007523788968824935,
+            "min": 0,
+            "med": 0,
+            "max": 1.0072,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_blocked": {
+            "max": 12.3256,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.013944764188649083,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0
+        },
+        "http_req_waiting": {
+            "max": 625.3532,
+            "p(90)": 6.583140000000002,
+            "p(95)": 8.3509,
+            "avg": 4.9182743405275575,
+            "min": 2.0638,
+            "med": 4.3142
+        }
+    },
+    "setup_data": {
+        "token": "eyJhbGciOiJIUzUxMiJ9.eyJqdGkiOiJhZDEwNmZiYS03MjhkLTRhNzItYjYyMy04N2QxZmM5MDQyYjgiLCJpc3MiOiJQRkMtUHJlc3VzdGVudGFjaW9uZXMtVVRFUSIsInN1YiI6ImFkbWluQHV0ZXEuZWR1LmVjIiwiYXVkIjpbIlBGQy1Gcm9udGVuZC1Bbmd1bGFyIl0sImlhdCI6MTc4ODA1MjU2OSwibmJmIjoxNzg4MDUyNTY5LCJleHAiOjE3ODgwNTYxNjl9.aIfPgUmAnC5y1IJ2KdTf7I0iF20X2mPoqn4vYpi0Z0GFLoZAVIjiu-oCW9428xRkBzp3Zrq5npSU0_77IpRH4A"
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "catalogos status is 200": {
+                    "id": "a8051716b980dbe59508c152c032a33e",
+                    "passes": 3127,
+                    "fails": 0,
+                    "name": "catalogos status is 200",
+                    "path": "::catalogos status is 200"
+                },
+                "universidades status is 200": {
+                    "name": "universidades status is 200",
+                    "path": "::universidades status is 200",
+                    "id": "61f70fb479d096a7d1fcacbc86e7293f",
+                    "passes": 3127,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": ""
+    }
+}

@@ -59,7 +59,7 @@ Leyenda: ✅ Cumple · 🟡 Cumple parcialmente · 🔴 No cumple
 | **Consistente** (sin contradicciones internas) | ✅ | Se corrigió en esta fase una inconsistencia real: `SRS.md` v0.9.0-rc numeraba HU-04/HU-05 de forma distinta a `matriz.csv` (HU-04 significaba "Evaluación" en un documento y "Cronograma" en el otro) — resuelto adoptando la numeración de `matriz.csv` (más completa) como canónica en v1.0.0 |
 | **Factible** (implementable con los recursos reales) | ✅ | Los 12 están implementados y funcionando (verificado end-to-end en la Fase 5) |
 | **Comprensible** (lenguaje claro para todos los interesados) | ✅ | Formato Connextra + Gherkin es deliberadamente más legible para stakeholders no técnicos que notación formal |
-| **Verificable como conjunto** (existe una forma de confirmar que el conjunto se cumplió) | 🔴 | Ver `matriz.csv` v1.0.0: solo 5/8 requisitos Must tienen prueba automatizada real (62.5%), no el 100% que exige el criterio D0R. No se puede afirmar "el conjunto se verificó" hoy |
+| **Verificable como conjunto** (existe una forma de confirmar que el conjunto se cumplió) | 🟡 | Ver `matriz.csv` v1.0.0: 7/8 requisitos Must tienen prueba automatizada real (87.5%, actualizado 2026-08-29), no el 100% que exige el criterio D0R. Falta solo RF-06 (generación de actas) — no se puede afirmar "el conjunto se verificó" al 100% hoy |
 | **Acotado** (el alcance no crece sin control) | ✅ | El conjunto pasó de 5 HU formalizadas (v0.9.0-rc) a 12 (v1.0.0) por una razón concreta y única: completar lo que `matriz.csv` ya asumía que existía, no por expansión de alcance no planificada — ver `CHANGELOG-REQ.md` |
 
 ## Conclusión

@@ -9,6 +9,7 @@ import ec.edu.uteq.presustentaciones.security.dto.LoginRequest;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtAuthenticationFilter;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
 import ec.edu.uteq.presustentaciones.services.IUsuarioService;
+import ec.edu.uteq.presustentaciones.services.PermisoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -74,6 +75,9 @@ class AuthControllerIntegrationTest {
     @MockBean
     private ec.edu.uteq.presustentaciones.repositories.RolUsuarioRepository rolUsuarioRepository;
 
+    @MockBean(name = "permisoService")
+    private PermisoService permisoService;
+
     private Usuario dummyUsuario;
 
     @BeforeEach
@@ -137,9 +141,11 @@ class AuthControllerIntegrationTest {
 
     @Test
     void testAccesoProtegidoSinToken() throws Exception {
+        // 401, no 403: ver fix(seguridad) "responder 401 en vez de 403 cuando la sesion expira"
+        // (SecurityConfig.authenticationEntryPoint / GlobalExceptionHandler).
         mockMvc.perform(get("/api/v1/usuarios")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -152,6 +158,7 @@ class AuthControllerIntegrationTest {
         when(jwtTokenProvider.getUsernameFromToken(token)).thenReturn(dummyUsuario.getEmail());
         when(userDetailsService.loadUserByUsername(dummyUsuario.getEmail())).thenReturn(userDetails);
         when(usuarioService.listarTodos()).thenReturn(Collections.emptyList());
+        when(permisoService.tienePermiso(any(), any())).thenReturn(true);
 
         mockMvc.perform(get("/api/v1/usuarios")
                         .header("Authorization", "Bearer " + token)

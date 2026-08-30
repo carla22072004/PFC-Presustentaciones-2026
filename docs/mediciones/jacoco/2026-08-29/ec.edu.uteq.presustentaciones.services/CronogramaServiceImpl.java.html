@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CronogramaServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">CronogramaServiceImpl.java</span></div><h1>CronogramaServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.entities.Cronograma;
+import ec.edu.uteq.presustentaciones.entities.Jurado;
+import ec.edu.uteq.presustentaciones.entities.Sala;
+import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.entities.Tutor;
+import ec.edu.uteq.presustentaciones.repositories.CronogramaRepository;
+import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
+import ec.edu.uteq.presustentaciones.repositories.SalaRepository;
+import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L29">@RequiredArgsConstructor</span>
+<span class="fc" id="L30">@Slf4j</span>
+public class CronogramaServiceImpl implements CronogramaService {
+
+    private final CronogramaRepository cronogramaRepository;
+    private final SolicitudRepository solicitudRepository;
+    private final SalaRepository salaRepository;
+    private final JuradoRepository juradoRepository;
+    private final TutorRepository tutorRepository;
+    private final NotificacionService notificacionService;
+    private final ec.edu.uteq.presustentaciones.repositories.EstadoCronogramaRepository estadoCronogramaRepository;
+
+<span class="fc" id="L41">    private static final LocalTime HORA_INICIO = LocalTime.of(8, 0);</span>
+<span class="fc" id="L42">    private static final LocalTime HORA_FIN    = LocalTime.of(17, 0);</span>
+    private static final int DURACION = 45;
+<span class="fc" id="L44">    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy 'a las' HH:mm&quot;);</span>
+
+    @Override
+    @Transactional
+    public Cronograma crearCronograma(Long solicitudId, Long salaId, LocalDate fecha, LocalTime hora) {
+<span class="fc" id="L49">        validarPrerequisitosParaCronograma(solicitudId);</span>
+ 
+<span class="fc" id="L51">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="pc" id="L52">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+<span class="fc" id="L53">        Sala sala = salaRepository.findById(salaId)</span>
+<span class="pc" id="L54">                .orElseThrow(() -&gt; new RuntimeException(&quot;Sala no encontrada&quot;));</span>
+ 
+<span class="fc" id="L56">        LocalDateTime inicio = LocalDateTime.of(fecha, hora);</span>
+<span class="fc" id="L57">        LocalDateTime fin = inicio.plusMinutes(DURACION);</span>
+ 
+<span class="fc" id="L59">        List&lt;Cronograma&gt; conflictos = cronogramaRepository.findConflictos(salaId, inicio, fin);</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (!conflictos.isEmpty()) {</span>
+<span class="nc" id="L61">            throw new RuntimeException(</span>
+<span class="nc" id="L62">                    &quot;Conflicto de horario: la sala '&quot; + sala.getNombre() +</span>
+                            &quot;' ya tiene una pre-sustentación programada en esa franja.&quot;);
+        }
+
+        // sp_validar_conflicto_jurado (Fase 3 / Criterio P1, categoría &quot;validaciones
+        // cruzadas&quot;): ningún docente ya asignado como jurado de esta solicitud puede quedar
+        // programado en dos defensas cuyos horarios se solapen.
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (Jurado jurado : juradoRepository.findBySolicitudId(solicitudId)) {</span>
+<span class="fc" id="L70">            Boolean disponible = juradoRepository.validarConflictoJurado(</span>
+<span class="fc" id="L71">                    solicitudId, jurado.getDocente().getId(), inicio, DURACION, null);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (Boolean.FALSE.equals(disponible)) {</span>
+<span class="fc" id="L73">                throw new RuntimeException(</span>
+<span class="fc" id="L74">                        &quot;Conflicto de horario: el docente &quot; + jurado.getDocente().getUsuario().getNombre() +</span>
+<span class="fc" id="L75">                                &quot; &quot; + jurado.getDocente().getUsuario().getApellido() +</span>
+                                &quot; ya es jurado de otra defensa programada en esa franja.&quot;);
+            }
+<span class="fc" id="L78">        }</span>
+
+<span class="fc" id="L80">        ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo(&quot;PROGRAMADO&quot;)</span>
+<span class="pc" id="L81">                .orElseGet(() -&gt; estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()</span>
+<span class="nc" id="L82">                        .codigo(&quot;PROGRAMADO&quot;).nombre(&quot;Programado&quot;).build()));</span>
+
+<span class="fc" id="L84">        Cronograma cronograma = cronogramaRepository.save(Cronograma.builder()</span>
+<span class="fc" id="L85">                .solicitud(solicitud).sala(sala)</span>
+<span class="fc" id="L86">                .convocatoria(solicitud.getConvocatoria())</span>
+<span class="fc" id="L87">                .fechaInicio(inicio).duracionMin(DURACION).estado(estadoProgramado).build());</span>
+ 
+<span class="fc" id="L89">        notificarProgramacion(cronograma);</span>
+<span class="fc" id="L90">        return cronograma;</span>
+    }
+ 
+    @Override
+    @Transactional
+    public Cronograma asignarAutomatico(Long solicitudId) {
+<span class="nc" id="L96">        validarPrerequisitosParaCronograma(solicitudId);</span>
+ 
+<span class="nc" id="L98">        solicitudRepository.findById(solicitudId)</span>
+<span class="nc" id="L99">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada&quot;));</span>
+ 
+<span class="nc" id="L101">        Optional&lt;Cronograma&gt; existente = cronogramaRepository.findBySolicitudId(solicitudId);</span>
+<span class="nc bnc" id="L102" title="All 6 branches missed.">        if (existente.isPresent() &amp;&amp; existente.get().getEstado() != null &amp;&amp; &quot;PROGRAMADO&quot;.equals(existente.get().getEstado().getCodigo())) {</span>
+<span class="nc" id="L103">            return existente.get();</span>
+        }
+ 
+<span class="nc" id="L106">        List&lt;Sala&gt; salas = salaRepository.findAll().stream()</span>
+<span class="nc" id="L107">                .filter(s -&gt; Boolean.TRUE.equals(s.getDisponible())).toList();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (salas.isEmpty()) throw new RuntimeException(&quot;No hay salas disponibles.&quot;);</span>
+ 
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        for (int diasAdelantar = 1; diasAdelantar &lt;= 30; diasAdelantar++) {</span>
+<span class="nc" id="L111">            LocalDate fecha = LocalDate.now().plusDays(diasAdelantar);</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (fecha.getDayOfWeek().getValue() &gt;= 6) continue;</span>
+ 
+<span class="nc" id="L114">            List&lt;LocalDateTime&gt; franjas = franjasDisponibles(fecha, DURACION);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            for (LocalDateTime franja : franjas) {</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">                for (Sala sala : salas) {</span>
+<span class="nc" id="L117">                    List&lt;Cronograma&gt; conflictos = cronogramaRepository</span>
+<span class="nc" id="L118">                            .findConflictos(sala.getId(), franja, franja.plusMinutes(DURACION));</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                    if (conflictos.isEmpty()) {</span>
+<span class="nc" id="L120">                        Solicitud solicitud = solicitudRepository.findById(solicitudId).get();</span>
+                        
+<span class="nc" id="L122">                        ec.edu.uteq.presustentaciones.entities.EstadoCronograma estadoProgramado = estadoCronogramaRepository.findByCodigo(&quot;PROGRAMADO&quot;)</span>
+<span class="nc" id="L123">                                .orElseGet(() -&gt; estadoCronogramaRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoCronograma.builder()</span>
+<span class="nc" id="L124">                                        .codigo(&quot;PROGRAMADO&quot;).nombre(&quot;Programado&quot;).build()));</span>
+
+<span class="nc" id="L126">                        Cronograma cronograma = cronogramaRepository.save(Cronograma.builder()</span>
+<span class="nc" id="L127">                                .solicitud(solicitud).sala(sala)</span>
+<span class="nc" id="L128">                                .convocatoria(solicitud.getConvocatoria())</span>
+<span class="nc" id="L129">                                .fechaInicio(franja).duracionMin(DURACION).estado(estadoProgramado)</span>
+<span class="nc" id="L130">                                .build());</span>
+<span class="nc" id="L131">                        notificarProgramacion(cronograma);</span>
+<span class="nc" id="L132">                        return cronograma;</span>
+                    }
+<span class="nc" id="L134">                }</span>
+<span class="nc" id="L135">            }</span>
+        }
+<span class="nc" id="L137">        throw new RuntimeException(</span>
+                &quot;No se encontró disponibilidad en los próximos 30 días. Verifique las salas o el calendario.&quot;);
+    }
+ 
+    private void validarPrerequisitosParaCronograma(Long solicitudId) {
+        // 1. Tribunal completo: los 3 roles deben estar asignados
+<span class="fc" id="L143">        List&lt;String&gt; rolesAsignados = juradoRepository.findBySolicitudId(solicitudId)</span>
+<span class="fc" id="L144">                .stream().map(Jurado::getRol).toList();</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        boolean tribunalCompleto = rolesAsignados.contains(&quot;PRESIDENTE&quot;)</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">                &amp;&amp; rolesAsignados.contains(&quot;VOCAL_1&quot;)</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">                &amp;&amp; rolesAsignados.contains(&quot;VOCAL_2&quot;);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (!tribunalCompleto) {</span>
+<span class="fc" id="L149">            throw new RuntimeException(</span>
+                    &quot;No se puede programar la presentación: el tribunal no está completo. &quot; +
+                    &quot;Se requieren Presidente, Vocal 1 y Vocal 2.&quot;);
+        }
+
+        // 2. Tutoría COMPLETADA
+<span class="fc" id="L155">        Tutor tutor = tutorRepository.findBySolicitudId(solicitudId)</span>
+<span class="pc" id="L156">                .orElseThrow(() -&gt; new RuntimeException(</span>
+                        &quot;No se puede programar la presentación: la tutoría no ha sido completada.&quot;));
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (!&quot;COMPLETADA&quot;.equals(tutor.getEstado())) {</span>
+<span class="fc" id="L159">            throw new RuntimeException(</span>
+                    &quot;No se puede programar la presentación: la tutoría no ha sido completada.&quot;);
+        }
+<span class="fc" id="L162">    }</span>
+
+    /** Notifica al estudiante y a los jurados asignados cuando se programa la exposición */
+    private void notificarProgramacion(Cronograma c) {
+        try {
+<span class="fc" id="L167">            Solicitud s = c.getSolicitud();</span>
+<span class="fc" id="L168">            String fechaStr = c.getFechaInicio().format(FMT);</span>
+<span class="fc" id="L169">            String sala     = c.getSala().getNombre();</span>
+<span class="fc" id="L170">            String titulo   = s.getTituloTema();</span>
+
+            // Notificar al estudiante
+<span class="nc" id="L173">            Long estudianteUsuarioId = s.getEstudiante().getUsuario().getId();</span>
+<span class="nc" id="L174">            notificacionService.crearNotificacion(estudianteUsuarioId,</span>
+<span class="nc" id="L175">                    String.format(&quot;📅 Tu pre-sustentación \&quot;%s\&quot; ha sido programada para el %s en la sala %s. &quot; +</span>
+<span class="nc" id="L176">                            &quot;Duración estimada: %d minutos.&quot;, titulo, fechaStr, sala, c.getDuracionMin()));</span>
+<span class="fc" id="L177">        } catch (Exception e) {</span>
+<span class="fc" id="L178">            log.warn(&quot;No se pudo enviar notificación de programación: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L179">        }</span>
+<span class="fc" id="L180">    }</span>
+
+    @Override
+    public boolean estaDisponible(Long salaId, LocalDateTime inicio, int duracionMin) {
+<span class="nc" id="L184">        return cronogramaRepository.findConflictos(salaId, inicio, inicio.plusMinutes(duracionMin)).isEmpty();</span>
+    }
+
+    @Override
+    public List&lt;LocalDateTime&gt; franjasDisponibles(LocalDate fecha, int duracionMin) {
+<span class="nc" id="L189">        List&lt;LocalDateTime&gt; franjas = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L190">        LocalDateTime cursor = LocalDateTime.of(fecha, HORA_INICIO);</span>
+<span class="nc" id="L191">        LocalDateTime limite = LocalDateTime.of(fecha, HORA_FIN);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        while (!cursor.plusMinutes(duracionMin).isAfter(limite)) {</span>
+<span class="nc" id="L193">            franjas.add(cursor);</span>
+<span class="nc" id="L194">            cursor = cursor.plusMinutes(duracionMin);</span>
+        }
+<span class="nc" id="L196">        return franjas;</span>
+    }
+
+<span class="nc" id="L199">    @Override public Page&lt;Cronograma&gt; listarCronogramas(Pageable pageable) { return cronogramaRepository.findAll(pageable); }</span>
+<span class="nc" id="L200">    @Override public List&lt;Cronograma&gt; listarPorEstudiante(Long id) { return cronogramaRepository.findByEstudianteId(id); }</span>
+<span class="nc" id="L201">    @Override public List&lt;Cronograma&gt; listarPorUsuario(Long id) { return cronogramaRepository.findByUsuarioId(id); }</span>
+<span class="nc" id="L202">    @Override public Optional&lt;Cronograma&gt; buscarPorSolicitud(Long id) { return cronogramaRepository.findBySolicitudId(id); }</span>
+<span class="nc" id="L203">    @Override public void eliminar(Long id) { cronogramaRepository.deleteById(id); }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

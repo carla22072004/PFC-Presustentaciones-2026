@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CatalogoAdminService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">CatalogoAdminService.java</span></div><h1>CatalogoAdminService.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
+import ec.edu.uteq.presustentaciones.repositories.FacultadRepository;
+import ec.edu.uteq.presustentaciones.repositories.ModalidadTitulacionRepository;
+import ec.edu.uteq.presustentaciones.repositories.PeriodoAcademicoRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Solo las eliminaciones de Gestión de Carreras viven aquí, en un bean aparte del
+ * controlador. Si @Transactional envuelve el método del controlador y el catch de
+ * DataIntegrityViolationException vive DENTRO de ese mismo método, Hibernate ya marcó
+ * la transacción como rollback-only en cuanto el flush() falla -- el catch atrapa la
+ * excepción en código Java, pero al volver &quot;normalmente&quot; el intento de commit del AOP
+ * de Spring lanza UnexpectedRollbackException igual (bug real: probado borrando una
+ * facultad con carreras asociadas, el mensaje amigable nunca llegaba a devolverse).
+ * Separando el delete+flush en su propio bean transaccional, la excepción cruza la
+ * frontera del proxy @Transactional (así Spring hace el rollback correctamente) antes
+ * de llegar al controlador, que la atrapa ya con la transacción cerrada.
+ */
+@Service
+<span class="nc" id="L24">@RequiredArgsConstructor</span>
+public class CatalogoAdminService {
+
+    private final FacultadRepository facultadRepo;
+    private final CarreraRepository carreraRepo;
+    private final ModalidadTitulacionRepository modalidadRepo;
+    private final PeriodoAcademicoRepository periodoAcademicoRepo;
+    private final AuditoriaService auditoriaService;
+
+    @Transactional
+    public void eliminarFacultad(Integer id) {
+<span class="nc" id="L35">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L36">        facultadRepo.deleteById(id);</span>
+<span class="nc" id="L37">        facultadRepo.flush();</span>
+<span class="nc" id="L38">    }</span>
+
+    @Transactional
+    public void eliminarCarrera(Integer id) {
+<span class="nc" id="L42">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L43">        carreraRepo.deleteById(id);</span>
+<span class="nc" id="L44">        carreraRepo.flush();</span>
+<span class="nc" id="L45">    }</span>
+
+    @Transactional
+    public void eliminarModalidad(Short id) {
+<span class="nc" id="L49">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L50">        modalidadRepo.deleteById(id);</span>
+<span class="nc" id="L51">        modalidadRepo.flush();</span>
+<span class="nc" id="L52">    }</span>
+
+    @Transactional
+    public void eliminarPeriodo(Integer id) {
+<span class="nc" id="L56">        auditoriaService.marcarActorActual();</span>
+<span class="nc" id="L57">        periodoAcademicoRepo.deleteById(id);</span>
+<span class="nc" id="L58">        periodoAcademicoRepo.flush();</span>
+<span class="nc" id="L59">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

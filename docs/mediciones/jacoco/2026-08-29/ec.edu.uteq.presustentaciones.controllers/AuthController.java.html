@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.controllers</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.controllers;
+
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.security.dto.LoginRequest;
+import ec.edu.uteq.presustentaciones.security.dto.LoginResponse;
+import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/auth&quot;)
+<span class="fc" id="L32">@RequiredArgsConstructor</span>
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;, allowCredentials = &quot;true&quot;)
+<span class="fc" id="L34">@Slf4j</span>
+@Tag(name = &quot;Autenticación&quot;, description = &quot;Endpoints para inicio de sesión, registro, actualización de tokens y cierre de sesión&quot;)
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @PostMapping(&quot;/login&quot;)
+    @Operation(summary = &quot;Iniciar sesión y obtener tokens&quot;, description = &quot;Genera el JWT de acceso y el refresh token. Configura cookies HttpOnly + Secure + SameSite=Strict.&quot;)
+    public ResponseEntity&lt;?&gt; login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+
+<span class="fc" id="L47">        Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())</span>
+<span class="pc" id="L48">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;));</span>
+
+<span class="fc" id="L50">        Authentication authentication = authenticationManager.authenticate(</span>
+                new UsernamePasswordAuthenticationToken(
+<span class="fc" id="L52">                        loginRequest.getEmail(),</span>
+<span class="fc" id="L53">                        loginRequest.getPassword()</span>
+                )
+        );
+
+        // Generamos Access Token (JWT de 7 claims) y Refresh Token (UUID en Redis)
+<span class="fc" id="L58">        String token = jwtTokenProvider.generateToken(authentication);</span>
+<span class="fc" id="L59">        String refreshToken = jwtTokenProvider.generateRefreshToken(usuario.getEmail());</span>
+
+        // Cabeceras para Set-Cookie seguras (Requisito E13 - HttpOnly, Secure, SameSite=Strict)
+        // Usamos addHeader en lugar de Cookie de Servlet para tener soporte de SameSite=Strict completo
+<span class="fc" id="L63">        response.addHeader(HttpHeaders.SET_COOKIE, </span>
+<span class="fc" id="L64">                String.format(&quot;jwtToken=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400&quot;, token));</span>
+<span class="fc" id="L65">        response.addHeader(HttpHeaders.SET_COOKIE, </span>
+<span class="fc" id="L66">                String.format(&quot;refreshToken=%s; Path=/api/auth/refresh; HttpOnly; Secure; SameSite=Strict; Max-Age=604800&quot;, refreshToken));</span>
+
+<span class="fc" id="L68">        LoginResponse loginResponse = LoginResponse.builder()</span>
+<span class="fc" id="L69">                .token(token)</span>
+<span class="fc" id="L70">                .type(&quot;Bearer&quot;)</span>
+<span class="fc" id="L71">                .id(usuario.getId())</span>
+<span class="fc" id="L72">                .email(usuario.getEmail())</span>
+<span class="fc" id="L73">                .nombre(usuario.getNombre() + &quot; &quot; + usuario.getApellido())</span>
+<span class="fc" id="L74">                .rol(usuario.getRol())</span>
+<span class="fc" id="L75">                .emailNotificaciones(usuario.getEmailNotificaciones())</span>
+<span class="fc" id="L76">                .build();</span>
+
+        // Creamos una respuesta enriquecida
+<span class="fc" id="L79">        Map&lt;String, Object&gt; data = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L80">        data.put(&quot;auth&quot;, loginResponse);</span>
+<span class="fc" id="L81">        data.put(&quot;refreshToken&quot;, refreshToken);</span>
+
+<span class="fc" id="L83">        return ResponseEntity.ok(ResponseWrapper.success(data, &quot;Sesión iniciada correctamente&quot;));</span>
+    }
+
+    @PostMapping(&quot;/refresh&quot;)
+    @Operation(summary = &quot;Refrescar el token de acceso vencido&quot;, description = &quot;Recibe el refresh token, lo valida en Redis y rota ambos tokens (Access y Refresh).&quot;)
+    public ResponseEntity&lt;?&gt; refresh(HttpServletRequest request, HttpServletResponse response) {
+<span class="nc" id="L89">        String refreshToken = null;</span>
+
+        // Extraer refresh token de las cookies
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (request.getCookies() != null) {</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            for (Cookie cookie : request.getCookies()) {</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">                if (&quot;refreshToken&quot;.equals(cookie.getName())) {</span>
+<span class="nc" id="L95">                    refreshToken = cookie.getValue();</span>
+<span class="nc" id="L96">                    break;</span>
+                }
+            }
+        }
+
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (refreshToken == null) {</span>
+<span class="nc" id="L102">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L103">                    .body(ResponseWrapper.error(&quot;Refresh token no proporcionado&quot;));</span>
+        }
+
+        // Buscar el usuario al que corresponde el refresh token
+<span class="nc" id="L107">        String email = jwtTokenProvider.getUsernameFromRefreshToken(refreshToken);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (email == null) {</span>
+<span class="nc" id="L109">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L110">                    .body(ResponseWrapper.error(&quot;Refresh token inválido o expirado&quot;));</span>
+        }
+
+        // Validar si coincide con el token almacenado en Redis
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (!jwtTokenProvider.validateRefreshToken(email, refreshToken)) {</span>
+<span class="nc" id="L115">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L116">                    .body(ResponseWrapper.error(&quot;Refresh token revocado&quot;));</span>
+        }
+
+<span class="nc" id="L119">        Usuario usuario = usuarioRepository.findByEmail(email)</span>
+<span class="nc" id="L120">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;));</span>
+
+        // Rotación de tokens (Requisito Rotación): eliminar el anterior y generar nuevos
+<span class="nc" id="L123">        jwtTokenProvider.deleteRefreshToken(email);</span>
+<span class="nc" id="L124">        String newAccessToken = jwtTokenProvider.generateTokenFromUsername(email);</span>
+<span class="nc" id="L125">        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);</span>
+
+        // Actualizar cookies seguras
+<span class="nc" id="L128">        response.addHeader(HttpHeaders.SET_COOKIE, </span>
+<span class="nc" id="L129">                String.format(&quot;jwtToken=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400&quot;, newAccessToken));</span>
+<span class="nc" id="L130">        response.addHeader(HttpHeaders.SET_COOKIE, </span>
+<span class="nc" id="L131">                String.format(&quot;refreshToken=%s; Path=/api/auth/refresh; HttpOnly; Secure; SameSite=Strict; Max-Age=604800&quot;, newRefreshToken));</span>
+
+<span class="nc" id="L133">        Map&lt;String, Object&gt; data = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L134">        data.put(&quot;token&quot;, newAccessToken);</span>
+<span class="nc" id="L135">        data.put(&quot;refreshToken&quot;, newRefreshToken);</span>
+
+<span class="nc" id="L137">        return ResponseEntity.ok(ResponseWrapper.success(data, &quot;Tokens actualizados correctamente&quot;));</span>
+    }
+
+    @PostMapping(&quot;/logout&quot;)
+    @Operation(summary = &quot;Cerrar sesión e invalidar tokens&quot;, description = &quot;Agrega el token de acceso a la blacklist en Redis y elimina el refresh token.&quot;)
+    public ResponseEntity&lt;?&gt; logout(HttpServletRequest request, HttpServletResponse response) {
+<span class="nc" id="L143">        String token = null;</span>
+
+        // Intentar extraer token del header Authorization
+<span class="nc" id="L146">        String bearerToken = request.getHeader(&quot;Authorization&quot;);</span>
+<span class="nc bnc" id="L147" title="All 4 branches missed.">        if (bearerToken != null &amp;&amp; bearerToken.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="nc" id="L148">            token = bearerToken.substring(7);</span>
+        }
+
+        // Si no está en el header, intentar extraer de las cookies
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (token == null &amp;&amp; request.getCookies() != null) {</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">            for (Cookie cookie : request.getCookies()) {</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                if (&quot;jwtToken&quot;.equals(cookie.getName())) {</span>
+<span class="nc" id="L155">                    token = cookie.getValue();</span>
+<span class="nc" id="L156">                    break;</span>
+                }
+            }
+        }
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (token != null) {</span>
+            // Blacklist de Access Token (Requisito Blacklist)
+<span class="nc" id="L163">            jwtTokenProvider.blacklistToken(token);</span>
+            
+            try {
+<span class="nc" id="L166">                String email = jwtTokenProvider.getUsernameFromToken(token);</span>
+                // Eliminar Refresh Token de Redis (Requisito Blacklist)
+<span class="nc" id="L168">                jwtTokenProvider.deleteRefreshToken(email);</span>
+<span class="nc" id="L169">            } catch (Exception e) {</span>
+<span class="nc" id="L170">                log.warn(&quot;No se pudo extraer usuario del token para borrar refresh token: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L171">            }</span>
+        }
+
+        // Limpiar Cookies del cliente
+<span class="nc" id="L175">        response.addHeader(HttpHeaders.SET_COOKIE, &quot;jwtToken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0&quot;);</span>
+<span class="nc" id="L176">        response.addHeader(HttpHeaders.SET_COOKIE, &quot;refreshToken=; Path=/api/auth/refresh; HttpOnly; Secure; SameSite=Strict; Max-Age=0&quot;);</span>
+
+<span class="nc" id="L178">        return ResponseEntity.ok(ResponseWrapper.success(null, &quot;Sesión cerrada correctamente&quot;));</span>
+    }
+
+    /** Provisión de cuentas: solo un ADMIN puede crear usuarios (incluye poder asignar cualquier rol). */
+    @PostMapping(&quot;/register&quot;)
+    @PreAuthorize(&quot;@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')&quot;)
+    @Operation(summary = &quot;Registrar nuevo usuario&quot;, description = &quot;Permite a un administrador crear nuevos usuarios en el sistema.&quot;)
+    public ResponseEntity&lt;?&gt; register(@RequestBody Usuario usuario) {
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (usuarioRepository.existsByEmail(usuario.getEmail())) {</span>
+<span class="nc" id="L187">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L188">                    .body(ResponseWrapper.error(&quot;El email ya está registrado&quot;));</span>
+        }
+
+<span class="nc" id="L191">        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));</span>
+<span class="nc" id="L192">        usuario.setActivo(true);</span>
+<span class="nc" id="L193">        usuarioRepository.save(usuario);</span>
+
+<span class="nc" id="L195">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L196">                .body(ResponseWrapper.success(null, &quot;Usuario registrado exitosamente&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

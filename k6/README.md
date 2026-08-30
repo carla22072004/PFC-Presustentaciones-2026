@@ -2,7 +2,19 @@
 
 ## Historial
 
-Una versión anterior de `run1-summary.json`, `run2-summary.json` y `run3-summary.json` contenía números inventados. Se reemplazaron por 2 corridas reales (`run1`, `run2`) contra `/api` (sin versionar, antes de implementar el versionado dinámico) y luego, tras cerrar la brecha de reproducibilidad/CI de la Unidad IV (Fase 5), se agregaron **3 corridas adicionales** (`run3`, `run4`, `run5`) para llegar a las 5 corridas independientes que exige la guía, más un análisis estadístico de caché frío vs caliente.
+Una versión anterior de `run1-summary.json`, `run2-summary.json` y `run3-summary.json` contenía números inventados. Se reemplazaron por 2 corridas reales (`run1`, `run2`) contra `/api` (sin versionar, antes de implementar el versionado dinámico); ambas resultaron **inválidas** (ver "Corridas inválidas conservadas como evidencia" abajo). Tras cerrar la brecha de reproducibilidad/CI de la Unidad IV (Fase 5) se agregaron **3 corridas válidas** (`run3`, `run4`, `run5`), y en la auditoría de reproducibilidad de 2026-08-29 se agregaron **2 corridas válidas más** (`run6`, `run7`) para llegar a las **5 corridas independientes válidas** que exige la guía (`run3`-`run7`), más un análisis estadístico de caché frío vs caliente.
+
+## Corridas inválidas conservadas como evidencia (`run1`, `run2`)
+
+`run1-summary.json` y `run2-summary.json` tuvieron **0 éxitos / 2938 fallos (100%)** en el check
+`"status is 200 or 401"` — el script de esa época hacía login en cada iteración contra
+`/api/auth/login` (sin versionar) y apuntaba a `/catalogos/carreras`, un endpoint que **nunca
+existió** en el backend (`CatalogoController` solo expone `/modalidades`, `/convocatorias` y
+`/convocatoria-activa`). No se depuran ni se sobrescriben estos dos archivos — quedan como
+evidencia real de un fallo real, ya diagnosticado (ver sección siguiente) y corregido en `run3`
+en adelante. **No se usan para ninguna estadística ni figura de rendimiento**: `scripts/gen-figuras.py`
+grafica explícitamente solo `run3`-`run7`, y la tabla de resultados de abajo solo reporta las 5
+corridas válidas.
 
 ## Cambio de metodología entre run1/run2 y run3/run4/run5
 
@@ -12,29 +24,33 @@ Entre las corridas 1-2 y las corridas 3-5 el backend cambió de forma que rompe 
 2. **Rate limiting en login** (6 intentos/60s → 429): el script original hacía login en **cada iteración**. Con 50 VUs concurrentes eso agota el límite casi de inmediato — el primer intento de corrida 3 con el script viejo dio **99.8% de fallos**, todos por rate limiting, no por falta de capacidad. Esa corrida se conserva como evidencia de que el rate limiter funciona: [`rate-limiter-evidence-run.json`](rate-limiter-evidence-run.json). El script se rediseñó con un `setup()` de k6 que hace **un solo login** y reutiliza el token; las iteraciones prueban el flujo real de un usuario ya autenticado.
 3. **Endpoint inexistente**: el script original apuntaba a `/api/catalogos/carreras`, que **nunca existió** en el backend (`CatalogoController` solo expone `/modalidades`, `/convocatorias` y `/convocatoria-activa`). Como la petición iba sin token, siempre devolvía 403 antes de llegar al enrutador, por lo que el 404 real nunca se notó. Se corrigió a `/catalogos/modalidades` (endpoint real) y se agregó `/universidades` (el endpoint con caché Redis, Requisito E2) para ejercitar más superficie de la API.
 
-## Cómo se ejecutaron (runs 3-5)
+## Cómo se ejecutaron (runs 3-7, las 5 válidas)
 
 ```bash
-# k6 nativo (winget install GrafanaLabs.k6), backend real en localhost:8080
-# (postgres + redis en Docker, backend con mvnw spring-boot:run)
-k6 run --quiet --summary-export=runN-summary.json load-test.js
+# k6 nativo, backend real accesible en localhost:8080 (docker compose up -d --build)
+cd k6 && BASE_URL=http://localhost:8080/api/v1 k6 run --quiet --summary-export=runN-summary.json load-test.js
 ```
 
-## Resultados reales (5 corridas, ~2 minutos cada una: 30s ramp-up a 20 VUs, 1min en 50 VUs, 30s ramp-down)
+`run3`-`run5` se ejecutaron el 2026-08-17 contra un backend levantado con `mvnw spring-boot:run`.
+`run6`-`run7` se ejecutaron el 2026-08-29 contra el stack completo de `docker compose up -d --build`
+(nginx → backend → Postgres/Redis), como parte de la verificación de reproducibilidad end-to-end —
+mismo script `load-test.js`, sin cambios, para que las 5 corridas sean comparables entre sí.
 
-| Métrica | Run 1 | Run 2 | Run 3 | Run 4 | Run 5 |
+## Resultados reales — 5 corridas válidas (~2 minutos cada una: 30s ramp-up a 20 VUs, 1min en 50 VUs, 30s ramp-down)
+
+| Métrica | Run 3 | Run 4 | Run 5 | Run 6 | Run 7 |
 |---|---|---|---|---|---|
-| Metodología | login por iteración, `/api` sin versión | login por iteración, `/api` sin versión | login único (`setup()`), `/api/v1` | login único (`setup()`), `/api/v1` | login único (`setup()`), `/api/v1` |
-| Requests totales | 5,876 | 5,874 | 6,231 | 6,237 | 6,241 |
-| `http_req_duration` p95 | 80.28 ms | 80.91 ms | 7.70 ms | 7.39 ms | 7.47 ms |
-| `http_req_duration` avg | 38.35 ms | 38.33 ms | 7.48 ms | 6.26 ms | 6.30 ms |
-| `http_req_failed` | 50%* | 50%* | 0% | 0% | 0% |
+| Fecha | 2026-08-17 | 2026-08-17 | 2026-08-17 | 2026-08-29 | 2026-08-29 |
+| Requests totales | 6,231 | 6,237 | 6,241 | 6,255 | 6,271 |
+| `http_req_duration` p95 | 7.70 ms | 7.39 ms | 7.47 ms | 8.53 ms | 6.17 ms |
+| `http_req_duration` avg | 7.48 ms | 6.26 ms | 6.30 ms | 5.00 ms | 3.87 ms |
+| `http_req_failed` | 0% | 0% | 0% | 0% | 0% |
 | Umbral `p(95)<500ms` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Umbral `http_req_failed<1%` | ❌* | ❌* | ✅ | ✅ | ✅ |
+| Umbral `http_req_failed<1%` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-\* En run1/run2 la mitad de las peticiones eran a `/catalogos/carreras` sin token (403 Forbidden, contado como fallo por k6) — comportamiento documentado, no error del servidor. Runs 3-5 usan un endpoint real con token válido y no reproducen ese fallo.
-
-La latencia bajó notablemente entre run1/2 y run3-5 (p95 de ~80ms a ~7.5ms) principalmente porque las corridas nuevas no repiten `POST /auth/login` (con hashing BCrypt, el paso más costoso) en cada iteración — es la comparación esperada entre "login en cada request" vs "sesión ya autenticada", no una mejora de infraestructura entre corridas.
+Media de p95 sobre las 5 corridas válidas: **7.45 ms**. Las corridas `run1`/`run2` (metodología
+distinta, 100% de fallos en su check principal) se excluyen de este promedio — ver la sección
+anterior.
 
 ## Análisis estadístico: caché fría vs caché caliente (`GET /api/v1/universidades`)
 

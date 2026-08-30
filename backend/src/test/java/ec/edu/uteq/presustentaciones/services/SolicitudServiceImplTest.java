@@ -35,6 +35,8 @@ class SolicitudServiceImplTest {
     @Mock private ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
     @Mock private CarreraRepository carreraRepository;
     @Mock private PeriodoAcademicoRepository periodoAcademicoRepository;
+    @Mock private AuditoriaService auditoriaService;
+    @Mock private EstadoAcademicoRepository estadoAcademicoRepository;
 
     @InjectMocks
     private SolicitudServiceImpl solicitudService;
@@ -106,6 +108,8 @@ class SolicitudServiceImplTest {
         // sp_generar_codigo_expediente (Fase 3): verifica que el service SI llama al SP
         // al crear el perfil, no que calcule el codigo el mismo en Java.
         when(estudianteRepository.generarCodigoExpediente(null, null)).thenReturn("EXP-2026-00007");
+        when(estadoAcademicoRepository.findByCodigo("ACTIVO"))
+                .thenReturn(Optional.of(EstadoAcademico.builder().codigo("ACTIVO").nombre("Activo").build()));
         when(estudianteRepository.save(any(Estudiante.class))).thenAnswer(inv -> {
             Estudiante e = inv.getArgument(0);
             e.setId(5L);

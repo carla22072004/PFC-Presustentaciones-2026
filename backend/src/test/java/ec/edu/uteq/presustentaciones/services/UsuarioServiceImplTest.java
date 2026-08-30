@@ -33,6 +33,9 @@ class UsuarioServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private AuditoriaService auditoriaService;
+
     @InjectMocks
     private UsuarioServiceImpl usuarioService;
 

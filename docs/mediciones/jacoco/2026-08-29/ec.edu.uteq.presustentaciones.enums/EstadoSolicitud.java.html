@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EstadoSolicitud.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.enums</a> &gt; <span class="el_source">EstadoSolicitud.java</span></div><h1>EstadoSolicitud.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.enums;
+
+<span class="nc" id="L3">public enum EstadoSolicitud {</span>
+<span class="nc" id="L4">    CREADA,</span>
+<span class="nc" id="L5">    ENVIADA,</span>
+<span class="nc" id="L6">    APROBADA,</span>
+<span class="nc" id="L7">    RECHAZADA,</span>
+<span class="nc" id="L8">    SUSPENDIDA,</span>
+<span class="nc" id="L9">    TUTORIA,</span>
+<span class="nc" id="L10">    EVALUACION,</span>
+<span class="nc" id="L11">    CALIFICADA,</span>
+<span class="nc" id="L12">    COMPLETADA;</span>
+
+    public static boolean esSuspendible(EstadoSolicitud estado) {
+<span class="nc bnc" id="L15" title="All 8 branches missed.">        return estado != null </span>
+            &amp;&amp; estado != COMPLETADA 
+            &amp;&amp; estado != SUSPENDIDA 
+            &amp;&amp; estado != RECHAZADA;
+    }
+
+    public boolean esSuspendible() {
+<span class="nc" id="L22">        return esSuspendible(this);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

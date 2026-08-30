@@ -41,17 +41,23 @@ $p = 3.02 \times 10^{-11}$ (dos colas), tamaño de efecto (correlación biserial
 \begin{itemize}[nosep]
     \item \textbf{Revisión manual OWASP Top~10:} 6 de 10 controles auditados manualmente en código
     fuente; 3 hallazgos reales corregidos, 1 abierto (\texttt{docs/mediciones/sec/owasp/OWASP-AUDIT.md}).
-    \item \textbf{OWASP ZAP (escaneo dinámico):} 0 hallazgos \texttt{FAIL}, 4 hallazgos corregidos
-    (cabeceras de seguridad faltantes en nginx), verificado contra la topología real de producción.
-    \item \textbf{Análisis estático (find-sec-bugs, 189 hallazgos totales):} 121 informativos
-    (\texttt{SPRING\_ENDPOINT}), 44 \texttt{CRLF\_INJECTION\_LOGS}, 13 \texttt{IMPROPER\_UNICODE}, 9
-    \texttt{PATH\_TRAVERSAL\_IN}, 1 \texttt{UNSAFE\_HASH\_EQUALS} (corregido en esta fase, cambiado a
-    \texttt{MessageDigest.isEqual}), 1 informativo \texttt{SPRING\_CSRF\_PROTECTION\_DISABLED}.
+    \item \textbf{OWASP ZAP (escaneo dinámico):} 0 hallazgos \texttt{FAIL} en las tres corridas reales
+    (17-08 y 29-08). 5 hallazgos corregidos en total: 4 cabeceras de seguridad faltantes en nginx
+    (17-08) y 1 alerta de riesgo \texttt{High} --- \texttt{@angular/core} 21.2.12 vulnerable (3 CVEs
+    reales), corregida el 29-08 actualizando a 21.2.22 --- verificado contra la topología real de
+    producción. 3 \texttt{WARN} de severidad Medium/Informational quedan abiertos.
+    \item \textbf{Análisis estático (find-sec-bugs, 233 hallazgos totales al 29-08, 189 al 17-08 ---
+    el aumento refleja código de producción nuevo, no nuevas categorías de riesgo):} 160 informativos
+    (\texttt{SPRING\_ENDPOINT}), 52 \texttt{CRLF\_INJECTION\_LOGS}, 11 \texttt{IMPROPER\_UNICODE}, 9
+    \texttt{PATH\_TRAVERSAL\_IN}, 0 \texttt{UNSAFE\_HASH\_EQUALS} (corregido en Fase 3, confirmado que se
+    mantiene en 0), 1 informativo \texttt{SPRING\_CSRF\_PROTECTION\_DISABLED}.
     \textbf{0 hallazgos de \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE}} --- ninguna evidencia
     de SQL dinámico/inyección.
-    \item \textbf{\texttt{npm audit} (dependencias frontend):} 41 vulnerabilidades (3 bajas, 7 moderadas,
-    25 altas, 6 críticas) --- no corregidas en el alcance de este informe, declaradas como brecha
-    abierta (Sección~\ref{sec:trabajo-futuro}).
+    \item \textbf{\texttt{npm audit} (dependencias frontend):} bajó de 41 a \textbf{14 vulnerabilidades}
+    (0 bajas, 4 moderadas, 5 altas, 5 críticas) tras corregir \texttt{@angular/core} el 29-08; las 14
+    restantes están en herramientas de build de íconos (\texttt{sharp}/\texttt{to-ico}/\texttt{jimp}),
+    no en código que se envía al navegador --- declaradas como brecha abierta
+    (Sección~\ref{sec:trabajo-futuro}).
 \end{itemize}
 
 \subsection{Usabilidad}
@@ -64,9 +70,11 @@ porque no existe ninguna medición real que reportar.
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 46 pruebas automatizadas reales: 18.13\,\% de instrucciones (2,417/13,334), 22.70\,\% de
-líneas (559/2,463) --- por debajo del umbral RNF-04 de 60\,\%, en progreso real desde 2.83\,\% en una
-medición anterior (\texttt{docs/mediciones/jacoco/COVERAGE.md}).
+JaCoCo sobre 61 pruebas automatizadas reales: 20.26\,\% de instrucciones (3,290/16,237), 24.63\,\% de
+líneas (743/3,017) --- por debajo del umbral RNF-04 de 60\,\%. El porcentaje bajó respecto a una medición
+intermedia del 17-08 (23.33\,\%/28.45\,\%) porque se agregó código de producción real sin tests
+proporcionales en el mismo periodo; el número absoluto de instrucciones/líneas cubiertas subió
+(\texttt{docs/mediciones/jacoco/COVERAGE.md}).
 
 \subsection{Calidad web (Lighthouse)}
 

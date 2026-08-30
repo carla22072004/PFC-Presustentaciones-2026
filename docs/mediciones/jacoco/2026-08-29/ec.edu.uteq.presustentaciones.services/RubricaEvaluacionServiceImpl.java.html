@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RubricaEvaluacionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sistema Gestión Pre-Sustentaciones UTEQ</a> &gt; <a href="index.source.html" class="el_package">ec.edu.uteq.presustentaciones.services</a> &gt; <span class="el_source">RubricaEvaluacionServiceImpl.java</span></div><h1>RubricaEvaluacionServiceImpl.java</h1><pre class="source lang-java linenums">package ec.edu.uteq.presustentaciones.services;
+
+import ec.edu.uteq.presustentaciones.dto.EscalaCriterioDTO;
+import ec.edu.uteq.presustentaciones.dto.EvaluacionRubricaRequest;
+import ec.edu.uteq.presustentaciones.dto.EvaluacionRubricaResponse;
+import ec.edu.uteq.presustentaciones.dto.ObservacionesSolicitudDTO;
+import ec.edu.uteq.presustentaciones.entities.*;
+import ec.edu.uteq.presustentaciones.repositories.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
+public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
+
+    private final EvaluacionCriterioRepository evalCriterioRepo;
+    private final CriterioRubricaRepository criterioRepo;
+    private final JuradoRepository juradoRepo;
+    private final SolicitudRepository solicitudRepo;
+    private final RubricaRepository rubricaRepo;
+    private final TutorRepository tutorRepo;
+    private final EvaluacionFinalRepository evaluacionFinalRepo;
+    private final EvaluacionJuradoRepository javaEvaluacionJuradoRepo;
+    private final EvaluadorRepository evaluadorRepo;
+    private final TipoEvaluadorRepository tipoEvaluadorRepo;
+
+    @Override
+    @Transactional
+    public EvaluacionRubricaResponse registrarEvaluacion(EvaluacionRubricaRequest req) {
+<span class="nc" id="L35">        Solicitud solicitud = solicitudRepo.findById(req.getSolicitudId())</span>
+<span class="nc" id="L36">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + req.getSolicitudId()));</span>
+
+<span class="nc" id="L38">        Jurado jurado = juradoRepo.findById(req.getJuradoId())</span>
+<span class="nc" id="L39">                .orElseThrow(() -&gt; new RuntimeException(&quot;Jurado no encontrado: &quot; + req.getJuradoId()));</span>
+
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (!jurado.getSolicitud().getId().equals(req.getSolicitudId())) {</span>
+<span class="nc" id="L42">            throw new RuntimeException(&quot;El jurado no pertenece a esta solicitud.&quot;);</span>
+        }
+
+<span class="nc" id="L45">        rubricaRepo.findById(req.getRubricaId())</span>
+<span class="nc" id="L46">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rúbrica no encontrada: &quot; + req.getRubricaId()));</span>
+
+<span class="nc" id="L48">        List&lt;CriterioRubrica&gt; criterios = criterioRepo.findByRubricaIdOrderByOrdenAsc(req.getRubricaId());</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (criterios.isEmpty()) {</span>
+<span class="nc" id="L50">            throw new RuntimeException(&quot;La rúbrica no tiene criterios definidos.&quot;);</span>
+        }
+<span class="nc bnc" id="L52" title="All 4 branches missed.">        if (req.getCriterios() == null || req.getCriterios().size() != criterios.size()) {</span>
+<span class="nc" id="L53">            throw new RuntimeException(&quot;Debe evaluar todos los &quot; + criterios.size() + &quot; criterios de la rúbrica.&quot;);</span>
+        }
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        for (EscalaCriterioDTO c : req.getCriterios()) {</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">            if (c.getEscala() &lt; 1 || c.getEscala() &gt; 100) {</span>
+<span class="nc" id="L57">                throw new RuntimeException(&quot;Escala inválida: &quot; + c.getEscala() + &quot;. Use valores entre 1 y 100.&quot;);</span>
+            }
+<span class="nc" id="L59">        }</span>
+
+        // Buscar o crear el Evaluador correspondiente para este jurado
+<span class="nc" id="L62">        Evaluador evaluador = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(</span>
+<span class="nc" id="L63">                req.getSolicitudId(), jurado.getDocente().getId(), &quot;JURADO&quot;)</span>
+<span class="nc" id="L64">            .orElseGet(() -&gt; {</span>
+<span class="nc" id="L65">                TipoEvaluador tipo = tipoEvaluadorRepo.findByCodigo(&quot;JURADO&quot;)</span>
+<span class="nc" id="L66">                        .orElseThrow(() -&gt; new RuntimeException(&quot;Tipo evaluador JURADO no configurado.&quot;));</span>
+<span class="nc" id="L67">                Evaluador ev = Evaluador.builder()</span>
+<span class="nc" id="L68">                        .solicitud(solicitud)</span>
+<span class="nc" id="L69">                        .docente(jurado.getDocente())</span>
+<span class="nc" id="L70">                        .miembroTribunal(jurado)</span>
+<span class="nc" id="L71">                        .tipoEvaluador(tipo)</span>
+<span class="nc" id="L72">                        .peso(1.0)</span>
+<span class="nc" id="L73">                        .build();</span>
+<span class="nc" id="L74">                return evaluadorRepo.save(ev);</span>
+            });
+
+        // Permite re-evaluación: eliminar la anterior
+<span class="nc" id="L78">        evalCriterioRepo.deleteBySolicitudIdAndEvaluadorId(req.getSolicitudId(), evaluador.getId());</span>
+
+<span class="nc" id="L80">        List&lt;EvaluacionCriterio&gt; guardadas = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        for (EscalaCriterioDTO cDto : req.getCriterios()) {</span>
+<span class="nc" id="L82">            CriterioRubrica criterio = criterios.stream()</span>
+<span class="nc" id="L83">                    .filter(c -&gt; c.getId().equals(cDto.getCriterioId()))</span>
+<span class="nc" id="L84">                    .findFirst()</span>
+<span class="nc" id="L85">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Criterio no encontrado: &quot; + cDto.getCriterioId()));</span>
+
+<span class="nc" id="L87">            double notaObtenida = Math.round(criterio.getPonderacion() * cDto.getEscala() / 100.0 * 100.0) / 100.0;</span>
+<span class="nc" id="L88">            String observacionAuto = EvaluacionCriterio.getObservacionPorRango(cDto.getEscala());</span>
+
+<span class="nc" id="L90">            EvaluacionCriterio ec = EvaluacionCriterio.builder()</span>
+<span class="nc" id="L91">                    .solicitud(solicitud)</span>
+<span class="nc" id="L92">                    .evaluador(evaluador)</span>
+<span class="nc" id="L93">                    .jurado(jurado)</span>
+<span class="nc" id="L94">                    .criterio(criterio)</span>
+<span class="nc" id="L95">                    .escala(cDto.getEscala())</span>
+<span class="nc" id="L96">                    .notaObtenida(notaObtenida)</span>
+<span class="nc" id="L97">                    .observacionAuto(observacionAuto)</span>
+<span class="nc" id="L98">                    .observacionManual(cDto.getObservacionManual())</span>
+<span class="nc" id="L99">                    .observaciones(cDto.getObservaciones())</span>
+<span class="nc" id="L100">                    .build();</span>
+<span class="nc" id="L101">            guardadas.add(evalCriterioRepo.save(ec));</span>
+<span class="nc" id="L102">        }</span>
+
+<span class="nc" id="L104">        return buildResponse(jurado, guardadas, req.getSolicitudId(), evaluador.getId());</span>
+    }
+ 
+    @Override
+    public EvaluacionRubricaResponse obtenerEvaluacionJurado(Long solicitudId, Long juradoId) {
+<span class="nc" id="L109">        Jurado jurado = juradoRepo.findById(juradoId)</span>
+<span class="nc" id="L110">                .orElseThrow(() -&gt; new RuntimeException(&quot;Jurado no encontrado: &quot; + juradoId));</span>
+        
+<span class="nc" id="L112">        Evaluador evaluador = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(</span>
+<span class="nc" id="L113">                solicitudId, jurado.getDocente().getId(), &quot;JURADO&quot;)</span>
+<span class="nc" id="L114">                .orElseThrow(() -&gt; new RuntimeException(&quot;Evaluador no registrado para el jurado.&quot;));</span>
+
+<span class="nc" id="L116">        List&lt;EvaluacionCriterio&gt; evals = evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evaluador.getId());</span>
+<span class="nc" id="L117">        return buildResponse(jurado, evals, solicitudId, evaluador.getId());</span>
+    }
+ 
+    @Override
+    public List&lt;EvaluacionRubricaResponse&gt; obtenerEvaluacionesSolicitud(Long solicitudId) {
+<span class="nc" id="L122">        List&lt;Jurado&gt; jurados = juradoRepo.findBySolicitudId(solicitudId);</span>
+<span class="nc" id="L123">        return jurados.stream()</span>
+<span class="nc" id="L124">                .map(j -&gt; {</span>
+<span class="nc" id="L125">                    var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(</span>
+<span class="nc" id="L126">                            solicitudId, j.getDocente().getId(), &quot;JURADO&quot;);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                    List&lt;EvaluacionCriterio&gt; evals = evOpt.isPresent()</span>
+<span class="nc" id="L128">                            ? evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())</span>
+<span class="nc" id="L129">                            : new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L130">                    return buildResponse(j, evals, solicitudId, evOpt.map(Evaluador::getId).orElse(null));</span>
+                })
+<span class="nc" id="L132">                .collect(Collectors.toList());</span>
+    }
+ 
+    @Override
+    public Double calcularNotaTribunal(Long solicitudId) {
+<span class="fc" id="L137">        return promedioTribunal(solicitudId);</span>
+    }
+ 
+    // ── Helper ──────────────────────────────────────────────────────────────
+ 
+    /** Calcula el promedio de (suma de notas por jurado) en Java para evitar subqueries en JPQL */
+    private Double promedioTribunal(Long solicitudId) {
+<span class="fc" id="L144">        List&lt;Object[]&gt; filas = evalCriterioRepo.sumaPorEvaluador(solicitudId);</span>
+<span class="pc bpc" id="L145" title="1 of 4 branches missed.">        if (filas == null || filas.isEmpty()) return null;</span>
+<span class="fc" id="L146">        double suma = filas.stream()</span>
+<span class="fc" id="L147">                .mapToDouble(f -&gt; ((Number) f[1]).doubleValue())</span>
+<span class="fc" id="L148">                .sum();</span>
+<span class="fc" id="L149">        double promedio = suma / filas.size();</span>
+<span class="fc" id="L150">        return Math.round(promedio * 100.0) / 100.0;</span>
+    }
+ 
+    private EvaluacionRubricaResponse buildResponse(Jurado jurado,
+                                                     List&lt;EvaluacionCriterio&gt; evals,
+                                                     Long solicitudId,
+                                                     Long evaluadorId) {
+<span class="nc bnc" id="L157" title="All 4 branches missed.">        String nombre = jurado.getDocente() != null &amp;&amp; jurado.getDocente().getUsuario() != null</span>
+<span class="nc" id="L158">                ? jurado.getDocente().getUsuario().getNombre() + &quot; &quot; + jurado.getDocente().getUsuario().getApellido()</span>
+<span class="nc" id="L159">                : &quot;Docente #&quot; + jurado.getId();</span>
+ 
+<span class="nc" id="L161">        List&lt;EvaluacionRubricaResponse.CriterioResultado&gt; detalles = evals.stream()</span>
+<span class="nc" id="L162">                .map(ec -&gt; EvaluacionRubricaResponse.CriterioResultado.builder()</span>
+<span class="nc" id="L163">                        .criterioId(ec.getCriterio().getId())</span>
+<span class="nc" id="L164">                        .nombreCriterio(ec.getCriterio().getNombre())</span>
+<span class="nc" id="L165">                        .ponderacion(ec.getCriterio().getPonderacion())</span>
+<span class="nc" id="L166">                        .escala(ec.getEscala())</span>
+<span class="nc" id="L167">                        .rangoDescripcion(EvaluacionCriterio.getRangoDescripcion(ec.getEscala()))</span>
+<span class="nc" id="L168">                        .notaObtenida(ec.getNotaObtenida())</span>
+<span class="nc" id="L169">                        .observacionAuto(ec.getObservacionAuto())</span>
+<span class="nc" id="L170">                        .observacionManual(ec.getObservacionManual())</span>
+<span class="nc" id="L171">                        .observaciones(ec.getObservaciones())</span>
+<span class="nc" id="L172">                        .build())</span>
+<span class="nc" id="L173">                .collect(Collectors.toList());</span>
+ 
+<span class="nc" id="L175">        double notaTotal = evals.stream()</span>
+<span class="nc" id="L176">                .mapToDouble(EvaluacionCriterio::getNotaObtenida)</span>
+<span class="nc" id="L177">                .sum();</span>
+<span class="nc" id="L178">        notaTotal = Math.round(notaTotal * 100.0) / 100.0;</span>
+ 
+<span class="nc" id="L180">        Double notaPromedio = promedioTribunal(solicitudId);</span>
+ 
+<span class="nc" id="L182">        List&lt;Jurado&gt; todosJurados = juradoRepo.findBySolicitudId(solicitudId);</span>
+<span class="nc" id="L183">        boolean completo = false;</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (!todosJurados.isEmpty()) {</span>
+<span class="nc" id="L185">            completo = true;</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            for (Jurado j : todosJurados) {</span>
+<span class="nc" id="L187">                var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(</span>
+<span class="nc" id="L188">                        solicitudId, j.getDocente().getId(), &quot;JURADO&quot;);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                if (evOpt.isPresent()) {</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">                    if (!evalCriterioRepo.existsBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())) {</span>
+<span class="nc" id="L191">                        completo = false;</span>
+<span class="nc" id="L192">                        break;</span>
+                    }
+                } else {
+<span class="nc" id="L195">                    completo = false;</span>
+<span class="nc" id="L196">                    break;</span>
+                }
+<span class="nc" id="L198">            }</span>
+        }
+ 
+<span class="nc" id="L201">        return EvaluacionRubricaResponse.builder()</span>
+<span class="nc" id="L202">                .solicitudId(solicitudId)</span>
+<span class="nc" id="L203">                .juradoId(jurado.getId())</span>
+<span class="nc" id="L204">                .nombreJurado(nombre)</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                .rolJurado(jurado.getRolJurado() != null ? jurado.getRolJurado().getNombre() : &quot;&quot;)</span>
+<span class="nc" id="L206">                .detalles(detalles)</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">                .notaTotalJurado(evals.isEmpty() ? null : notaTotal)</span>
+<span class="nc" id="L208">                .notaPromedioTribunal(notaPromedio)</span>
+<span class="nc" id="L209">                .tribunalCompleto(completo)</span>
+<span class="nc" id="L210">                .build();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ObservacionesSolicitudDTO obtenerObservacionesSolicitud(Long solicitudId) {
+<span class="nc" id="L216">        Solicitud solicitud = solicitudRepo.findById(solicitudId)</span>
+<span class="nc" id="L217">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+
+<span class="nc" id="L219">        String nombreEstudiante = &quot;&quot;;</span>
+<span class="nc bnc" id="L220" title="All 4 branches missed.">        if (solicitud.getEstudiante() != null &amp;&amp; solicitud.getEstudiante().getUsuario() != null) {</span>
+<span class="nc" id="L221">            nombreEstudiante = solicitud.getEstudiante().getUsuario().getNombre() + &quot; &quot; </span>
+<span class="nc" id="L222">                    + solicitud.getEstudiante().getUsuario().getApellido();</span>
+        }
+
+<span class="nc" id="L225">        ObservacionesSolicitudDTO.ObservacionesTutorDTO tutorDTO = null;</span>
+<span class="nc" id="L226">        var tutorOpt = tutorRepo.findBySolicitudId(solicitudId);</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (tutorOpt.isPresent()) {</span>
+<span class="nc" id="L228">            Tutor tutor = tutorOpt.get();</span>
+<span class="nc bnc" id="L229" title="All 4 branches missed.">            String nombreTutor = tutor.getDocente() != null &amp;&amp; tutor.getDocente().getUsuario() != null</span>
+<span class="nc" id="L230">                    ? tutor.getDocente().getUsuario().getNombre() + &quot; &quot; + tutor.getDocente().getUsuario().getApellido()</span>
+<span class="nc" id="L231">                    : &quot;Tutor&quot;;</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">            String fechaRegistro = tutor.getFechaAsignacion() != null</span>
+<span class="nc" id="L233">                    ? tutor.getFechaAsignacion().toString() : null;</span>
+<span class="nc" id="L234">            tutorDTO = ObservacionesSolicitudDTO.ObservacionesTutorDTO.builder()</span>
+<span class="nc" id="L235">                    .tutorId(tutor.getId())</span>
+<span class="nc" id="L236">                    .nombreTutor(nombreTutor)</span>
+<span class="nc" id="L237">                    .observaciones(tutor.getObservaciones())</span>
+<span class="nc" id="L238">                    .fechaRegistro(fechaRegistro)</span>
+<span class="nc" id="L239">                    .build();</span>
+        }
+
+<span class="nc" id="L242">        List&lt;ObservacionesSolicitudDTO.ObservacionesJuradoDTO&gt; juradosDTO = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L243">        List&lt;Jurado&gt; jurados = juradoRepo.findBySolicitudId(solicitudId);</span>
+        
+<span class="nc" id="L245">        List&lt;EvaluacionJurado&gt; evaluacionesJurado = javaEvaluacionJuradoRepo.findBySolicitudId(solicitudId);</span>
+        
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        for (Jurado jurado : jurados) {</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">            String nombreJurado = jurado.getDocente() != null &amp;&amp; jurado.getDocente().getUsuario() != null</span>
+<span class="nc" id="L249">                    ? jurado.getDocente().getUsuario().getNombre() + &quot; &quot; + jurado.getDocente().getUsuario().getApellido()</span>
+<span class="nc" id="L250">                    : &quot;Docente&quot;;</span>
+            
+<span class="nc" id="L252">            EvaluacionJurado evalJurado = evaluacionesJurado.stream()</span>
+<span class="nc" id="L253">                    .filter(e -&gt; e.getJurado().getId().equals(jurado.getId()))</span>
+<span class="nc" id="L254">                    .findFirst()</span>
+<span class="nc" id="L255">                    .orElse(null);</span>
+            
+<span class="nc" id="L257">            var evOpt = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(solicitudId, jurado.getDocente().getId(), &quot;JURADO&quot;);</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">            List&lt;EvaluacionCriterio&gt; criterios = evOpt.isPresent()</span>
+<span class="nc" id="L259">                    ? evalCriterioRepo.findBySolicitudIdAndEvaluadorId(solicitudId, evOpt.get().getId())</span>
+<span class="nc" id="L260">                    : new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L261">            List&lt;ObservacionesSolicitudDTO.CriterioObservacionDTO&gt; criteriosDTO = criterios.stream()</span>
+<span class="nc" id="L262">                    .map(ec -&gt; ObservacionesSolicitudDTO.CriterioObservacionDTO.builder()</span>
+<span class="nc" id="L263">                            .nombreCriterio(ec.getCriterio().getNombre())</span>
+<span class="nc" id="L264">                            .ponderacion(ec.getCriterio().getPonderacion())</span>
+<span class="nc" id="L265">                            .escala(ec.getEscala())</span>
+<span class="nc" id="L266">                            .rangoDescripcion(EvaluacionCriterio.getRangoDescripcion(ec.getEscala()))</span>
+<span class="nc" id="L267">                            .notaObtenida(ec.getNotaObtenida())</span>
+<span class="nc" id="L268">                            .observacionAuto(ec.getObservacionAuto())</span>
+<span class="nc" id="L269">                            .observacionManual(ec.getObservacionManual())</span>
+<span class="nc" id="L270">                            .build())</span>
+<span class="nc" id="L271">                    .collect(Collectors.toList());</span>
+            
+<span class="nc" id="L273">            juradosDTO.add(ObservacionesSolicitudDTO.ObservacionesJuradoDTO.builder()</span>
+<span class="nc" id="L274">                    .juradoId(jurado.getId())</span>
+<span class="nc" id="L275">                    .nombreJurado(nombreJurado)</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">                    .rol(jurado.getRolJurado() != null ? jurado.getRolJurado().getNombre() : &quot;&quot;)</span>
+<span class="nc" id="L277">                    .criterios(criteriosDTO)</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                    .notaJurado(evalJurado != null ? evalJurado.getNotaJurado() : null)</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">                    .observaciones(evalJurado != null ? evalJurado.getObservaciones() : null)</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">                    .resultado(evalJurado != null ? evalJurado.getResultado() : null)</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">                    .comentarioPreestablecido(evalJurado != null ? evalJurado.getComentarioPreestablecido() : null)</span>
+<span class="nc" id="L282">                    .build());</span>
+<span class="nc" id="L283">        }</span>
+
+<span class="nc" id="L285">        ObservacionesSolicitudDTO.ObservacionesCoordinadorDTO coordinadorDTO = null;</span>
+<span class="nc" id="L286">        var evaluacionOpt = evaluacionFinalRepo.findBySolicitudId(solicitudId);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (evaluacionOpt.isPresent()) {</span>
+<span class="nc" id="L288">            EvaluacionFinal ev = evaluacionOpt.get();</span>
+<span class="nc" id="L289">            coordinadorDTO = ObservacionesSolicitudDTO.ObservacionesCoordinadorDTO.builder()</span>
+<span class="nc" id="L290">                    .observaciones(ev.getObservaciones())</span>
+<span class="nc" id="L291">                    .notaInstructor(ev.getNotaInstructor())</span>
+<span class="nc" id="L292">                    .notaFinal(ev.getNotaFinal())</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">                    .resultado(ev.getResultado() != null ? ev.getResultado().getNombre() : &quot;&quot;)</span>
+<span class="nc" id="L294">                    .build();</span>
+        }
+
+<span class="nc" id="L297">        return ObservacionesSolicitudDTO.builder()</span>
+<span class="nc" id="L298">                .solicitudId(solicitudId)</span>
+<span class="nc" id="L299">                .tituloTema(solicitud.getTituloTema())</span>
+<span class="nc" id="L300">                .nombreEstudiante(nombreEstudiante)</span>
+<span class="nc" id="L301">                .tutor(tutorDTO)</span>
+<span class="nc" id="L302">                .jurados(juradosDTO)</span>
+<span class="nc" id="L303">                .coordinador(coordinadorDTO)</span>
+<span class="nc" id="L304">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

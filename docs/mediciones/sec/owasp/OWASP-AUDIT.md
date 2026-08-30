@@ -1,14 +1,16 @@
 # 🛡️ AUDITORÍA DE SEGURIDAD OWASP TOP 10 — REVISIÓN MANUAL + HERRAMIENTAS AUTOMÁTICAS
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
-**Metodología:** Revisión manual del código fuente (2026-08-11/12) contra los 6 controles listados abajo, **más 3 herramientas automáticas reales corridas el 2026-08-17** (Fase 5): OWASP ZAP baseline (escaneo dinámico contra la app corriendo), SpotBugs + find-sec-bugs (análisis estático, incluye la regla `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE` para SQL dinámico), y `npm audit` (componentes vulnerables del frontend). Evidencia completa en [`docs/mediciones/sec/zap/`](../zap/) y en el job `backend` de [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml).
-**Fecha:** 2026-08-11/12 (revisión manual), 2026-08-17 (herramientas automáticas).
+**Metodología:** Revisión manual del código fuente (2026-08-11/12) contra los 6 controles listados abajo, **más 3 herramientas automáticas reales corridas el 2026-08-17** (Fase 5) **y una segunda corrida de verificación el 2026-08-29** (auditoría de reproducibilidad, tras corregir el hallazgo `10003`): OWASP ZAP (escaneo dinámico contra la app corriendo), SpotBugs + find-sec-bugs (análisis estático, incluye la regla `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE` para SQL dinámico), y `npm audit` (componentes vulnerables del frontend). Evidencia completa en [`docs/mediciones/sec/zap/`](../zap/) (el par `zap-baseline-report.PREVIOUS.{html,json}` es la corrida del 17-08, conservada; `zap-baseline-report.{html,json}` sin sufijo es la corrida del 29-08) y en el job `backend` de [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml).
+**Fecha:** 2026-08-11/12 (revisión manual), 2026-08-17 (herramientas automáticas), 2026-08-29 (corrección de `10003` y re-escaneo).
 
 ---
 
 ## Resumen
 
-La revisión manual encontró y corrigió **3 problemas reales de control de acceso** en la gestión de usuarios. El hallazgo abierto de la ronda anterior (secreto JWT hardcodeado) **se corrigió el 2026-08-17** (ver A02). Las herramientas automáticas corridas en Fase 5 confirman **0 hallazgos de SQL dinámico/inyección** (find-sec-bugs), identifican **41 dependencias vulnerables del frontend** (6 críticas) pendientes de actualizar, y el escaneo dinámico OWASP ZAP no encontró ningún `FAIL` (0 vulnerabilidades de alta confianza), con 7 `WARN` restantes tras corregir 4 en el momento (cabeceras de seguridad faltantes en las respuestas estáticas de nginx).
+La revisión manual encontró y corrigió **3 problemas reales de control de acceso** en la gestión de usuarios. El hallazgo abierto de la ronda anterior (secreto JWT hardcodeado) se corrigió el 2026-08-17 (ver A02). Las herramientas automáticas confirman **0 hallazgos de SQL dinámico/inyección** (find-sec-bugs) y el escaneo dinámico OWASP ZAP no encontró ningún `FAIL` (0 vulnerabilidades de alta confianza) en ninguna de las dos corridas.
+
+**Corrección real 2026-08-29:** la corrida de ZAP del 17-08 sí tenía una alerta de **riesgo `High`** — `10003 Vulnerable JS Library` (`@angular/core` 21.2.12, 3 CVEs reales con advisories públicos de GitHub) — que una versión anterior de este documento describía incorrectamente junto con los demás `WARN` de "severidad menor", sin destacar que ZAP la clasifica como `riskdesc: High (Medium)`, el nivel de riesgo más alto de todo el escaneo. Se corrigió actualizando `@angular/core`/`common`/`compiler`/`forms`/`platform-browser`/`router`/`build`/`cli` de 21.2.12 a 21.2.22 (parche dentro del mismo rango `^21.1.0` ya declarado en `package.json`, sin cambios breaking) y se re-corrió ZAP: **la alerta `10003` ahora pasa (`PASS`), 0 alertas de riesgo `High` en el escaneo actual.** `npm audit` del frontend bajó de 41 a **14 vulnerabilidades** (las 14 restantes son de herramientas de build de íconos —`sharp`/`to-ico`/`jimp`—, no de dependencias que se envían al navegador). ZAP bajó de 7 `WARN` a **3 `WARN`** (`10055`, `10109`, `90003`, todos Medium/Informational).
 
 ## A01:2021 — Broken Access Control
 
@@ -44,7 +46,11 @@ La revisión manual encontró y corrigió **3 problemas reales de control de acc
 
 ## A06:2021 — Vulnerable and Outdated Components
 
-**Confirmado con herramienta automática (2026-08-17):** `npm audit` sobre `Frontend/package-lock.json` real (no simulado) reporta **41 vulnerabilidades: 6 críticas, 25 altas, 7 moderadas, 3 bajas**. Las 3 críticas identificadas por nombre: `form-data <=2.5.5`, `minimist <=0.2.3`, `tar <=7.5.20` — todas dependencias transitivas de herramientas de build/test, no del código de aplicación en sí, pero igual de reales y explotables si algún flujo del pipeline de build queda expuesto. **No corregido en esta ronda** (requiere `npm audit fix` y probar que el build de producción y los tests siguen pasando tras el bump de versiones — trabajo no trivial dado el volumen, se deja para una iteración dedicada). El backend no se auditó con `mvn dependency-check:check` porque requiere descargar la base de datos NVD completa (varios GB, puede tardar más de una hora en la primera corrida) — queda pendiente para una corrida con tiempo dedicado, idealmente como job de CI con caché persistente de la base NVD.
+**Confirmado con herramienta automática (2026-08-17):** `npm audit` sobre `Frontend/package-lock.json` real (no simulado) reportó **41 vulnerabilidades: 6 críticas, 25 altas, 7 moderadas, 3 bajas**, incluyendo `@angular/core` 21.2.12 (la misma librería que ZAP detectó como servida al navegador — ver `10003` en la sección ZAP).
+
+**Corregido (2026-08-29):** se actualizaron `@angular/core`, `common`, `compiler`, `compiler-cli`, `forms`, `platform-browser`, `router`, `build` y `cli` de 21.2.12 a **21.2.22** — un parche dentro del mismo rango semver ya declarado en `package.json` (`^21.1.0`/`^21.1.2`), verificado con `npm ls` y con un `ng build --configuration production` real que compiló sin errores y se sirvió correctamente vía Docker/nginx (confirmado con login end-to-end contra la topología completa). Esto resuelve directamente los 3 CVEs que ZAP había detectado (GHSA-f3m7-gqxr-g87x, GHSA-rgjc-h3x7-9mwg, GHSA-692r-grfm-v8x7) y varios más. `npm audit` bajó a **14 vulnerabilidades: 5 críticas, 5 altas, 4 moderadas, 0 bajas** — las 14 restantes trazan a `sharp`/`to-ico`/`jimp`/`request` (dependencias de dev usadas solo para generar los íconos de la app, no se envían al navegador ni corren en producción).
+
+El backend no se auditó con `mvn dependency-check:check` porque requiere descargar la base de datos NVD completa (varios GB, puede tardar más de una hora en la primera corrida) — queda pendiente para una corrida con tiempo dedicado, idealmente como job de CI con caché persistente de la base NVD.
 
 ---
 
@@ -56,33 +62,40 @@ La revisión manual encontró y corrigió **3 problemas reales de control de acc
 | A02: Cryptographic Failures | 🟢 Corregido | 3 corregidos (password en texto plano, filtrado en JSON, secreto JWT hardcodeado) | Ver detalle arriba |
 | A03: Injection | 🟢 Sin hallazgos (manual + find-sec-bugs) | 0 | — |
 | A04: Insecure Design | 🟡 Riesgo bajo, sin corregir | 1 (entidades expuestas directamente) | Recomendado para próxima entrega |
-| A05: Security Misconfig | 🟡 Corregido parcialmente | 4 corregidos por ZAP (headers nginx), 7 abiertos de menor severidad | Ver sección OWASP ZAP |
-| A06: Vulnerable Components | 🔴 Verificado, sin corregir | 41 (6 críticas) en frontend vía `npm audit`; backend no auditado (NVD pendiente) | `npm audit fix` + `dependency-check` en próxima iteración |
+| A05: Security Misconfig | 🟢 Corregido (4 por ZAP + 1 High reclasificado y corregido) | 3 `WARN` Medium/Informational abiertos (`10055`,`10109`,`90003`) | Ver sección OWASP ZAP |
+| A06: Vulnerable Components | 🟡 Corregido lo crítico (Angular), resto en dev-tooling | 14 (5 críticas, 5 altas, 4 moderadas) en frontend vía `npm audit`, todas en herramientas de build de íconos, no en código enviado al navegador; backend no auditado (NVD pendiente) | `dependency-check` del backend en próxima iteración |
 
-## Análisis estático SpotBugs / find-sec-bugs (2026-08-17)
+## Análisis estático SpotBugs / find-sec-bugs (2026-08-17, re-corrido 2026-08-29)
 
-Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`, filtrado a la categoría `SECURITY` ([`backend/spotbugs-security-include.xml`](../../../../backend/spotbugs-security-include.xml)), integrado como paso no bloqueante en `.github/workflows/ci.yml` (se publica el reporte XML como artefacto en cada push). **189 hallazgos reales**, ninguno de tipo `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE`:
+Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`, filtrado a la categoría `SECURITY` ([`backend/spotbugs-security-include.xml`](../../../../backend/spotbugs-security-include.xml)), integrado como paso no bloqueante en `.github/workflows/ci.yml` (se publica el reporte XML como artefacto en cada push). **233 hallazgos reales en la corrida vigente** (subió de 189 el 17-08 porque se agregó código de producción real en ese periodo, no por nuevas categorías de riesgo), ninguno de tipo `SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE`. Detalle completo con el desglose 17-08→29-08 por regla en [`docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md`](../static-analysis/STATIC-ANALYSIS.md):
 
-| Regla | Cantidad | Severidad | Estado |
+| Regla | Cantidad (29-08) | Severidad | Estado |
 |---|---|---|---|
-| `SPRING_ENDPOINT` | 121 | Informativa | Sin acción (marca cada endpoint REST, no es una vulnerabilidad) |
-| `CRLF_INJECTION_LOGS` | 44 | Baja/Media | Abierto — logs con `Logger.info(fmt, objetoUsuario)` podrían permitir forjar entradas de log si el objeto contiene `\r\n`; mitigación: usar un `encoder` de logging que escape saltos de línea |
-| `IMPROPER_UNICODE` | 13 | Baja | Abierto — comparaciones/transformaciones de String sin especificar `Locale` |
+| `SPRING_ENDPOINT` | 160 | Informativa | Sin acción (marca cada endpoint REST, no es una vulnerabilidad) |
+| `CRLF_INJECTION_LOGS` | 52 | Baja/Media | Abierto — logs con `Logger.info(fmt, objetoUsuario)` podrían permitir forjar entradas de log si el objeto contiene `\r\n`; mitigación: usar un `encoder` de logging que escape saltos de línea |
+| `IMPROPER_UNICODE` | 11 | Baja | Abierto — comparaciones/transformaciones de String sin especificar `Locale` |
 | `PATH_TRAVERSAL_IN` | 9 | Media | Abierto — `Paths.get()` en `ActaServiceImpl`, `AnteproyectoServiceImpl`, `TutoriaServiceImpl` construye rutas de archivo a partir de datos que en última instancia vienen de la base de datos (IDs `Long`, no strings de usuario libres) — riesgo real bajo pero sin validación explícita de que la ruta resultante permanezca dentro del directorio esperado |
-| `UNSAFE_HASH_EQUALS` | 1 | Media | **Corregido en esta ronda** — `AnteproyectoServiceImpl.verificarIntegridad()` comparaba hashes SHA-256 con `String.equals()` (vulnerable a timing attack); se cambió a `MessageDigest.isEqual()` |
+| `UNSAFE_HASH_EQUALS` | 0 | Media | **Corregido el 17-08, confirmado que se mantiene el 29-08** — `AnteproyectoServiceImpl.verificarIntegridad()` comparaba hashes SHA-256 con `String.equals()` (vulnerable a timing attack); se cambió a `MessageDigest.isEqual()` |
 | `SPRING_CSRF_PROTECTION_DISABLED` | 1 | Informativa | Sin acción — deshabilitado deliberadamente por ser API JWT stateless (ver A05) |
 
-## Escaneo dinámico OWASP ZAP (2026-08-17)
+## Escaneo dinámico OWASP ZAP (2026-08-17, re-corrido 2026-08-29)
 
-Corrido con `zap-baseline.py` (imagen oficial `zaproxy/zap-stable`) contra la app real corriendo con la topología de producción (nginx sirviendo el build de Angular + proxy inverso a `/api/v1/` y `/actuator/`, backend Spring Boot, Postgres y Redis). Reportes completos: [`docs/mediciones/sec/zap/zap-baseline-report.html`](../zap/zap-baseline-report.html) y [`zap-baseline-report.json`](../zap/zap-baseline-report.json).
+Corrido con el plan de automatización [`zap.yaml`](../zap/zap.yaml) (imagen oficial `zaproxy/zap-stable`) contra la app real corriendo con la topología de producción (nginx sirviendo el build de Angular + proxy inverso a `/api/v1/` y `/actuator/`, backend Spring Boot, Postgres y Redis, todo vía `docker compose up -d --build`). Reportes completos de la corrida más reciente (2026-08-29): [`docs/mediciones/sec/zap/zap-baseline-report.html`](../zap/zap-baseline-report.html) y [`zap-baseline-report.json`](../zap/zap-baseline-report.json). La corrida del 2026-08-17 se conserva sin modificar como [`zap-baseline-report.PREVIOUS.html`](../zap/zap-baseline-report.PREVIOUS.html)/[`.json`](../zap/zap-baseline-report.PREVIOUS.json).
 
-**Antes de corregir:** `FAIL-NEW: 0` · `WARN-NEW: 11` · `PASS: 56`
-**Después de corregir 4 hallazgos:** `FAIL-NEW: 0` · `WARN-NEW: 7` · `PASS: 60`
+**17-08, antes de corregir headers:** `FAIL-NEW: 0` · `WARN-NEW: 11` · `PASS: 56`
+**17-08, después de corregir 4 hallazgos de headers:** `FAIL-NEW: 0` · `WARN-NEW: 7` · `PASS: 60` (incluía `10003 Vulnerable JS Library`, riesgo **`High (Medium)`** — ver A06)
+**29-08, después de corregir `10003` (bump de Angular):** `FAIL-NEW: 0` · `WARN-NEW: 3` · `PASS: 58` — **0 alertas de riesgo `High` o `Critical` en el escaneo actual.**
 
-**0 alertas de alta confianza (`FAIL`) en ambas corridas** — ningún hallazgo crítico tipo XSS reflejado, inyección SQL detectable dinámicamente, o cookie insegura. Los 4 hallazgos corregidos en el momento (real, verificado con `curl -I` antes/después):
+**0 alertas de alta confianza (`FAIL`) en las tres corridas** — ningún hallazgo crítico tipo XSS reflejado, inyección SQL detectable dinámicamente, o cookie insegura. Los 4 hallazgos de headers corregidos el 17-08 (real, verificado con `curl -I` antes/después):
 
 - `10020` Missing Anti-clickjacking Header, `10021` X-Content-Type-Options Missing, `10038` CSP Header Not Set, `10036` Server Version Disclosure — las 4 causadas por el mismo hueco: **nginx sirve el HTML/JS/CSS del frontend directamente sin pasar por el backend**, así que las cabeceras de seguridad que Spring Security agrega (Requisito E14) nunca llegaban a esas respuestas. Se agregaron las mismas cabeceras (`X-Frame-Options`, `X-Content-Type-Options`, `Content-Security-Policy`, `Permissions-Policy`, `server_tokens off`) directamente en [`nginx/nginx.conf`](../../../../nginx/nginx.conf).
 
-Los 7 `WARN` restantes son de severidad menor y quedan documentados para una próxima iteración: `10003` Vulnerable JS Library (relacionado con A06), `10049` Storable-but-Non-Cacheable en assets estáticos, `10055` CSP sin `object-src`/`base-uri` explícitos, `10109`/`10110` informativos (SPA moderna, uso de `eval` requerido por el compilador JIT de Angular), `90003` Subresource Integrity ausente en los `<script>`, `90004` Cross-Origin-Embedder-Policy ausente.
+El hallazgo `10003` corregido el 29-08 (real, riesgo **`High`**, ver A06 para el detalle del CVE y la corrección) — pasó de alerta a `PASS` tras actualizar Angular a 21.2.22.
+
+Los **3 `WARN` restantes** (Medium/Informational, sin cambios entre corridas, quedan documentados para una próxima iteración):
+
+- `10055` CSP: Failure to Define Directive with No Fallback (falta `object-src`/`base-uri`/`form-action` explícitos en la CSP).
+- `10109` Modern Web Application (informativo — ZAP simplemente identifica que es una SPA moderna, no es una vulnerabilidad).
+- `90003` Subresource Integrity Attribute Missing (los `<script>` del build de Angular no llevan atributo `integrity`; requeriría configurar SRI en `angular.json`, no soportado de forma nativa por el builder actual).
 
 **Nota de proceso:** al agregar las cabeceras de seguridad a `nginx.conf` se detectó y corrigió un efecto secundario real: la Content-Security-Policy heredada de `SecurityConfig.java` no incluía `cdn.jsdelivr.net` (de donde carga `bootstrap-icons`), lo que habría roto los íconos del frontend en producción; se agregó el dominio a `style-src`/`font-src` en ambos lugares (backend y nginx) tras verificarlo con un login real de punta a punta contra la topología de producción completa (nginx + backend + Postgres + Redis, todos en Docker).

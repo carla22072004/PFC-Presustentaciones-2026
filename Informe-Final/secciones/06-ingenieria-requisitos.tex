@@ -23,9 +23,9 @@ uso ``fully dressed'' con la notación de nivel de meta de Cockburn y un diagram
 \textbf{RF} & \textbf{Título} & \textbf{Prioridad} & \textbf{Verificación} \\
 \midrule
 RF-01 & Autenticación segura & Must & Verificado (test real) \\
-RF-02 & Registro de solicitud & Must & No verificado \\
+RF-02 & Registro de solicitud & Must & Verificado (test real) \\
 RF-03 & Asignación de jurados & Must & Verificado (test real) \\
-RF-04 & Programación de cronograma & Must & No verificado \\
+RF-04 & Programación de cronograma & Must & Verificado (test real) \\
 RF-05 & Evaluación por rúbrica & Must & Verificado (test real) \\
 RF-06 & Generación de actas & Must & No verificado \\
 RF-07 & Firma digital de actas & Should & No verificado \\
@@ -48,8 +48,9 @@ apropiado, no ambiguo, completo, singular, factible, verificable, correcto, conf
 seis características de calidad del conjunto completo (\texttt{docs/checklists/INCOSE-REQUIREMENTS.md}).
 El hallazgo más consistente: ningún requisito usa lenguaje normativo tipo ``shall'' (se usa formato
 Historia de Usuario, una decisión de estilo consciente, no un descuido), y la característica de conjunto
-``verificable como conjunto'' falla porque solo 5 de 8 requisitos Must tienen prueba automatizada real
-(62.5\,\%, no el 100\,\% ideal).
+``verificable como conjunto'' falla porque solo 7 de 8 requisitos Must tienen prueba automatizada real
+(87.5\,\%, actualizado 2026-08-29, no el 100\,\% ideal; solo RF-06 --- generación de actas --- sigue
+sin test dedicado).
 
 \subsection{Trazabilidad}
 

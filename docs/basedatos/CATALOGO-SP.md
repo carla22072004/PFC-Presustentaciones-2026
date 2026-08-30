@@ -6,6 +6,22 @@
 
 ---
 
+## ⚠️ Objetos duplicados detectados en auditoría (2026-08-29)
+
+`V10__actualizar_procedimientos_fase3.sql` (cabecera interna aún dice `V3__...`, resto de una
+renumeración de la fusión de ramas — ver nota de fusión del ítem 3 más abajo) **también** declara
+`sp_calcular_promedio_evaluacion(BIGINT)` y `sp_generar_reporte_defensas(VARCHAR)` como `FUNCTION ...
+RETURNS TABLE`, con **un solo parámetro** cada una (sin el `INOUT refcursor`). Como PostgreSQL
+identifica una rutina por `(esquema, nombre, tipos de parámetros)`, esta firma de un solo parámetro
+es distinta a la `PROCEDURE` de dos parámetros de `V2`/`V3` documentada abajo — no la reemplaza, sino
+que **coexiste como una sobrecarga (overload) separada y sin uso**: el código Java (`@Procedure`/
+`@NamedStoredProcedureQuery`, ver más abajo) invoca explícitamente la firma de dos parámetros, así que
+sigue resolviendo contra la `PROCEDURE` correcta (confirmado: la suite de tests del backend pasa
+completa, 61/61). Estas dos `FUNCTION` son objetos huérfanos en el esquema real, resultado de la
+fusión de ramas del equipo — quedan documentadas aquí para que no se confundan con la firma que
+realmente usa la aplicación; no se modifica `V10` porque es una migración Flyway ya aplicada
+(alterarla invalidaría el checksum de `flyway_schema_history` en cualquier base de datos existente).
+
 ## ⚠️ Actualización de este documento (Fase 3)
 
 Una versión anterior de este catálogo describía 4 procedimientos con nombres de tabla que
