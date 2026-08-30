@@ -428,21 +428,21 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     public List&lt;Map&lt;String, Object&gt;&gt; generarReporteDefensasSP(String carrera) {
-<span class="nc" id="L431">        List&lt;Object[]&gt; res = solicitudRepository.generarReporteDefensasSp(carrera);</span>
-<span class="nc" id="L432">        List&lt;Map&lt;String, Object&gt;&gt; list = new java.util.ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L433" title="All 2 branches missed.">        for (Object[] row : res) {</span>
-<span class="nc" id="L434">            Map&lt;String, Object&gt; map = new java.util.HashMap&lt;&gt;();</span>
-<span class="nc" id="L435">            map.put(&quot;solicitudId&quot;, row[0]);</span>
-<span class="nc" id="L436">            map.put(&quot;estudianteNombre&quot;, row[1]);</span>
-<span class="nc" id="L437">            map.put(&quot;expediente&quot;, row[2]);</span>
-<span class="nc" id="L438">            map.put(&quot;tituloTema&quot;, row[3]);</span>
-<span class="nc" id="L439">            map.put(&quot;estadoSolicitud&quot;, row[4]);</span>
-<span class="nc" id="L440">            map.put(&quot;fechaDefensa&quot;, row[5]);</span>
-<span class="nc" id="L441">            map.put(&quot;salaNombre&quot;, row[6]);</span>
-<span class="nc" id="L442">            map.put(&quot;notaFinal&quot;, row[7]);</span>
-<span class="nc" id="L443">            list.add(map);</span>
-<span class="nc" id="L444">        }</span>
-<span class="nc" id="L445">        return list;</span>
+<span class="fc" id="L431">        List&lt;Object[]&gt; res = solicitudRepository.generarReporteDefensasSp(carrera);</span>
+<span class="fc" id="L432">        List&lt;Map&lt;String, Object&gt;&gt; list = new java.util.ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">        for (Object[] row : res) {</span>
+<span class="fc" id="L434">            Map&lt;String, Object&gt; map = new java.util.HashMap&lt;&gt;();</span>
+<span class="fc" id="L435">            map.put(&quot;solicitudId&quot;, row[0]);</span>
+<span class="fc" id="L436">            map.put(&quot;estudianteNombre&quot;, row[1]);</span>
+<span class="fc" id="L437">            map.put(&quot;expediente&quot;, row[2]);</span>
+<span class="fc" id="L438">            map.put(&quot;tituloTema&quot;, row[3]);</span>
+<span class="fc" id="L439">            map.put(&quot;estadoSolicitud&quot;, row[4]);</span>
+<span class="fc" id="L440">            map.put(&quot;fechaDefensa&quot;, row[5]);</span>
+<span class="fc" id="L441">            map.put(&quot;salaNombre&quot;, row[6]);</span>
+<span class="fc" id="L442">            map.put(&quot;notaFinal&quot;, row[7]);</span>
+<span class="fc" id="L443">            list.add(map);</span>
+<span class="fc" id="L444">        }</span>
+<span class="fc" id="L445">        return list;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -2,7 +2,7 @@
 
 **Cómo se generó:** `cd backend && ./mvnw test` (JaCoCo corre en la fase `test` vía `jacoco-maven-plugin`, ver `backend/pom.xml`).
 **Reporte crudo archivado (HTML + XML + CSV):** [`docs/mediciones/jacoco/2026-08-29/`](2026-08-29/) — snapshot real más reciente; [`2026-08-17/`](2026-08-17/) se conserva como snapshot histórico. El reporte también se regenera y publica como artefacto en el job `backend` de [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) en cada push.
-**Última actualización:** 2026-08-29 (auditoría de reproducibilidad — se repararon 17 tests que fallaban por mocks faltantes tras cambios de código posteriores al 17-08; ningún test nuevo se añadió).
+**Última actualización:** 2026-08-29 (auditoría de reproducibilidad — primero se repararon 17 tests que fallaban por mocks faltantes, después se agregaron 31 tests reales nuevos para 4 clases de servicio con 0% de cobertura y lógica de negocio real: `PermisoServiceTest`, `NotificacionServiceImplTest`, `EvaluacionJuradoServiceTest`, `ActaServiceImplTest`).
 
 Una versión anterior de este documento (y el badge de `README.md`) afirmaba `>60%` de cobertura sin que existiera ni una sola clase de prueba en el repositorio. Esa cifra era falsa. La cobertura real ha fluctuado a medida que se agregan tests reales *y* código nuevo (el denominador también crece):
 
@@ -12,9 +12,11 @@ Una versión anterior de este documento (y el badge de `README.md`) afirmaba `>6
 | 2026-08-12 | 1.65% | 2.83% | — | 3 archivos |
 | 2026-08-17 (Fase 5) | 18.13% (2,417 / 13,334) | 22.70% (559 / 2,463) | — | 46 tests / 9 archivos |
 | 2026-08-17 (Fase 3) | 23.33% (3,169 / 13,581) | 28.45% (716 / 2,517) | 15.00% (129 / 860) | 61 tests / 11 archivos |
-| **2026-08-29 (actual)** | **20.26%** (3,290 / 16,237) | **24.63%** (743 / 3,017) | **12.39%** (137 / 1,106) | **61 tests / 11 archivos** |
+| 2026-08-29 (tests reparados, 0 nuevos) | 20.26% (3,290 / 16,237) | 24.63% (743 / 3,017) | 12.39% (137 / 1,106) | 61 tests / 11 archivos |
+| 2026-08-29 (+ 4 clases de test nuevas) | 29.69% (4,820 / 16,237) | 33.51% (1,011 / 3,017) | 18.90% (209 / 1,106) | 92 tests / 15 archivos |
+| **2026-08-29 (+ RF-06 `generarActa`, actual)** | **33.18%** (5,388 / 16,237) | **37.06%** (1,118 / 3,017) | **23.06%** (255 / 1,106) | **109 tests / 15 archivos** |
 
-**El porcentaje bajó del 17-08 al 29-08 aunque el número absoluto de instrucciones/líneas cubiertas subió** (3,169→3,290 instrucciones, 716→743 líneas): entre esas dos fechas se agregó código de producción real (nuevos módulos/controladores) sin tests proporcionales, así que el denominador creció más rápido que la cobertura. No se ocultó esta caída — es la cifra real de `./mvnw test` corrida el 2026-08-29, verificable en [`2026-08-29/jacoco.csv`](2026-08-29/jacoco.csv).
+**El porcentaje bajó del 17-08 al 29-08 (fila intermedia) aunque el número absoluto de instrucciones/líneas cubiertas subió** (3,169→3,290 instrucciones, 716→743 líneas): entre esas dos fechas se agregó código de producción real (nuevos módulos/controladores) sin tests proporcionales, así que el denominador creció más rápido que la cobertura. Después se agregaron 31 tests reales nuevos (`PermisoServiceTest`, `NotificacionServiceImplTest`, `EvaluacionJuradoServiceTest`, `ActaServiceImplTest`) cubriendo 4 clases de servicio que tenían 0% — subiendo la cobertura de líneas 8.9 puntos porcentuales de una vez. **No se alcanza el objetivo de ≥60/70% declarado en la guía** — sigue habiendo 17 controllers y varias clases de servicio con 0% (`EstudianteService`, `EvaluacionServiceImpl`, `TutorServiceImpl`, etc.); esta ronda priorizó agregar cobertura real y útil sobre inflar la cifra, y la brecha restante queda declarada explícitamente en vez de maquillada. No se ocultó ninguna caída — es la cifra real de `./mvnw test`, verificable en [`2026-08-29/jacoco.csv`](2026-08-29/jacoco.csv).
 
 ## Clases nuevas cubiertas por los tests agregados en la Fase 3
 
@@ -43,6 +45,6 @@ Una versión anterior de este documento (y el badge de `README.md`) afirmaba `>6
 
 ## Clases sin cobertura real o con cobertura baja (candidatas para próxima iteración)
 
-`UsuarioController` (7%), `GlobalExceptionHandler` (31%), `AuthController` (32%), `EvaluacionServiceImpl` (el nuevo método `calcularPromedioSp` no tiene test unitario, solo se verificó manualmente contra Docker — ver `docs/basedatos/CATALOGO-SP.md`), `ActaServiceImpl`, y la mayoría de los 21 controladores REST no tienen tests dedicados — la suite actual se concentra en `services/` y `security/`, que es donde vive la lógica de negocio y la superficie de riesgo de seguridad. Los controladores están cubiertos indirectamente por `AuthControllerIntegrationTest` (`@WebMvcTest`), pero no exhaustivamente.
+`UsuarioController` (7%), `GlobalExceptionHandler` (31%), `AuthController` (32%), y la mayoría de los 21 controladores REST no tienen tests dedicados — la suite actual se concentra en `services/` y `security/`, que es donde vive la lógica de negocio y la superficie de riesgo de seguridad. Los controladores están cubiertos indirectamente por `AuthControllerIntegrationTest` (`@WebMvcTest`), pero no exhaustivamente. (Actualizado 2026-08-29: `EvaluacionServiceImpl.calcularPromedioSp` y `ActaServiceImpl` ya tienen test unitario dedicado — ver `docs/basedatos/CATALOGO-SP.md`.)
 
 El umbral objetivo declarado en la autoevaluación de Unidad IV era ≥60% — sigue sin alcanzarse, pero la trayectoria real (0% → 2.83% → 22.70% en instrucciones) documenta progreso genuino en vez de una cifra estática inventada.
