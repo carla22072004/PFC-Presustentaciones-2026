@@ -211,4 +211,37 @@ class SolicitudServiceImplTest {
         assertEquals("Estudiante retirado del período", suspendida.getMotivoSuspension());
         assertNotNull(suspendida.getSuspendidoEn());
     }
+
+    @Test
+    void testGenerarReporteDefensasSPMapeaCadaColumnaDeLaFilaCruda() {
+        // sp_generar_reporte_defensas (Fase 3 / Criterio P1) devuelve filas posicionales;
+        // sin este test, un cambio en el orden de columnas del SP rompería el mapeo sin
+        // que ningún test lo detectara.
+        Object[] fila = new Object[]{
+                10L, "Mario Alvarado", "EXP-2026-00007", "Sistema X", "COMPLETADA",
+                java.sql.Timestamp.valueOf("2026-09-01 09:00:00"), "Aula 1", 8.5
+        };
+        when(solicitudRepository.generarReporteDefensasSp("Software")).thenReturn(List.<Object[]>of(fila));
+
+        List<java.util.Map<String, Object>> reporte = solicitudService.generarReporteDefensasSP("Software");
+
+        assertEquals(1, reporte.size());
+        java.util.Map<String, Object> fila0 = reporte.get(0);
+        assertEquals(10L, fila0.get("solicitudId"));
+        assertEquals("Mario Alvarado", fila0.get("estudianteNombre"));
+        assertEquals("EXP-2026-00007", fila0.get("expediente"));
+        assertEquals("Sistema X", fila0.get("tituloTema"));
+        assertEquals("COMPLETADA", fila0.get("estadoSolicitud"));
+        assertEquals("Aula 1", fila0.get("salaNombre"));
+        assertEquals(8.5, fila0.get("notaFinal"));
+    }
+
+    @Test
+    void testGenerarReporteDefensasSPRetornaListaVaciaSinFilas() {
+        when(solicitudRepository.generarReporteDefensasSp("Inexistente")).thenReturn(List.of());
+
+        List<java.util.Map<String, Object>> reporte = solicitudService.generarReporteDefensasSP("Inexistente");
+
+        assertTrue(reporte.isEmpty());
+    }
 }

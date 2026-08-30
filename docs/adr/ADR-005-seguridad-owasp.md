@@ -19,3 +19,9 @@ Adopción obligatoria de 6 controles de seguridad basados en OWASP Top 10:
 ## Consecuencias
 - **Positivas:** Reducción a cero de vulnerabilidades críticas; cumplimiento de auditorías académicas de software.
 - **Negativas:** Reclama esfuerzo continuo de actualización de dependencias de terceros.
+
+**Actualización (2026-08-29):** el control #1 ("RBAC estricto con `@PreAuthorize`") describe el
+enfoque original con roles fijos en código. Ese enfoque fue reemplazado por un sistema de permisos
+dinámicos consultados contra la base de datos — ver [`ADR-007-permisos-dinamicos.md`](ADR-007-permisos-dinamicos.md)
+para el detalle completo y el porqué del cambio. No se reescribe este control retroactivamente para
+conservar el registro histórico de la decisión tal como se tomó.

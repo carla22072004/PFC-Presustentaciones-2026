@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -147,5 +148,44 @@ class JuradoServiceImplTest {
 
         assertNotNull(tutor);
         verify(tutorRepository).save(any(Tutor.class));
+    }
+
+    // sp_asignar_jurado_masivo (Fase 3 / Criterio P1) -- sin test dedicado pese a ser el
+    // unico punto del codigo que invoca ese procedimiento.
+    @Test
+    void testAsignarJuradoMasivoRechazaArreglosDeLongitudDistinta() {
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                juradoService.asignarJuradoMasivo(List.of(50L, 51L), List.of(1L), "PRESIDENTE"));
+
+        assertTrue(ex.getMessage().contains("misma longitud"));
+        verify(juradoRepository, never()).spAsignarJuradoMasivo(anyLong(), anyLong(), anyString());
+    }
+
+    @Test
+    void testAsignarJuradoMasivoInvocaElProcedimientoUnaVezPorPar() {
+        juradoService.asignarJuradoMasivo(List.of(50L, 51L), List.of(1L, 2L), "VOCAL_1");
+
+        verify(juradoRepository).spAsignarJuradoMasivo(50L, 1L, "VOCAL_1");
+        verify(juradoRepository).spAsignarJuradoMasivo(51L, 2L, "VOCAL_1");
+        verify(juradoRepository, times(2)).spAsignarJuradoMasivo(anyLong(), anyLong(), anyString());
+    }
+
+    @Test
+    void testAsignarJuradoMasivoSiUnParFallaNoSigueConLosSiguientes() {
+        // Simula el rollback transaccional real: si el SP lanza excepcion en el segundo par,
+        // el metodo debe propagarla (Spring revierte la transaccion @Transactional completa).
+        // Mockito en modo estricto (default) exige stubear tambien la primera llamada:
+        // sin esto, la interpreta como un posible error del test en vez de "sin comportamiento
+        // especial" y lanza su propia excepcion de "stubbing argument mismatch" en su lugar.
+        doNothing().when(juradoRepository).spAsignarJuradoMasivo(50L, 1L, "VOCAL_2");
+        doThrow(new RuntimeException("El docente ya tiene otra defensa en ese horario"))
+                .when(juradoRepository).spAsignarJuradoMasivo(51L, 2L, "VOCAL_2");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                juradoService.asignarJuradoMasivo(List.of(50L, 51L), List.of(1L, 2L), "VOCAL_2"));
+        assertEquals("El docente ya tiene otra defensa en ese horario", ex.getMessage());
+
+        verify(juradoRepository).spAsignarJuradoMasivo(50L, 1L, "VOCAL_2");
+        verify(juradoRepository).spAsignarJuradoMasivo(51L, 2L, "VOCAL_2");
     }
 }
