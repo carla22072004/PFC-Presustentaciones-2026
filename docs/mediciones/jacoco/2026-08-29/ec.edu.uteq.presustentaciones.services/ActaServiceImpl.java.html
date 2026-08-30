@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-<span class="nc" id="L44">@RequiredArgsConstructor</span>
-<span class="nc" id="L45">@Slf4j</span>
+<span class="fc" id="L44">@RequiredArgsConstructor</span>
+<span class="fc" id="L45">@Slf4j</span>
 public class ActaServiceImpl implements ActaService {
 
     private final ActaRepository actaRepository;
@@ -58,56 +58,56 @@ public class ActaServiceImpl implements ActaService {
     private String actasDir;
 
     // ── Colores institucionales UTEQ ─────────────────────────────────────────
-<span class="nc" id="L61">    private static final DeviceRgb UTEQ_BLUE    = new DeviceRgb(0, 56, 101);</span>
-<span class="nc" id="L62">    private static final DeviceRgb UTEQ_GOLD    = new DeviceRgb(204, 153, 0);</span>
-<span class="nc" id="L63">    private static final DeviceRgb LIGHT_GRAY   = new DeviceRgb(245, 245, 245);</span>
-<span class="nc" id="L64">    private static final DeviceRgb MEDIUM_GRAY  = new DeviceRgb(200, 200, 200);</span>
+<span class="fc" id="L61">    private static final DeviceRgb UTEQ_BLUE    = new DeviceRgb(0, 56, 101);</span>
+<span class="fc" id="L62">    private static final DeviceRgb UTEQ_GOLD    = new DeviceRgb(204, 153, 0);</span>
+<span class="fc" id="L63">    private static final DeviceRgb LIGHT_GRAY   = new DeviceRgb(245, 245, 245);</span>
+<span class="fc" id="L64">    private static final DeviceRgb MEDIUM_GRAY  = new DeviceRgb(200, 200, 200);</span>
 
     @Override
     public Acta generarActa(Long solicitudId) {
-<span class="nc" id="L68">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
-<span class="nc" id="L69">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+<span class="fc" id="L68">        Solicitud solicitud = solicitudRepository.findById(solicitudId)</span>
+<span class="fc" id="L69">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
 
         // Buscar evaluación y jurados
-<span class="nc" id="L72">        Optional&lt;EvaluacionFinal&gt; evalOpt = evaluacionRepository.findBySolicitudId(solicitudId);</span>
-<span class="nc" id="L73">        List&lt;Jurado&gt; jurados = juradoRepository.findBySolicitudId(solicitudId);</span>
+<span class="fc" id="L72">        Optional&lt;EvaluacionFinal&gt; evalOpt = evaluacionRepository.findBySolicitudId(solicitudId);</span>
+<span class="fc" id="L73">        List&lt;Jurado&gt; jurados = juradoRepository.findBySolicitudId(solicitudId);</span>
 
         // Si ya existe el acta, retornar la misma
-<span class="nc" id="L76">        Optional&lt;Acta&gt; existente = actaRepository.findBySolicitudId(solicitudId);</span>
-<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (existente.isPresent()) {</span>
-<span class="nc" id="L78">            return existente.get();</span>
+<span class="fc" id="L76">        Optional&lt;Acta&gt; existente = actaRepository.findBySolicitudId(solicitudId);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (existente.isPresent()) {</span>
+<span class="fc" id="L78">            return existente.get();</span>
         }
 
-<span class="nc" id="L81">        String fileName = &quot;acta_&quot; + solicitudId + &quot;_&quot; + System.currentTimeMillis() + &quot;.pdf&quot;;</span>
-<span class="nc" id="L82">        Acta acta = Acta.builder()</span>
-<span class="nc" id="L83">                .solicitud(solicitud)</span>
-<span class="nc" id="L84">                .archivoPdf(fileName)</span>
-<span class="nc" id="L85">                .fechaGeneracion(LocalDate.now())</span>
-<span class="nc" id="L86">                .build();</span>
+<span class="fc" id="L81">        String fileName = &quot;acta_&quot; + solicitudId + &quot;_&quot; + System.currentTimeMillis() + &quot;.pdf&quot;;</span>
+<span class="fc" id="L82">        Acta acta = Acta.builder()</span>
+<span class="fc" id="L83">                .solicitud(solicitud)</span>
+<span class="fc" id="L84">                .archivoPdf(fileName)</span>
+<span class="fc" id="L85">                .fechaGeneracion(LocalDate.now())</span>
+<span class="fc" id="L86">                .build();</span>
 
         // Crear directorio de subida si no existe
         try {
-<span class="nc" id="L90">            Files.createDirectories(Paths.get(actasDir));</span>
+<span class="fc" id="L90">            Files.createDirectories(Paths.get(actasDir));</span>
 <span class="nc" id="L91">        } catch (IOException e) {</span>
 <span class="nc" id="L92">            throw new RuntimeException(&quot;No se pudo crear el directorio de actas: &quot; + e.getMessage());</span>
-<span class="nc" id="L93">        }</span>
+<span class="fc" id="L93">        }</span>
 
-<span class="nc" id="L95">        String rutaCompleta = actasDir + &quot;/&quot; + fileName;</span>
-<span class="nc" id="L96">        generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);</span>
+<span class="fc" id="L95">        String rutaCompleta = actasDir + &quot;/&quot; + fileName;</span>
+<span class="fc" id="L96">        generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);</span>
 
-<span class="nc" id="L98">        return actaRepository.save(acta);</span>
+<span class="fc" id="L98">        return actaRepository.save(acta);</span>
     }
 
     @Override
     @Transactional
     public Acta firmarActa(Long actaId, String rol, String observacion) {
-<span class="nc" id="L104">        auditoriaService.marcarActorActual();</span>
-<span class="nc" id="L105">        Acta acta = actaRepository.findById(actaId)</span>
-<span class="nc" id="L106">                .orElseThrow(() -&gt; new RuntimeException(&quot;Acta no encontrada: &quot; + actaId));</span>
+<span class="fc" id="L104">        auditoriaService.marcarActorActual();</span>
+<span class="fc" id="L105">        Acta acta = actaRepository.findById(actaId)</span>
+<span class="pc" id="L106">                .orElseThrow(() -&gt; new RuntimeException(&quot;Acta no encontrada: &quot; + actaId));</span>
 
-<span class="nc" id="L108">        String rolNormalizado = rol.toUpperCase();</span>
-<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (!java.util.Set.of(&quot;PRESIDENTE&quot;, &quot;VOCAL_1&quot;, &quot;VOCAL_2&quot;, &quot;TUTOR&quot;).contains(rolNormalizado)) {</span>
-<span class="nc" id="L110">            throw new RuntimeException(&quot;Rol inválido: &quot; + rol + &quot;. Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR&quot;);</span>
+<span class="fc" id="L108">        String rolNormalizado = rol.toUpperCase();</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (!java.util.Set.of(&quot;PRESIDENTE&quot;, &quot;VOCAL_1&quot;, &quot;VOCAL_2&quot;, &quot;TUTOR&quot;).contains(rolNormalizado)) {</span>
+<span class="fc" id="L110">            throw new RuntimeException(&quot;Rol inválido: &quot; + rol + &quot;. Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR&quot;);</span>
         }
 
         // Persiste la firma vía sp_firmar_acta_digital (Fase 3 / Criterio P1) -- el
@@ -115,56 +115,56 @@ public class ActaServiceImpl implements ActaService {
         // se refresca la entidad para que el resto del método (incluida observaciones_acta,
         // que antes de esta fase no se escribía desde Java) vea lo que el SP realmente
         // persistió, en vez de sobreescribirlo con el save() final de abajo.
-<span class="nc" id="L118">        actaRepository.firmarActaDigital(actaId, rolNormalizado, observacion);</span>
-<span class="nc" id="L119">        entityManager.refresh(acta);</span>
+<span class="fc" id="L118">        actaRepository.firmarActaDigital(actaId, rolNormalizado, observacion);</span>
+<span class="fc" id="L119">        entityManager.refresh(acta);</span>
 
         // firmada_*/fecha_firma_*/observaciones_acta ya quedaron persistidos y reflejados
         // en memoria por el refresh() de arriba; solo falta recalcular el flag agregado.
-<span class="nc" id="L123">        acta.actualizarEstadoFirma();</span>
+<span class="fc" id="L123">        acta.actualizarEstadoFirma();</span>
 
         try {
-<span class="nc" id="L126">            Long estudianteUsuarioId = acta.getSolicitud().getEstudiante().getUsuario().getId();</span>
-<span class="nc" id="L127">            notificacionService.crearNotificacion(estudianteUsuarioId,</span>
-<span class="nc" id="L128">                    String.format(&quot;El %s firmó el acta de tu pre-sustentación.&quot;, rolNormalizado));</span>
-<span class="nc" id="L129">        } catch (Exception e) {</span>
-<span class="nc" id="L130">            log.warn(&quot;No se pudo notificar la firma del acta {} (rol {}): {}&quot;, actaId, rolNormalizado, e.getMessage());</span>
-<span class="nc" id="L131">        }</span>
+<span class="fc" id="L126">            Long estudianteUsuarioId = acta.getSolicitud().getEstudiante().getUsuario().getId();</span>
+<span class="fc" id="L127">            notificacionService.crearNotificacion(estudianteUsuarioId,</span>
+<span class="fc" id="L128">                    String.format(&quot;El %s firmó el acta de tu pre-sustentación.&quot;, rolNormalizado));</span>
+<span class="fc" id="L129">        } catch (Exception e) {</span>
+<span class="fc" id="L130">            log.warn(&quot;No se pudo notificar la firma del acta {} (rol {}): {}&quot;, actaId, rolNormalizado, e.getMessage());</span>
+<span class="fc" id="L131">        }</span>
 
         // Si el acta quedó completamente firmada, cambiar estado a COMPLETADA y regenerar PDF
-<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (acta.isFirmada()) {</span>
-<span class="nc" id="L135">            Solicitud solicitud = acta.getSolicitud();</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (acta.isFirmada()) {</span>
+<span class="fc" id="L135">            Solicitud solicitud = acta.getSolicitud();</span>
 
-<span class="nc" id="L137">            ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCompletada = estadoSolicitudRepository.findByCodigo(&quot;COMPLETADA&quot;)</span>
-<span class="nc" id="L138">                    .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
+<span class="fc" id="L137">            ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCompletada = estadoSolicitudRepository.findByCodigo(&quot;COMPLETADA&quot;)</span>
+<span class="pc" id="L138">                    .orElseGet(() -&gt; estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()</span>
 <span class="nc" id="L139">                            .codigo(&quot;COMPLETADA&quot;).nombre(&quot;Completada&quot;).build()));</span>
-<span class="nc" id="L140">            solicitud.setEstado(estadoCompletada);</span>
-<span class="nc" id="L141">            solicitudRepository.save(solicitud);</span>
-<span class="nc" id="L142">            log.info(&quot;Solicitud {} completada - todas las firmas del acta han sido aplicadas&quot;, solicitud.getId());</span>
+<span class="fc" id="L140">            solicitud.setEstado(estadoCompletada);</span>
+<span class="fc" id="L141">            solicitudRepository.save(solicitud);</span>
+<span class="fc" id="L142">            log.info(&quot;Solicitud {} completada - todas las firmas del acta han sido aplicadas&quot;, solicitud.getId());</span>
 
             try {
-<span class="nc" id="L145">                notificacionService.crearNotificacion(solicitud.getEstudiante().getUsuario().getId(),</span>
+<span class="fc" id="L145">                notificacionService.crearNotificacion(solicitud.getEstudiante().getUsuario().getId(),</span>
                         &quot;¡Tu acta de pre-sustentación fue firmada por todo el tribunal! El proceso ha finalizado.&quot;);
 <span class="nc" id="L147">            } catch (Exception e) {</span>
 <span class="nc" id="L148">                log.warn(&quot;No se pudo notificar la finalización del acta {}: {}&quot;, actaId, e.getMessage());</span>
-<span class="nc" id="L149">            }</span>
+<span class="fc" id="L149">            }</span>
 
-<span class="nc bnc" id="L151" title="All 2 branches missed.">            if (acta.getArchivoPdf() != null) {</span>
-<span class="nc" id="L152">                Optional&lt;EvaluacionFinal&gt; evalOpt = evaluacionRepository.findBySolicitudId(solicitud.getId());</span>
-<span class="nc" id="L153">                List&lt;Jurado&gt; jurados = juradoRepository.findBySolicitudId(solicitud.getId());</span>
-<span class="nc" id="L154">                String rutaCompleta = actasDir + &quot;/&quot; + acta.getArchivoPdf();</span>
-<span class="nc" id="L155">                generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">            if (acta.getArchivoPdf() != null) {</span>
+<span class="fc" id="L152">                Optional&lt;EvaluacionFinal&gt; evalOpt = evaluacionRepository.findBySolicitudId(solicitud.getId());</span>
+<span class="fc" id="L153">                List&lt;Jurado&gt; jurados = juradoRepository.findBySolicitudId(solicitud.getId());</span>
+<span class="fc" id="L154">                String rutaCompleta = actasDir + &quot;/&quot; + acta.getArchivoPdf();</span>
+<span class="fc" id="L155">                generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);</span>
             }
         }
 
-<span class="nc" id="L159">        return actaRepository.save(acta);</span>
+<span class="fc" id="L159">        return actaRepository.save(acta);</span>
     }
 
     @Override
     public byte[] obtenerPdfBytes(Long actaId) {
-<span class="nc" id="L164">        Acta acta = actaRepository.findById(actaId)</span>
-<span class="nc" id="L165">                .orElseThrow(() -&gt; new RuntimeException(&quot;Acta no encontrada&quot;));</span>
-<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (acta.getArchivoPdf() == null) {</span>
-<span class="nc" id="L167">            throw new RuntimeException(&quot;El acta no tiene PDF generado aún.&quot;);</span>
+<span class="fc" id="L164">        Acta acta = actaRepository.findById(actaId)</span>
+<span class="fc" id="L165">                .orElseThrow(() -&gt; new RuntimeException(&quot;Acta no encontrada&quot;));</span>
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        if (acta.getArchivoPdf() == null) {</span>
+<span class="fc" id="L167">            throw new RuntimeException(&quot;El acta no tiene PDF generado aún.&quot;);</span>
         }
 <span class="nc" id="L169">        Path path = Paths.get(actasDir, acta.getArchivoPdf());</span>
         try {
@@ -181,7 +181,7 @@ public class ActaServiceImpl implements ActaService {
 
     @Override
     public Optional&lt;Acta&gt; buscarPorSolicitud(Long solicitudId) {
-<span class="nc" id="L184">        return actaRepository.findBySolicitudId(solicitudId);</span>
+<span class="fc" id="L184">        return actaRepository.findBySolicitudId(solicitudId);</span>
     }
 
     // ── Generación PDF ────────────────────────────────────────────────────────
@@ -193,90 +193,90 @@ public class ActaServiceImpl implements ActaService {
     private void generarPdf(String ruta, Solicitud solicitud, EvaluacionFinal evaluacion,
                              List&lt;Jurado&gt; jurados, Acta acta) {
         try {
-<span class="nc" id="L196">            PdfFont fontRegular = PdfFontFactory.createFont(StandardFonts.HELVETICA);</span>
-<span class="nc" id="L197">            PdfFont fontBold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);</span>
+<span class="fc" id="L196">            PdfFont fontRegular = PdfFontFactory.createFont(StandardFonts.HELVETICA);</span>
+<span class="fc" id="L197">            PdfFont fontBold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);</span>
 
-<span class="nc" id="L199">            PdfWriter writer     = new PdfWriter(ruta);</span>
-<span class="nc" id="L200">            PdfDocument pdfDoc   = new PdfDocument(writer);</span>
-<span class="nc" id="L201">            Document document    = new Document(pdfDoc);</span>
-<span class="nc" id="L202">            document.setMargins(40, 50, 40, 50);</span>
+<span class="fc" id="L199">            PdfWriter writer     = new PdfWriter(ruta);</span>
+<span class="fc" id="L200">            PdfDocument pdfDoc   = new PdfDocument(writer);</span>
+<span class="fc" id="L201">            Document document    = new Document(pdfDoc);</span>
+<span class="fc" id="L202">            document.setMargins(40, 50, 40, 50);</span>
 
-<span class="nc" id="L204">            DateTimeFormatter fmt = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy&quot;);</span>
-<span class="nc" id="L205">            DateTimeFormatter fmtDt = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+<span class="fc" id="L204">            DateTimeFormatter fmt = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy&quot;);</span>
+<span class="fc" id="L205">            DateTimeFormatter fmtDt = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
 
             // ── Encabezado ────────────────────────────────────────────────────
-<span class="nc" id="L208">            Table header = new Table(UnitValue.createPercentArray(new float[]{20f, 60f, 20f}))</span>
-<span class="nc" id="L209">                    .setWidth(UnitValue.createPercentValue(100));</span>
+<span class="fc" id="L208">            Table header = new Table(UnitValue.createPercentArray(new float[]{20f, 60f, 20f}))</span>
+<span class="fc" id="L209">                    .setWidth(UnitValue.createPercentValue(100));</span>
 
             // Logo placeholder (azul UTEQ)
-<span class="nc" id="L212">            Cell logoCell = new Cell()</span>
-<span class="nc" id="L213">                    .add(new Paragraph(&quot;UTEQ&quot;).setFont(fontBold).setFontSize(18)</span>
-<span class="nc" id="L214">                            .setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L215">                    .setBackgroundColor(UTEQ_BLUE)</span>
-<span class="nc" id="L216">                    .setBorder(Border.NO_BORDER)</span>
-<span class="nc" id="L217">                    .setPadding(15);</span>
-<span class="nc" id="L218">            header.addCell(logoCell);</span>
+<span class="fc" id="L212">            Cell logoCell = new Cell()</span>
+<span class="fc" id="L213">                    .add(new Paragraph(&quot;UTEQ&quot;).setFont(fontBold).setFontSize(18)</span>
+<span class="fc" id="L214">                            .setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L215">                    .setBackgroundColor(UTEQ_BLUE)</span>
+<span class="fc" id="L216">                    .setBorder(Border.NO_BORDER)</span>
+<span class="fc" id="L217">                    .setPadding(15);</span>
+<span class="fc" id="L218">            header.addCell(logoCell);</span>
 
             // Título central
-<span class="nc" id="L221">            Cell titleCell = new Cell()</span>
-<span class="nc" id="L222">                    .add(new Paragraph(&quot;ACTA DE PRE-SUSTENTACIÓN&quot;)</span>
-<span class="nc" id="L223">                            .setFont(fontBold).setFontSize(14).setFontColor(UTEQ_BLUE)</span>
-<span class="nc" id="L224">                            .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L225">                    .add(new Paragraph(&quot;Universidad Técnica Estatal de Quevedo&quot;)</span>
-<span class="nc" id="L226">                            .setFont(fontRegular).setFontSize(9).setFontColor(ColorConstants.DARK_GRAY)</span>
-<span class="nc" id="L227">                            .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L228">                    .add(new Paragraph(&quot;Facultad de Ciencias de la Computación y Diseño Digital&quot;)</span>
-<span class="nc" id="L229">                            .setFont(fontRegular).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY)</span>
-<span class="nc" id="L230">                            .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L231">                    .setBorder(Border.NO_BORDER).setPadding(10);</span>
-<span class="nc" id="L232">            header.addCell(titleCell);</span>
+<span class="fc" id="L221">            Cell titleCell = new Cell()</span>
+<span class="fc" id="L222">                    .add(new Paragraph(&quot;ACTA DE PRE-SUSTENTACIÓN&quot;)</span>
+<span class="fc" id="L223">                            .setFont(fontBold).setFontSize(14).setFontColor(UTEQ_BLUE)</span>
+<span class="fc" id="L224">                            .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L225">                    .add(new Paragraph(&quot;Universidad Técnica Estatal de Quevedo&quot;)</span>
+<span class="fc" id="L226">                            .setFont(fontRegular).setFontSize(9).setFontColor(ColorConstants.DARK_GRAY)</span>
+<span class="fc" id="L227">                            .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L228">                    .add(new Paragraph(&quot;Facultad de Ciencias de la Computación y Diseño Digital&quot;)</span>
+<span class="fc" id="L229">                            .setFont(fontRegular).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY)</span>
+<span class="fc" id="L230">                            .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L231">                    .setBorder(Border.NO_BORDER).setPadding(10);</span>
+<span class="fc" id="L232">            header.addCell(titleCell);</span>
 
             // Número de acta
-<span class="nc" id="L235">            Cell numCell = new Cell()</span>
-<span class="nc" id="L236">                    .add(new Paragraph(&quot;No. &quot; + solicitud.getId())</span>
-<span class="nc" id="L237">                            .setFont(fontBold).setFontSize(12).setFontColor(UTEQ_GOLD)</span>
-<span class="nc" id="L238">                            .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L239">                    .add(new Paragraph(LocalDate.now().format(fmt))</span>
-<span class="nc" id="L240">                            .setFont(fontRegular).setFontSize(9)</span>
-<span class="nc" id="L241">                            .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc" id="L242">                    .setBackgroundColor(LIGHT_GRAY).setBorder(Border.NO_BORDER).setPadding(10);</span>
-<span class="nc" id="L243">            header.addCell(numCell);</span>
-<span class="nc" id="L244">            document.add(header);</span>
+<span class="fc" id="L235">            Cell numCell = new Cell()</span>
+<span class="fc" id="L236">                    .add(new Paragraph(&quot;No. &quot; + solicitud.getId())</span>
+<span class="fc" id="L237">                            .setFont(fontBold).setFontSize(12).setFontColor(UTEQ_GOLD)</span>
+<span class="fc" id="L238">                            .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L239">                    .add(new Paragraph(LocalDate.now().format(fmt))</span>
+<span class="fc" id="L240">                            .setFont(fontRegular).setFontSize(9)</span>
+<span class="fc" id="L241">                            .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc" id="L242">                    .setBackgroundColor(LIGHT_GRAY).setBorder(Border.NO_BORDER).setPadding(10);</span>
+<span class="fc" id="L243">            header.addCell(numCell);</span>
+<span class="fc" id="L244">            document.add(header);</span>
 
             // Línea separadora dorada
-<span class="nc" id="L247">            document.add(new LineSeparator(new com.itextpdf.kernel.pdf.canvas.draw.SolidLine(3f))</span>
-<span class="nc" id="L248">                    .setStrokeColor(UTEQ_GOLD));</span>
-<span class="nc" id="L249">            document.add(new Paragraph(&quot;\n&quot;).setMargin(2));</span>
+<span class="fc" id="L247">            document.add(new LineSeparator(new com.itextpdf.kernel.pdf.canvas.draw.SolidLine(3f))</span>
+<span class="fc" id="L248">                    .setStrokeColor(UTEQ_GOLD));</span>
+<span class="fc" id="L249">            document.add(new Paragraph(&quot;\n&quot;).setMargin(2));</span>
 
             // ── Datos del estudiante ──────────────────────────────────────────
-<span class="nc" id="L252">            document.add(sectionTitle(&quot;1. DATOS DEL ESTUDIANTE&quot;, fontBold));</span>
-<span class="nc" id="L253">            Table datosEstudiante = new Table(UnitValue.createPercentArray(new float[]{30f, 70f}))</span>
-<span class="nc" id="L254">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);</span>
-<span class="nc bnc" id="L255" title="All 4 branches missed.">            String nombreEst = solicitud.getEstudiante() != null &amp;&amp; solicitud.getEstudiante().getUsuario() != null</span>
-<span class="nc" id="L256">                    ? solicitud.getEstudiante().getUsuario().getNombre() + &quot; &quot;</span>
-<span class="nc" id="L257">                      + solicitud.getEstudiante().getUsuario().getApellido()</span>
-<span class="nc" id="L258">                    : &quot;—&quot;;</span>
-<span class="nc" id="L259">            addRow(datosEstudiante, &quot;Estudiante:&quot;, nombreEst, fontBold, fontRegular);</span>
-<span class="nc bnc" id="L260" title="All 2 branches missed.">            addRow(datosEstudiante, &quot;Carrera:&quot;, solicitud.getEstudiante() != null</span>
-<span class="nc" id="L261">                    ? nvl(solicitud.getEstudiante().getCarrera()) : &quot;—&quot;, fontBold, fontRegular);</span>
-<span class="nc" id="L262">            addRow(datosEstudiante, &quot;Título del tema:&quot;, nvl(solicitud.getTituloTema()), fontBold, fontRegular);</span>
-<span class="nc bnc" id="L263" title="All 2 branches missed.">            addRow(datosEstudiante, &quot;Modalidad:&quot;, solicitud.getModalidadTitulacion() != null ? nvl(solicitud.getModalidadTitulacion().getNombre()) : &quot;—&quot;, fontBold, fontRegular);</span>
-<span class="nc" id="L264">            addRow(datosEstudiante, &quot;Fecha de solicitud:&quot;,</span>
-<span class="nc bnc" id="L265" title="All 2 branches missed.">                    solicitud.getFechaRegistro() != null ? solicitud.getFechaRegistro().format(fmtDt) : &quot;—&quot;,</span>
+<span class="fc" id="L252">            document.add(sectionTitle(&quot;1. DATOS DEL ESTUDIANTE&quot;, fontBold));</span>
+<span class="fc" id="L253">            Table datosEstudiante = new Table(UnitValue.createPercentArray(new float[]{30f, 70f}))</span>
+<span class="fc" id="L254">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);</span>
+<span class="pc bpc" id="L255" title="2 of 4 branches missed.">            String nombreEst = solicitud.getEstudiante() != null &amp;&amp; solicitud.getEstudiante().getUsuario() != null</span>
+<span class="fc" id="L256">                    ? solicitud.getEstudiante().getUsuario().getNombre() + &quot; &quot;</span>
+<span class="fc" id="L257">                      + solicitud.getEstudiante().getUsuario().getApellido()</span>
+<span class="pc" id="L258">                    : &quot;—&quot;;</span>
+<span class="fc" id="L259">            addRow(datosEstudiante, &quot;Estudiante:&quot;, nombreEst, fontBold, fontRegular);</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">            addRow(datosEstudiante, &quot;Carrera:&quot;, solicitud.getEstudiante() != null</span>
+<span class="pc" id="L261">                    ? nvl(solicitud.getEstudiante().getCarrera()) : &quot;—&quot;, fontBold, fontRegular);</span>
+<span class="fc" id="L262">            addRow(datosEstudiante, &quot;Título del tema:&quot;, nvl(solicitud.getTituloTema()), fontBold, fontRegular);</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">            addRow(datosEstudiante, &quot;Modalidad:&quot;, solicitud.getModalidadTitulacion() != null ? nvl(solicitud.getModalidadTitulacion().getNombre()) : &quot;—&quot;, fontBold, fontRegular);</span>
+<span class="fc" id="L264">            addRow(datosEstudiante, &quot;Fecha de solicitud:&quot;,</span>
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">                    solicitud.getFechaRegistro() != null ? solicitud.getFechaRegistro().format(fmtDt) : &quot;—&quot;,</span>
                     fontBold, fontRegular);
-<span class="nc" id="L267">            document.add(datosEstudiante);</span>
+<span class="fc" id="L267">            document.add(datosEstudiante);</span>
 
             // ── Tribunal ───────────────────────────────────────────────────────
-<span class="nc" id="L270">            document.add(sectionTitle(&quot;2. TRIBUNAL EVALUADOR&quot;, fontBold));</span>
-<span class="nc" id="L271">            Table tribunal = new Table(UnitValue.createPercentArray(new float[]{40f, 40f, 20f}))</span>
-<span class="nc" id="L272">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);</span>
-<span class="nc" id="L273">            addHeaderRow(tribunal, new String[]{&quot;Docente&quot;, &quot;Rol&quot;, &quot;Confirmado&quot;}, fontBold);</span>
-<span class="nc bnc" id="L274" title="All 2 branches missed.">            if (jurados.isEmpty()) {</span>
-<span class="nc" id="L275">                Cell noJurados = new Cell(1, 3)</span>
-<span class="nc" id="L276">                        .add(new Paragraph(&quot;No hay jurados asignados&quot;).setFont(fontRegular).setFontSize(9))</span>
-<span class="nc" id="L277">                        .setTextAlignment(TextAlignment.CENTER).setPadding(8).setBackgroundColor(LIGHT_GRAY);</span>
-<span class="nc" id="L278">                tribunal.addCell(noJurados);</span>
-<span class="nc" id="L279">            } else {</span>
+<span class="fc" id="L270">            document.add(sectionTitle(&quot;2. TRIBUNAL EVALUADOR&quot;, fontBold));</span>
+<span class="fc" id="L271">            Table tribunal = new Table(UnitValue.createPercentArray(new float[]{40f, 40f, 20f}))</span>
+<span class="fc" id="L272">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);</span>
+<span class="fc" id="L273">            addHeaderRow(tribunal, new String[]{&quot;Docente&quot;, &quot;Rol&quot;, &quot;Confirmado&quot;}, fontBold);</span>
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">            if (jurados.isEmpty()) {</span>
+<span class="fc" id="L275">                Cell noJurados = new Cell(1, 3)</span>
+<span class="fc" id="L276">                        .add(new Paragraph(&quot;No hay jurados asignados&quot;).setFont(fontRegular).setFontSize(9))</span>
+<span class="fc" id="L277">                        .setTextAlignment(TextAlignment.CENTER).setPadding(8).setBackgroundColor(LIGHT_GRAY);</span>
+<span class="fc" id="L278">                tribunal.addCell(noJurados);</span>
+<span class="fc" id="L279">            } else {</span>
 <span class="nc bnc" id="L280" title="All 2 branches missed.">                for (Jurado j : jurados) {</span>
 <span class="nc bnc" id="L281" title="All 4 branches missed.">                    String docNombre = j.getDocente() != null &amp;&amp; j.getDocente().getUsuario() != null</span>
 <span class="nc" id="L282">                            ? j.getDocente().getUsuario().getNombre() + &quot; &quot; + j.getDocente().getUsuario().getApellido()</span>
@@ -286,11 +286,11 @@ public class ActaServiceImpl implements ActaService {
 <span class="nc bnc" id="L286" title="All 2 branches missed.">                    tribunal.addCell(dataCell(j.isConfirmado() ? &quot;✓&quot; : &quot;Pendiente&quot;, fontRegular));</span>
 <span class="nc" id="L287">                }</span>
             }
-<span class="nc" id="L289">            document.add(tribunal);</span>
+<span class="fc" id="L289">            document.add(tribunal);</span>
 
             // ── Evaluación y calificación ────────────────────────────────────
-<span class="nc" id="L292">            document.add(sectionTitle(&quot;3. EVALUACIÓN Y CALIFICACIÓN&quot;, fontBold));</span>
-<span class="nc bnc" id="L293" title="All 2 branches missed.">            if (evaluacion != null) {</span>
+<span class="fc" id="L292">            document.add(sectionTitle(&quot;3. EVALUACIÓN Y CALIFICACIÓN&quot;, fontBold));</span>
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">            if (evaluacion != null) {</span>
 <span class="nc" id="L294">                Table evalTable = new Table(UnitValue.createPercentArray(new float[]{50f, 25f, 25f}))</span>
 <span class="nc" id="L295">                        .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(10);</span>
 <span class="nc" id="L296">                addHeaderRow(evalTable, new String[]{&quot;Concepto&quot;, &quot;Peso (%)&quot;, &quot;Nota&quot;}, fontBold);</span>
@@ -337,89 +337,89 @@ public class ActaServiceImpl implements ActaService {
 <span class="nc" id="L337">                            .setPadding(8).setMarginBottom(10));</span>
                 }
 <span class="nc" id="L339">            } else {</span>
-<span class="nc" id="L340">                document.add(new Paragraph(&quot;Evaluación pendiente de registro.&quot;)</span>
-<span class="nc" id="L341">                        .setFont(fontRegular).setFontSize(9).setFontColor(ColorConstants.GRAY));</span>
+<span class="fc" id="L340">                document.add(new Paragraph(&quot;Evaluación pendiente de registro.&quot;)</span>
+<span class="fc" id="L341">                        .setFont(fontRegular).setFontSize(9).setFontColor(ColorConstants.GRAY));</span>
             }
 
             // ── Firmas ────────────────────────────────────────────────────────
-<span class="nc" id="L345">            document.add(sectionTitle(&quot;4. FIRMAS ELECTRÓNICAS&quot;, fontBold));</span>
-<span class="nc" id="L346">            Table firmasTable = new Table(UnitValue.createPercentArray(new float[]{25f, 25f, 25f, 25f}))</span>
-<span class="nc" id="L347">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(15);</span>
+<span class="fc" id="L345">            document.add(sectionTitle(&quot;4. FIRMAS ELECTRÓNICAS&quot;, fontBold));</span>
+<span class="fc" id="L346">            Table firmasTable = new Table(UnitValue.createPercentArray(new float[]{25f, 25f, 25f, 25f}))</span>
+<span class="fc" id="L347">                    .setWidth(UnitValue.createPercentValue(100)).setMarginBottom(15);</span>
 
-<span class="nc" id="L349">            String[] rolesLabel = {&quot;Presidente&quot;, &quot;Vocal 1&quot;, &quot;Vocal 2&quot;, &quot;Tutor&quot;};</span>
-<span class="nc bnc" id="L350" title="All 2 branches missed.">            boolean[] firmados  = {</span>
-<span class="nc bnc" id="L351" title="All 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaPresidente(),</span>
-<span class="nc bnc" id="L352" title="All 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaVocal1(),</span>
-<span class="nc bnc" id="L353" title="All 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaVocal2(),</span>
-<span class="nc bnc" id="L354" title="All 2 branches missed.">                acta != null &amp;&amp; acta.isFirmadaTutor()</span>
+<span class="fc" id="L349">            String[] rolesLabel = {&quot;Presidente&quot;, &quot;Vocal 1&quot;, &quot;Vocal 2&quot;, &quot;Tutor&quot;};</span>
+<span class="pc bpc" id="L350" title="1 of 2 branches missed.">            boolean[] firmados  = {</span>
+<span class="pc bpc" id="L351" title="1 of 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaPresidente(),</span>
+<span class="pc bpc" id="L352" title="1 of 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaVocal1(),</span>
+<span class="pc bpc" id="L353" title="1 of 4 branches missed.">                acta != null &amp;&amp; acta.isFirmadaVocal2(),</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">                acta != null &amp;&amp; acta.isFirmadaTutor()</span>
             };
-<span class="nc" id="L356">            LocalDateTime[] fechasFirma = {</span>
-<span class="nc bnc" id="L357" title="All 2 branches missed.">                acta != null ? acta.getFechaFirmaPresidente() : null,</span>
-<span class="nc bnc" id="L358" title="All 2 branches missed.">                acta != null ? acta.getFechaFirmaVocal1() : null,</span>
-<span class="nc bnc" id="L359" title="All 2 branches missed.">                acta != null ? acta.getFechaFirmaVocal2() : null,</span>
-<span class="nc bnc" id="L360" title="All 2 branches missed.">                acta != null ? acta.getFechaFirmaTutor() : null</span>
+<span class="fc" id="L356">            LocalDateTime[] fechasFirma = {</span>
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">                acta != null ? acta.getFechaFirmaPresidente() : null,</span>
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">                acta != null ? acta.getFechaFirmaVocal1() : null,</span>
+<span class="pc bpc" id="L359" title="1 of 2 branches missed.">                acta != null ? acta.getFechaFirmaVocal2() : null,</span>
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">                acta != null ? acta.getFechaFirmaTutor() : null</span>
             };
 
-<span class="nc bnc" id="L363" title="All 2 branches missed.">            for (int i = 0; i &lt; 4; i++) {</span>
-<span class="nc" id="L364">                boolean firmado = firmados[i];</span>
-<span class="nc" id="L365">                Cell firmaCell = new Cell()</span>
-<span class="nc" id="L366">                        .add(new Paragraph(rolesLabel[i]).setFont(fontBold).setFontSize(9)</span>
-<span class="nc" id="L367">                                .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc bnc" id="L368" title="All 2 branches missed.">                        .add(new Paragraph(firmado ? &quot;✓ FIRMADO&quot; : &quot;PENDIENTE&quot;)</span>
-<span class="nc" id="L369">                                .setFont(fontBold).setFontSize(10)</span>
-<span class="nc bnc" id="L370" title="All 2 branches missed.">                                .setFontColor(firmado ? new DeviceRgb(0, 128, 0) : new DeviceRgb(150, 150, 150))</span>
-<span class="nc" id="L371">                                .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc bnc" id="L372" title="All 4 branches missed.">                        .add(new Paragraph(firmado &amp;&amp; fechasFirma[i] != null</span>
-<span class="nc" id="L373">                                ? fechasFirma[i].format(fmtDt) : &quot; &quot;)</span>
-<span class="nc" id="L374">                                .setFont(fontRegular).setFontSize(7)</span>
-<span class="nc" id="L375">                                .setTextAlignment(TextAlignment.CENTER))</span>
-<span class="nc bnc" id="L376" title="All 2 branches missed.">                        .setBackgroundColor(firmado ? new DeviceRgb(230, 255, 230) : LIGHT_GRAY)</span>
-<span class="nc bnc" id="L377" title="All 2 branches missed.">                        .setBorder(new SolidBorder(firmado ? new DeviceRgb(0, 128, 0) : MEDIUM_GRAY, 1))</span>
-<span class="nc" id="L378">                        .setPadding(10).setMargin(3);</span>
-<span class="nc" id="L379">                firmasTable.addCell(firmaCell);</span>
+<span class="fc bfc" id="L363" title="All 2 branches covered.">            for (int i = 0; i &lt; 4; i++) {</span>
+<span class="fc" id="L364">                boolean firmado = firmados[i];</span>
+<span class="fc" id="L365">                Cell firmaCell = new Cell()</span>
+<span class="fc" id="L366">                        .add(new Paragraph(rolesLabel[i]).setFont(fontBold).setFontSize(9)</span>
+<span class="fc" id="L367">                                .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">                        .add(new Paragraph(firmado ? &quot;✓ FIRMADO&quot; : &quot;PENDIENTE&quot;)</span>
+<span class="fc" id="L369">                                .setFont(fontBold).setFontSize(10)</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">                                .setFontColor(firmado ? new DeviceRgb(0, 128, 0) : new DeviceRgb(150, 150, 150))</span>
+<span class="fc" id="L371">                                .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="pc bpc" id="L372" title="1 of 4 branches missed.">                        .add(new Paragraph(firmado &amp;&amp; fechasFirma[i] != null</span>
+<span class="pc" id="L373">                                ? fechasFirma[i].format(fmtDt) : &quot; &quot;)</span>
+<span class="fc" id="L374">                                .setFont(fontRegular).setFontSize(7)</span>
+<span class="fc" id="L375">                                .setTextAlignment(TextAlignment.CENTER))</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">                        .setBackgroundColor(firmado ? new DeviceRgb(230, 255, 230) : LIGHT_GRAY)</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">                        .setBorder(new SolidBorder(firmado ? new DeviceRgb(0, 128, 0) : MEDIUM_GRAY, 1))</span>
+<span class="fc" id="L378">                        .setPadding(10).setMargin(3);</span>
+<span class="fc" id="L379">                firmasTable.addCell(firmaCell);</span>
             }
-<span class="nc" id="L381">            document.add(firmasTable);</span>
+<span class="fc" id="L381">            document.add(firmasTable);</span>
 
             // ── Pie de página ─────────────────────────────────────────────────
-<span class="nc" id="L384">            document.add(new LineSeparator(new com.itextpdf.kernel.pdf.canvas.draw.SolidLine(1f))</span>
-<span class="nc" id="L385">                    .setStrokeColor(UTEQ_GOLD));</span>
-<span class="nc" id="L386">            document.add(new Paragraph(&quot;Generado el &quot; + LocalDateTime.now().format(fmtDt)</span>
+<span class="fc" id="L384">            document.add(new LineSeparator(new com.itextpdf.kernel.pdf.canvas.draw.SolidLine(1f))</span>
+<span class="fc" id="L385">                    .setStrokeColor(UTEQ_GOLD));</span>
+<span class="fc" id="L386">            document.add(new Paragraph(&quot;Generado el &quot; + LocalDateTime.now().format(fmtDt)</span>
                     + &quot; | Sistema de Gestión de Pre-Sustentaciones UTEQ | Documento oficial&quot;)
-<span class="nc" id="L388">                    .setFont(fontRegular).setFontSize(7).setFontColor(ColorConstants.GRAY)</span>
-<span class="nc" id="L389">                    .setTextAlignment(TextAlignment.CENTER));</span>
+<span class="fc" id="L388">                    .setFont(fontRegular).setFontSize(7).setFontColor(ColorConstants.GRAY)</span>
+<span class="fc" id="L389">                    .setTextAlignment(TextAlignment.CENTER));</span>
 
-<span class="nc" id="L391">            document.close();</span>
+<span class="fc" id="L391">            document.close();</span>
 
 <span class="nc" id="L393">        } catch (IOException e) {</span>
 <span class="nc" id="L394">            throw new RuntimeException(&quot;Error generando PDF: &quot; + e.getMessage(), e);</span>
-<span class="nc" id="L395">        }</span>
-<span class="nc" id="L396">    }</span>
+<span class="fc" id="L395">        }</span>
+<span class="fc" id="L396">    }</span>
 
     // ── Helpers de construcción de tablas ─────────────────────────────────────
 
     private Paragraph sectionTitle(String text, PdfFont fontBold) {
-<span class="nc" id="L401">        return new Paragraph(text).setFont(fontBold).setFontSize(10)</span>
-<span class="nc" id="L402">                .setFontColor(UTEQ_BLUE)</span>
-<span class="nc" id="L403">                .setBorderBottom(new SolidBorder(UTEQ_GOLD, 1.5f))</span>
-<span class="nc" id="L404">                .setMarginTop(8).setMarginBottom(4);</span>
+<span class="fc" id="L401">        return new Paragraph(text).setFont(fontBold).setFontSize(10)</span>
+<span class="fc" id="L402">                .setFontColor(UTEQ_BLUE)</span>
+<span class="fc" id="L403">                .setBorderBottom(new SolidBorder(UTEQ_GOLD, 1.5f))</span>
+<span class="fc" id="L404">                .setMarginTop(8).setMarginBottom(4);</span>
     }
 
     private void addRow(Table table, String label, String value, PdfFont fontBold, PdfFont fontRegular) {
-<span class="nc" id="L408">        table.addCell(new Cell()</span>
-<span class="nc" id="L409">                .add(new Paragraph(label).setFont(fontBold).setFontSize(9))</span>
-<span class="nc" id="L410">                .setBackgroundColor(LIGHT_GRAY).setBorder(Border.NO_BORDER).setPadding(5));</span>
-<span class="nc" id="L411">        table.addCell(new Cell()</span>
-<span class="nc" id="L412">                .add(new Paragraph(value).setFont(fontRegular).setFontSize(9))</span>
-<span class="nc" id="L413">                .setBorder(Border.NO_BORDER).setPadding(5));</span>
-<span class="nc" id="L414">    }</span>
+<span class="fc" id="L408">        table.addCell(new Cell()</span>
+<span class="fc" id="L409">                .add(new Paragraph(label).setFont(fontBold).setFontSize(9))</span>
+<span class="fc" id="L410">                .setBackgroundColor(LIGHT_GRAY).setBorder(Border.NO_BORDER).setPadding(5));</span>
+<span class="fc" id="L411">        table.addCell(new Cell()</span>
+<span class="fc" id="L412">                .add(new Paragraph(value).setFont(fontRegular).setFontSize(9))</span>
+<span class="fc" id="L413">                .setBorder(Border.NO_BORDER).setPadding(5));</span>
+<span class="fc" id="L414">    }</span>
 
     private void addHeaderRow(Table table, String[] headers, PdfFont fontBold) {
-<span class="nc bnc" id="L417" title="All 2 branches missed.">        for (String h : headers) {</span>
-<span class="nc" id="L418">            table.addCell(new Cell()</span>
-<span class="nc" id="L419">                    .add(new Paragraph(h).setFont(fontBold).setFontSize(9).setFontColor(ColorConstants.WHITE))</span>
-<span class="nc" id="L420">                    .setBackgroundColor(UTEQ_BLUE).setPadding(6).setBorder(Border.NO_BORDER));</span>
+<span class="fc bfc" id="L417" title="All 2 branches covered.">        for (String h : headers) {</span>
+<span class="fc" id="L418">            table.addCell(new Cell()</span>
+<span class="fc" id="L419">                    .add(new Paragraph(h).setFont(fontBold).setFontSize(9).setFontColor(ColorConstants.WHITE))</span>
+<span class="fc" id="L420">                    .setBackgroundColor(UTEQ_BLUE).setPadding(6).setBorder(Border.NO_BORDER));</span>
         }
-<span class="nc" id="L422">    }</span>
+<span class="fc" id="L422">    }</span>
 
     private Cell dataCell(String text, PdfFont font) {
 <span class="nc" id="L425">        return new Cell()</span>
@@ -430,7 +430,7 @@ public class ActaServiceImpl implements ActaService {
     }
 
     private String nvl(String s) {
-<span class="nc bnc" id="L433" title="All 2 branches missed.">        return s != null ? s : &quot;—&quot;;</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">        return s != null ? s : &quot;—&quot;;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

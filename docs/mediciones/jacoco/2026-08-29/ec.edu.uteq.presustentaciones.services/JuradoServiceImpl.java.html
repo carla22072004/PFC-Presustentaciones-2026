@@ -262,13 +262,13 @@ public class JuradoServiceImpl implements JuradoService {
     @Override
     @Transactional
     public void asignarJuradoMasivo(List&lt;Long&gt; solicitudIds, List&lt;Long&gt; docenteIds, String rolCodigo) {
-<span class="nc bnc" id="L265" title="All 6 branches missed.">        if (solicitudIds == null || docenteIds == null || solicitudIds.size() != docenteIds.size()) {</span>
-<span class="nc" id="L266">            throw new RuntimeException(&quot;Los arreglos de solicitudes y docentes deben tener la misma longitud&quot;);</span>
+<span class="pc bpc" id="L265" title="2 of 6 branches missed.">        if (solicitudIds == null || docenteIds == null || solicitudIds.size() != docenteIds.size()) {</span>
+<span class="fc" id="L266">            throw new RuntimeException(&quot;Los arreglos de solicitudes y docentes deben tener la misma longitud&quot;);</span>
         }
-<span class="nc bnc" id="L268" title="All 2 branches missed.">        for (int i = 0; i &lt; solicitudIds.size(); i++) {</span>
-<span class="nc" id="L269">            juradoRepository.spAsignarJuradoMasivo(solicitudIds.get(i), docenteIds.get(i), rolCodigo);</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        for (int i = 0; i &lt; solicitudIds.size(); i++) {</span>
+<span class="fc" id="L269">            juradoRepository.spAsignarJuradoMasivo(solicitudIds.get(i), docenteIds.get(i), rolCodigo);</span>
         }
-<span class="nc" id="L271">    }</span>
+<span class="fc" id="L271">    }</span>
 
     @Override
     public List&lt;Jurado&gt; listarPorDocente(Long docenteId) {

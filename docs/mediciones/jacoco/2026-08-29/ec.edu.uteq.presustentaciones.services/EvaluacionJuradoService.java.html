@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-<span class="nc" id="L19">@RequiredArgsConstructor</span>
+<span class="fc" id="L19">@RequiredArgsConstructor</span>
 public class EvaluacionJuradoService {
 
     private final EvaluacionJuradoRepository evaluacionJuradoRepo;
@@ -25,89 +25,89 @@ public class EvaluacionJuradoService {
 
     @Transactional
     public EvaluacionJuradoDTO guardarEvaluacion(Long solicitudId, Long juradoId, Double notaJurado, String observaciones) {
-<span class="nc" id="L28">        Solicitud solicitud = solicitudRepo.findById(solicitudId)</span>
-<span class="nc" id="L29">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
+<span class="fc" id="L28">        Solicitud solicitud = solicitudRepo.findById(solicitudId)</span>
+<span class="fc" id="L29">                .orElseThrow(() -&gt; new RuntimeException(&quot;Solicitud no encontrada: &quot; + solicitudId));</span>
 
-<span class="nc" id="L31">        Jurado jurado = juradoRepo.findById(juradoId)</span>
-<span class="nc" id="L32">                .orElseThrow(() -&gt; new RuntimeException(&quot;Jurado no encontrado: &quot; + juradoId));</span>
+<span class="fc" id="L31">        Jurado jurado = juradoRepo.findById(juradoId)</span>
+<span class="fc" id="L32">                .orElseThrow(() -&gt; new RuntimeException(&quot;Jurado no encontrado: &quot; + juradoId));</span>
 
-<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (!jurado.getSolicitud().getId().equals(solicitudId)) {</span>
-<span class="nc" id="L35">            throw new RuntimeException(&quot;El jurado no pertenece a esta solicitud.&quot;);</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (!jurado.getSolicitud().getId().equals(solicitudId)) {</span>
+<span class="fc" id="L35">            throw new RuntimeException(&quot;El jurado no pertenece a esta solicitud.&quot;);</span>
         }
 
-<span class="nc bnc" id="L38" title="All 4 branches missed.">        if (notaJurado &lt; 1 || notaJurado &gt; 10) {</span>
-<span class="nc" id="L39">            throw new RuntimeException(&quot;La nota debe estar entre 1 y 10.&quot;);</span>
+<span class="fc bfc" id="L38" title="All 4 branches covered.">        if (notaJurado &lt; 1 || notaJurado &gt; 10) {</span>
+<span class="fc" id="L39">            throw new RuntimeException(&quot;La nota debe estar entre 1 y 10.&quot;);</span>
         }
 
-<span class="nc bnc" id="L42" title="All 2 branches missed.">        String resultado = notaJurado &gt;= 7 ? &quot;APROBADO&quot; : &quot;REPROBADO&quot;;</span>
-<span class="nc" id="L43">        String comentarioPreestablecido = generarComentarioPorRango(notaJurado);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        String resultado = notaJurado &gt;= 7 ? &quot;APROBADO&quot; : &quot;REPROBADO&quot;;</span>
+<span class="fc" id="L43">        String comentarioPreestablecido = generarComentarioPorRango(notaJurado);</span>
 
-<span class="nc" id="L45">        Optional&lt;EvaluacionJurado&gt; existente = evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId);</span>
+<span class="fc" id="L45">        Optional&lt;EvaluacionJurado&gt; existente = evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId);</span>
         
         EvaluacionJurado evaluacion;
-<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (existente.isPresent()) {</span>
-<span class="nc" id="L49">            evaluacion = existente.get();</span>
-<span class="nc" id="L50">            evaluacion.setNotaJurado(notaJurado);</span>
-<span class="nc" id="L51">            evaluacion.setObservaciones(observaciones);</span>
-<span class="nc" id="L52">            evaluacion.setResultado(resultado);</span>
-<span class="nc" id="L53">            evaluacion.setComentarioPreestablecido(comentarioPreestablecido);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        if (existente.isPresent()) {</span>
+<span class="fc" id="L49">            evaluacion = existente.get();</span>
+<span class="fc" id="L50">            evaluacion.setNotaJurado(notaJurado);</span>
+<span class="fc" id="L51">            evaluacion.setObservaciones(observaciones);</span>
+<span class="fc" id="L52">            evaluacion.setResultado(resultado);</span>
+<span class="fc" id="L53">            evaluacion.setComentarioPreestablecido(comentarioPreestablecido);</span>
         } else {
-<span class="nc" id="L55">            evaluacion = EvaluacionJurado.builder()</span>
-<span class="nc" id="L56">                    .solicitud(solicitud)</span>
-<span class="nc" id="L57">                    .jurado(jurado)</span>
-<span class="nc" id="L58">                    .notaJurado(notaJurado)</span>
-<span class="nc" id="L59">                    .observaciones(observaciones)</span>
-<span class="nc" id="L60">                    .resultado(resultado)</span>
-<span class="nc" id="L61">                    .comentarioPreestablecido(comentarioPreestablecido)</span>
-<span class="nc" id="L62">                    .build();</span>
+<span class="fc" id="L55">            evaluacion = EvaluacionJurado.builder()</span>
+<span class="fc" id="L56">                    .solicitud(solicitud)</span>
+<span class="fc" id="L57">                    .jurado(jurado)</span>
+<span class="fc" id="L58">                    .notaJurado(notaJurado)</span>
+<span class="fc" id="L59">                    .observaciones(observaciones)</span>
+<span class="fc" id="L60">                    .resultado(resultado)</span>
+<span class="fc" id="L61">                    .comentarioPreestablecido(comentarioPreestablecido)</span>
+<span class="fc" id="L62">                    .build();</span>
         }
 
-<span class="nc" id="L65">        evaluacion = evaluacionJuradoRepo.save(evaluacion);</span>
-<span class="nc" id="L66">        return toDTO(evaluacion);</span>
+<span class="fc" id="L65">        evaluacion = evaluacionJuradoRepo.save(evaluacion);</span>
+<span class="fc" id="L66">        return toDTO(evaluacion);</span>
     }
 
     @Transactional(readOnly = true)
     public EvaluacionJuradoDTO obtenerEvaluacion(Long solicitudId, Long juradoId) {
-<span class="nc" id="L71">        return evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId)</span>
-<span class="nc" id="L72">                .map(this::toDTO)</span>
-<span class="nc" id="L73">                .orElse(null);</span>
+<span class="fc" id="L71">        return evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId)</span>
+<span class="fc" id="L72">                .map(this::toDTO)</span>
+<span class="fc" id="L73">                .orElse(null);</span>
     }
 
     @Transactional(readOnly = true)
     public List&lt;EvaluacionJuradoDTO&gt; obtenerTribunal(Long solicitudId) {
-<span class="nc" id="L78">        return evaluacionJuradoRepo.findBySolicitudId(solicitudId).stream()</span>
-<span class="nc" id="L79">                .map(this::toDTO)</span>
-<span class="nc" id="L80">                .collect(Collectors.toList());</span>
+<span class="fc" id="L78">        return evaluacionJuradoRepo.findBySolicitudId(solicitudId).stream()</span>
+<span class="fc" id="L79">                .map(this::toDTO)</span>
+<span class="fc" id="L80">                .collect(Collectors.toList());</span>
     }
 
     private EvaluacionJuradoDTO toDTO(EvaluacionJurado eval) {
-<span class="nc" id="L84">        String nombreJurado = &quot;&quot;;</span>
-<span class="nc bnc" id="L85" title="All 4 branches missed.">        if (eval.getJurado() != null &amp;&amp; eval.getJurado().getDocente() != null </span>
-<span class="nc bnc" id="L86" title="All 2 branches missed.">            &amp;&amp; eval.getJurado().getDocente().getUsuario() != null) {</span>
-<span class="nc" id="L87">            nombreJurado = eval.getJurado().getDocente().getUsuario().getNombre() + &quot; &quot;</span>
-<span class="nc" id="L88">                    + eval.getJurado().getDocente().getUsuario().getApellido();</span>
+<span class="fc" id="L84">        String nombreJurado = &quot;&quot;;</span>
+<span class="pc bpc" id="L85" title="2 of 4 branches missed.">        if (eval.getJurado() != null &amp;&amp; eval.getJurado().getDocente() != null </span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            &amp;&amp; eval.getJurado().getDocente().getUsuario() != null) {</span>
+<span class="fc" id="L87">            nombreJurado = eval.getJurado().getDocente().getUsuario().getNombre() + &quot; &quot;</span>
+<span class="fc" id="L88">                    + eval.getJurado().getDocente().getUsuario().getApellido();</span>
         }
 
-<span class="nc" id="L91">        return EvaluacionJuradoDTO.builder()</span>
-<span class="nc" id="L92">                .id(eval.getId())</span>
-<span class="nc" id="L93">                .solicitudId(eval.getSolicitud().getId())</span>
-<span class="nc" id="L94">                .juradoId(eval.getJurado().getId())</span>
-<span class="nc" id="L95">                .notaJurado(eval.getNotaJurado())</span>
-<span class="nc" id="L96">                .observaciones(eval.getObservaciones())</span>
-<span class="nc" id="L97">                .resultado(eval.getResultado())</span>
-<span class="nc" id="L98">                .comentarioPreestablecido(eval.getComentarioPreestablecido())</span>
-<span class="nc" id="L99">                .nombreJurado(nombreJurado)</span>
-<span class="nc" id="L100">                .rolJurado(eval.getJurado().getRol())</span>
-<span class="nc" id="L101">                .build();</span>
+<span class="fc" id="L91">        return EvaluacionJuradoDTO.builder()</span>
+<span class="fc" id="L92">                .id(eval.getId())</span>
+<span class="fc" id="L93">                .solicitudId(eval.getSolicitud().getId())</span>
+<span class="fc" id="L94">                .juradoId(eval.getJurado().getId())</span>
+<span class="fc" id="L95">                .notaJurado(eval.getNotaJurado())</span>
+<span class="fc" id="L96">                .observaciones(eval.getObservaciones())</span>
+<span class="fc" id="L97">                .resultado(eval.getResultado())</span>
+<span class="fc" id="L98">                .comentarioPreestablecido(eval.getComentarioPreestablecido())</span>
+<span class="fc" id="L99">                .nombreJurado(nombreJurado)</span>
+<span class="fc" id="L100">                .rolJurado(eval.getJurado().getRol())</span>
+<span class="fc" id="L101">                .build();</span>
     }
 
     private String generarComentarioPorRango(Double nota) {
-<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (nota &lt;= 3) {</span>
-<span class="nc" id="L106">            return &quot;El trabajo no cumple con los requisitos mínimos esperados. Se evidencian falencias significativas que requieren correcciones sustanciales.&quot;;</span>
-<span class="nc bnc" id="L107" title="All 2 branches missed.">        } else if (nota &lt;= 6) {</span>
-<span class="nc" id="L108">            return &quot;El trabajo presenta un nivel aceptable pero con aspectos que requieren mejoras o correcciones para alcanzar los estándares esperados.&quot;;</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (nota &lt;= 3) {</span>
+<span class="fc" id="L106">            return &quot;El trabajo no cumple con los requisitos mínimos esperados. Se evidencian falencias significativas que requieren correcciones sustanciales.&quot;;</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        } else if (nota &lt;= 6) {</span>
+<span class="fc" id="L108">            return &quot;El trabajo presenta un nivel aceptable pero con aspectos que requieren mejoras o correcciones para alcanzar los estándares esperados.&quot;;</span>
         } else {
-<span class="nc" id="L110">            return &quot;El trabajo cumple satisfactoriamente con los objetivos y requisitos establecidos, demostrando un desempeño adecuado.&quot;;</span>
+<span class="fc" id="L110">            return &quot;El trabajo cumple satisfactoriamente con los objetivos y requisitos establecidos, demostrando un desempeño adecuado.&quot;;</span>
         }
     }
 }

@@ -12,20 +12,20 @@ import org.springframework.stereotype.Service;
  * permisos, rol_permisos) y son editables desde &quot;Gestionar Roles&quot; / &quot;Gestionar Permisos&quot;.
  */
 @Service(&quot;permisoService&quot;)
-<span class="nc" id="L15">@RequiredArgsConstructor</span>
+<span class="fc" id="L15">@RequiredArgsConstructor</span>
 public class PermisoService {
 
     private final PermisoRepository permisoRepository;
 
     public boolean tienePermiso(Authentication authentication, String codigoPermiso) {
-<span class="nc bnc" id="L21" title="All 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
-<span class="nc" id="L22">            return false;</span>
+<span class="fc bfc" id="L21" title="All 4 branches covered.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
+<span class="fc" id="L22">            return false;</span>
         }
-<span class="nc" id="L24">        String email = authentication.getName();</span>
-<span class="nc bnc" id="L25" title="All 4 branches missed.">        if (email == null || &quot;anonymousUser&quot;.equals(email)) {</span>
-<span class="nc" id="L26">            return false;</span>
+<span class="fc" id="L24">        String email = authentication.getName();</span>
+<span class="pc bpc" id="L25" title="1 of 4 branches missed.">        if (email == null || &quot;anonymousUser&quot;.equals(email)) {</span>
+<span class="fc" id="L26">            return false;</span>
         }
-<span class="nc" id="L28">        return permisoRepository.usuarioTienePermiso(email, codigoPermiso);</span>
+<span class="fc" id="L28">        return permisoRepository.usuarioTienePermiso(email, codigoPermiso);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

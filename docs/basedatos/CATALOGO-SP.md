@@ -93,6 +93,7 @@ List<PromedioEvaluacionResult> calcularPromedioEvaluacion(@Param("p_solicitud_id
 ```
 * **Flujo real:** `EvaluacionServiceImpl.calcularPromedioSp()` (`@Transactional`), expuesto en `POST /api/v1/evaluaciones/{solicitudId}/calcular-promedio`.
 * **Verificado real** (2026-08-17, contra Docker): `POST /api/v1/evaluaciones/1/calcular-promedio` → `200 {"solicitudId":1,"notaFinal":4.2,"estadoResultado":"REPROBADO"}`.
+* **Prueba unitaria (2026-08-29):** `EvaluacionServiceImplTest` — cubre la fila base creada automáticamente si no existe, la reutilización si ya existe, y el caso en que el procedimiento no devuelve filas. Antes de esta fecha solo estaba verificado manualmente (brecha declarada explícitamente en `docs/mediciones/jacoco/COVERAGE.md`).
 
 ---
 
@@ -111,6 +112,7 @@ CREATE OR REPLACE PROCEDURE presus.sp_generar_reporte_defensas(
 * **Invocación real desde Java** (`Solicitud.java` + `SolicitudRepository.java`), mismo patrón `@NamedStoredProcedureQuery` + `ParameterMode.REF_CURSOR` que el anterior.
 * **Flujo real:** `GET /api/v1/reportes/defensas?carrera=...` en `ReporteController` (`@Transactional(readOnly = true)`, requerido por el mismo motivo del refcursor).
 * **Verificado real:** `GET /api/v1/reportes/defensas?carrera=Software` → `200`, con `expediente` y `notaFinal` ya calculados por los otros dos procedimientos, confirmando el cruce real entre los 6 SPs.
+* **Prueba unitaria (2026-08-29):** `SolicitudServiceImplTest.testGenerarReporteDefensasSPMapeaCadaColumnaDeLaFilaCruda` — confirma que cada posición del `Object[]` crudo se mapea a la clave correcta (protege contra un cambio de orden de columnas en el SP que rompería el mapeo sin que ningún test lo detectara).
 
 ---
 
@@ -142,6 +144,7 @@ void spAsignarJuradoMasivo(@Param("p_solicitud_id") Long solicitudId,
 ```
 Invocado desde `JuradoServiceImpl.asignarJuradoMasivo(List<Long>, List<Long>, String)`, anotado `@Transactional`, expuesto en `POST /api/v1/jurados/asignar-masivo` (roles `ADMIN`/`COORDINADOR`).
 * **Prueba de control transaccional (verificada manualmente):** lote de 2 pares donde el primero es válido y el segundo viola la FK de `docente_id` → el `INSERT` del primer par se ejecuta pero, al fallar el segundo, Spring revierte la transacción completa; se confirmó que **ningún** registro del lote queda en `miembros_tribunal`.
+* **Prueba unitaria (2026-08-29):** `JuradoServiceImplTest` — cubre el rechazo por longitud de arreglos distinta, que el procedimiento se invoca una vez por par, y que una excepción a mitad de lote detiene el `for` sin intentar los pares restantes (el rollback real de la fila ya insertada lo hace `@Transactional`, no el bucle Java).
 
 ---
 
@@ -165,6 +168,7 @@ void firmarActaDigital(@Param("p_acta_id") Long actaId, @Param("p_rol") String r
 ```
 * **Flujo real:** `ActaServiceImpl.firmarActa()` invoca el SP y luego `entityManager.refresh(acta)` para que el resto del flujo (cambio de estado a `COMPLETADA`, regeneración de PDF) vea lo que el procedimiento realmente persistió. Expuesto en `POST /api/v1/actas/firmar/{actaId}`.
 * **Verificado real:** firma de PRESIDENTE → `200`, con `observacionesActa: "\n[PRESIDENTE]: Todo correcto"` confirmado en la respuesta.
+* **Prueba unitaria (2026-08-29):** `ActaServiceImplTest` — cubre rol inválido, firma parcial (no completa la solicitud), firma completa (las 4 firmas → transición a `COMPLETADA` + regeneración real de PDF con iText contra un directorio temporal), y que un fallo en la notificación no interrumpe la firma.
 
 ---
 
@@ -191,6 +195,7 @@ Boolean validarConflictoJurado(@Param("p_solicitud_id") Long solicitudId, @Param
 ```
 * **Flujo real:** `CronogramaServiceImpl.crearCronograma()` lo llama para cada jurado ya asignado antes de guardar el cronograma; si algún docente tiene conflicto, se rechaza con un mensaje explícito.
 * **Verificado real:** (a) creación de cronograma con 3 jurados sin conflictos previos → `200`; (b) prueba directa por SQL (`CALL` con un docente ya ocupado en un horario solapado) → `p_disponible = f`, confirmando también la rama de conflicto.
+* **Prueba unitaria:** `CronogramaServiceImplTest.testCrearCronogramaFallaPorConflictoDeJurado` mockea la respuesta `Boolean.FALSE` del procedimiento y confirma que el servicio la traduce en el mensaje de conflicto esperado.
 
 ---
 
@@ -214,17 +219,30 @@ String generarCodigoExpediente(@Param("p_anio") Integer anio, @Param("p_codigo")
 ```
 * **Flujo real:** `SolicitudServiceImpl.crearPerfilEstudiante()` lo llama al crear automáticamente el perfil de un estudiante nuevo.
 * **Verificado real:** creación de solicitud de punta a punta → `expedienteCodigo: "EXP-2026-00001"` en la respuesta real del backend.
+* **Prueba unitaria:** `SolicitudServiceImplTest.testCrearSolicitudPorUsuarioCreaPerfilEstudianteAutomaticamente` verifica que `crearPerfilEstudiante()` invoca `generarCodigoExpediente` y que el código devuelto por el procedimiento (no calculado en Java) queda en el estudiante guardado.
 
 ---
 
-## 📊 Cobertura de las 5 categorías funcionales exigidas por la guía
+## 📊 Cobertura de las categorías funcionales exigidas por la guía
 
-| Categoría | Procedimiento(s) | Estado |
-|---|---|---|
-| Consultas multi-tabla | `sp_generar_reporte_defensas` | ✅ Conectado y verificado |
-| Cálculos agregados | `sp_calcular_promedio_evaluacion` | ✅ Conectado y verificado |
-| Actualizaciones masivas | `sp_asignar_jurado_masivo`, `sp_firmar_acta_digital` | ✅ Conectados y verificados |
-| Validaciones cruzadas | `sp_validar_conflicto_jurado` | ✅ Conectado y verificado (Fase 3) |
-| Generación de códigos secuenciales | `sp_generar_codigo_expediente` | ✅ Conectado y verificado (Fase 3) |
+La guía enumera 6 categorías (multi-tabla, agregados, **reportes**, actualizaciones masivas,
+validaciones cruzadas, códigos secuenciales); "reportes" y "consultas multi-tabla" se satisfacen
+aquí con el **mismo** procedimiento porque `sp_generar_reporte_defensas` es, por definición, un
+reporte que cruza 6 tablas — no hay dos procedimientos separados para esas dos filas, es una
+única pieza de SQL sirviendo ambos requisitos, documentado así explícitamente para que quede
+trazable en vez de implícito.
 
-**Total: 6 procedimientos, 6 conectados desde código Java real vía JPA 2.1, 6 verificados end-to-end contra un backend corriendo en Docker** (no solo contra el código fuente) — supera el mínimo de 6 exigido por el criterio P1.
+| Categoría (guía) | Procedimiento(s) | Estado | Prueba unitaria |
+|---|---|---|---|
+| Consultas multi-tabla / Reportes | `sp_generar_reporte_defensas` | ✅ Conectado y verificado | ✅ `SolicitudServiceImplTest` |
+| Cálculos agregados | `sp_calcular_promedio_evaluacion` | ✅ Conectado y verificado | ✅ `EvaluacionServiceImplTest` |
+| Actualizaciones masivas | `sp_asignar_jurado_masivo`, `sp_firmar_acta_digital` | ✅ Conectados y verificados | ✅ `JuradoServiceImplTest`, `ActaServiceImplTest` |
+| Validaciones cruzadas | `sp_validar_conflicto_jurado` | ✅ Conectado y verificado (Fase 3) | ✅ `CronogramaServiceImplTest` |
+| Generación de códigos secuenciales | `sp_generar_codigo_expediente` | ✅ Conectado y verificado (Fase 3) | ✅ `SolicitudServiceImplTest` |
+
+**Total: 6 procedimientos, 6 conectados desde código Java real vía JPA 2.1, 6 verificados end-to-end
+contra un backend corriendo en Docker, y (actualizado 2026-08-29) 6 con prueba unitaria dedicada**
+— antes de esta fecha, `sp_calcular_promedio_evaluacion` y `sp_generar_reporte_defensas` solo
+estaban verificados manualmente (brecha que declaraba explícitamente `docs/mediciones/jacoco/COVERAGE.md`);
+`sp_asignar_jurado_masivo` tampoco tenía prueba dedicada pese a que `JuradoServiceImplTest` ya
+existía para otras responsabilidades de esa clase. Supera el mínimo de 6 exigido por el criterio P1.

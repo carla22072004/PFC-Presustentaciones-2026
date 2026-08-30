@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-<span class="nc" id="L18">@RequiredArgsConstructor</span>
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
 public class NotificacionServiceImpl implements NotificacionService {
 
     private final NotificacionRepository notificacionRepository;
@@ -24,31 +24,31 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public Notificacion crearNotificacion(Long usuarioId, String mensaje) {
-<span class="nc" id="L27">        Usuario receptor = usuarioRepository.findById(usuarioId)</span>
-<span class="nc" id="L28">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;));</span>
+<span class="fc" id="L27">        Usuario receptor = usuarioRepository.findById(usuarioId)</span>
+<span class="fc" id="L28">                .orElseThrow(() -&gt; new RuntimeException(&quot;Usuario no encontrado&quot;));</span>
 
-<span class="nc" id="L30">        Notificacion notificacion = notificacionRepository.save(</span>
-<span class="nc" id="L31">                Notificacion.builder()</span>
-<span class="nc" id="L32">                        .usuario(receptor)</span>
-<span class="nc" id="L33">                        .mensaje(mensaje)</span>
-<span class="nc" id="L34">                        .fecha(LocalDateTime.now())</span>
-<span class="nc" id="L35">                        .leida(false)</span>
-<span class="nc" id="L36">                        .build());</span>
+<span class="fc" id="L30">        Notificacion notificacion = notificacionRepository.save(</span>
+<span class="fc" id="L31">                Notificacion.builder()</span>
+<span class="fc" id="L32">                        .usuario(receptor)</span>
+<span class="fc" id="L33">                        .mensaje(mensaje)</span>
+<span class="fc" id="L34">                        .fecha(LocalDateTime.now())</span>
+<span class="fc" id="L35">                        .leida(false)</span>
+<span class="fc" id="L36">                        .build());</span>
 
         // Obtener remitente desde el contexto de seguridad (usuario logueado)
-<span class="nc" id="L39">        String[] remitente = resolverRemitente();</span>
+<span class="fc" id="L39">        String[] remitente = resolverRemitente();</span>
 
         // Enviar email al correo de notificaciones del receptor (si está configurado)
-<span class="nc bnc" id="L42" title="All 2 branches missed.">        String destino = (receptor.getEmailNotificaciones() != null</span>
-<span class="nc bnc" id="L43" title="All 2 branches missed.">                &amp;&amp; !receptor.getEmailNotificaciones().isBlank())</span>
-<span class="nc" id="L44">                ? receptor.getEmailNotificaciones()</span>
-<span class="nc" id="L45">                : null;</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        String destino = (receptor.getEmailNotificaciones() != null</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">                &amp;&amp; !receptor.getEmailNotificaciones().isBlank())</span>
+<span class="fc" id="L44">                ? receptor.getEmailNotificaciones()</span>
+<span class="fc" id="L45">                : null;</span>
 
-<span class="nc bnc" id="L47" title="All 2 branches missed.">        if (destino != null) {</span>
-<span class="nc" id="L48">            emailService.enviarNotificacion(destino, mensaje, remitente[0], remitente[1]);</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if (destino != null) {</span>
+<span class="fc" id="L48">            emailService.enviarNotificacion(destino, mensaje, remitente[0], remitente[1]);</span>
         }
 
-<span class="nc" id="L51">        return notificacion;</span>
+<span class="fc" id="L51">        return notificacion;</span>
     }
 
     /**
@@ -57,22 +57,22 @@ public class NotificacionServiceImpl implements NotificacionService {
      */
     private String[] resolverRemitente() {
         try {
-<span class="nc" id="L60">            Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
-<span class="nc bnc" id="L61" title="All 4 branches missed.">            if (auth != null &amp;&amp; auth.isAuthenticated()</span>
-<span class="nc bnc" id="L62" title="All 2 branches missed.">                    &amp;&amp; !&quot;anonymousUser&quot;.equals(String.valueOf(auth.getPrincipal()))) {</span>
-<span class="nc" id="L63">                Optional&lt;Usuario&gt; opt = usuarioRepository.findByEmail(auth.getName());</span>
-<span class="nc bnc" id="L64" title="All 2 branches missed.">                if (opt.isPresent()) {</span>
-<span class="nc" id="L65">                    Usuario u = opt.get();</span>
-<span class="nc" id="L66">                    return new String[]{</span>
-<span class="nc" id="L67">                            u.getNombre() + &quot; &quot; + u.getApellido(),</span>
-<span class="nc" id="L68">                            u.getEmail()</span>
+<span class="fc" id="L60">            Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="pc bpc" id="L61" title="1 of 4 branches missed.">            if (auth != null &amp;&amp; auth.isAuthenticated()</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                    &amp;&amp; !&quot;anonymousUser&quot;.equals(String.valueOf(auth.getPrincipal()))) {</span>
+<span class="fc" id="L63">                Optional&lt;Usuario&gt; opt = usuarioRepository.findByEmail(auth.getName());</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                if (opt.isPresent()) {</span>
+<span class="fc" id="L65">                    Usuario u = opt.get();</span>
+<span class="fc" id="L66">                    return new String[]{</span>
+<span class="fc" id="L67">                            u.getNombre() + &quot; &quot; + u.getApellido(),</span>
+<span class="fc" id="L68">                            u.getEmail()</span>
                     };
                 }
             }
 <span class="nc" id="L72">        } catch (Exception ignored) {</span>
             // Sin contexto de seguridad: usar valor genérico
-<span class="nc" id="L74">        }</span>
-<span class="nc" id="L75">        return new String[]{&quot;Sistema de Pre-Sustentaciones&quot;, &quot;noreply@uteq.edu.ec&quot;};</span>
+<span class="fc" id="L74">        }</span>
+<span class="fc" id="L75">        return new String[]{&quot;Sistema de Pre-Sustentaciones&quot;, &quot;noreply@uteq.edu.ec&quot;};</span>
     }
 
     @Override
@@ -87,21 +87,21 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public long contarNoLeidas(Long usuarioId) {
-<span class="nc" id="L90">        return notificacionRepository.countByUsuarioIdAndLeidaFalse(usuarioId);</span>
+<span class="fc" id="L90">        return notificacionRepository.countByUsuarioIdAndLeidaFalse(usuarioId);</span>
     }
 
     @Override
     public Notificacion marcarComoLeida(Long id) {
-<span class="nc" id="L95">        Notificacion n = notificacionRepository.findById(id)</span>
-<span class="nc" id="L96">                .orElseThrow(() -&gt; new RuntimeException(&quot;Notificación no encontrada&quot;));</span>
-<span class="nc" id="L97">        n.setLeida(true);</span>
-<span class="nc" id="L98">        return notificacionRepository.save(n);</span>
+<span class="fc" id="L95">        Notificacion n = notificacionRepository.findById(id)</span>
+<span class="fc" id="L96">                .orElseThrow(() -&gt; new RuntimeException(&quot;Notificación no encontrada&quot;));</span>
+<span class="fc" id="L97">        n.setLeida(true);</span>
+<span class="fc" id="L98">        return notificacionRepository.save(n);</span>
     }
 
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void marcarTodasLeidas(Long usuarioId) {
-<span class="nc" id="L104">        notificacionRepository.marcarTodasLeidasPorUsuario(usuarioId);</span>
-<span class="nc" id="L105">    }</span>
+<span class="fc" id="L104">        notificacionRepository.marcarTodasLeidasPorUsuario(usuarioId);</span>
+<span class="fc" id="L105">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
