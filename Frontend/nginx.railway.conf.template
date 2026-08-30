@@ -17,6 +17,21 @@ server {
         root /usr/share/nginx/html;
         index index.html index.htm;
         try_files $uri $uri/ /index.html;
+
+        # Cabeceras de seguridad para el contenido estatico (mismo criterio que
+        # nginx/nginx.conf usado en docker-compose): SOLO en location /, nunca en
+        # /api/v1/ o /actuator/, porque esas rutas ya reciben sus propias cabeceras
+        # de Spring Security -- duplicarlas aqui rompería la CSP del backend (ver
+        # docs/mediciones/sec/owasp/OWASP-AUDIT.md, control A05). HSTS no se declara
+        # aqui: Railway termina TLS en su borde y esta plantilla sirve HTTP puro
+        # dentro de la red interna, así que HSTS lo emite Spring Security cuando
+        # detecta la peticion como segura via X-Forwarded-Proto (ver
+        # server.forward-headers-strategy en application.properties).
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';" always;
+        add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+        add_header Cache-Control "no-cache";
     }
 
     location /api/v1/ {

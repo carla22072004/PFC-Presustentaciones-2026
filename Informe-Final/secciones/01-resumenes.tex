@@ -9,16 +9,18 @@ Redis 7) que automatiza ese flujo de extremo a extremo, siguiendo la metodologí
 de Peffers et al. El sistema implementa 12 requisitos funcionales verificados mediante 12 historias de
 usuario (formato Connextra) y 12 casos de uso (plantilla de Cockburn), con una matriz de trazabilidad
 bidireccional. La evaluación empírica combina estadística descriptiva e inferencial real: 5 corridas de
-carga con k6 (p95 de 7.4--80.9\,ms bajo 50 usuarios concurrentes), un test de Wilcoxon/Mann-Whitney con
+carga con k6 (p95 de 6.17--8.53\,ms bajo 50 usuarios concurrentes), un test de Wilcoxon/Mann-Whitney con
 tamaño de efecto comparando caché fría y caliente de Redis (reducción de latencia de 13.9$\times$,
 $p < 0.001$), una auditoría de seguridad manual y automatizada contra OWASP Top~10 (find-sec-bugs, OWASP
 ZAP), y seis corridas de Lighthouse contra el build de producción. El proceso de desarrollo estuvo
 marcado por hallazgos reales que se corrigieron explícitamente en lugar de ocultarse: datos de usabilidad
 y evidencia de trazabilidad previamente fabricados fueron detectados y reemplazados por mediciones
 reales; un bug de migración de base de datos que impedía el despliegue desde cero fue identificado y
-corregido. Los resultados muestran un sistema funcional con brechas honestamente documentadas --- 1 de
-12 requisitos funcionales carece de prueba automatizada dedicada, y la cobertura de código alcanza
-24.6\,\% de líneas --- que se declaran explícitamente como trabajo futuro en vez de maquillarse. Este informe
+corregido. Los resultados muestran un sistema funcional con brechas honestamente documentadas --- los 8
+requisitos funcionales de prioridad Must tienen prueba automatizada dedicada (100\,\%), pero 3 de los 12
+requisitos totales (prioridad Could/Should: RF-08, RF-09, RF-10) todavía no la tienen (75\,\% general), y
+la cobertura de código alcanza 37.1\,\% de líneas --- que se declaran explícitamente como trabajo futuro
+en vez de maquillarse. Este informe
 documenta tanto los resultados positivos como las limitaciones reales del sistema y del proceso de
 desarrollo, priorizando la integridad de la evidencia sobre la completitud aparente.
 
@@ -44,14 +46,16 @@ Redis 7) that automates this end-to-end workflow, following Peffers et al.'s Des
 methodology. The system implements 12 verified functional requirements through 12 user stories
 (Connextra format) and 12 use cases (Cockburn template), with a bidirectional traceability matrix.
 Empirical evaluation combines real descriptive and inferential statistics: five k6 load-testing runs
-(p95 of 7.4--80.9\,ms under 50 concurrent users), a Wilcoxon/Mann-Whitney test with effect size comparing
+(p95 of 6.17--8.53\,ms under 50 concurrent users), a Wilcoxon/Mann-Whitney test with effect size comparing
 cold and warm Redis cache states (13.9$\times$ latency reduction, $p < 0.001$), a manual and automated
 security audit against the OWASP Top~10 (find-sec-bugs, OWASP ZAP), and six Lighthouse runs against the
 production build. The development process was marked by real findings that were explicitly corrected
 rather than hidden: previously fabricated usability data and traceability evidence were detected and
 replaced with real measurements; a database migration bug that prevented deployment from a clean state
-was identified and fixed. Results show a functional system with honestly documented gaps --- 1 of 12
-functional requirements lacks a dedicated automated test, and code coverage reaches 24.6\,\% of lines --- which are
+was identified and fixed. Results show a functional system with honestly documented gaps --- all 8
+Must-priority functional requirements have a dedicated automated test (100\,\%), but 3 of the 12 total
+requirements (Could/Should priority: RF-08, RF-09, RF-10) still lack one (75\,\% overall), and code
+coverage reaches 37.1\,\% of lines --- which are
 explicitly declared as future work rather than papered over. This report documents both the positive
 results and the real limitations of the system and the development process, prioritizing evidence
 integrity over apparent completeness.

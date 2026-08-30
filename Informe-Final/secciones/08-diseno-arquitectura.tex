@@ -18,7 +18,7 @@ La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquite
     académica compleja, a procedimientos almacenados PL/pgSQL.
 \end{itemize}
 
-\subsection{Resumen de los seis Registros de Decisión Arquitectónica (ADR)}
+\subsection{Resumen de los siete Registros de Decisión Arquitectónica (ADR)}
 
 \begin{table}[H]
 \centering
@@ -33,9 +33,10 @@ ADR-003 & Estrategia híbrida JPA + procedimientos almacenados & CRUD simple ví
 ADR-004 & Frontend Angular (SPA) & Reactividad y componentización para un dominio con múltiples roles y vistas condicionales \\
 ADR-005 & Seguridad alineada a OWASP & JWT de 7 claims, rate limiting, cabeceras HSTS/CSP/X-Frame-Options, BCrypt \\
 ADR-006 & Despliegue con Docker Compose, imágenes ancladas por digest SHA-256 & Reproducibilidad determinista. Ampliada en la Fase 8 con la decisión de Railway como proveedor de producción (Sección~\ref{sec:implementacion}) \\
+ADR-007 & Control de acceso por permisos dinámicos (BD), no roles estáticos en código & Reemplaza el RBAC fijo con \texttt{@PreAuthorize} descrito originalmente en ADR-005 por una verificación contra \texttt{permisos}/\texttt{rol\_permisos}, para que cambiar qué rol puede qué requiera solo datos, no redespliegue \\
 \bottomrule
 \end{tabular}
-\caption{Resumen de los 6 ADR reales del repositorio (\texttt{docs/adr/}).}
+\caption{Resumen de los 7 ADR reales del repositorio (\texttt{docs/adr/}).}
 \label{tab:adrs}
 \end{table}
 

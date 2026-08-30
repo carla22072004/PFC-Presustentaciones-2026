@@ -47,10 +47,12 @@ Se aplicaron las nueve características individuales de calidad de INCOSE \cite{
 apropiado, no ambiguo, completo, singular, factible, verificable, correcto, conforme) a los 12 RF, y las
 seis características de calidad del conjunto completo (\texttt{docs/checklists/INCOSE-REQUIREMENTS.md}).
 El hallazgo más consistente: ningún requisito usa lenguaje normativo tipo ``shall'' (se usa formato
-Historia de Usuario, una decisión de estilo consciente, no un descuido), y la característica de conjunto
-``verificable como conjunto'' falla porque solo 7 de 8 requisitos Must tienen prueba automatizada real
-(87.5\,\%, actualizado 2026-08-29, no el 100\,\% ideal; solo RF-06 --- generación de actas --- sigue
-sin test dedicado).
+Historia de Usuario, una decisión de estilo consciente, no un descuido). La característica de conjunto
+``verificable como conjunto'' ahora se cumple: los 8 de 8 requisitos Must tienen prueba automatizada real
+(100\,\%, actualizado 2026-08-29 tras agregar prueba dedicada para RF-06 --- generación de actas, el
+último que faltaba). A nivel de los 12 requisitos totales del sistema la cifra es 9/12 (75\,\%): RF-08,
+RF-09 y RF-10 (prioridad Could/Should) siguen sin prueba dedicada --- no se declara 100\,\% de
+trazabilidad general, solo de los Must que exige el criterio D0R.
 
 \subsection{Trazabilidad}
 

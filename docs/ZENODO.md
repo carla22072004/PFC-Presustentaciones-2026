@@ -27,6 +27,11 @@ software y datos — ver [`ZENODO-DATASET.md`](ZENODO-DATASET.md).
 - **Licencia:** MIT Open Source License
 - **Repositorio GitHub:** `https://github.com/carla22072004/PFC-Presustentaciones-2026`
 - **Autores CRediT:** Jean Pierre Alava Alvarado ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)), Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
+- **Verificación externa real (2026-08-30):** `curl https://zenodo.org/api/records/21988564` (API pública de
+  Zenodo, no solo el badge) devuelve `title: "Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ"`,
+  los mismos 4 autores en el mismo orden, `version: v1.0.0`, licencia MIT — coincide exactamente con lo
+  declarado aquí y en `CITATION.cff`. Antes de esta fecha el "✅ Verificado" de este documento no se había
+  contrastado contra la API real de Zenodo, solo se había verificado el formato del DOI.
 - **Formato de Cita BibTeX:**
 
 ```bibtex

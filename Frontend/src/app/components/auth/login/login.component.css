@@ -170,7 +170,10 @@
 .login-footer {
     margin-top: 1.5rem;
     font-size: 0.7rem;
-    color: #94a3b8;
+    /* #94a3b8 (slate-400) no cumplia el contraste minimo AA (4.5:1) contra el fondo
+       translucido de .glass-card -- hallazgo real de Lighthouse (auditoria 2026-08-30,
+       audit "color-contrast"). #475569 (slate-600) si cumple. */
+    color: #475569;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     padding-top: 1rem;
 }
