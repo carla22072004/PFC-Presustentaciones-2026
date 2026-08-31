@@ -103,24 +103,27 @@ public class AuthController {
                     .body(ResponseWrapper.error("Refresh token no proporcionado"));
         }
 
-        // Buscar el usuario al que corresponde el refresh token
-        String email = jwtTokenProvider.getUsernameFromRefreshToken(refreshToken);
-        if (email == null) {
+        // 1. Verificar si el token fue reutilizado (ataque de robo de sesión)
+        String reusedBy = jwtTokenProvider.getUsernameFromUsedRefreshToken(refreshToken);
+        if (reusedBy != null) {
+            log.warn("¡ALERTA DE SEGURIDAD! Intento de reutilización de Refresh Token detectado para el usuario: {}", reusedBy);
+            jwtTokenProvider.revokeAllUserTokens(reusedBy);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ResponseWrapper.error("Refresh token inválido o expirado"));
+                    .body(ResponseWrapper.error("Token de seguridad comprometido. Todas las sesiones han sido cerradas."));
         }
 
-        // Validar si coincide con el token almacenado en Redis
-        if (!jwtTokenProvider.validateRefreshToken(email, refreshToken)) {
+        // 2. Extraer usuario del token válido
+        String email = jwtTokenProvider.getUsernameFromRefreshToken(refreshToken);
+        if (email == null || !jwtTokenProvider.validateRefreshToken(refreshToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ResponseWrapper.error("Refresh token revocado"));
+                    .body(ResponseWrapper.error("Refresh token inválido o expirado"));
         }
 
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Rotación de tokens (Requisito Rotación): eliminar el anterior y generar nuevos
-        jwtTokenProvider.deleteRefreshToken(email);
+        // 3. Rotación de tokens (Requisito Rotación): invalidar el usado y generar nuevos
+        jwtTokenProvider.rotateRefreshToken(refreshToken, email);
         String newAccessToken = jwtTokenProvider.generateTokenFromUsername(email);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
 
@@ -163,11 +166,21 @@ public class AuthController {
             jwtTokenProvider.blacklistToken(token);
             
             try {
-                String email = jwtTokenProvider.getUsernameFromToken(token);
-                // Eliminar Refresh Token de Redis (Requisito Blacklist)
-                jwtTokenProvider.deleteRefreshToken(email);
+                // Eliminar el refresh token específico de la sesión (usando las cookies)
+                String refreshCookie = null;
+                if (request.getCookies() != null) {
+                    for (Cookie cookie : request.getCookies()) {
+                        if ("refreshToken".equals(cookie.getName())) {
+                            refreshCookie = cookie.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (refreshCookie != null) {
+                    jwtTokenProvider.deleteRefreshToken(refreshCookie);
+                }
             } catch (Exception e) {
-                log.warn("No se pudo extraer usuario del token para borrar refresh token: {}", e.getMessage());
+                log.warn("No se pudo extraer o borrar refresh token: {}", e.getMessage());
             }
         }
 

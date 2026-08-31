@@ -59,49 +59,70 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // Generar y almacenar Refresh Token en Redis (Requisito Refresh Token)
+    // Generar y almacenar Refresh Token en Redis (Multi-device support)
     public String generateRefreshToken(String username) {
         String refreshToken = UUID.randomUUID().toString();
         if (redisTemplate != null) {
-            String key = "refresh:" + username;
-            String reverseKey = "refresh_token:" + refreshToken;
-            redisTemplate.opsForValue().set(key, refreshToken, jwtRefreshExpiration, TimeUnit.MILLISECONDS);
-            redisTemplate.opsForValue().set(reverseKey, username, jwtRefreshExpiration, TimeUnit.MILLISECONDS);
+            String tokenKey = "refresh_token:" + refreshToken;
+            String userSetKey = "user_refresh_tokens:" + username;
+            
+            // Guardar token -> username
+            redisTemplate.opsForValue().set(tokenKey, username, jwtRefreshExpiration, TimeUnit.MILLISECONDS);
+            // Agregar a la lista de tokens activos del usuario
+            redisTemplate.opsForSet().add(userSetKey, refreshToken);
+            redisTemplate.expire(userSetKey, jwtRefreshExpiration, TimeUnit.MILLISECONDS);
+            
             log.info("Refresh token generado y guardado en Redis para el usuario: {}", username);
-        } else {
-            log.warn("StringRedisTemplate no está disponible. Refresh token no guardado.");
         }
         return refreshToken;
     }
 
     public String getUsernameFromRefreshToken(String token) {
-        if (redisTemplate == null) {
-            return null;
-        }
-        String reverseKey = "refresh_token:" + token;
-        return redisTemplate.opsForValue().get(reverseKey);
+        if (redisTemplate == null) return null;
+        return redisTemplate.opsForValue().get("refresh_token:" + token);
+    }
+    
+    public String getUsernameFromUsedRefreshToken(String token) {
+        if (redisTemplate == null) return null;
+        return redisTemplate.opsForValue().get("used_refresh_token:" + token);
     }
 
-    public boolean validateRefreshToken(String username, String token) {
-        if (redisTemplate == null) {
-            return false;
-        }
-        String key = "refresh:" + username;
-        String storedToken = redisTemplate.opsForValue().get(key);
-        return storedToken != null && storedToken.equals(token);
+    public boolean validateRefreshToken(String token) {
+        if (redisTemplate == null) return false;
+        return Boolean.TRUE.equals(redisTemplate.hasKey("refresh_token:" + token));
     }
 
-    public void deleteRefreshToken(String username) {
-        if (redisTemplate == null) {
-            return;
+    public void rotateRefreshToken(String oldToken, String username) {
+        if (redisTemplate == null) return;
+        
+        // Mover a "usados" para detectar reutilización
+        redisTemplate.delete("refresh_token:" + oldToken);
+        redisTemplate.opsForValue().set("used_refresh_token:" + oldToken, username, jwtRefreshExpiration, TimeUnit.MILLISECONDS);
+        
+        // Quitar de la lista de activos
+        redisTemplate.opsForSet().remove("user_refresh_tokens:" + username, oldToken);
+    }
+    
+    public void revokeAllUserTokens(String username) {
+        if (redisTemplate == null) return;
+        String userSetKey = "user_refresh_tokens:" + username;
+        java.util.Set<String> activeTokens = redisTemplate.opsForSet().members(userSetKey);
+        if (activeTokens != null) {
+            for (String t : activeTokens) {
+                redisTemplate.delete("refresh_token:" + t);
+            }
         }
-        String key = "refresh:" + username;
-        String token = redisTemplate.opsForValue().get(key);
-        if (token != null) {
-            redisTemplate.delete(key);
+        redisTemplate.delete(userSetKey);
+        log.warn("Todos los refresh tokens han sido revocados para el usuario: {}", username);
+    }
+
+    public void deleteRefreshToken(String token) {
+        if (redisTemplate == null) return;
+        String username = getUsernameFromRefreshToken(token);
+        if (username != null) {
             redisTemplate.delete("refresh_token:" + token);
+            redisTemplate.opsForSet().remove("user_refresh_tokens:" + username, token);
         }
-        log.info("Refresh token eliminado de Redis para el usuario: {}", username);
     }
 
     // Invalidar token JWT (Blacklist en Redis - Requisito Blacklist)
