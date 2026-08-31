@@ -130,7 +130,7 @@ class UsuarioServiceImplTest {
     @Test
     void testCrearUsuarioRechazaEmailDuplicado() {
         when(usuarioRepository.existsByEmail(usuario.getEmail())).thenReturn(true);
-        assertThrows(RuntimeException.class, () -> usuarioService.crear(usuario));
+        assertThrows(IllegalArgumentException.class, () -> usuarioService.crear(usuario));
         verify(usuarioRepository, never()).save(any());
     }
 

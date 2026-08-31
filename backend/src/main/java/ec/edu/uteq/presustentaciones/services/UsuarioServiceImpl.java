@@ -45,7 +45,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         log.info("Creando usuario con email: {}", usuario.getEmail());
 
         if (existePorEmail(usuario.getEmail())) {
-            throw new RuntimeException("Ya existe un usuario con el email: " + usuario.getEmail());
+            throw new IllegalArgumentException("Ya existe un usuario con el email: " + usuario.getEmail());
         }
 
         auditoriaService.marcarActorActual();
@@ -81,7 +81,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         log.info("Eliminando usuario con ID: {}", id);
 
         if (!usuarioRepository.existsById(id)) {
-            throw new RuntimeException("Usuario no encontrado con ID: " + id);
+            throw new IllegalArgumentException("Usuario no encontrado con ID: " + id);
         }
 
         auditoriaService.marcarActorActual();
@@ -143,7 +143,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public Usuario actualizarPerfil(Long id, String emailNotificaciones, String telefono) {
         int updated = usuarioRepository.actualizarPerfil(id, emailNotificaciones, telefono);
         if (updated == 0) {
-            throw new RuntimeException("Usuario no encontrado con ID: " + id);
+            throw new IllegalArgumentException("Usuario no encontrado con ID: " + id);
         }
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));

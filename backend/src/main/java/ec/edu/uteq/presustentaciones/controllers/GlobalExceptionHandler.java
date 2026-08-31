@@ -67,6 +67,13 @@ public class GlobalExceptionHandler {
                 .body(ResponseWrapper.error("Recurso no encontrado: " + ex.getResourcePath()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ResponseWrapper.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ResponseWrapper<Object>> handleRuntimeException(RuntimeException ex) {
         // Log the exception for internal debugging (to be added to proper logger later if needed)
