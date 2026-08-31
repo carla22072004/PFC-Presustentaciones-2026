@@ -21,6 +21,7 @@ import ec.edu.uteq.presustentaciones.repositories.ActaRepository;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +56,7 @@ public class ActaServiceImpl implements ActaService {
     private final jakarta.persistence.EntityManager entityManager;
     private final NotificacionService notificacionService;
     private final AuditoriaService auditoriaService;
+    private final TutorRepository tutorRepository;
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -62,6 +66,33 @@ public class ActaServiceImpl implements ActaService {
     private static final DeviceRgb UTEQ_GOLD    = new DeviceRgb(204, 153, 0);
     private static final DeviceRgb LIGHT_GRAY   = new DeviceRgb(245, 245, 245);
     private static final DeviceRgb MEDIUM_GRAY  = new DeviceRgb(200, 200, 200);
+
+    private void validarAcceso(Acta acta) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("Usuario no autenticado");
+        }
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) return;
+
+        String email = auth.getName();
+        if (acta.getSolicitud().getEstudiante() != null &&
+            acta.getSolicitud().getEstudiante().getUsuario().getEmail().equals(email)) {
+            return;
+        }
+
+        List<Jurado> jurados = juradoRepository.findBySolicitudId(acta.getSolicitud().getId());
+        boolean esJurado = jurados.stream().anyMatch(j -> j.getDocente() != null && j.getDocente().getUsuario().getEmail().equals(email));
+        if (esJurado) return;
+
+        Optional<ec.edu.uteq.presustentaciones.entities.Tutor> tutorOpt = tutorRepository.findBySolicitudId(acta.getSolicitud().getId());
+        if (tutorOpt.isPresent() && tutorOpt.get().getDocente() != null && tutorOpt.get().getDocente().getUsuario().getEmail().equals(email)) {
+            return;
+        }
+
+        throw new RuntimeException("No tienes permiso para acceder a esta acta");
+    }
 
     @Override
     public Acta generarActa(Long solicitudId) {
@@ -108,6 +139,29 @@ public class ActaServiceImpl implements ActaService {
         String rolNormalizado = rol.toUpperCase();
         if (!java.util.Set.of("PRESIDENTE", "VOCAL_1", "VOCAL_2", "TUTOR").contains(rolNormalizado)) {
             throw new RuntimeException("Rol inválido: " + rol + ". Use: PRESIDENTE, VOCAL_1, VOCAL_2, TUTOR");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("Usuario no autenticado");
+        }
+        String email = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            if (rolNormalizado.equals("TUTOR")) {
+                Optional<ec.edu.uteq.presustentaciones.entities.Tutor> tutorOpt = tutorRepository.findBySolicitudId(acta.getSolicitud().getId());
+                if (tutorOpt.isEmpty() || tutorOpt.get().getDocente() == null || !tutorOpt.get().getDocente().getUsuario().getEmail().equals(email)) {
+                     throw new RuntimeException("No eres el tutor de esta solicitud");
+                }
+            } else {
+                List<Jurado> jurados = juradoRepository.findBySolicitudId(acta.getSolicitud().getId());
+                boolean esJuradoRol = jurados.stream().anyMatch(j -> j.getRol().equals(rolNormalizado) && j.getDocente() != null && j.getDocente().getUsuario().getEmail().equals(email));
+                if (!esJuradoRol) {
+                     throw new RuntimeException("No eres el " + rolNormalizado + " de esta solicitud");
+                }
+            }
         }
 
         // Persiste la firma vía sp_firmar_acta_digital (Fase 3 / Criterio P1) -- el
@@ -163,6 +217,7 @@ public class ActaServiceImpl implements ActaService {
     public byte[] obtenerPdfBytes(Long actaId) {
         Acta acta = actaRepository.findById(actaId)
                 .orElseThrow(() -> new RuntimeException("Acta no encontrada"));
+        validarAcceso(acta);
         if (acta.getArchivoPdf() == null) {
             throw new RuntimeException("El acta no tiene PDF generado aún.");
         }
@@ -181,7 +236,9 @@ public class ActaServiceImpl implements ActaService {
 
     @Override
     public Optional<Acta> buscarPorSolicitud(Long solicitudId) {
-        return actaRepository.findBySolicitudId(solicitudId);
+        Optional<Acta> acta = actaRepository.findBySolicitudId(solicitudId);
+        acta.ifPresent(this::validarAcceso);
+        return acta;
     }
 
     // ── Generación PDF ────────────────────────────────────────────────────────

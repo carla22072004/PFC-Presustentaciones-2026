@@ -8,8 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -30,9 +29,9 @@ public class ActaController {
     public ResponseEntity<?> generarActa(@PathVariable Long solicitudId) {
         try {
             Acta acta = actaService.generarActa(solicitudId);
-            return ResponseEntity.ok(acta);
+            return ResponseEntity.ok(ResponseWrapper.success(acta, "Acta generada exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -48,14 +47,15 @@ public class ActaController {
             @RequestParam(required = false) String observacion) {
         try {
             Acta acta = actaService.firmarActa(actaId, rol, observacion);
-            return ResponseEntity.ok(acta);
+            return ResponseEntity.ok(ResponseWrapper.success(acta, "Acta firmada exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     /** RF-11: Descarga el PDF del acta */
     @GetMapping("/descargar/{actaId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> descargarPdf(@PathVariable Long actaId) {
         try {
             byte[] pdfBytes = actaService.obtenerPdfBytes(actaId);
@@ -71,6 +71,7 @@ public class ActaController {
 
     /** Vista en línea del PDF (en navegador) */
     @GetMapping("/ver/{actaId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> verPdf(@PathVariable Long actaId) {
         try {
             byte[] pdfBytes = actaService.obtenerPdfBytes(actaId);
@@ -85,14 +86,24 @@ public class ActaController {
     }
 
     @GetMapping
-    public Page<Acta> listar(Pageable pageable) {
-        return actaService.listarActas(pageable);
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTAS_VER')")
+    public ResponseEntity<?> listar(Pageable pageable) {
+        try {
+            return ResponseEntity.ok(ResponseWrapper.success(actaService.listarActas(pageable)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @GetMapping("/solicitud/{solicitudId}")
-    public ResponseEntity<Acta> porSolicitud(@PathVariable Long solicitudId) {
-        return actaService.buscarPorSolicitud(solicitudId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> porSolicitud(@PathVariable Long solicitudId) {
+        try {
+            return actaService.buscarPorSolicitud(solicitudId)
+                    .map(acta -> ResponseEntity.ok(ResponseWrapper.success(acta)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 }
