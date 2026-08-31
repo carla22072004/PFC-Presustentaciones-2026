@@ -9,7 +9,12 @@ import java.util.Optional;
 
 @Repository
 public interface ActaRepository extends JpaRepository<Acta, Long> {
-    Optional<Acta> findBySolicitudId(Long solicitudId);
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Acta a JOIN FETCH a.solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE s.id = :solicitudId")
+    Optional<Acta> findBySolicitudId(@Param("solicitudId") Long solicitudId);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT a FROM Acta a JOIN FETCH a.solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u",
+           countQuery = "SELECT COUNT(a) FROM Acta a")
+    org.springframework.data.domain.Page<Acta> findAll(org.springframework.data.domain.Pageable pageable);
 
     /** Invoca sp_firmar_acta_digital (PROCEDURE). Fase 3 / Criterio P1. */
     @Procedure(procedureName = "presus.sp_firmar_acta_digital")
