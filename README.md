@@ -139,7 +139,7 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 
 ---
 
-## Resumen de Entregables y Documentación (Entrega 3)
+## Resumen de Entregables y Documentación
 
 | Componente | Ubicación en el Repositorio | Descripción |
 |---|---|---|
