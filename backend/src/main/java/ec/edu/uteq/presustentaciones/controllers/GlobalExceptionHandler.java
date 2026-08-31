@@ -69,15 +69,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ResponseWrapper<Object>> handleRuntimeException(RuntimeException ex) {
+        // Log the exception for internal debugging (to be added to proper logger later if needed)
+        System.err.println("RuntimeException: " + ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ResponseWrapper.error(ex.getMessage()));
+                .body(ResponseWrapper.error("Solicitud inválida o error en el proceso"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseWrapper<Object>> handleGeneralException(Exception ex) {
+        // Log the exception for internal debugging
+        System.err.println("Exception: " + ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ResponseWrapper.error("Ha ocurrido un error interno en el servidor: " + ex.getMessage()));
+                .body(ResponseWrapper.error("Ha ocurrido un error interno en el servidor. Por favor, inténtelo de nuevo más tarde."));
     }
 }
