@@ -35,7 +35,7 @@ graph TD
     UserBrowser["🌐 Navegador Web / Cliente<br/>(HTML5 / CSS3 / JS)"]
 
     subgraph "Infraestructura de Aplicación UTEQ"
-        Frontend["🎨 Frontend SPA Angular 17<br/>[Contenedor Web / Nginx]<br/>Puerto: 4200"]
+        Frontend["🎨 Frontend SPA Angular 21<br/>[Contenedor Web / Nginx]<br/>Puerto: 4200"]
         Backend["⚙️ API REST Spring Boot 3.2.1<br/>[Contenedor Java 17 / JVM]<br/>Puerto: 8080"]
         PostgreSQL["🗄️ Base de Datos Relacional PostgreSQL 15<br/>[Contenedor BD]<br/>Puerto: 5432"]
         Redis["⚡ Almacén de Caché Redis 7<br/>[Contenedor In-Memory]<br/>Puerto: 6379"]
@@ -44,7 +44,7 @@ graph TD
     UserBrowser -->|"HTTPS / REST API JSON / Cookies HTTP-Only"| Frontend
     Frontend -->|"Peticiones HTTP REST / Header Bearer JWT"| Backend
     Backend -->|"Spring Data JPA + Procedimientos PL/pgSQL"| PostgreSQL
-    Backend -->|"Sesiones y Caché de Rúbricas"| Redis
+    Backend -->|"Refresh tokens JWT + caché de solicitudes y API externa de universidades"| Redis
 ```
 
 ---
