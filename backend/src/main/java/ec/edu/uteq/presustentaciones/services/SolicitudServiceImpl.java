@@ -87,6 +87,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         Estudiante estudiante = estudianteRepository.findById(estudianteId)
                 .orElseThrow(() -> new RuntimeException("Estudiante no encontrado con ID: " + estudianteId));
 
+        if (datos.getTituloTema() == null || datos.getTituloTema().trim().isEmpty()) {
+            throw new RuntimeException("El título del tema es obligatorio");
+        }
+        if (datos.getTituloTema().length() > 300) {
+            throw new RuntimeException("El título del tema no puede exceder los 300 caracteres");
+        }
+
         // Resolver estado inicial
         ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCreada = estadoSolicitudRepository.findByCodigo("CREADA")
                 .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
