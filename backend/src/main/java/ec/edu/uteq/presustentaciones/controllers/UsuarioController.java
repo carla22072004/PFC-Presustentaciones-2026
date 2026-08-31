@@ -1,6 +1,7 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.dto.PerfilRequest;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.IUsuarioService;
@@ -35,9 +36,13 @@ public class UsuarioController {
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar todos los usuarios (solo ADMIN) — sin paginar, uso interno/pequeñas instalaciones")
-    public ResponseEntity<List<Usuario>> listarTodos() {
+    public ResponseEntity<?> listarTodos() {
         log.info("GET /api/usuarios - Listando todos los usuarios");
-        return ResponseEntity.ok(usuarioService.listarTodos());
+        try {
+            return ResponseEntity.ok(ResponseWrapper.success(usuarioService.listarTodos()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     /** La tabla puede tener decenas de miles de filas (datos de carga k6) — el panel de admin siempre usa este endpoint paginado. */
@@ -49,14 +54,18 @@ public class UsuarioController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String q
     ) {
-        var resultado = usuarioService.listarPaginado(page, size, q);
-        return ResponseEntity.ok(java.util.Map.of(
-                "content", resultado.getContent(),
-                "totalElements", resultado.getTotalElements(),
-                "totalPages", resultado.getTotalPages(),
-                "page", resultado.getNumber(),
-                "size", resultado.getSize()
-        ));
+        try {
+            var resultado = usuarioService.listarPaginado(page, size, q);
+            return ResponseEntity.ok(ResponseWrapper.success(java.util.Map.of(
+                    "content", resultado.getContent(),
+                    "totalElements", resultado.getTotalElements(),
+                    "totalPages", resultado.getTotalPages(),
+                    "page", resultado.getNumber(),
+                    "size", resultado.getSize()
+            )));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")
@@ -64,69 +73,89 @@ public class UsuarioController {
     public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
         if (!esUsuarioActualOAdmin(id)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(java.util.Map.of("error", "No tienes permiso para ver este usuario"));
+                    .body(ResponseWrapper.error("No tienes permiso para ver este usuario"));
         }
         log.info("GET /api/usuarios/{} - Obteniendo usuario", id);
         return usuarioService.obtenerPorId(id)
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .<ResponseEntity<?>>map(usuario -> ResponseEntity.ok(ResponseWrapper.success(usuario)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseWrapper.error("Usuario no encontrado")));
     }
 
     @GetMapping("/email/{email}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Buscar usuario por email (solo ADMIN)")
-    public ResponseEntity<Usuario> buscarPorEmail(@PathVariable String email) {
+    public ResponseEntity<?> buscarPorEmail(@PathVariable String email) {
         log.info("GET /api/usuarios/email/{} - Buscando usuario", email);
         return usuarioService.obtenerPorEmail(email)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .<ResponseEntity<?>>map(usuario -> ResponseEntity.ok(ResponseWrapper.success(usuario)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseWrapper.error("Usuario no encontrado")));
     }
 
     @GetMapping("/activos")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar usuarios activos (solo ADMIN)")
-    public ResponseEntity<List<Usuario>> listarActivos() {
+    public ResponseEntity<?> listarActivos() {
         log.info("GET /api/usuarios/activos - Listando usuarios activos");
-        return ResponseEntity.ok(usuarioService.listarActivos());
+        try {
+            return ResponseEntity.ok(ResponseWrapper.success(usuarioService.listarActivos()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Crear nuevo usuario (solo ADMIN)")
-    public ResponseEntity<Usuario> crear(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> crear(@RequestBody Usuario usuario) {
         log.info("POST /api/usuarios - Creando usuario: {}", usuario.getEmail());
-        Usuario creado = usuarioService.crear(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+        try {
+            Usuario creado = usuarioService.crear(usuario);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ResponseWrapper.success(creado, "Usuario creado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Actualizar usuario, incluido su rol (solo ADMIN)")
-    public ResponseEntity<Usuario> actualizar(
+    public ResponseEntity<?> actualizar(
             @PathVariable Long id,
             @RequestBody Usuario usuario
     ) {
         log.info("PUT /api/usuarios/{} - Actualizando usuario", id);
-        Usuario actualizado = usuarioService.actualizar(id, usuario);
-        return ResponseEntity.ok(actualizado);
+        try {
+            Usuario actualizado = usuarioService.actualizar(id, usuario);
+            return ResponseEntity.ok(ResponseWrapper.success(actualizado, "Usuario actualizado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @PatchMapping("/{id}/activar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Activar usuario (solo ADMIN)")
-    public ResponseEntity<Void> activar(@PathVariable Long id) {
+    public ResponseEntity<?> activar(@PathVariable Long id) {
         log.info("PATCH /api/usuarios/{}/activar", id);
-        usuarioService.activar(id);
-        return ResponseEntity.ok().build();
+        try {
+            usuarioService.activar(id);
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Usuario activado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @PatchMapping("/{id}/desactivar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Desactivar usuario (solo ADMIN)")
-    public ResponseEntity<Void> desactivar(@PathVariable Long id) {
+    public ResponseEntity<?> desactivar(@PathVariable Long id) {
         log.info("PATCH /api/usuarios/{}/desactivar", id);
-        usuarioService.desactivar(id);
-        return ResponseEntity.ok().build();
+        try {
+            usuarioService.desactivar(id);
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Usuario desactivado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     @PatchMapping("/{id}/perfil")
@@ -137,23 +166,27 @@ public class UsuarioController {
     ) {
         if (!esUsuarioActual(id)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(java.util.Map.of("error", "No puedes editar el perfil de otro usuario"));
+                    .body(ResponseWrapper.error("No puedes editar el perfil de otro usuario"));
         }
         try {
             Usuario actualizado = usuarioService.actualizarPerfil(id, req.getEmailNotificaciones(), req.getTelefono());
-            return ResponseEntity.ok(actualizado);
+            return ResponseEntity.ok(ResponseWrapper.success(actualizado, "Perfil actualizado exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Eliminar usuario (solo ADMIN)")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/usuarios/{}", id);
-        usuarioService.eliminar(id);
-        return ResponseEntity.noContent().build();
+        try {
+            usuarioService.eliminar(id);
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Usuario eliminado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
     }
 
     /** El id del path coincide con el usuario autenticado (resuelto por email del JWT, no por el id recibido). */

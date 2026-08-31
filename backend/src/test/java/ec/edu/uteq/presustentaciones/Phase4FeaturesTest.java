@@ -1,7 +1,6 @@
 package ec.edu.uteq.presustentaciones;
 
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
-import ec.edu.uteq.presustentaciones.dto.UniversityDto;
 import ec.edu.uteq.presustentaciones.security.RateLimiterService;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,9 +9,6 @@ import org.mockito.Mockito;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -88,16 +84,17 @@ class Phase4FeaturesTest {
     @Test
     void testRefreshTokens() {
         String username = "test@uteq.edu.ec";
-        String token = jwtTokenProvider.generateRefreshToken(username);
-        assertNotNull(token);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        assertNotNull(refreshToken);
 
-        String reverseKey = "refresh_token:" + token;
+        String reverseKey = "refresh_token:" + refreshToken;
         when(redisTemplate.opsForValue().get(reverseKey)).thenReturn(username);
 
-        assertEquals(username, jwtTokenProvider.getUsernameFromRefreshToken(token));
+        assertEquals(username, jwtTokenProvider.getUsernameFromRefreshToken(refreshToken));
 
         String key = "refresh:" + username;
-        when(redisTemplate.opsForValue().get(key)).thenReturn(token);
-        assertTrue(jwtTokenProvider.validateRefreshToken(username, token));
+        when(redisTemplate.opsForValue().get(key)).thenReturn(refreshToken);
+        boolean isValid = jwtTokenProvider.validateRefreshToken(refreshToken);
+        assertTrue(isValid);
     }
 }
