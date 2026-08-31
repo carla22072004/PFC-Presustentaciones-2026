@@ -93,7 +93,7 @@ public class TutoriaServiceImpl implements TutoriaService {
                 .orElseThrow(() -> new RuntimeException("Tutor no encontrado"));
 
         if (!tutor.getDocente().getUsuario().getId().equals(tutorUsuarioId)) {
-            throw new RuntimeException("No autorizado");
+            throw new org.springframework.security.access.AccessDeniedException("No autorizado");
         }
 
         long totalFases = tutoriaFaseRepository.countByTutorId(tutorId);
@@ -141,7 +141,7 @@ public class TutoriaServiceImpl implements TutoriaService {
 
         Long estudianteUsuarioReal = fase.getTutor().getSolicitud().getEstudiante().getUsuario().getId();
         if (!estudianteUsuarioReal.equals(estudianteUsuarioId)) {
-            throw new RuntimeException("No autorizado");
+            throw new org.springframework.security.access.AccessDeniedException("No autorizado");
         }
 
         Solicitud solicitud = fase.getTutor().getSolicitud();
@@ -214,7 +214,7 @@ public class TutoriaServiceImpl implements TutoriaService {
                 .orElseThrow(() -> new RuntimeException("Fase no encontrada"));
 
         if (!fase.getTutor().getDocente().getUsuario().getId().equals(tutorUsuarioId)) {
-            throw new RuntimeException("No autorizado");
+            throw new org.springframework.security.access.AccessDeniedException("No autorizado");
         }
 
         if (!"PENDIENTE_TUTOR".equals(fase.getEstado())) {
@@ -309,7 +309,7 @@ public class TutoriaServiceImpl implements TutoriaService {
                 ("ADMIN".equalsIgnoreCase(remitente.getRol()) || "COORDINADOR".equalsIgnoreCase(remitente.getRol()));
 
         if (!remitenteId.equals(tutorUserId) && !remitenteId.equals(estudianteUserId) && !esPrivilegiado) {
-            throw new RuntimeException("No autorizado para enviar mensajes en esta tutoría");
+            throw new org.springframework.security.access.AccessDeniedException("No autorizado para enviar mensajes en esta tutoría");
         }
 
         TutoriaMensaje mensaje = TutoriaMensaje.builder()
@@ -396,7 +396,7 @@ public class TutoriaServiceImpl implements TutoriaService {
                 ? tutor.getSolicitud().getEstudiante().getUsuario().getId() : null;
                 
         if (!usuarioId.equals(tutorUserId) && !usuarioId.equals(estudianteUserId)) {
-            throw new RuntimeException("No autorizado para acceder a esta tutoría");
+            throw new org.springframework.security.access.AccessDeniedException("No autorizado para acceder a esta tutoría");
         }
     }
 
