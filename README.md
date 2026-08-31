@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026)
 [![CI](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![JaCoCo Coverage](https://img.shields.io/badge/coverage-37.1%25_lines-orange.svg)](docs/mediciones/jacoco/COVERAGE.md)
+[![JaCoCo Coverage](https://img.shields.io/badge/coverage-38.9%25_lines-orange.svg)](docs/mediciones/jacoco/COVERAGE.md)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP-revisión_manual-yellow.svg)](docs/mediciones/sec/owasp/OWASP-AUDIT.md)
 
 Sistema web para la automatización, gestión y evaluación de pre-sustentaciones de trabajos de titulación de la **Universidad Técnica Estatal de Quevedo (UTEQ)**.
@@ -77,6 +77,25 @@ make all
 Ver [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) para el guion del
 video de demostración de este comando (⏳ video pendiente de grabar).
 
+**Hallazgo real de reproducibilidad corregido (auditoría CI/CD, 2026-08-30):**
+[`PreSustentacionesApplicationTests.java`](backend/src/test/java/ec/edu/uteq/presustentaciones/PreSustentacionesApplicationTests.java)
+era un `assertTrue(true)` sin ninguna anotación de Spring — nunca levantaba un contexto real, así que
+ningún test ejercía de verdad que Flyway migrara limpio desde una base de datos vacía (el job `backend`
+de [`ci.yml`](.github/workflows/ci.yml) provisiona contenedores Postgres/Redis frescos, pero nada los
+usaba). Se convirtió en un `@SpringBootTest` real con `@AutoConfigureTestDatabase(replace = NONE)`, y al
+verificarlo contra una base de datos genuinamente vacía **encontró un bug real preexistente**:
+`V1__schema_inicial.sql` creaba las secuencias `roles_usuario_seq` y `modalidades_titulacion_seq` sin
+cualificar el esquema (`create sequence roles_usuario_seq` en vez de `create sequence
+presus.roles_usuario_seq`), mientras que `V14` y `V17` sí las referenciaban cualificadas
+(`presus.roles_usuario_seq`) — una migración limpia desde cero fallaba en V14. Nunca se había detectado
+porque ningún entorno de desarrollo había migrado nunca desde una base de datos realmente vacía. Corregido
+en `V1` (cualificación explícita de esas dos secuencias) y verificado dos veces: (1) migración limpia
+V1→V18 contra una base de datos Postgres vacía real (no simulada), y (2) suite completa
+(`./mvnw test`, 109/109, 0 fallos) contra la base de datos de desarrollo ya migrada, tras realinear el
+checksum de Flyway con `flyway:repair` — mismo mecanismo ya usado antes para el checksum de V9. También se
+agregó `spring.flyway.schemas=presus` a `backend/src/test/resources/application.properties`, que hasta
+ahora reemplazaba por completo (no fusionaba) la configuración de `src/main/resources/` durante los tests.
+
 ## Comandos Disponibles
 
 `make all` corre todo en orden (`build → up → wait-backend → test → bench → audit → docs → pdf`), pero
@@ -137,7 +156,7 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 | **Checklists metodológicos** | [`docs/checklists/`](docs/checklists/) | Autoevaluación honesta contra Ralph 2021 (General + Engineering Research + Benchmarking), PRISMA 2020 (evaluado contra el procedimiento de búsqueda real del capítulo de trabajos relacionados), Runeson & Höst (no aplica — el proyecto es DSR+GQM, no estudio de caso), INCOSE y FAIR. |
 | **DOI del software (Zenodo)** | [`docs/ZENODO.md`](docs/ZENODO.md) / [`docs/ZENODO-DATASET.md`](docs/ZENODO-DATASET.md) | ✅ **Archivado en Zenodo** — DOI oficial: [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) (`v1.0.0`, licencia MIT). El dataset de mediciones se deposita por separado siguiendo el principio de citación independiente (`docs/ZENODO-DATASET.md`). |
 | **Scripts de análisis** | [`scripts/`](scripts/) | Notebooks reales y ejecutados (`perf-analysis.ipynb`, `sus-analysis.ipynb`) + `validate-traceability.sh`, `audit-sql-dynamic.sh`, `gen-figuras.py`. |
-| **Pruebas de Carga k6** | [`k6/`](k6/) | Script k6, 5 corridas reales (`run1`-`run5`) y análisis estadístico caché fría/caliente (Wilcoxon, IC 95%, tamaño de efecto). |
+| **Pruebas de Carga k6** | [`k6/`](k6/) | Script k6, 5 corridas independientes válidas (`run3`-`run7`; `run1`/`run2` se conservan versionadas como evidencia de una corrida inválida real, no se usan en las estadísticas — ver [`k6/README.md`](k6/README.md)) y análisis estadístico caché fría/caliente (Wilcoxon, IC 95%, tamaño de efecto). |
 | **Auditoría OWASP** | [`docs/mediciones/sec/owasp/OWASP-AUDIT.md`](docs/mediciones/sec/owasp/OWASP-AUDIT.md) | Revisión manual de 6 controles OWASP Top 10 + herramientas automáticas reales: OWASP ZAP (0 FAIL, 0 High; 5 hallazgos corregidos en total — 4 headers + 1 `@angular/core` vulnerable), SpotBugs/find-sec-bugs (0 SQL dinámico, 1 timing-attack corregido), `npm audit` (14 deps vulnerables, todas en tooling de build de íconos — bajó de 41 tras actualizar Angular). |
 | **Escaneo OWASP ZAP** | [`docs/mediciones/sec/zap/`](docs/mediciones/sec/zap/) | Reporte HTML/JSON de la corrida real (plan de automatización `zap.yaml`), re-verificada 2026-08-29; corrida anterior conservada como `*.PREVIOUS.*`. |
 | **Análisis estático** | [`docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md`](docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md) | SpotBugs + find-sec-bugs: 233 hallazgos reales (actualizado 2026-08-29; 189 en la corrida del 17-08), 0 de SQL dinámico. |
@@ -149,6 +168,6 @@ También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) 
 | **Citación & Licencia** | [`CITATION.cff`](CITATION.cff) / [`LICENSE`](LICENSE) | Archivo de citación CFF válido y Licencia Open Source MIT. |
 | 📖 **Diccionario Datos** | [`docs/mediciones/DATA-DICTIONARY.md`](docs/mediciones/DATA-DICTIONARY.md) | Explicación detallada de variables medidas en pruebas empíricas. |
 | **Documento Ético** | [`docs/etica/`](docs/etica/) | Principios bioéticos ([`ETHICS.md`](docs/etica/ETHICS.md)), plantilla de consentimiento informado ([`consentimientos/`](docs/etica/consentimientos/)) y declaración de uso de IA ([`ai-disclosure.md`](docs/etica/ai-disclosure.md)). |
-| **Colección Postman** | [`docs/postman/PFC-Collection.json`](docs/postman/PFC-Collection.json) | Colección v2.1 con 27 peticiones HTTP RESTful (éxito, validación 400, autorización 401/403, no encontrado 404), verificada en la Fase 10 contra el backend real corriendo en Docker — no solo contra el código. Corrigió rutas que nunca existieron en una versión anterior (`/asignar-masivo`, `/{id}/firmar`, `/{id}/calcular-promedio`, `/reportes/defensas`, `POST /api/solicitudes` sin path) y el prefijo de versión `/api/v1/` faltante en todas las peticiones. |
+| **Colección Postman** | [`docs/postman/PFC-Collection.json`](docs/postman/PFC-Collection.json) | Colección v2.1 con 27 peticiones HTTP RESTful (éxito, validación 400, autorización 401/403, no encontrado 404), verificada en la Fase 10 contra el backend real corriendo en Docker — no solo contra el código. Corrigió rutas que nunca existieron en una versión anterior (`/asignar-masivo`, `/{id}/firmar`, `/{id}/calcular-promedio`, `/reportes/defensas`, `POST /api/solicitudes` sin path) y el prefijo de versión `/api/v1/` faltante en todas las peticiones. **Re-verificada 2026-08-30 (auditoría de reproducibilidad):** las 27 peticiones se ejecutaron realmente contra el backend con el dataset de 1M+ registros cargado — 25/27 coincidían, 2 no: dos pruebas "sin token" nombradas "(Error 403)" en realidad reciben 401 desde el fix real de `GlobalExceptionHandler` (403 queda solo para autenticado-sin-rol), y tres pruebas "No Encontrado (Error 404)" usaban el ID `999` como "seguro que no existe" — pero **sí existe** en el dataset de 1M filas (verificado: `GET .../999` devolvía `200` con un registro real). El backend está correcto en los 5 casos; se corrigió la colección (nombres y el ID de prueba a `999999999`, confirmado inexistente), no el backend. |
 | **Informe Final (académico, 12 capítulos)** | [`Informe-Final/informe-final.pdf`](Informe-Final/informe-final.pdf) | Documento IMRaD ampliado: SRS, DSR+GQM, arquitectura, evaluación empírica, discusión, amenazas a la validez, CRediT, 32 referencias verificadas (19 de alto impacto). Es el informe vigente para la defensa. |
 | **Informe Técnico (Unidad IV, histórico)** | [`Informe-UNIDAD-4-PRESUS/`](Informe-UNIDAD-4-PRESUS/) | Informe técnico de la Unidad IV en `.docx`/`.tex`, anterior al Informe Final. |

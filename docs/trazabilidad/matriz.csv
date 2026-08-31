@@ -9,5 +9,5 @@ RF-07,HU-07,Actas / Firmas,POST /api/v1/actas/firmar/{actaId},Should,ActaService
 RF-08,HU-08,Notificaciones,GET /api/v1/notificaciones,Could,ninguna (NotificacionServiceImplTest.java no existe),NO_VERIFICADO,Postman Test Collection (verificacion manual, no automatizada),CRUD-ORM
 RF-09,HU-09,Reportes,GET /api/v1/reportes/estadisticas/json,Could,ninguna,NO_VERIFICADO,ninguna (cita previa de k6 era incorrecta, ver casos-de-uso/CU-09.md),CRUD-ORM
 RF-10,HU-10,Salas,GET /api/v1/salas,Should,ninguna (SalaServiceImplTest.java no existe),NO_VERIFICADO,ninguna (cita previa de SUS era un non-sequitur, ver historias/HU-10.md),CRUD-ORM
-RF-11,HU-11,Usuarios,GET /api/v1/usuarios,Must,UsuarioServiceImplTest.java,VERIFICADO,JaCoCo 68% cobertura de lineas real + OWASP-AUDIT.md control A01,CRUD-ORM
+RF-11,HU-11,Usuarios,GET /api/v1/usuarios,Must,UsuarioServiceImplTest.java,VERIFICADO,JaCoCo 69% cobertura de lineas real + OWASP-AUDIT.md control A01,CRUD-ORM
 RF-12,HU-12,Anteproyectos,POST /api/v1/anteproyectos/enviar/{id},Must,AnteproyectoServiceImplTest.java,VERIFICADO,JaCoCo 72% cobertura de lineas real + STATIC-ANALYSIS.md (UNSAFE_HASH_EQUALS corregido),CRUD-ORM
