@@ -9,17 +9,17 @@ help:
 	@echo "  make restart     - Reinicia los servicios"
 	@echo "  make logs        - Muestra los logs en tiempo real"
 	@echo "  make ps          - Muestra el estado de los contenedores"
-	@echo "  make clean       - Limpia volúmenes y contenedores huérfanos"
-	@echo "  make build       - Compila el backend y construye el build de producción del frontend"
+	@echo "  make clean       - Limpia volumenes y contenedores huerfanos"
+	@echo "  make build       - Compila el backend y construye el build de produccion del frontend"
 	@echo "  make test        - Corre la suite de tests del backend (JaCoCo incluido)"
 	@echo "  make bench       - Corre las 5 pruebas de carga k6 contra localhost:8080"
-	@echo "  make audit       - Corre SpotBugs/find-sec-bugs (SQL dinámico) + npm audit"
+	@echo "  make audit       - Corre SpotBugs/find-sec-bugs (SQL dinamico) + npm audit"
 	@echo "  make docs        - Regenera las figuras de docs/mediciones/perf/figuras/ y valida la matriz de trazabilidad"
 	@echo "  make pdf         - Compila Informe-Final/informe-final.tex a PDF (requiere latexmk/MiKTeX o TeX Live)"
-	@echo "  make all         - Objetivo de reproducibilidad (Criterio R1): desde una clonación limpia,"
+	@echo "  make all         - Objetivo de reproducibilidad (Criterio R1): desde una clonacion limpia,"
 	@echo "                     construye, levanta todos los contenedores, espera a que las migraciones"
-	@echo "                     Flyway se apliquen, corre tests + benchmarks + auditoría + reportes, y"
-	@echo "                     compila el PDF final. Sale con código 0 solo si TODO lo anterior tuvo éxito."
+	@echo "                     Flyway se apliquen, corre tests + benchmarks + auditoria + reportes, y"
+	@echo "                     compila el PDF final. Sale con codigo 0 solo si TODO lo anterior tuvo exito."
 
 up:
 	@echo "Levantando la infraestructura de contenedores..."
@@ -45,12 +45,18 @@ clean:
 build:
 	@echo "Compilando el backend..."
 	cd backend && ./mvnw -q compile
-	@echo "Construyendo el build de producción del frontend..."
+	@echo "Construyendo el build de produccion del frontend..."
 	cd Frontend && npx ng build --configuration production
 
 test:
 	@echo "Corriendo la suite de tests del backend (JaCoCo se genera en la fase test)..."
-	cd backend && ./mvnw test
+	@# Hallazgo real (verificacion 2026-08-31): "./mvnw test" en crudo no carga .env, asi que
+	@# DB_PASSWORD cae al valor por defecto de application.properties ("postgresAdmin"), que
+	@# nunca coincide con la contrasena real que usa Docker Compose (DB_PASSWORD=postgresAdminPassword
+	@# en .env) -- PreSustentacionesApplicationTests (@SpringBootTest real) fallaba con
+	@# "password authentication failed" contra el Postgres real y correcto, no por un bug de la
+	@# app. Se carga .env aqui mismo, igual que ya lo hace Docker Compose automaticamente.
+	set -a; [ -f .env ] && . ./.env; set +a; cd backend && ./mvnw test
 
 bench:
 	@echo "Corriendo las 5 pruebas de carga k6 contra localhost:8080/api/v1..."
@@ -58,7 +64,7 @@ bench:
 	cd k6 && k6 run load-test.js
 
 audit:
-	@echo "Análisis estático de seguridad (SpotBugs + find-sec-bugs, incluye SQL dinámico)..."
+	@echo "Analisis estatico de seguridad (SpotBugs + find-sec-bugs, incluye SQL dinamico)..."
 	./scripts/audit-sql-dynamic.sh
 	@echo ""
 	@echo "npm audit del frontend..."
@@ -89,12 +95,12 @@ wait-backend:
 		echo "  intento $$i/30, esperando 5s..."; \
 		sleep 5; \
 	done; \
-	echo "ERROR: el backend no respondió healthy tras 150s. Revisa 'docker compose logs backend'."; \
+	echo "ERROR: el backend no respondio healthy tras 150s. Revisa 'docker compose logs backend'."; \
 	exit 1
 
 all: build up wait-backend test bench audit docs pdf
 	@echo ""
-	@echo "=== make all completado con éxito ==="
+	@echo "=== make all completado con exito ==="
 	@echo "Contenedores arriba, migraciones Flyway aplicadas, tests corridos (JaCoCo), benchmarks k6"
-	@echo "ejecutados, auditoría de seguridad corrida, figuras/trazabilidad regeneradas y PDF final"
+	@echo "ejecutados, auditoria de seguridad corrida, figuras/trazabilidad regeneradas y PDF final"
 	@echo "compilado en Informe-Final/informe-final.pdf."

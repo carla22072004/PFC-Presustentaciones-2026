@@ -35,22 +35,29 @@ Rápido" (Docker + Node) es obligatorio para levantar el sistema; el resto solo 
 `command not found`, instala GNU Make (`choco install make` con [Chocolatey](https://chocolatey.org/),
 o usa WSL) o ejecuta el cuerpo de cada objetivo del `Makefile` directamente en la terminal.
 
-**Dos limitaciones reales de `make` en Windows, verificadas 2026-08-31 (no bugs del `Makefile` ni de
-los scripts — confirmado ejecutando cada uno directamente sin `make`, con éxito):**
-1. **`make audit` falla con `bash: D:\...\scripts\...: No such file or directory`** si la ruta del
-   repositorio contiene espacios (p. ej. `.../6. Quinto y Sexto Semestre.../...`). Causa raíz
-   confirmada con `make -d audit`: este `make.exe` nativo de Windows resuelve el shebang
-   (`#!/usr/bin/env bash`) de los scripts armando él mismo un `CreateProcess("env bash <ruta>")` **sin
-   comillas**, así que Windows corta el comando en el primer espacio. Workaround: correr
-   `bash scripts/audit-sql-dynamic.sh` directamente en vez de `make audit` (o `bash scripts/gen-versions.sh`
-   para cualquier otro script con shebang que falle igual).
-2. Si esta máquina tiene **otro PostgreSQL nativo además del de Docker** escuchando también en el
-   puerto 5432 (verificable con `netstat -ano | grep ":5432"`), `make test`/`make all` fallan con
-   `password authentication failed` — la conexión llega al Postgres equivocado, no al de
-   `docker compose`. No es un bug de la app ni de las migraciones (confirmado migrando limpio contra
-   una base vacía real). Workaround: exportar `DB_URL` apuntando al puerto real que expone Docker antes
-   de correr `make test`/`make all` (ver `docker compose ps` para el puerto mapeado), p. ej.
-   `export DB_URL="jdbc:postgresql://localhost:5434/BdPresustentaciones"`.
+**Tres causas reales de `make all` roto en Windows, encontradas y corregidas 2026-08-31** (ninguna era
+un bug de lógica del `Makefile` ni de los scripts en sí — confirmado con `make all` limpio, exit 0, de
+punta a punta tras corregirlas):
+1. **Rutas con espacios rompen scripts con shebang.** Este `make.exe` nativo de Windows resuelve
+   `#!/usr/bin/env bash` armando él mismo un `CreateProcess("env bash <ruta>")` **sin comillas**
+   (confirmado con `make -d audit`) — si la ruta del repositorio tiene espacios, Windows corta el
+   comando ahí y `make audit` falla con `No such file or directory`. **No hay fix posible dentro del
+   Makefile** (es una limitación del binario de `make`, no de este proyecto) — la solución real es
+   clonar/copiar el repositorio a una ruta sin espacios (p. ej. `C:\ProyectoWebFinal\...`), no un
+   workaround puntual.
+2. **Un PostgreSQL nativo de Windows adicional al de Docker, compitiendo por el puerto 5432**, produce
+   `password authentication failed` en `make test`/`make all` porque la conexión llega al Postgres
+   equivocado. Verificable con `Get-Service | Where-Object Name -like "*postgres*"` — si aparece un
+   servicio corriendo (no el contenedor Docker), es la causa. Se resuelve deteniéndolo (PowerShell como
+   administrador): `Stop-Service -Name "<nombre-del-servicio>" -Force`.
+3. **`make test` en crudo (`./mvnw test`) nunca cargaba `.env`**, así que `spring.datasource.password`
+   caía al valor por defecto hardcodeado en `application.properties` (`postgresAdmin`), que nunca
+   coincide con la contraseña real que usa Docker Compose (`DB_PASSWORD` real en `.env`,
+   `postgresAdminPassword` en este repositorio) — `PreSustentacionesApplicationTests` fallaba con
+   `password authentication failed` incluso contra el Postgres correcto. **Corregido en el
+   [`Makefile`](Makefile:51):** el target `test` ahora carga `.env` automáticamente antes de correr
+   `./mvnw test`, igual que ya hace Docker Compose — no es un workaround manual, corre así para
+   cualquiera que clone el repositorio.
 
 ---
 
@@ -93,6 +100,12 @@ make all
 
 Ver [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) para el guion del
 video de demostración de este comando (⏳ video pendiente de grabar).
+
+**`make all` verificado con éxito de punta a punta (2026-08-31, exit 0):** build del backend/frontend,
+contenedores levantados, migraciones Flyway aplicadas, 109/109 tests, k6 (0% de fallos), auditoría de
+seguridad (0 hallazgos SQL dinámico, 233 hallazgos totales), trazabilidad (8/8 Must) y PDF final — todo
+en una sola corrida real, sin overrides manuales, tras resolver las tres causas descritas en "Requisitos
+Previos" arriba (ruta sin espacios, sin conflicto de puerto 5432, `.env` cargado automáticamente).
 
 **Hallazgo real de reproducibilidad corregido (auditoría CI/CD, 2026-08-30):**
 [`PreSustentacionesApplicationTests.java`](backend/src/test/java/ec/edu/uteq/presustentaciones/PreSustentacionesApplicationTests.java)
