@@ -13,6 +13,9 @@ import java.util.List;
 @Repository
 public interface NotificacionRepository extends JpaRepository<Notificacion, Long> {
 
+    @Query(value = "SELECT n FROM Notificacion n JOIN FETCH n.usuario", countQuery = "SELECT COUNT(n) FROM Notificacion n")
+    Page<Notificacion> findAll(Pageable pageable);
+
     @Query("SELECT n FROM Notificacion n JOIN FETCH n.usuario WHERE n.usuario.id = :usuarioId ORDER BY n.fecha DESC")
     List<Notificacion> findByUsuarioIdOrderByFechaDesc(@Param("usuarioId") Long usuarioId);
 
