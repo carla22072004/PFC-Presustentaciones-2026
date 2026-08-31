@@ -9,9 +9,11 @@ import java.util.List;
 @Repository
 public interface TutoriaMensajeRepository extends JpaRepository<TutoriaMensaje, Long> {
 
-    List<TutoriaMensaje> findByFaseIdOrderByFechaEnvioAsc(Long faseId);
+    @org.springframework.data.jpa.repository.Query("SELECT m FROM TutoriaMensaje m JOIN FETCH m.remitente WHERE m.fase.id = :faseId ORDER BY m.fechaEnvio ASC")
+    List<TutoriaMensaje> findByFaseIdOrderByFechaEnvioAsc(@org.springframework.data.repository.query.Param("faseId") Long faseId);
 
     long countByFaseIdAndLeidoFalseAndRemitenteIdNot(Long faseId, Long remitenteId);
 
-    List<TutoriaMensaje> findByFaseIdAndLeidoFalseAndRemitenteIdNot(Long faseId, Long remitenteId);
+    @org.springframework.data.jpa.repository.Query("SELECT m FROM TutoriaMensaje m JOIN FETCH m.remitente WHERE m.fase.id = :faseId AND m.leido = false AND m.remitente.id != :remitenteId")
+    List<TutoriaMensaje> findByFaseIdAndLeidoFalseAndRemitenteIdNot(@org.springframework.data.repository.query.Param("faseId") Long faseId, @org.springframework.data.repository.query.Param("remitenteId") Long remitenteId);
 }

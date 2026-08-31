@@ -11,7 +11,8 @@ import java.util.Optional;
 @Repository
 public interface TutoriaFaseRepository extends JpaRepository<TutoriaFase, Long> {
 
-    List<TutoriaFase> findByTutorIdOrderByNumeroFaseAsc(Long tutorId);
+    @org.springframework.data.jpa.repository.Query("SELECT f FROM TutoriaFase f JOIN FETCH f.tutor t JOIN FETCH t.solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u WHERE f.tutor.id = :tutorId ORDER BY f.numeroFase ASC")
+    List<TutoriaFase> findByTutorIdOrderByNumeroFaseAsc(@Param("tutorId") Long tutorId);
 
     Optional<TutoriaFase> findByTutorIdAndNumeroFase(Long tutorId, Integer numeroFase);
 
