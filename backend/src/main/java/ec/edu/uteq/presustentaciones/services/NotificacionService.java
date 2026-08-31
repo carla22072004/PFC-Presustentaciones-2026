@@ -47,4 +47,11 @@ public interface NotificacionService {
 
     /** @param usuarioId id del usuario cuyas notificaciones se marcan todas como leídas */
     void marcarTodasLeidas(Long usuarioId);
+
+    /**
+     * Elimina una notificación específica
+     * @param notificacionId id de la notificación a eliminar
+     * @throws RuntimeException si la notificación no existe
+     */
+    void eliminarNotificacion(Long notificacionId);
 }

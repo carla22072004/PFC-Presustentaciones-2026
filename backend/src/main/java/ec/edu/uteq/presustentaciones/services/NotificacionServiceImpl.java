@@ -124,4 +124,12 @@ public class NotificacionServiceImpl implements NotificacionService {
         validarAcceso(usuarioId);
         notificacionRepository.marcarTodasLeidasPorUsuario(usuarioId);
     }
+
+    @Override
+    public void eliminarNotificacion(Long id) {
+        Notificacion n = notificacionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notificación no encontrada"));
+        validarAcceso(n.getUsuario().getId());
+        notificacionRepository.delete(n);
+    }
 }

@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/api/notificaciones")
+@RequestMapping("/api/v1/notificaciones")
 public class NotificacionController {
 
     private final NotificacionService notificacionService;
@@ -76,6 +76,17 @@ public class NotificacionController {
         try {
             notificacionService.marcarTodasLeidas(usuarioId);
             return ResponseEntity.ok(ResponseWrapper.success(null, "Todas las notificaciones marcadas como leídas"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        try {
+            notificacionService.eliminarNotificacion(id);
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Notificación eliminada exitosamente"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
