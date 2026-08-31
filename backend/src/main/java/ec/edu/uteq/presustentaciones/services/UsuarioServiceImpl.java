@@ -28,8 +28,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     /** rol (string) y rolUsuario (FK a roles_usuario) son dos columnas paralelas para el mismo dato — hay que mantenerlas sincronizadas. */
     private RolUsuario resolverRol(String codigoRol) {
+        if (codigoRol == null || codigoRol.trim().isEmpty()) {
+            throw new IllegalArgumentException("El rol del usuario es requerido");
+        }
         return rolUsuarioRepository.findByCodigo(codigoRol)
-                .orElseThrow(() -> new RuntimeException("Rol inválido: " + codigoRol));
+                .orElseThrow(() -> new IllegalArgumentException("Rol inválido o no existe: " + codigoRol));
     }
 
     @Override
