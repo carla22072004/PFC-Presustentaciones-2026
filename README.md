@@ -33,31 +33,10 @@ Rápido" (Docker + Node) es obligatorio para levantar el sistema; el resto solo 
 **Nota Windows:** todos los comandos de este README se probaron en Git Bash (MINGW64) en Windows 11.
 `make` específicamente **no está instalado por defecto** ahí — si `make all` falla con
 `command not found`, instala GNU Make (`choco install make` con [Chocolatey](https://chocolatey.org/),
-o usa WSL) o ejecuta el cuerpo de cada objetivo del `Makefile` directamente en la terminal.
-
-**Tres causas reales de `make all` roto en Windows, encontradas y corregidas 2026-08-31** (ninguna era
-un bug de lógica del `Makefile` ni de los scripts en sí — confirmado con `make all` limpio, exit 0, de
-punta a punta tras corregirlas):
-1. **Rutas con espacios rompen scripts con shebang.** Este `make.exe` nativo de Windows resuelve
-   `#!/usr/bin/env bash` armando él mismo un `CreateProcess("env bash <ruta>")` **sin comillas**
-   (confirmado con `make -d audit`) — si la ruta del repositorio tiene espacios, Windows corta el
-   comando ahí y `make audit` falla con `No such file or directory`. **No hay fix posible dentro del
-   Makefile** (es una limitación del binario de `make`, no de este proyecto) — la solución real es
-   clonar/copiar el repositorio a una ruta sin espacios (p. ej. `C:\ProyectoWebFinal\...`), no un
-   workaround puntual.
-2. **Un PostgreSQL nativo de Windows adicional al de Docker, compitiendo por el puerto 5432**, produce
-   `password authentication failed` en `make test`/`make all` porque la conexión llega al Postgres
-   equivocado. Verificable con `Get-Service | Where-Object Name -like "*postgres*"` — si aparece un
-   servicio corriendo (no el contenedor Docker), es la causa. Se resuelve deteniéndolo (PowerShell como
-   administrador): `Stop-Service -Name "<nombre-del-servicio>" -Force`.
-3. **`make test` en crudo (`./mvnw test`) nunca cargaba `.env`**, así que `spring.datasource.password`
-   caía al valor por defecto hardcodeado en `application.properties` (`postgresAdmin`), que nunca
-   coincide con la contraseña real que usa Docker Compose (`DB_PASSWORD` real en `.env`,
-   `postgresAdminPassword` en este repositorio) — `PreSustentacionesApplicationTests` fallaba con
-   `password authentication failed` incluso contra el Postgres correcto. **Corregido en el
-   [`Makefile`](Makefile:51):** el target `test` ahora carga `.env` automáticamente antes de correr
-   `./mvnw test`, igual que ya hace Docker Compose — no es un workaround manual, corre así para
-   cualquiera que clone el repositorio.
+o usa WSL) o ejecuta el cuerpo de cada objetivo del `Makefile` directamente en la terminal. Si `make all`
+falla por otra razón en Windows (ruta con espacios, conflicto de puerto 5432, etc.), ver
+[`docs/entorno/TROUBLESHOOTING.md`](docs/entorno/TROUBLESHOOTING.md) — las tres causas reales que
+encontramos ahí ya están corregidas o tienen solución documentada.
 
 ---
 
@@ -101,30 +80,23 @@ make all
 Ver [`docs/entorno/VIDEO-DEMO-SCRIPT.md`](docs/entorno/VIDEO-DEMO-SCRIPT.md) para el guion del
 video de demostración de este comando (⏳ video pendiente de grabar).
 
-**`make all` verificado con éxito de punta a punta (2026-08-31, exit 0):** build del backend/frontend,
-contenedores levantados, migraciones Flyway aplicadas, 109/109 tests, k6 (0% de fallos), auditoría de
-seguridad (0 hallazgos SQL dinámico, 233 hallazgos totales), trazabilidad (8/8 Must) y PDF final — todo
-en una sola corrida real, sin overrides manuales, tras resolver las tres causas descritas en "Requisitos
-Previos" arriba (ruta sin espacios, sin conflicto de puerto 5432, `.env` cargado automáticamente).
+`make all` está verificado con éxito de punta a punta (109/109 tests, k6, auditoría, trazabilidad y PDF
+final, exit 0) — detalle completo de la verificación y de un bug real de migración que encontró en el
+camino en [`docs/entorno/TROUBLESHOOTING.md`](docs/entorno/TROUBLESHOOTING.md).
 
-**Hallazgo real de reproducibilidad corregido (auditoría CI/CD, 2026-08-30):**
-[`PreSustentacionesApplicationTests.java`](backend/src/test/java/ec/edu/uteq/presustentaciones/PreSustentacionesApplicationTests.java)
-era un `assertTrue(true)` sin ninguna anotación de Spring — nunca levantaba un contexto real, así que
-ningún test ejercía de verdad que Flyway migrara limpio desde una base de datos vacía (el job `backend`
-de [`ci.yml`](.github/workflows/ci.yml) provisiona contenedores Postgres/Redis frescos, pero nada los
-usaba). Se convirtió en un `@SpringBootTest` real con `@AutoConfigureTestDatabase(replace = NONE)`, y al
-verificarlo contra una base de datos genuinamente vacía **encontró un bug real preexistente**:
-`V1__schema_inicial.sql` creaba las secuencias `roles_usuario_seq` y `modalidades_titulacion_seq` sin
-cualificar el esquema (`create sequence roles_usuario_seq` en vez de `create sequence
-presus.roles_usuario_seq`), mientras que `V14` y `V17` sí las referenciaban cualificadas
-(`presus.roles_usuario_seq`) — una migración limpia desde cero fallaba en V14. Nunca se había detectado
-porque ningún entorno de desarrollo había migrado nunca desde una base de datos realmente vacía. Corregido
-en `V1` (cualificación explícita de esas dos secuencias) y verificado dos veces: (1) migración limpia
-V1→V18 contra una base de datos Postgres vacía real (no simulada), y (2) suite completa
-(`./mvnw test`, 109/109, 0 fallos) contra la base de datos de desarrollo ya migrada, tras realinear el
-checksum de Flyway con `flyway:repair` — mismo mecanismo ya usado antes para el checksum de V9. También se
-agregó `spring.flyway.schemas=presus` a `backend/src/test/resources/application.properties`, que hasta
-ahora reemplazaba por completo (no fusionaba) la configuración de `src/main/resources/` durante los tests.
+## Cómo Compilar el Informe Académico
+
+El informe final y el SRS son documentos LaTeX versionados en el repositorio; ambos se compilan a PDF con
+[`latexmk`](https://mg.readthedocs.io/latexmk.html) (viene con MiKTeX o TeX Live — ver "Requisitos
+Previos").
+
+| Documento | Fuente | Comando | Salida |
+|---|---|---|---|
+| **Informe Final** (12 capítulos, IMRaD) | [`Informe-Final/informe-final.tex`](Informe-Final/informe-final.tex) | `make pdf` | [`Informe-Final/informe-final.pdf`](Informe-Final/informe-final.pdf) |
+| **SRS** (requisitos, ISO/IEC/IEEE 29148) | [`docs/requisitos/SRS-v1.0.0.tex`](docs/requisitos/SRS-v1.0.0.tex) | `cd docs/requisitos && latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.0.tex` | [`docs/requisitos/SRS-v1.0.0.pdf`](docs/requisitos/SRS-v1.0.0.pdf) |
+
+Ambos PDF ya están compilados y versionados en el repositorio — solo hace falta recompilar si editás el
+`.tex` correspondiente. `latexmk` es incremental: si no hay cambios, termina de inmediato sin recompilar.
 
 ## Comandos Disponibles
 
@@ -143,10 +115,7 @@ directamente).
 | `bench` | Corre `k6/load-test.js` contra el backend levantado | `cd k6 && BASE_URL=http://localhost:8080/api/v1 k6 run --quiet --summary-export=runN-summary.json load-test.js` (backend debe estar arriba primero) |
 | `audit` | SpotBugs/find-sec-bugs (SQL dinámico) + `npm audit` del frontend | `./scripts/audit-sql-dynamic.sh && cd Frontend && npm audit` |
 | `docs` | Regenera las figuras de rendimiento y valida la matriz de trazabilidad | `python scripts/gen-figuras.py && ./scripts/validate-traceability.sh` |
-| `pdf` | Compila `Informe-Final/informe-final.tex` a PDF | `cd Informe-Final && latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex` |
-
-Para compilar además el SRS (`docs/requisitos/SRS-v1.0.0.tex`, no cubierto por `make pdf`):
-`cd docs/requisitos && latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.0.tex`.
+| `pdf` | Compila `Informe-Final/informe-final.tex` a PDF (el SRS se compila aparte, ver "Cómo Compilar el Informe Académico" arriba) | `cd Informe-Final && latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex` |
 
 Para re-correr el escaneo OWASP ZAP (no cubierto por `make audit`, requiere Docker):
 `cd docs/mediciones/sec/zap && docker run --rm -v "$(pwd):/zap/wrk:rw" -t zaproxy/zap-stable zap.sh -cmd -autorun /zap/wrk/zap.yaml` (con el stack de `make up` corriendo). **En Git Bash/MINGW64 en Windows**, antepone `MSYS_NO_PATHCONV=1` a ese comando — si no, Git Bash reescribe la ruta `/zap/wrk/...` del argumento como si fuera una ruta de Windows y el contenedor no encuentra el archivo.
