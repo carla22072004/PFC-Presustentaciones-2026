@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,6 +57,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ResponseWrapper.error("Correo o contraseña incorrectos"));
+    }
+
+    /** NoResourceFoundException (Spring 6): ruta no encontrada → 404, no 500. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleNoResource(NoResourceFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ResponseWrapper.error("Recurso no encontrado: " + ex.getResourcePath()));
     }
 
     @ExceptionHandler(RuntimeException.class)

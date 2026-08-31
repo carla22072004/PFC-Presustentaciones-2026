@@ -16,7 +16,7 @@ export interface RegistroAuditoria {
 
 @Injectable({ providedIn: 'root' })
 export class AuditoriaService {
-    private apiUrl = 'http://localhost:8080/api/auditoria';
+    private apiUrl = 'http://127.0.0.1:8080/api/auditoria';
 
     constructor(private http: HttpClient) {}
 

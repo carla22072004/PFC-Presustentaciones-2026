@@ -79,7 +79,7 @@ export interface GuardarPeriodoRequest {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogoService {
-    private apiUrl = 'http://localhost:8080/api/catalogos';
+    private apiUrl = 'http://127.0.0.1:8080/api/catalogos';
     constructor(private http: HttpClient) {}
 
     listarModalidades(): Observable<ModalidadTitulacion[]> {

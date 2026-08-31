@@ -49,7 +49,7 @@ export interface ActualizarEstudianteRequest {
 
 @Injectable({ providedIn: 'root' })
 export class EstudianteService {
-    private apiUrl = 'http://localhost:8080/api/estudiantes';
+    private apiUrl = 'http://127.0.0.1:8080/api/estudiantes';
 
     constructor(private http: HttpClient) {}
 

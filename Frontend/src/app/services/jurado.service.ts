@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class JuradoService {
-  private api = 'http://localhost:8080/api/jurados';
+  private api = 'http://127.0.0.1:8080/api/jurados';
 
   constructor(private http: HttpClient) {}
 

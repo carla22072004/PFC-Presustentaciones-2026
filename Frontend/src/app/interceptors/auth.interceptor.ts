@@ -16,9 +16,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   // 2. En producción (cuando la aplicación corre servida por Nginx en puerto 80),
-  // removemos la URL base 'http://localhost:8080' para utilizar llamadas relativas
-  if (window.location.port !== '4200' && url.startsWith('http://localhost:8080')) {
-    url = url.replace('http://localhost:8080', '');
+  // removemos la URL base 'http://127.0.0.1:8080' para utilizar llamadas relativas
+  if (window.location.port !== '4200' && url.startsWith('http://127.0.0.1:8080')) {
+    url = url.replace('http://127.0.0.1:8080', '');
   }
 
   // Clonar la petición con la nueva URL y el header de autenticación

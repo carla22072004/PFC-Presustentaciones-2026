@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionService {
-    private api = 'http://localhost:8080/api/notificaciones';
+    private api = 'http://127.0.0.1:8080/api/notificaciones';
 
     // Badge reactivo — cualquier componente puede suscribirse
     private _badge = new BehaviorSubject<number>(0);

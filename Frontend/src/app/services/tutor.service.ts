@@ -24,7 +24,7 @@ export interface MiEstudianteTutorado {
 
 @Injectable({ providedIn: 'root' })
 export class TutorService {
-  private api = 'http://localhost:8080/api/tutores';
+  private api = 'http://127.0.0.1:8080/api/tutores';
 
   constructor(private http: HttpClient) {}
 

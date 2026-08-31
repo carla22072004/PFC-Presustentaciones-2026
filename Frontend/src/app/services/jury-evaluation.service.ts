@@ -23,7 +23,7 @@ export interface EvaluacionJuradoResponse {
 
 @Injectable({ providedIn: 'root' })
 export class JuryEvaluationService {
-    private api = 'http://localhost:8080/api/evaluaciones-jurado';
+    private api = 'http://127.0.0.1:8080/api/evaluaciones-jurado';
 
     constructor(private http: HttpClient) {}
 

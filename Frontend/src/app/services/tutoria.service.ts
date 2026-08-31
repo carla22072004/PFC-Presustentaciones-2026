@@ -10,7 +10,7 @@ export interface NuevoMensajeRequest {
 
 @Injectable({ providedIn: 'root' })
 export class TutoriaService {
-  private readonly base = 'http://localhost:8080/api/tutorias';
+  private readonly base = 'http://127.0.0.1:8080/api/tutorias';
 
   constructor(private http: HttpClient) {}
 
@@ -87,6 +87,6 @@ export class TutoriaService {
   /** Obtiene el Tutor (entidad Tutor, no JuradoAsignacion) asignado a una solicitud.
    *  Devuelve { id, ... } donde id es el tutorId que usan los endpoints de tutoría. */
   obtenerTutorPorSolicitud(solicitudId: number): Observable<any> {
-    return this.http.get<any>(`http://localhost:8080/api/tutores/solicitud/${solicitudId}`);
+    return this.http.get<any>(`http://127.0.0.1:8080/api/tutores/solicitud/${solicitudId}`);
   }
 }

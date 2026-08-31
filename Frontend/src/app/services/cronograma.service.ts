@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CronogramaService {
-  private api = 'http://localhost:8080/api/cronogramas';
+  private api = 'http://127.0.0.1:8080/api/cronogramas';
 
   constructor(private http: HttpClient) {}
 
