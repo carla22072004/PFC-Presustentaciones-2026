@@ -492,4 +492,24 @@ public class ActaServiceImpl implements ActaService {
     private String nvl(String s) {
         return s != null ? s : "—";
     }
+
+    @Override
+    public void eliminarActa(Long actaId) {
+        Acta acta = actaRepository.findById(actaId)
+                .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
+        // Validar que el usuario tenga permisos (ya sea admin, estudiante dueño, jurado o tutor)
+        validarAcceso(acta);
+        
+        // Si hay un archivo físico, intentar eliminarlo
+        if (acta.getArchivoPdf() != null) {
+            Path path = Paths.get(actasDir, acta.getArchivoPdf());
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                log.warn("No se pudo eliminar el archivo físico del acta {}: {}", actaId, e.getMessage());
+            }
+        }
+        
+        actaRepository.delete(acta);
+    }
 }

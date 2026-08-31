@@ -45,4 +45,10 @@ public interface ActaService {
      * @return el acta de esa solicitud, si ya fue generada
      */
     Optional<Acta> buscarPorSolicitud(Long solicitudId);
+
+    /**
+     * Elimina un acta si el usuario tiene permiso.
+     * @param actaId id del acta
+     */
+    void eliminarActa(Long actaId);
 }

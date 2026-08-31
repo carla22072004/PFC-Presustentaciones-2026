@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/api/actas")
+@RequestMapping("/api/v1/actas")
 public class ActaController {
 
     private final ActaService actaService;
@@ -102,6 +102,17 @@ public class ActaController {
             return actaService.buscarPorSolicitud(solicitudId)
                     .map(acta -> ResponseEntity.ok(ResponseWrapper.success(acta)))
                     .orElse(ResponseEntity.notFound().build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        try {
+            actaService.eliminarActa(id);
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Acta eliminada exitosamente"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
