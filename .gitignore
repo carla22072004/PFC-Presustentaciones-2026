@@ -38,6 +38,7 @@ yarn-error.log
 *.iml
 *.ipr
 .vscode/
+.claude/
 
 # Logs y otros
 *.log
