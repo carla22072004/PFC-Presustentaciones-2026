@@ -36,7 +36,7 @@ medición se corrigieron dos problemas reales del bundle:
 
 Correcciones aplicadas: las 20 rutas hijas de `/dashboard` ahora usan `loadComponent()` (lazy, code-split por ruta)
 y `sweetalert2` se carga con `import()` dinámico solo cuando se muestra un diálogo. Resultado: el bundle inicial
-bajó de **1.01 MB a 387 KB** (−62%).
+bajó de **1.01 MB a 396.21 KB** (−61%; re-verificado 2026-08-30 tras el bump de `@angular/core` 21.2.12→21.2.22 — la cifra "387 KB" citada hasta el 29-08 subió unos KB por el propio framework, no por una regresión de este proyecto).
 
 ## Puntajes reales (promedio de 3 corridas por perfil) — 2026-08-30
 
