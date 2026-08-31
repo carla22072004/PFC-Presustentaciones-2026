@@ -101,6 +101,9 @@ public class ActaServiceImpl implements ActaService {
 
         // Buscar evaluación y jurados
         Optional<EvaluacionFinal> evalOpt = evaluacionRepository.findBySolicitudId(solicitudId);
+        if (evalOpt.isEmpty()) {
+            throw new RuntimeException("No se puede generar el acta sin una evaluación final");
+        }
         List<Jurado> jurados = juradoRepository.findBySolicitudId(solicitudId);
 
         // Si ya existe el acta, retornar la misma

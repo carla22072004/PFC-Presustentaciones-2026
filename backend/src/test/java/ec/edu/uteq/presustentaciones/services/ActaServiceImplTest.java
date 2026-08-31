@@ -165,7 +165,7 @@ class ActaServiceImplTest {
     void generarActaRetornaLaExistenteSinRegenerarElPdf() {
         Acta existente = actaConFirmas(false, false, false, false);
         when(solicitudRepository.findById(7L)).thenReturn(Optional.of(solicitud));
-        when(evaluacionRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
+        when(evaluacionRepository.findBySolicitudId(7L)).thenReturn(Optional.of(new ec.edu.uteq.presustentaciones.entities.EvaluacionFinal()));
         when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
         when(actaRepository.findBySolicitudId(7L)).thenReturn(Optional.of(existente));
 
@@ -178,7 +178,7 @@ class ActaServiceImplTest {
     @Test
     void generarActaCreaUnaNuevaConPdfRealYLaGuarda() {
         when(solicitudRepository.findById(7L)).thenReturn(Optional.of(solicitud));
-        when(evaluacionRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
+        when(evaluacionRepository.findBySolicitudId(7L)).thenReturn(Optional.of(new ec.edu.uteq.presustentaciones.entities.EvaluacionFinal()));
         when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
         when(actaRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
         when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
