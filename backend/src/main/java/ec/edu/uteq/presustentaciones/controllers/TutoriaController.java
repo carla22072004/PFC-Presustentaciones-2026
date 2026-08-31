@@ -4,6 +4,7 @@ import ec.edu.uteq.presustentaciones.dto.NuevoMensajeRequest;
 import ec.edu.uteq.presustentaciones.dto.TutoriaFaseDTO;
 import ec.edu.uteq.presustentaciones.dto.TutoriaMensajeDTO;
 import ec.edu.uteq.presustentaciones.dto.TutoriaResumenDTO;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.services.TutoriaService;
@@ -40,9 +41,9 @@ public class TutoriaController {
         try {
             Long realUsuarioId = resolverUsuarioId(usuarioId);
             List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasEstudiante(realUsuarioId);
-            return ResponseEntity.ok(resultado);
+            return ResponseEntity.ok(ResponseWrapper.success(resultado));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -51,9 +52,9 @@ public class TutoriaController {
         try {
             Long realUsuarioId = resolverUsuarioId(usuarioId);
             List<TutoriaResumenDTO> resultado = tutoriaService.obtenerTutoriasDocente(realUsuarioId);
-            return ResponseEntity.ok(resultado);
+            return ResponseEntity.ok(ResponseWrapper.success(resultado));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -65,19 +66,21 @@ public class TutoriaController {
         try {
             Long realUsuarioId = resolverUsuarioId(usuarioId);
             TutoriaResumenDTO resumen = tutoriaService.obtenerResumen(tutorId, realUsuarioId);
-            return ResponseEntity.ok(resumen);
+            return ResponseEntity.ok(ResponseWrapper.success(resumen));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     @GetMapping("/{tutorId}/fases")
-    public ResponseEntity<?> obtenerFases(@PathVariable Long tutorId) {
+    public ResponseEntity<?> obtenerFases(@PathVariable Long tutorId,
+                                          @RequestParam(required = false) Long usuarioId) {
         try {
-            List<TutoriaFaseDTO> fases = tutoriaService.obtenerFases(tutorId);
-            return ResponseEntity.ok(fases);
+            Long realUsuarioId = resolverUsuarioId(usuarioId);
+            List<TutoriaFaseDTO> fases = tutoriaService.obtenerFases(tutorId, realUsuarioId);
+            return ResponseEntity.ok(ResponseWrapper.success(fases));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -91,9 +94,9 @@ public class TutoriaController {
         try {
             Long realTutorUsuarioId = obtenerUsuarioAutenticado().getId();
             TutoriaFaseDTO fase = tutoriaService.crearFaseConObservacion(tutorId, realTutorUsuarioId, observacion);
-            return ResponseEntity.ok(fase);
+            return ResponseEntity.ok(ResponseWrapper.success(fase, "Fase creada exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -104,9 +107,9 @@ public class TutoriaController {
         try {
             Long realEstudianteUsuarioId = obtenerUsuarioAutenticado().getId();
             TutoriaFaseDTO fase = tutoriaService.subirPdfCorregido(faseId, archivo, realEstudianteUsuarioId);
-            return ResponseEntity.ok(fase);
+            return ResponseEntity.ok(ResponseWrapper.success(fase, "PDF subido exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -118,9 +121,9 @@ public class TutoriaController {
         try {
             Long realTutorUsuarioId = obtenerUsuarioAutenticado().getId();
             TutoriaFaseDTO fase = tutoriaService.aprobarFase(faseId, realTutorUsuarioId, comentario);
-            return ResponseEntity.ok(fase);
+            return ResponseEntity.ok(ResponseWrapper.success(fase, "Fase aprobada exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -132,9 +135,9 @@ public class TutoriaController {
             Long realRemitenteId = obtenerUsuarioAutenticado().getId();
             TutoriaMensajeDTO mensaje = tutoriaService.enviarMensaje(
                     faseId, realRemitenteId, request.getContenido(), request.getTipo());
-            return ResponseEntity.ok(mensaje);
+            return ResponseEntity.ok(ResponseWrapper.success(mensaje, "Mensaje enviado exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -144,25 +147,27 @@ public class TutoriaController {
         try {
             Long realUsuarioId = obtenerUsuarioAutenticado().getId();
             tutoriaService.marcarMensajesLeidos(faseId, realUsuarioId);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(ResponseWrapper.success(null, "Mensajes marcados como leídos"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     // ── PDF ───────────────────────────────────────────────────────────────────
 
     @GetMapping("/fases/{faseId}/pdf")
-    public ResponseEntity<?> obtenerPdfFase(@PathVariable Long faseId) {
+    public ResponseEntity<?> obtenerPdfFase(@PathVariable Long faseId,
+                                            @RequestParam(required = false) Long usuarioId) {
         try {
-            Resource resource = tutoriaService.obtenerPdfFase(faseId);
+            Long realUsuarioId = resolverUsuarioId(usuarioId);
+            Resource resource = tutoriaService.obtenerPdfFase(faseId, realUsuarioId);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "inline; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -189,17 +194,18 @@ public class TutoriaController {
 
             if (numeroFase == null || archivoPdf == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Se requieren 'numeroFase' y 'archivoPdf'"));
+                        .body(ResponseWrapper.error("Se requieren 'numeroFase' y 'archivoPdf'"));
             }
 
-            tutoriaService.registrarAvanceSP(tutorId, numeroFase, archivoPdf, tamanoBytes, sha256);
-            return ResponseEntity.ok(Map.of(
+            Long realUsuarioId = obtenerUsuarioAutenticado().getId();
+            tutoriaService.registrarAvanceSP(tutorId, numeroFase, archivoPdf, tamanoBytes, sha256, realUsuarioId);
+            return ResponseEntity.ok(ResponseWrapper.success(Map.of(
                     "mensaje", "Avance de fase registrado correctamente vía stored procedure",
                     "tutorId", tutorId,
                     "numeroFase", numeroFase
-            ));
+            ), "Avance de fase registrado correctamente vía stored procedure"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 

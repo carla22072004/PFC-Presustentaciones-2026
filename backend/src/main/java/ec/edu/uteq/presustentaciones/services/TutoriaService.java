@@ -20,9 +20,10 @@ public interface TutoriaService {
 
     /**
      * @param tutorId id del registro de tutoría
+     * @param usuarioId id del usuario que consulta (para resolver permisos)
      * @return las fases registradas de esa tutoría, en orden
      */
-    List<TutoriaFaseDTO> obtenerFases(Long tutorId);
+    List<TutoriaFaseDTO> obtenerFases(Long tutorId, Long usuarioId);
 
     /**
      * @param tutorId        id del registro de tutoría
@@ -69,10 +70,11 @@ public interface TutoriaService {
 
     /**
      * @param faseId id de la fase de tutoría
+     * @param usuarioId id del usuario que solicita el PDF
      * @return el recurso PDF de esa fase, para descarga
      * @throws RuntimeException si la fase no existe o no tiene PDF
      */
-    Resource obtenerPdfFase(Long faseId);
+    Resource obtenerPdfFase(Long faseId, Long usuarioId);
 
     /**
      * @param estudianteUsuarioId id del usuario estudiante
@@ -94,6 +96,7 @@ public interface TutoriaService {
      * @param archivoPdf  nombre del archivo PDF asociado al avance
      * @param tamanoBytes tamaño en bytes del archivo
      * @param sha256      hash SHA-256 del archivo, para verificación de integridad posterior
+     * @param usuarioId   id del usuario estudiante que registra el avance (para validacion)
      */
-    void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256);
+    void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256, Long usuarioId);
 }

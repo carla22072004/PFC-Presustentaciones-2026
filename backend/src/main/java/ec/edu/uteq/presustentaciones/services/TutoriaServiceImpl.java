@@ -68,13 +68,19 @@ public class TutoriaServiceImpl implements TutoriaService {
         Tutor tutor = tutorRepository.findById(tutorId)
                 .orElseThrow(() -> new RuntimeException("Tutor no encontrado"));
 
+        validarAccesoATutoria(tutor, usuarioId);
         return construirResumenParaTutor(tutor, usuarioId);
     }
 
     // ── Fases ─────────────────────────────────────────────────────────────────
 
     @Override
-    public List<TutoriaFaseDTO> obtenerFases(Long tutorId) {
+    public List<TutoriaFaseDTO> obtenerFases(Long tutorId, Long usuarioId) {
+        Tutor tutor = tutorRepository.findById(tutorId)
+                .orElseThrow(() -> new RuntimeException("Tutor no encontrado"));
+                
+        validarAccesoATutoria(tutor, usuarioId);
+        
         return tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(tutorId).stream()
                 .map(this::mapFaseConMensajes)
                 .collect(Collectors.toList());
@@ -329,9 +335,11 @@ public class TutoriaServiceImpl implements TutoriaService {
     // ── PDF ───────────────────────────────────────────────────────────────────
 
     @Override
-    public Resource obtenerPdfFase(Long faseId) {
+    public Resource obtenerPdfFase(Long faseId, Long usuarioId) {
         TutoriaFase fase = tutoriaFaseRepository.findById(faseId)
                 .orElseThrow(() -> new RuntimeException("Fase no encontrada"));
+
+        validarAccesoATutoria(fase.getTutor(), usuarioId);
 
         if (fase.getArchivoPdfEstudiante() == null) {
             throw new RuntimeException("Esta fase no tiene PDF cargado");
@@ -370,6 +378,27 @@ public class TutoriaServiceImpl implements TutoriaService {
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────────
+
+    private void validarAccesoATutoria(Tutor tutor, Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                
+        boolean esAdminOCoord = "ADMIN".equalsIgnoreCase(usuario.getRol())
+                || "COORDINADOR".equalsIgnoreCase(usuario.getRol());
+                
+        if (esAdminOCoord) {
+            return;
+        }
+        
+        Long tutorUserId = (tutor.getDocente() != null && tutor.getDocente().getUsuario() != null)
+                ? tutor.getDocente().getUsuario().getId() : null;
+        Long estudianteUserId = (tutor.getSolicitud() != null && tutor.getSolicitud().getEstudiante() != null && tutor.getSolicitud().getEstudiante().getUsuario() != null)
+                ? tutor.getSolicitud().getEstudiante().getUsuario().getId() : null;
+                
+        if (!usuarioId.equals(tutorUserId) && !usuarioId.equals(estudianteUserId)) {
+            throw new RuntimeException("No autorizado para acceder a esta tutoría");
+        }
+    }
 
     private TutoriaResumenDTO construirResumenParaTutor(Tutor tutor, Long usuarioId) {
         Long tutorId = tutor.getId();
@@ -452,7 +481,12 @@ public class TutoriaServiceImpl implements TutoriaService {
 
     @Override
     @Transactional
-    public void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256) {
+    public void registrarAvanceSP(Long tutorId, Integer numeroFase, String archivoPdf, Long tamanoBytes, String sha256, Long usuarioId) {
+        Tutor tutor = tutorRepository.findById(tutorId)
+                .orElseThrow(() -> new RuntimeException("Tutor no encontrado"));
+                
+        validarAccesoATutoria(tutor, usuarioId);
+
         tutoriaFaseRepository.spRegistrarTutoriaAvance(tutorId, numeroFase, archivoPdf, tamanoBytes, sha256);
     }
 }
