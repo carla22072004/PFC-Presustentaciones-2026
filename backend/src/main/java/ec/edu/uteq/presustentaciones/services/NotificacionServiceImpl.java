@@ -22,6 +22,23 @@ public class NotificacionServiceImpl implements NotificacionService {
     private final UsuarioRepository usuarioRepository;
     private final EmailService emailService;
 
+    private void validarAcceso(Long targetUsuarioId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("Usuario no autenticado");
+        }
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) return;
+
+        Usuario actual = usuarioRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario actual no encontrado"));
+
+        if (!actual.getId().equals(targetUsuarioId)) {
+            throw new RuntimeException("No tienes permiso para acceder a las notificaciones de este usuario");
+        }
+    }
+
     @Override
     public Notificacion crearNotificacion(Long usuarioId, String mensaje) {
         Usuario receptor = usuarioRepository.findById(usuarioId)
@@ -82,11 +99,13 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public Page<Notificacion> listarPorUsuario(Long usuarioId, Pageable pageable) {
+        validarAcceso(usuarioId);
         return notificacionRepository.findByUsuarioIdOrderByFechaDesc(usuarioId, pageable);
     }
 
     @Override
     public long contarNoLeidas(Long usuarioId) {
+        validarAcceso(usuarioId);
         return notificacionRepository.countByUsuarioIdAndLeidaFalse(usuarioId);
     }
 
@@ -94,6 +113,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     public Notificacion marcarComoLeida(Long id) {
         Notificacion n = notificacionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notificación no encontrada"));
+        validarAcceso(n.getUsuario().getId());
         n.setLeida(true);
         return notificacionRepository.save(n);
     }
@@ -101,6 +121,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void marcarTodasLeidas(Long usuarioId) {
+        validarAcceso(usuarioId);
         notificacionRepository.marcarTodasLeidasPorUsuario(usuarioId);
     }
 }
