@@ -35,6 +35,23 @@ Rápido" (Docker + Node) es obligatorio para levantar el sistema; el resto solo 
 `command not found`, instala GNU Make (`choco install make` con [Chocolatey](https://chocolatey.org/),
 o usa WSL) o ejecuta el cuerpo de cada objetivo del `Makefile` directamente en la terminal.
 
+**Dos limitaciones reales de `make` en Windows, verificadas 2026-08-31 (no bugs del `Makefile` ni de
+los scripts — confirmado ejecutando cada uno directamente sin `make`, con éxito):**
+1. **`make audit` falla con `bash: D:\...\scripts\...: No such file or directory`** si la ruta del
+   repositorio contiene espacios (p. ej. `.../6. Quinto y Sexto Semestre.../...`). Causa raíz
+   confirmada con `make -d audit`: este `make.exe` nativo de Windows resuelve el shebang
+   (`#!/usr/bin/env bash`) de los scripts armando él mismo un `CreateProcess("env bash <ruta>")` **sin
+   comillas**, así que Windows corta el comando en el primer espacio. Workaround: correr
+   `bash scripts/audit-sql-dynamic.sh` directamente en vez de `make audit` (o `bash scripts/gen-versions.sh`
+   para cualquier otro script con shebang que falle igual).
+2. Si esta máquina tiene **otro PostgreSQL nativo además del de Docker** escuchando también en el
+   puerto 5432 (verificable con `netstat -ano | grep ":5432"`), `make test`/`make all` fallan con
+   `password authentication failed` — la conexión llega al Postgres equivocado, no al de
+   `docker compose`. No es un bug de la app ni de las migraciones (confirmado migrando limpio contra
+   una base vacía real). Workaround: exportar `DB_URL` apuntando al puerto real que expone Docker antes
+   de correr `make test`/`make all` (ver `docker compose ps` para el puerto mapeado), p. ej.
+   `export DB_URL="jdbc:postgresql://localhost:5434/BdPresustentaciones"`.
+
 ---
 
 ## Despliegue Rápido (Comando Único)
