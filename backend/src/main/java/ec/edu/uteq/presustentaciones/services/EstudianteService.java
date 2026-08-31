@@ -37,6 +37,12 @@ public class EstudianteService {
     private final PasswordEncoder passwordEncoder;
     private final AuditoriaService auditoriaService;
 
+    /**
+     * @param page número de página, base 0
+     * @param size tamaño de página (se acota a un máximo de 100)
+     * @param q    texto libre de búsqueda por nombre/apellido/email, o {@code null}
+     * @return página de estudiantes con su último proyecto de titulación (si tiene)
+     */
     @Transactional(readOnly = true)
     public Page<EstudianteDTO> listarPaginado(int page, int size, String q) {
         int paginaSegura = Math.max(page, 0);
@@ -51,6 +57,11 @@ public class EstudianteService {
         return pagina.map(e -> toDto(e, proyectos.get(e.getId())));
     }
 
+    /**
+     * @param id id del estudiante
+     * @return el estudiante con su último proyecto de titulación (si tiene)
+     * @throws RuntimeException si el estudiante no existe
+     */
     @Transactional(readOnly = true)
     public EstudianteDTO obtenerPorId(Long id) {
         Estudiante e = estudianteRepository.findByIdWithUsuario(id)
@@ -59,7 +70,15 @@ public class EstudianteService {
         return toDto(e, proyectos.isEmpty() ? null : proyectos.get(0));
     }
 
-    /** Registra el usuario (rol ESTUDIANTE) y su perfil académico en un solo paso. */
+    /**
+     * Registra el usuario (rol ESTUDIANTE) y su perfil académico en un solo paso.
+     *
+     * @param req datos del estudiante a crear (nombre, apellido, email, contraseña, carrera
+     *            obligatorios; período de ingreso, teléfono y semestre opcionales)
+     * @return el estudiante creado
+     * @throws RuntimeException si faltan campos obligatorios, el email ya está en uso, o la
+     *                          carrera/período no existen
+     */
     public EstudianteDTO crear(CrearEstudianteRequest req) {
         auditoriaService.marcarActorActual();
 
@@ -116,6 +135,17 @@ public class EstudianteService {
         return toDto(estudiante, null);
     }
 
+    /**
+     * Actualiza solo los campos de perfil académico enviados (carrera, período de ingreso,
+     * semestre, teléfono, estado académico); los campos {@code null} en {@code req} se dejan
+     * sin tocar.
+     *
+     * @param id  id del estudiante a actualizar
+     * @param req campos a actualizar; cualquier campo en {@code null} no se modifica
+     * @return el estudiante actualizado
+     * @throws RuntimeException si el estudiante no existe, o la carrera/período/estado
+     *                          académico indicados no existen
+     */
     public EstudianteDTO actualizar(Long id, ActualizarEstudianteRequest req) {
         auditoriaService.marcarActorActual();
         Estudiante e = estudianteRepository.findById(id)
@@ -149,6 +179,7 @@ public class EstudianteService {
         return toDto(guardado, null);
     }
 
+    /** @return el catálogo completo de estados académicos disponibles */
     @Transactional(readOnly = true)
     public List<EstadoAcademico> listarEstadosAcademicos() {
         return estadoAcademicoRepository.findAll();

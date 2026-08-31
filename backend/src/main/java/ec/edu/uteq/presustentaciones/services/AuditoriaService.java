@@ -34,6 +34,10 @@ public class AuditoriaService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /** Fija en la conexión actual el usuario autenticado que va a quedar como autor en la
+     * fila de auditoría que dispare el siguiente trigger (o {@code NULL} si no hay usuario
+     * autenticado). Sin parámetros ni valor de retorno: opera sobre el contexto de seguridad
+     * y la conexión JDBC actuales. */
     public void marcarActorActual() {
         Long usuarioId = resolverUsuarioIdActual();
         String valor = usuarioId != null ? usuarioId.toString() : "";
