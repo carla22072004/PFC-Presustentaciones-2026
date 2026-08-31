@@ -35,7 +35,7 @@ public class NotificacionServiceImpl implements NotificacionService {
                 .orElseThrow(() -> new RuntimeException("Usuario actual no encontrado"));
 
         if (!actual.getId().equals(targetUsuarioId)) {
-            throw new RuntimeException("No tienes permiso para acceder a las notificaciones de este usuario");
+            throw new org.springframework.security.access.AccessDeniedException("No tienes permiso para acceder a las notificaciones de este usuario");
         }
     }
 
