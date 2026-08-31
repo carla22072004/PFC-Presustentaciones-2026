@@ -155,19 +155,14 @@ public class JwtTokenProvider {
     }
 
     public boolean validateToken(String token) {
-        try {
-            if (isTokenBlacklisted(token)) {
-                log.warn("Token JWT rechazado: se encuentra en la blacklist.");
-                return false;
-            }
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (Exception e) {
-            log.error("Error validando token JWT: {}", e.getMessage());
-            return false;
+        if (isTokenBlacklisted(token)) {
+            log.warn("Token JWT rechazado: se encuentra en la blacklist.");
+            throw new io.jsonwebtoken.JwtException("Token en blacklist");
         }
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+        return true;
     }
 }

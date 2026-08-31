@@ -33,19 +33,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-                String username = jwtTokenProvider.getUsernameFromToken(jwt);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (StringUtils.hasText(jwt)) {
+                try {
+                    if (jwtTokenProvider.validateToken(jwt)) {
+                        String username = jwtTokenProvider.getUsernameFromToken(jwt);
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+                    log.warn("Token expirado: {}", ex.getMessage());
+                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
+                    return;
+                } catch (Exception ex) {
+                    log.error("Token inválido: {}", ex.getMessage());
+                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
+                    return;
+                }
             }
         } catch (Exception e) {
             log.error("No se pudo establecer la autenticación: {}", e.getMessage());
@@ -69,5 +81,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return null;
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(String.format("{\"success\": false, \"message\": \"%s\"}", message));
     }
 }
