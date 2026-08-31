@@ -1,6 +1,7 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.repositories.PermisoRepository;
+import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class PermisoService {
 
     private final PermisoRepository permisoRepository;
+    private final DocenteRepository docenteRepository;
 
     public boolean tienePermiso(Authentication authentication, String codigoPermiso) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -26,5 +28,18 @@ public class PermisoService {
             return false;
         }
         return permisoRepository.usuarioTienePermiso(email, codigoPermiso);
+    }
+
+    public boolean esPropioDocente(Authentication authentication, Long docenteId) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        String email = authentication.getName();
+        if (email == null || "anonymousUser".equals(email)) {
+            return false;
+        }
+        return docenteRepository.findById(docenteId)
+                .map(docente -> docente.getUsuario() != null && email.equals(docente.getUsuario().getEmail()))
+                .orElse(false);
     }
 }

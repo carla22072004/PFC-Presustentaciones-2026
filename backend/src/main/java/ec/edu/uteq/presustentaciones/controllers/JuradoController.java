@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -36,9 +39,9 @@ public class JuradoController {
             @RequestParam String rol) {
         try {
             Jurado j = juradoService.asignarJurado(solicitudId, docenteId, rol);
-            return ResponseEntity.ok(j);
+            return ResponseEntity.ok(ResponseWrapper.success(j, "Jurado asignado exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
@@ -49,22 +52,23 @@ public class JuradoController {
         try {
             juradoService.asignarJuradosAutomaticamente(solicitudId);
             List<Jurado> jurados = juradoService.listarPorSolicitud(solicitudId);
-            return ResponseEntity.ok(jurados);
+            return ResponseEntity.ok(ResponseWrapper.success(jurados, "Jurados asignados automáticamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     /** Listar jurados de una solicitud */
     @GetMapping("/solicitud/{solicitudId}")
-    public List<Jurado> listarPorSolicitud(@PathVariable Long solicitudId) {
-        return juradoService.listarPorSolicitud(solicitudId);
+    public ResponseEntity<?> listarPorSolicitud(@PathVariable Long solicitudId) {
+        return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarPorSolicitud(solicitudId)));
     }
 
     /** Listar todos los jurados */
     @GetMapping
-    public Page<Jurado> listarTodos(Pageable pageable) {
-        return juradoService.listarTodos(pageable);
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
+    public ResponseEntity<?> listarTodos(Pageable pageable) {
+        return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarTodos(pageable)));
     }
 
     /** Eliminar un jurado */
@@ -78,10 +82,10 @@ public class JuradoController {
     /** Sugerir docentes disponibles para asignar (sin los ya asignados) */
     @GetMapping("/sugerencias/{solicitudId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
-    public List<Docente> sugerirDocentes(
+    public ResponseEntity<?> sugerirDocentes(
             @PathVariable Long solicitudId,
             @RequestParam(defaultValue = "5") int cantidad) {
-        return juradoService.sugerirDocentes(solicitudId, cantidad);
+        return ResponseEntity.ok(ResponseWrapper.success(juradoService.sugerirDocentes(solicitudId, cantidad)));
     }
 
     // ── Tutor ─────────────────────────────────────────────────────────────────
@@ -94,17 +98,17 @@ public class JuradoController {
             @RequestParam Long docenteId) {
         try {
             Tutor t = juradoService.asignarTutor(solicitudId, docenteId);
-            return ResponseEntity.ok(t);
+            return ResponseEntity.ok(ResponseWrapper.success(t, "Tutor asignado exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 
     /** Obtener el tutor activo de una solicitud */
     @GetMapping("/tutor/solicitud/{solicitudId}")
-    public ResponseEntity<Tutor> obtenerTutor(@PathVariable Long solicitudId) {
+    public ResponseEntity<?> obtenerTutor(@PathVariable Long solicitudId) {
         return juradoService.obtenerTutorDeSolicitud(solicitudId)
-                .map(ResponseEntity::ok)
+                .map(t -> ResponseEntity.ok(ResponseWrapper.success(t)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -120,14 +124,16 @@ public class JuradoController {
 
     /** Listar todas las asignaciones de un docente como jurado */
     @GetMapping("/docente/{docenteId}")
-    public List<Jurado> listarPorDocente(@PathVariable Long docenteId) {
-        return juradoService.listarPorDocente(docenteId);
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR') or @permisoService.esPropioDocente(authentication, #docenteId)")
+    public ResponseEntity<?> listarPorDocente(@PathVariable Long docenteId) {
+        return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarPorDocente(docenteId)));
     }
 
     /** Listar tutorias de un docente */
     @GetMapping("/tutor/docente/{docenteId}")
-    public List<Tutor> listarTutoriasPorDocente(@PathVariable Long docenteId) {
-        return juradoService.listarTutoriasPorDocente(docenteId);
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR') or @permisoService.esPropioDocente(authentication, #docenteId)")
+    public ResponseEntity<?> listarTutoriasPorDocente(@PathVariable Long docenteId) {
+        return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarTutoriasPorDocente(docenteId)));
     }
 
     @GetMapping("/info/{solicitudId}/{usuarioId}")
@@ -140,14 +146,14 @@ public class JuradoController {
                 nombreDocente = jurado.getDocente().getUsuario().getNombre() + " " 
                         + jurado.getDocente().getUsuario().getApellido();
             }
-            return ResponseEntity.ok(Map.of(
+            return ResponseEntity.ok(ResponseWrapper.success(Map.of(
                     "id", jurado.getId(),
                     "rol", jurado.getRol() != null ? jurado.getRol() : "",
                     "confirmado", jurado.isConfirmado(),
                     "nombreDocente", nombreDocente
-            ));
+            )));
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(ResponseWrapper.success(null));
     }
 
     /**
@@ -175,13 +181,13 @@ public class JuradoController {
             Long[] docenteIds   = docenteIdsList.stream().map(i -> i.longValue()).toArray(Long[]::new);
 
             juradoService.asignarJuradoMasivoSP(solicitudIds, docenteIds, rol);
-            return ResponseEntity.ok(Map.of(
+            return ResponseEntity.ok(ResponseWrapper.success(Map.of(
                     "mensaje", "Asignación masiva ejecutada correctamente",
                     "asignados", solicitudIds.length,
                     "rol", rol
-            ));
+            ), "Asignación masiva ejecutada correctamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }
     }
 }
