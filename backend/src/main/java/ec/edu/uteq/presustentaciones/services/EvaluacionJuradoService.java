@@ -23,6 +23,19 @@ public class EvaluacionJuradoService {
     private final SolicitudRepository solicitudRepo;
     private final JuradoRepository juradoRepo;
 
+    /**
+     * Registra o actualiza la nota que un jurado le asigna a una solicitud, calculando el
+     * resultado ("APROBADO" si {@code notaJurado >= 7}) y un comentario preestablecido según
+     * el rango de la nota.
+     *
+     * @param solicitudId  id de la solicitud evaluada
+     * @param juradoId     id del jurado que evalúa
+     * @param notaJurado   nota asignada, debe estar entre 1 y 10
+     * @param observaciones observaciones opcionales del jurado
+     * @return la evaluación registrada, con resultado y comentario calculados
+     * @throws RuntimeException si la solicitud o el jurado no existen, el jurado no
+     *                          pertenece a esa solicitud, o la nota está fuera de 1-10
+     */
     @Transactional
     public EvaluacionJuradoDTO guardarEvaluacion(Long solicitudId, Long juradoId, Double notaJurado, String observaciones) {
         Solicitud solicitud = solicitudRepo.findById(solicitudId)
@@ -67,6 +80,11 @@ public class EvaluacionJuradoService {
     }
 
     @Transactional(readOnly = true)
+    /**
+     * @param solicitudId id de la solicitud
+     * @param juradoId    id del jurado
+     * @return la evaluación de ese jurado para esa solicitud, o {@code null} si aún no evaluó
+     */
     public EvaluacionJuradoDTO obtenerEvaluacion(Long solicitudId, Long juradoId) {
         return evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId)
                 .map(this::toDTO)
@@ -74,6 +92,10 @@ public class EvaluacionJuradoService {
     }
 
     @Transactional(readOnly = true)
+    /**
+     * @param solicitudId id de la solicitud
+     * @return las evaluaciones registradas por todos los jurados de esa solicitud
+     */
     public List<EvaluacionJuradoDTO> obtenerTribunal(Long solicitudId) {
         return evaluacionJuradoRepo.findBySolicitudId(solicitudId).stream()
                 .map(this::toDTO)
