@@ -27,7 +27,8 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
                                 @Param("p_docente_id") Long docenteId,
                                 @Param("p_rol_codigo") String rolCodigo);
 
-    List<Jurado> findBySolicitudId(Long solicitudId);
+    @Query("SELECT j FROM Jurado j JOIN FETCH j.docente d JOIN FETCH d.usuario u JOIN FETCH j.solicitud s JOIN FETCH j.rolJurado r WHERE s.id = :solicitudId")
+    List<Jurado> findBySolicitudId(@Param("solicitudId") Long solicitudId);
 
     /**
      * Invoca sp_validar_conflicto_jurado (FUNCTION escalar, categoría "validaciones
@@ -41,8 +42,8 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
                                     @Param("p_duracion_min") Integer duracionMin,
                                     @Param("p_disponible") Boolean disponibleInicial);
 
-    @Query("SELECT j FROM Jurado j WHERE j.docente.id = :docenteId")
-    List<Jurado> findByDocenteId(Long docenteId);
+    @Query("SELECT j FROM Jurado j JOIN FETCH j.docente d JOIN FETCH d.usuario u JOIN FETCH j.solicitud s JOIN FETCH j.rolJurado r WHERE d.id = :docenteId")
+    List<Jurado> findByDocenteId(@Param("docenteId") Long docenteId);
 
     @Query("SELECT COUNT(j) FROM Jurado j WHERE j.docente.id = :docenteId AND j.solicitud.estado.codigo != 'RECHAZADA'")
     long contarAsignacionesActivasByDocente(Long docenteId);
