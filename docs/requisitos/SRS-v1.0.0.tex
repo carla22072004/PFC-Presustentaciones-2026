@@ -184,7 +184,7 @@ declara esta distinción explícitamente en vez de reportar un 100\% general que
 RNF-01 & Rendimiento & Peticiones REST $<$ 500ms bajo 50 usuarios concurrentes. \textbf{Verificado}: p95 real de 7.4--80.9ms en 5 corridas k6 (\texttt{k6/README.md}). \\
 RNF-02 & Seguridad & Protección OWASP Top 10. \textbf{Verificado parcialmente}: 0 hallazgos de SQL dinámico (find-sec-bugs), 0 FAIL y 0 High en OWASP ZAP (corregido 2026-08-29), 14 dependencias vulnerables sin corregir en tooling de build (\texttt{npm audit}, bajó de 41 tras corregir \texttt{@angular/core}). \\
 RNF-03 & Usabilidad & Puntaje SUS $>$ 75/100. \textbf{No verificado}: instrumento listo, sin aplicar a usuarios reales (\texttt{docs/mediciones/sus/SUS-RESULTS.md}). \\
-RNF-04 & Mantenibilidad & Cobertura JaCoCo $\geq$ 60\%. \textbf{No cumplido}: 37.06\% de líneas real (2026-08-29, 109 tests), en progreso desde 2.83\% (\texttt{docs/mediciones/jacoco/COVERAGE.md}). \\
+RNF-04 & Mantenibilidad & Cobertura JaCoCo $\geq$ 60\%. \textbf{No cumplido}: 38.88\% de líneas real (2026-08-31, 109 tests), en progreso desde 2.83\% (\texttt{docs/mediciones/jacoco/COVERAGE.md}). \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -16,10 +16,11 @@
 
 ## 🛠️ Matriz de Resoluciones de Retroalimentación
 
-> **Nota de integridad (auditoría 2026-08-29):** los 7 hashes de commit citados originalmente en esta
-> tabla (`6e06438`, `d7aeb1a`, `a3b89f1`, `b7c12d4`, `c4e56f7`, `e8f90a1`, `f1a23b4`) no existen en el
-> historial de este repositorio (`git show <hash>` falla en los 7 con "unknown revision") — eran
-> marcadores de posición inventados, nunca verificados contra `git log`. Se reemplazan aquí por los
+> **Nota de integridad (auditoría 2026-08-29, re-verificada 2026-08-31 con `git cat-file -e`):** los 7
+> hashes de commit citados originalmente en esta tabla no existen en el historial de este repositorio
+> (ninguno resuelve a un objeto real) — eran marcadores de posición inventados, nunca verificados contra
+> `git log`. Se omiten aquí deliberadamente (no se citan strings con forma de hash que no correspondan a
+> un commit real, ni siquiera para ilustrar el error) y se reemplazan por los
 > commits reales verificados con `git show --stat`. La resolución de OBS-02/03/04 sí ocurrió en un
 > único commit (`bda64ec`); OBS-05/06/07 ocurrieron en otro commit único posterior (`015fd6d`), pero
 > más amplio (integra Makefile, digests SHA-256, SRS, matriz de trazabilidad, k6, OWASP y SUS de una

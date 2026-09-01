@@ -74,15 +74,19 @@ porque no existe ninguna medición real que reportar.
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 109 pruebas automatizadas reales: 33.18\,\% de instrucciones (5,388/16,237), 37.06\,\% de
-líneas (1,118/3,017), 23.06\,\% de ramas (255/1,106) --- por debajo del umbral RNF-04 de 60\,\%. El
+JaCoCo sobre 109 pruebas automatizadas reales: 35.10\,\% de instrucciones (5,699/16,237), 38.88\,\% de
+líneas (1,173/3,017), 23.06\,\% de ramas (255/1,106) --- por debajo del umbral RNF-04 de 60\,\%. El
 porcentaje había bajado respecto a una medición intermedia del 17-08 (23.33\,\%/28.45\,\%) porque se
 agregó código de producción real sin tests proporcionales en ese periodo; se recuperó y superó agregando
 48 tests reales nuevos (2026-08-29) para 5 clases de servicio con lógica de negocio real y 0\,\% de
 cobertura previa, incluyendo las tres que invocan procedimientos almacenados sin prueba dedicada
 (\texttt{sp\_calcular\_promedio\_evaluacion}, \texttt{sp\_generar\_reporte\_defensas},
 \texttt{sp\_firmar\_acta\_digital} vía \texttt{ActaServiceImpl.generarActa()} --- ver
-Sección~\ref{sec:arquitectura}) (\texttt{docs/mediciones/jacoco/COVERAGE.md}).
+Sección~\ref{sec:arquitectura}). El salto adicional del 29-08 al 31-08 (37.06\,\%$\to$38.88\,\%
+líneas) no viene de tests nuevos --- el número de tests no cambió --- sino de que
+\texttt{PreSustentacionesApplicationTests} dejó de ser un \texttt{assertTrue(true)} y ahora levanta el
+contexto real de Spring, ejecutando código de inicialización de beans que antes nunca corría bajo test
+(\texttt{docs/mediciones/jacoco/COVERAGE.md}).
 
 \subsection{Calidad web (Lighthouse)}
 
