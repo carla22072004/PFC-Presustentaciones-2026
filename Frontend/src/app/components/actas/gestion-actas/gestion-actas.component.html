@@ -1,0 +1,91 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-folder2-open me-2"></i>Gestión de Actas</h2>
+      <p class="page-subtitle">Buscar, filtrar y administrar las actas de pre-sustentación</p>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <input type="text" placeholder="Buscar por estudiante o tema..." [(ngModel)]="f.q" (input)="onFiltroTexto()">
+    <select [(ngModel)]="f.estado" (change)="aplicarFiltros()">
+      <option [ngValue]="undefined">Todos los estados</option>
+      <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+    </select>
+    <input type="text" placeholder="Carrera" [(ngModel)]="f.carrera" (change)="aplicarFiltros()">
+    <label>Desde <input type="date" [(ngModel)]="f.desde" (change)="aplicarFiltros()"></label>
+    <label>Hasta <input type="date" [(ngModel)]="f.hasta" (change)="aplicarFiltros()"></label>
+    <button class="btn-limpiar" (click)="limpiarFiltros()"><i class="bi bi-x-circle"></i> Limpiar</button>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando...</p></div>
+
+  <ng-container *ngIf="!cargando && pagina">
+    <p class="total">{{ pagina.totalElements }} acta(s)</p>
+
+    <div class="empty-state" *ngIf="pagina.content.length === 0">
+      <i class="bi bi-inbox"></i><p>No hay actas que coincidan con los filtros.</p>
+    </div>
+
+    <div class="table-card" *ngIf="pagina.content.length > 0">
+      <table class="tabla">
+        <thead>
+          <tr><th>#</th><th>Estudiante</th><th>Tema</th><th>Carrera</th><th>Estado</th><th>Generada</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of pagina.content">
+            <td>{{ a.id }}</td>
+            <td>{{ a.estudianteNombre }}</td>
+            <td class="tema">{{ a.tituloTema }}</td>
+            <td>{{ a.carrera }}</td>
+            <td><span class="estado-chip" [ngClass]="estadoClase(a.estado)">{{ a.estadoNombre || a.estado }}</span></td>
+            <td>{{ a.fechaGeneracion | date:'dd/MM/yyyy' }}</td>
+            <td class="acciones">
+              <a class="btn-mini" [href]="'/api/v1/actas/ver/' + a.id" target="_blank" title="Ver PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+              <a class="btn-mini" [routerLink]="['/dashboard/actas', a.id, 'historial']" title="Historial"><i class="bi bi-clock-history"></i></a>
+              <button class="btn-mini btn-estado" (click)="abrirModal(a)" title="Cambiar estado"><i class="bi bi-arrow-repeat"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="paginador" *ngIf="pagina.totalPages > 1">
+      <button (click)="irAPagina((f.page || 0) - 1)" [disabled]="(f.page || 0) === 0"><i class="bi bi-chevron-left"></i></button>
+      <span>Página {{ (f.page || 0) + 1 }} de {{ pagina.totalPages }}</span>
+      <button (click)="irAPagina((f.page || 0) + 1)" [disabled]="(f.page || 0) + 1 >= pagina.totalPages"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </ng-container>
+
+  <!-- Modal cambio de estado -->
+  <div class="modal-backdrop" *ngIf="modalActa" (click)="cerrarModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h3>Cambiar estado — Acta #{{ modalActa.id }}</h3>
+      <p class="modal-sub">
+        {{ modalActa.estudianteNombre }} · Estado actual:
+        <span class="estado-chip" [ngClass]="estadoClase(modalActa.estado)">{{ modalActa.estado }}</span>
+      </p>
+
+      <label class="campo">Nuevo estado
+        <select [(ngModel)]="nuevoEstado">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let e of opcionesEstado" [value]="e">{{ e }}</option>
+        </select>
+      </label>
+      <p class="aviso" *ngIf="opcionesEstado.length === 0">
+        Desde <strong>{{ modalActa.estado }}</strong> no hay transiciones disponibles.
+      </p>
+
+      <label class="campo">Motivo <span class="req" *ngIf="motivoObligatorio">(obligatorio)</span>
+        <textarea rows="3" [(ngModel)]="motivo" placeholder="Motivo u observación del cambio..."></textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn-secundario" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-primario" [disabled]="!nuevoEstado || guardando" (click)="confirmarCambio()">
+          {{ guardando ? 'Guardando...' : 'Confirmar cambio' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

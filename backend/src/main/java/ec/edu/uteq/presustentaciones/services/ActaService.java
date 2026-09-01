@@ -1,9 +1,14 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.entities.Acta;
+import ec.edu.uteq.presustentaciones.dto.ActaDetalleDTO;
+import ec.edu.uteq.presustentaciones.dto.ActaResumenDTO;
+import ec.edu.uteq.presustentaciones.dto.HistorialActaDTO;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface ActaService {
@@ -51,4 +56,41 @@ public interface ActaService {
      * @param actaId id del acta
      */
     void eliminarActa(Long actaId);
+
+    // ── Módulo 2: gestión e historial de actas ───────────────────────────────
+
+    /**
+     * "Mis actas" del docente: actas de las pre-sustentaciones en las que es tutor o jurado.
+     * @param email email del usuario autenticado
+     */
+    Page<ActaResumenDTO> listarMisActas(String email, Pageable pageable);
+
+    /**
+     * Búsqueda/filtrado administrativo de actas. Parámetros nulos/vacíos no filtran.
+     */
+    Page<ActaResumenDTO> buscarActas(String estado, String carrera, LocalDate desde, LocalDate hasta,
+                                     String q, Pageable pageable);
+
+    /**
+     * Detalle de un acta. Aplica control de acceso: ADMIN/COORDINADOR (permiso ACTAS_VER),
+     * o el estudiante dueño / jurado / tutor de la solicitud. Lanza excepción si el usuario
+     * no participa en esa acta (previene IDOR/BOLA).
+     */
+    ActaDetalleDTO obtenerDetalle(Long actaId);
+
+    /**
+     * Historial de trazabilidad (timeline) del acta, más reciente primero. Mismo control
+     * de acceso que {@link #obtenerDetalle(Long)}.
+     */
+    List<HistorialActaDTO> obtenerHistorial(Long actaId);
+
+    /**
+     * Cambia el estado del acta (GENERADA -> REVISADA -> FINALIZADA, u OBSERVADA/ANULADA)
+     * validando la transición y registrando el cambio en historial_estados_acta con el
+     * usuario, su rol, el estado anterior/nuevo y el motivo.
+     * @param actaId            id del acta
+     * @param nuevoEstadoCodigo código del catálogo estados_acta
+     * @param motivo            motivo/observación (obligatorio para OBSERVADA y ANULADA)
+     */
+    Acta cambiarEstado(Long actaId, String nuevoEstadoCodigo, String motivo);
 }

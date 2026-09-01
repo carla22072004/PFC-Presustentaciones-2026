@@ -42,4 +42,8 @@ public interface DocenteRepository extends JpaRepository<Docente, Long> {
 
     @Query("SELECT d FROM Docente d ORDER BY d.cargaHorariaSemanal ASC")
     List<Docente> findTodosOrdenadosPorCarga();
+
+    /** Reportes: nombre de un conjunto acotado de docentes (los que participan en el proceso). */
+    @Query("SELECT d.id, u.nombre, u.apellido FROM Docente d JOIN d.usuario u WHERE d.id IN :ids")
+    List<Object[]> findNombresByIds(@org.springframework.data.repository.query.Param("ids") java.util.Collection<Long> ids);
 }

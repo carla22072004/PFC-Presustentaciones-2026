@@ -60,6 +60,28 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/notificaciones/notificaciones.component').then(m => m.NotificacionesComponent),
                 canActivate: [authGuard]
             },
+            // ── Actas: gestión e historial (DOCENTE / COORDINADOR / ADMIN) ──
+            {
+                path: 'actas/mis-actas',
+                loadComponent: () => import('./components/actas/mis-actas/mis-actas.component').then(m => m.MisActasComponent),
+                canActivate: [authGuard, roleGuard(['DOCENTE', 'COORDINADOR', 'ADMIN'])]
+            },
+            {
+                path: 'actas/gestion',
+                loadComponent: () => import('./components/actas/gestion-actas/gestion-actas.component').then(m => m.GestionActasComponent),
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
+            },
+            {
+                path: 'actas/:id/historial',
+                loadComponent: () => import('./components/actas/historial-acta/historial-acta.component').then(m => m.HistorialActaComponent),
+                canActivate: [authGuard, roleGuard(['DOCENTE', 'COORDINADOR', 'ADMIN'])]
+            },
+            // ── Reportes (COORDINADOR / ADMIN) ──────────────────────────────
+            {
+                path: 'reportes',
+                loadComponent: () => import('./components/reportes/reportes.component').then(m => m.ReportesComponent),
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
+            },
             // ── Administrador del sistema (ADMIN) ────────────────────────────
             {
                 path: 'admin/usuarios',

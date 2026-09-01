@@ -14,14 +14,23 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.io.font.constants.StandardFonts;
 import ec.edu.uteq.presustentaciones.entities.Acta;
+import ec.edu.uteq.presustentaciones.entities.EstadoActa;
 import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
+import ec.edu.uteq.presustentaciones.entities.HistorialEstadoActa;
 import ec.edu.uteq.presustentaciones.entities.Jurado;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
+import ec.edu.uteq.presustentaciones.entities.Usuario;
+import ec.edu.uteq.presustentaciones.dto.ActaDetalleDTO;
+import ec.edu.uteq.presustentaciones.dto.ActaResumenDTO;
+import ec.edu.uteq.presustentaciones.dto.HistorialActaDTO;
 import ec.edu.uteq.presustentaciones.repositories.ActaRepository;
+import ec.edu.uteq.presustentaciones.repositories.EstadoActaRepository;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
+import ec.edu.uteq.presustentaciones.repositories.HistorialEstadoActaRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.TutorRepository;
+import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,7 +48,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -57,6 +68,19 @@ public class ActaServiceImpl implements ActaService {
     private final NotificacionService notificacionService;
     private final AuditoriaService auditoriaService;
     private final TutorRepository tutorRepository;
+    private final EstadoActaRepository estadoActaRepository;
+    private final HistorialEstadoActaRepository historialEstadoActaRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PermisoService permisoService;
+
+    // Flujo de estados del acta. ADMIN puede saltarse estas reglas para ANULAR.
+    private static final Map<String, Set<String>> TRANSICIONES = Map.of(
+            "GENERADA",   Set.of("REVISADA", "OBSERVADA", "ANULADA"),
+            "REVISADA",   Set.of("FINALIZADA", "OBSERVADA", "ANULADA"),
+            "OBSERVADA",  Set.of("REVISADA", "GENERADA", "ANULADA"),
+            "FINALIZADA", Set.of("ANULADA"),
+            "ANULADA",    Set.of());
+    private static final Set<String> ESTADOS_QUE_EXIGEN_MOTIVO = Set.of("OBSERVADA", "ANULADA");
 
     @Value("${app.actas.dir:uploads/actas}")
     private String actasDir;
@@ -75,6 +99,14 @@ public class ActaServiceImpl implements ActaService {
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (isAdmin) return;
+
+        // ADMIN / COORDINADOR: acceso completo de lectura vía el sistema de permisos dinámico
+        // (mismo mecanismo que @permisoService.tienePermiso en los controllers). Un DOCENTE
+        // NO tiene ACTAS_VER, así que cae a la comprobación de propiedad de abajo.
+        if (permisoService.tienePermiso(auth, "ACTAS_VER")
+                || permisoService.tienePermiso(auth, "ACTAS_GESTIONAR")) {
+            return;
+        }
 
         String email = auth.getName();
         if (acta.getSolicitud().getEstudiante() != null &&
@@ -95,7 +127,9 @@ public class ActaServiceImpl implements ActaService {
     }
 
     @Override
+    @Transactional
     public Acta generarActa(Long solicitudId) {
+        auditoriaService.marcarActorActual();
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
 
@@ -113,10 +147,13 @@ public class ActaServiceImpl implements ActaService {
         }
 
         String fileName = "acta_" + solicitudId + "_" + System.currentTimeMillis() + ".pdf";
+        EstadoActa estadoGenerada = estadoActaRepository.findByCodigo("GENERADA")
+                .orElseThrow(() -> new RuntimeException("Catálogo estados_acta sin 'GENERADA' (revisar migración V19)"));
         Acta acta = Acta.builder()
                 .solicitud(solicitud)
                 .archivoPdf(fileName)
                 .fechaGeneracion(LocalDate.now())
+                .estado(estadoGenerada)
                 .build();
 
         // Crear directorio de subida si no existe
@@ -129,7 +166,9 @@ public class ActaServiceImpl implements ActaService {
         String rutaCompleta = actasDir + "/" + fileName;
         generarPdf(rutaCompleta, solicitud, evalOpt.orElse(null), jurados, acta);
 
-        return actaRepository.save(acta);
+        Acta guardada = actaRepository.save(acta);
+        registrarHistorial(guardada, null, estadoGenerada, "CREAR", "Acta generada a partir de la evaluación final");
+        return guardada;
     }
 
     @Override
@@ -191,6 +230,16 @@ public class ActaServiceImpl implements ActaService {
         if (acta.isFirmada()) {
             Solicitud solicitud = acta.getSolicitud();
 
+            // El acta pasa a FINALIZADA con la última firma (si no lo estaba ya). Queda en el historial.
+            if (acta.getEstado() == null || !"FINALIZADA".equals(acta.getEstado().getCodigo())) {
+                EstadoActa anterior = acta.getEstado();
+                EstadoActa finalizada = estadoActaRepository.findByCodigo("FINALIZADA")
+                        .orElseThrow(() -> new RuntimeException("Catálogo estados_acta sin 'FINALIZADA' (revisar migración V19)"));
+                acta.setEstado(finalizada);
+                registrarHistorial(acta, anterior, finalizada, "FIRMA_COMPLETA",
+                        "Acta finalizada automáticamente: firmada por presidente, ambos vocales y tutor");
+            }
+
             ec.edu.uteq.presustentaciones.entities.EstadoSolicitud estadoCompletada = estadoSolicitudRepository.findByCodigo("COMPLETADA")
                     .orElseGet(() -> estadoSolicitudRepository.save(ec.edu.uteq.presustentaciones.entities.EstadoSolicitud.builder()
                             .codigo("COMPLETADA").nombre("Completada").build()));
@@ -242,6 +291,134 @@ public class ActaServiceImpl implements ActaService {
         Optional<Acta> acta = actaRepository.findBySolicitudId(solicitudId);
         acta.ifPresent(this::validarAcceso);
         return acta;
+    }
+
+    // ── Módulo 2: gestión e historial de actas ───────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ActaResumenDTO> listarMisActas(String email, Pageable pageable) {
+        return actaRepository.findMisActas(email, pageable).map(ActaResumenDTO::de);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ActaResumenDTO> buscarActas(String estado, String carrera, LocalDate desde, LocalDate hasta,
+                                            String q, Pageable pageable) {
+        return actaRepository.buscarConFiltros(limpiar(estado), limpiar(carrera), desde, hasta, limpiar(q), pageable)
+                .map(ActaResumenDTO::de);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ActaDetalleDTO obtenerDetalle(Long actaId) {
+        Acta acta = actaRepository.findDetalleById(actaId)
+                .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
+        validarAcceso(acta); // ADMIN/COORDINADOR o participante (estudiante/jurado/tutor) -- previene IDOR
+        List<Jurado> jurados = juradoRepository.findBySolicitudId(acta.getSolicitud().getId());
+        return ActaDetalleDTO.de(acta, jurados);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HistorialActaDTO> obtenerHistorial(Long actaId) {
+        Acta acta = actaRepository.findDetalleById(actaId)
+                .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
+        validarAcceso(acta); // mismo control de acceso que el detalle
+        return historialEstadoActaRepository.findByActaIdOrderByFechaCambioDesc(actaId).stream()
+                .map(HistorialActaDTO::de)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public Acta cambiarEstado(Long actaId, String nuevoEstadoCodigo, String motivo) {
+        auditoriaService.marcarActorActual();
+        if (nuevoEstadoCodigo == null || nuevoEstadoCodigo.isBlank()) {
+            throw new RuntimeException("Debe indicar el nuevo estado del acta");
+        }
+        String destino = nuevoEstadoCodigo.trim().toUpperCase();
+
+        Acta acta = actaRepository.findDetalleById(actaId)
+                .orElseThrow(() -> new RuntimeException("Acta no encontrada: " + actaId));
+
+        EstadoActa actual = acta.getEstado();
+        String origen = actual != null ? actual.getCodigo() : "GENERADA";
+        if (origen.equals(destino)) {
+            throw new RuntimeException("El acta ya está en estado " + destino);
+        }
+
+        EstadoActa estadoDestino = estadoActaRepository.findByCodigo(destino)
+                .orElseThrow(() -> new RuntimeException("Estado de acta inválido: " + nuevoEstadoCodigo
+                        + ". Válidos: GENERADA, REVISADA, OBSERVADA, FINALIZADA, ANULADA"));
+
+        boolean isAdmin = esAdminActual();
+        Set<String> permitidas = TRANSICIONES.getOrDefault(origen, Set.of());
+        // El ADMIN puede anular en cualquier momento (gestión completa); el resto sigue el flujo.
+        if (!permitidas.contains(destino) && !(isAdmin && "ANULADA".equals(destino))) {
+            throw new RuntimeException("Transición de estado no permitida: " + origen + " -> " + destino
+                    + ". Desde " + origen + " solo se puede pasar a " + permitidas);
+        }
+        if (ESTADOS_QUE_EXIGEN_MOTIVO.contains(destino) && (motivo == null || motivo.isBlank())) {
+            throw new RuntimeException("Debe indicar un motivo para pasar el acta a " + destino);
+        }
+
+        acta.setEstado(estadoDestino);
+        if (motivo != null && !motivo.isBlank()) {
+            acta.setObservacionesActa(motivo.trim());
+        }
+        Acta guardada = actaRepository.save(acta);
+        registrarHistorial(guardada, actual, estadoDestino, "CAMBIO_ESTADO",
+                motivo != null && !motivo.isBlank() ? motivo.trim() : null);
+
+        try {
+            Long estudianteUsuarioId = acta.getSolicitud().getEstudiante().getUsuario().getId();
+            notificacionService.crearNotificacion(estudianteUsuarioId,
+                    String.format("El acta de tu pre-sustentación cambió de estado: %s -> %s", origen, destino));
+        } catch (Exception e) {
+            log.warn("No se pudo notificar el cambio de estado del acta {}: {}", actaId, e.getMessage());
+        }
+        return guardada;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private static String limpiar(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
+    /** Escribe una fila en historial_estados_acta con el usuario autenticado y su rol. */
+    private void registrarHistorial(Acta acta, EstadoActa anterior, EstadoActa nuevo, String accion, String comentario) {
+        Usuario autor = null;
+        String rol = null;
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(String.valueOf(auth.getPrincipal()))) {
+                autor = usuarioRepository.findByEmail(auth.getName()).orElse(null);
+                if (autor != null) {
+                    rol = autor.getRolUsuario() != null ? autor.getRolUsuario().getCodigo() : autor.getRol();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo resolver el autor del historial del acta {}: {}", acta.getId(), e.getMessage());
+        }
+        historialEstadoActaRepository.save(HistorialEstadoActa.builder()
+                .acta(acta)
+                .estadoAnterior(anterior)
+                .estadoNuevo(nuevo)
+                .usuario(autor)
+                .rolUsuario(rol)
+                .accion(accion)
+                .comentario(comentario)
+                .fechaCambio(LocalDateTime.now())
+                .build());
+    }
+
+    private boolean esAdminActual() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+                || (auth != null && permisoService.tienePermiso(auth, "ACTAS_GESTIONAR"));
     }
 
     // ── Generación PDF ────────────────────────────────────────────────────────

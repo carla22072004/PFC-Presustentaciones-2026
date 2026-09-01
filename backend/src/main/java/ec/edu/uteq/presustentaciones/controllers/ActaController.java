@@ -2,15 +2,21 @@ package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.entities.Acta;
 import ec.edu.uteq.presustentaciones.services.ActaService;
+import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import ec.edu.uteq.presustentaciones.dto.CambiarEstadoActaRequest;
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -90,6 +96,68 @@ public class ActaController {
     public ResponseEntity<?> listar(Pageable pageable) {
         try {
             return ResponseEntity.ok(ResponseWrapper.success(actaService.listarActas(pageable)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    // ── Módulo 2: gestión e historial de actas ──────────────────────────────
+
+    /** DOCENTE: actas de las pre-sustentaciones en las que es tutor o jurado. */
+    @GetMapping("/mis-actas")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTAS_VER_PROPIAS')")
+    public ResponseEntity<?> misActas(Authentication auth, Pageable pageable) {
+        return ResponseEntity.ok(ResponseWrapper.success(actaService.listarMisActas(auth.getName(), pageable)));
+    }
+
+    /**
+     * COORDINADOR / ADMINISTRADOR: búsqueda y filtrado de todas las actas (permiso ACTAS_VER).
+     * El coordinador consulta y cambia estado según el flujo académico; ACTAS_GESTIONAR
+     * (solo ADMIN) queda reservado para operaciones administrativas adicionales.
+     */
+    @GetMapping("/buscar")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTAS_VER')")
+    public ResponseEntity<?> buscar(
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String carrera,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) String q,
+            Pageable pageable) {
+        return ResponseEntity.ok(ResponseWrapper.success(
+                actaService.buscarActas(estado, carrera, desde, hasta, q, pageable)));
+    }
+
+    /** Detalle de un acta. El service aplica el control de acceso (previene IDOR). */
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> detalle(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(ResponseWrapper.success(actaService.obtenerDetalle(id)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    /** Historial de trazabilidad (timeline) del acta. Mismo control de acceso que el detalle. */
+    @GetMapping("/{id}/historial")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTA_HISTORIAL_VER')")
+    public ResponseEntity<?> historial(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(ResponseWrapper.success(actaService.obtenerHistorial(id)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    /** COORDINADOR / ADMINISTRADOR: cambia el estado del acta (queda en el historial). */
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTA_ESTADO_CAMBIAR')")
+    public ResponseEntity<?> cambiarEstado(@PathVariable Long id,
+                                           @Valid @RequestBody CambiarEstadoActaRequest req) {
+        try {
+            Acta acta = actaService.cambiarEstado(id, req.getNuevoEstado(), req.getMotivo());
+            return ResponseEntity.ok(ResponseWrapper.success(acta, "Estado del acta actualizado"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }

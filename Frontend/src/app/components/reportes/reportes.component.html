@@ -1,0 +1,101 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-graph-up-arrow me-2"></i>Reportes</h2>
+      <p class="page-subtitle">Resumen del proceso de pre-sustentaciones{{ esAdmin ? ' y de las actas' : '' }}</p>
+    </div>
+    <div class="pdf-btns">
+      <button (click)="descargarCronogramaPdf()"><i class="bi bi-file-earmark-pdf"></i> Cronograma</button>
+      <button (click)="descargarEstadisticasPdf()"><i class="bi bi-file-earmark-pdf"></i> Evaluaciones</button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <label>Desde <input type="date" [(ngModel)]="filtro.desde"></label>
+    <label>Hasta <input type="date" [(ngModel)]="filtro.hasta"></label>
+    <input type="text" placeholder="Carrera" [(ngModel)]="filtro.carrera">
+    <button class="btn-aplicar" (click)="aplicarFiltro()">Aplicar</button>
+    <button class="btn-limpiar" (click)="limpiarFiltro()">Limpiar</button>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Calculando reportes...</p></div>
+
+  <ng-container *ngIf="!cargando && resumen">
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi"><span class="kpi-num">{{ resumen.totalSolicitudes }}</span><span class="kpi-lbl">Solicitudes</span></div>
+      <div class="kpi ok"><span class="kpi-num">{{ resumen.solicitudesCompletadas }}</span><span class="kpi-lbl">Completadas</span></div>
+      <div class="kpi warn"><span class="kpi-num">{{ resumen.solicitudesEnProceso }}</span><span class="kpi-lbl">En proceso</span></div>
+      <div class="kpi bad"><span class="kpi-num">{{ resumen.solicitudesRechazadas }}</span><span class="kpi-lbl">Rechazadas / suspendidas</span></div>
+      <div class="kpi"><span class="kpi-num">{{ resumen.totalActas }}</span><span class="kpi-lbl">Actas</span></div>
+      <div class="kpi ok"><span class="kpi-num">{{ resumen.actasFinalizadas }}</span><span class="kpi-lbl">Actas finalizadas</span></div>
+      <div class="kpi warn"><span class="kpi-num">{{ resumen.actasPendientesFirma }}</span><span class="kpi-lbl">Actas pendientes de firma</span></div>
+      <div class="kpi"><span class="kpi-num">{{ resumen.actasObservadas + resumen.actasAnuladas }}</span><span class="kpi-lbl">Actas observadas / anuladas</span></div>
+    </div>
+
+    <div class="cols">
+      <!-- Solicitudes por estado -->
+      <section class="panel">
+        <h3><i class="bi bi-bar-chart-line me-2"></i>Solicitudes por estado</h3>
+        <div class="barras">
+          <div class="fila" *ngFor="let c of resumen.solicitudesPorEstado">
+            <span class="etq">{{ c.etiqueta }}</span>
+            <span class="track"><span class="fill" [style.width.%]="barra(c.cantidad, resumen.solicitudesPorEstado)"></span></span>
+            <span class="val">{{ c.cantidad }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sustentaciones por período -->
+      <section class="panel">
+        <h3><i class="bi bi-calendar-range me-2"></i>Pre-sustentaciones por período</h3>
+        <div class="barras">
+          <div class="fila" *ngFor="let c of resumen.sustentacionesPorPeriodo">
+            <span class="etq">{{ c.etiqueta }}</span>
+            <span class="track"><span class="fill alt" [style.width.%]="barra(c.cantidad, resumen.sustentacionesPorPeriodo)"></span></span>
+            <span class="val">{{ c.cantidad }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Estado de las actas -->
+    <section class="panel">
+      <h3><i class="bi bi-file-earmark-text me-2"></i>Estado de las actas</h3>
+      <div class="chips-actas">
+        <span class="chip est-generada">Generadas: {{ resumen.actasGeneradas }}</span>
+        <span class="chip est-revisada">Revisadas: {{ resumen.actasRevisadas }}</span>
+        <span class="chip est-observada">Observadas: {{ resumen.actasObservadas }}</span>
+        <span class="chip est-finalizada">Finalizadas: {{ resumen.actasFinalizadas }}</span>
+        <span class="chip est-anulada">Anuladas: {{ resumen.actasAnuladas }}</span>
+      </div>
+    </section>
+
+    <!-- Por carrera -->
+    <section class="panel" *ngIf="porCarrera.length">
+      <h3><i class="bi bi-mortarboard me-2"></i>Estadísticas por carrera</h3>
+      <table class="mini-tabla">
+        <thead><tr><th>Carrera</th><th>Total</th><th>Completadas</th><th>Rechazadas</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let row of porCarrera">
+            <td>{{ row['carrera'] }}</td><td>{{ row['total'] }}</td>
+            <td>{{ row['completadas'] }}</td><td>{{ row['rechazadas'] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Actividad por docente -->
+    <section class="panel" *ngIf="actividad.length">
+      <h3><i class="bi bi-person-lines-fill me-2"></i>Actividad por docente <span class="hint">(top 15)</span></h3>
+      <table class="mini-tabla">
+        <thead><tr><th>Docente</th><th>Como jurado</th><th>Como tutor</th><th>Actas firmadas</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let d of actividad">
+            <td>{{ d.docente }}</td><td>{{ d.comoJurado }}</td><td>{{ d.comoTutor }}</td><td>{{ d.actasFirmadas }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+</div>

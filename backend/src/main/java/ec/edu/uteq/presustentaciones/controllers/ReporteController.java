@@ -17,13 +17,16 @@ import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.repositories.CronogramaRepository;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.services.ReporteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -39,6 +42,7 @@ public class ReporteController {
     private final CronogramaRepository cronogramaRepo;
     private final EvaluacionFinalRepository evaluacionFinalRepo;
     private final SolicitudRepository solicitudRepo;
+    private final ReporteService reporteService;
 
     // ── Colores — siempre new DeviceRgb para evitar conflicto con Color.WHITE ──
     private static DeviceRgb BLUE()       { return new DeviceRgb(0,   56,  101); }
@@ -205,6 +209,56 @@ public class ReporteController {
                 "tasaAprobacion",       total > 0 ? Math.round((double) aprobados / total * 100) : 0,
                 "solicitudesPendientes", pendientes
         ));
+    }
+
+    // ── Módulo de reportes JSON (COORDINADOR / ADMINISTRADOR) ─────────────────
+    // El @PreAuthorize('REPORTES_VER') de la clase protege también estos endpoints.
+    // Todo se agrega con COUNT/GROUP BY en la base (ver ReporteServiceImpl).
+
+    /** Resumen general del proceso de pre-sustentaciones para el dashboard. */
+    @GetMapping("/resumen")
+    public ResponseEntity<?> resumen(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) String carrera) {
+        return ResponseEntity.ok(reporteService.resumen(desde, hasta, carrera));
+    }
+
+    /** Cantidad de solicitudes/pre-sustentaciones por estado. */
+    @GetMapping("/solicitudes-por-estado")
+    public ResponseEntity<?> solicitudesPorEstado(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) String carrera) {
+        return ResponseEntity.ok(reporteService.solicitudesPorEstado(desde, hasta, carrera));
+    }
+
+    /** Cantidad de pre-sustentaciones por período académico. */
+    @GetMapping("/sustentaciones-por-periodo")
+    public ResponseEntity<?> sustentacionesPorPeriodo(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(reporteService.sustentacionesPorPeriodo(desde, hasta));
+    }
+
+    /** Actas: generadas, revisadas, observadas, finalizadas, anuladas y pendientes de firma. */
+    @GetMapping("/actas")
+    public ResponseEntity<?> resumenActas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(reporteService.resumenActas(desde, hasta));
+    }
+
+    /** Actividad por docente: como jurado, como tutor y actas firmadas. */
+    @GetMapping("/actividad-docente")
+    public ResponseEntity<?> actividadDocente() {
+        return ResponseEntity.ok(reporteService.actividadPorDocente());
+    }
+
+    /** Estadísticas por carrera/programa. */
+    @GetMapping("/por-carrera")
+    public ResponseEntity<?> porCarrera() {
+        return ResponseEntity.ok(reporteService.estadisticasPorCarrera());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

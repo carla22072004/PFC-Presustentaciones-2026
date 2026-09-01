@@ -59,4 +59,18 @@ public interface JuradoRepository extends JpaRepository<Jurado, Long> {
             @Param("p_docente_ids") Long[] docenteIds,
             @Param("p_rol") String rol
     );
+
+    // ── Reportes: actividad por docente (GROUP BY en la base) ────────────────
+    @Query("SELECT d.id, u.nombre, u.apellido, COUNT(j) " +
+           "FROM Jurado j JOIN j.docente d JOIN d.usuario u " +
+           "GROUP BY d.id, u.nombre, u.apellido")
+    List<Object[]> contarAsignacionesPorDocente();
+
+    /** Actas totalmente firmadas de pre-sustentaciones donde el docente fue jurado. */
+    @Query("SELECT j.docente.id, COUNT(DISTINCT a.id) " +
+           "FROM Acta a, Jurado j WHERE j.solicitud = a.solicitud AND a.firmada = true " +
+           "GROUP BY j.docente.id")
+    List<Object[]> contarActasFirmadasPorDocente();
+
+    boolean existsBySolicitudIdAndDocenteUsuarioEmail(Long solicitudId, String email);
 }

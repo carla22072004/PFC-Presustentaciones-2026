@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -47,6 +47,10 @@ class ActaServiceImplTest {
     @Mock private NotificacionService notificacionService;
     @Mock private AuditoriaService auditoriaService;
     @Mock private TutorRepository tutorRepository;
+    @Mock private ec.edu.uteq.presustentaciones.repositories.EstadoActaRepository estadoActaRepository;
+    @Mock private ec.edu.uteq.presustentaciones.repositories.HistorialEstadoActaRepository historialEstadoActaRepository;
+    @Mock private ec.edu.uteq.presustentaciones.repositories.UsuarioRepository usuarioRepository;
+    @Mock private PermisoService permisoService;
 
     @InjectMocks
     private ActaServiceImpl actaService;
@@ -54,6 +58,10 @@ class ActaServiceImplTest {
     private Usuario usuarioEstudiante;
     private Estudiante estudiante;
     private Solicitud solicitud;
+
+    private static EstadoActa estadoActa(int id, String codigo) {
+        return EstadoActa.builder().id((short) id).codigo(codigo).nombre(codigo).orden((short) id).build();
+    }
 
     @BeforeEach
     void setUp() {
@@ -76,6 +84,16 @@ class ActaServiceImplTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
                         org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
+
+        // V19: el acta tiene estado (catálogo estados_acta) y cada transición se registra
+        // en historial_estados_acta. Stubs leniente porque no todos los tests los ejercen.
+        lenient().when(estadoActaRepository.findByCodigo("GENERADA")).thenReturn(Optional.of(estadoActa(1, "GENERADA")));
+        lenient().when(estadoActaRepository.findByCodigo("REVISADA")).thenReturn(Optional.of(estadoActa(2, "REVISADA")));
+        lenient().when(estadoActaRepository.findByCodigo("OBSERVADA")).thenReturn(Optional.of(estadoActa(3, "OBSERVADA")));
+        lenient().when(estadoActaRepository.findByCodigo("FINALIZADA")).thenReturn(Optional.of(estadoActa(4, "FINALIZADA")));
+        lenient().when(estadoActaRepository.findByCodigo("ANULADA")).thenReturn(Optional.of(estadoActa(5, "ANULADA")));
+        lenient().when(usuarioRepository.findByEmail(any())).thenReturn(Optional.empty());
+        lenient().when(historialEstadoActaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @AfterEach
@@ -257,5 +275,107 @@ class ActaServiceImplTest {
         RuntimeException ex = assertThrows(RuntimeException.class, () -> actaService.eliminarActa(1L));
         assertTrue(ex.getMessage().contains("No tienes permiso"));
         verify(actaRepository, never()).delete(any());
+    }
+
+    // ═══ Módulo 2: gestión e historial de actas (V19) ═══════════════════════════
+
+    private Acta actaConEstado(String codigoEstado) {
+        Acta acta = actaConFirmas(false, false, false, false);
+        acta.setEstado(estadoActa(1, codigoEstado));
+        return acta;
+    }
+
+    private void autenticarComo(String email, String role) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(email, null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_" + role)));
+    }
+
+    @Test
+    void obtenerDetalleDeActaAjenaLanzaExcepcionAunConIdConocido() {
+        // IDOR/BOLA: docente B pide el acta de una solicitud donde no es jurado ni tutor.
+        Acta acta = actaConEstado("GENERADA");
+        autenticarComo("docenteB@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
+        when(tutorRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> actaService.obtenerDetalle(1L));
+        assertTrue(ex.getMessage().contains("No tienes permiso"));
+    }
+
+    @Test
+    void obtenerDetalleLoPermiteAlCoordinadorViaPermiso() {
+        Acta acta = actaConEstado("GENERADA");
+        autenticarComo("coord@uteq.edu.ec", "COORDINADOR");
+        when(permisoService.tienePermiso(any(), eq("ACTAS_VER"))).thenReturn(true);
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
+
+        assertNotNull(actaService.obtenerDetalle(1L));
+    }
+
+    @Test
+    void cambiarEstadoValidoRegistraHistorialYActualizaElActa() {
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Acta resultado = actaService.cambiarEstado(1L, "revisada", "Revisado por el coordinador");
+
+        assertEquals("REVISADA", resultado.getEstado().getCodigo());
+        var captor = org.mockito.ArgumentCaptor.forClass(ec.edu.uteq.presustentaciones.entities.HistorialEstadoActa.class);
+        verify(historialEstadoActaRepository).save(captor.capture());
+        assertEquals("CAMBIO_ESTADO", captor.getValue().getAccion());
+        assertEquals("GENERADA", captor.getValue().getEstadoAnterior().getCodigo());
+        assertEquals("REVISADA", captor.getValue().getEstadoNuevo().getCodigo());
+    }
+
+    @Test
+    void cambiarEstadoConTransicionNoPermitidaLanzaExcepcion() {
+        Acta acta = actaConEstado("GENERADA");
+        autenticarComo("coord@uteq.edu.ec", "COORDINADOR");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.cambiarEstado(1L, "FINALIZADA", null));
+        assertTrue(ex.getMessage().contains("no permitida"));
+        verify(historialEstadoActaRepository, never()).save(any());
+        verify(actaRepository, never()).save(any());
+    }
+
+    @Test
+    void cambiarEstadoAObservadaSinMotivoLanzaExcepcion() {
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.cambiarEstado(1L, "OBSERVADA", "   "));
+        assertTrue(ex.getMessage().toLowerCase().contains("motivo"));
+    }
+
+    @Test
+    void obtenerHistorialDevuelveLasEntradasDelRepositorio() {
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        var h = ec.edu.uteq.presustentaciones.entities.HistorialEstadoActa.builder()
+                .id(1L).acta(acta).estadoNuevo(estadoActa(1, "GENERADA")).accion("CREAR")
+                .fechaCambio(java.time.LocalDateTime.now()).build();
+        when(historialEstadoActaRepository.findByActaIdOrderByFechaCambioDesc(1L)).thenReturn(List.of(h));
+
+        var timeline = actaService.obtenerHistorial(1L);
+
+        assertEquals(1, timeline.size());
+        assertEquals("CREAR", timeline.get(0).getAccion());
+    }
+
+    @Test
+    void listarMisActasDelegaAlRepositorioConElEmail() {
+        org.springframework.data.domain.Page<Acta> vacia = org.springframework.data.domain.Page.empty();
+        when(actaRepository.findMisActas(eq("docente@uteq.edu.ec"), any())).thenReturn(vacia);
+
+        actaService.listarMisActas("docente@uteq.edu.ec", org.springframework.data.domain.PageRequest.of(0, 10));
+
+        verify(actaRepository).findMisActas(eq("docente@uteq.edu.ec"), any());
     }
 }

@@ -2,6 +2,11 @@ services:
   postgres:
     ports:
       - "5434:5432"
+  redis:
+    # Publicado para que `./mvnw test` / `make test` local (los @SpringBootTest reales)
+    # alcancen el Redis del stack sin variables de entorno.
+    ports:
+      - "6379:6379"
   nginx:
     ports:
       - "4200:80"
