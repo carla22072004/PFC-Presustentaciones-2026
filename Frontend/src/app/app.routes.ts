@@ -41,6 +41,11 @@ export const routes: Routes = [
                 canActivate: [authGuard]
             },
             {
+                path: 'solicitudes/seguimiento/:id',
+                loadComponent: () => import('./components/solicitudes/seguimiento/seguimiento.component').then(m => m.SeguimientoComponent),
+                canActivate: [authGuard]
+            },
+            {
                 path: 'notas',
                 loadComponent: () => import('./components/notas/mis-notas.component').then(m => m.MisNotasComponent),
                 canActivate: [authGuard]

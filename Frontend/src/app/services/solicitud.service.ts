@@ -55,4 +55,7 @@ export class SolicitudService {
     suspenderSolicitud(id: number, motivo: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/suspender/${id}`, { motivo });
     }
+    obtenerSeguimiento(id: number): Observable<any> {
+        return this.http.get(`${this.apiUrl}/${id}/seguimiento`);
+    }
 }

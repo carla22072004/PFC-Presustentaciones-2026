@@ -1,0 +1,62 @@
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0.4rem;
+  height: 100%;
+  width: 2px;
+  background-color: #e9ecef;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: -2.35rem;
+  top: 0;
+  background-color: #fff;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.2rem;
+}
+
+.timeline-content {
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border-left: 4px solid #6c757d; /* Default pending */
+}
+
+.timeline-item.completed .timeline-content {
+  border-left-color: #198754;
+  background-color: rgba(25, 135, 84, 0.05);
+}
+
+.timeline-item.active .timeline-content {
+  border-left-color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.05);
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+.timeline-item.rejected .timeline-content {
+  border-left-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.timeline-item.pending .timeline-content {
+  opacity: 0.7;
+}

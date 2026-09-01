@@ -1,0 +1,84 @@
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Seguimiento de Pre-Sustentación</h2>
+    <button class="btn btn-outline-secondary" (click)="volver()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando información del seguimiento...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error && seguimiento" class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title text-primary">Información General</h5>
+      <div class="row mt-3">
+        <div class="col-md-8">
+          <p><strong>Proyecto:</strong> {{ seguimiento.tituloProyecto }}</p>
+          <p><strong>Estado Actual:</strong> <span class="badge bg-info">{{ seguimiento.estadoActual }}</span></p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <p class="mb-1"><strong>Progreso del Proceso</strong></p>
+          <div class="progress" style="height: 20px;">
+            <div class="progress-bar bg-success" role="progressbar" 
+                 [style.width]="seguimiento.porcentajeProgreso + '%'" 
+                 [attr.aria-valuenow]="seguimiento.porcentajeProgreso" 
+                 aria-valuemin="0" aria-valuemax="100">
+              {{ seguimiento.porcentajeProgreso }}%
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && seguimiento" class="card shadow-sm">
+    <div class="card-body p-4">
+      <h5 class="card-title mb-4 text-primary">Línea de Tiempo del Proceso</h5>
+      
+      <div class="timeline">
+        <div class="timeline-item" *ngFor="let etapa of seguimiento.etapas" 
+             [ngClass]="{
+               'completed': etapa.estadoVisual === 'COMPLETADO',
+               'active': etapa.estadoVisual === 'EN_PROCESO',
+               'pending': etapa.estadoVisual === 'PENDIENTE',
+               'rejected': etapa.estadoVisual === 'RECHAZADO'
+             }">
+          
+          <div class="timeline-icon">
+            <i class="bi" [ngClass]="{
+              'bi-check-circle-fill text-success': etapa.estadoVisual === 'COMPLETADO',
+              'bi-circle-fill text-primary': etapa.estadoVisual === 'EN_PROCESO',
+              'bi-circle text-secondary': etapa.estadoVisual === 'PENDIENTE',
+              'bi-exclamation-triangle-fill text-danger': etapa.estadoVisual === 'RECHAZADO'
+            }"></i>
+          </div>
+          
+          <div class="timeline-content">
+            <h6 class="mb-1 fw-bold">{{ etapa.nombre }}</h6>
+            <span class="badge mb-2" [ngClass]="{
+              'bg-success': etapa.estadoVisual === 'COMPLETADO',
+              'bg-primary': etapa.estadoVisual === 'EN_PROCESO',
+              'bg-secondary': etapa.estadoVisual === 'PENDIENTE',
+              'bg-danger': etapa.estadoVisual === 'RECHAZADO'
+            }">
+              {{ etapa.estadoVisual.replace('_', ' ') }}
+            </span>
+            <p class="mb-1 text-muted small" *ngIf="etapa.fecha">
+              <i class="bi bi-calendar3"></i> {{ etapa.fecha | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+            <p class="mb-0">{{ etapa.descripcion }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

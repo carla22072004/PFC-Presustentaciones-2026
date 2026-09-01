@@ -132,4 +132,11 @@ public interface SolicitudService {
      *         tituloTema, estadoSolicitud, fechaDefensa, salaNombre, notaFinal)
      */
     List<Map<String, Object>> generarReporteDefensasSP(String carrera);
+
+    /**
+     * Obtiene el seguimiento visual de la pre-sustentación.
+     * @param solicitudId el ID de la solicitud
+     * @return un DTO con el progreso y etapas del proceso
+     */
+    ec.edu.uteq.presustentaciones.dto.SeguimientoDTO obtenerSeguimiento(Long solicitudId);
 }

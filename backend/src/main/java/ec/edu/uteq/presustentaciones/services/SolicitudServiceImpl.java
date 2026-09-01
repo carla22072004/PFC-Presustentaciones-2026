@@ -451,4 +451,75 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
         return list;
     }
+
+    @Override
+    public ec.edu.uteq.presustentaciones.dto.SeguimientoDTO obtenerSeguimiento(Long solicitudId) {
+        Solicitud s = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                
+        String codEstado = s.getEstado() != null ? s.getEstado().getCodigo() : "";
+        
+        List<ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO> etapas = new java.util.ArrayList<>();
+        
+        // Etapa 1: Solicitud registrada
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder()
+                .nombre("Solicitud registrada")
+                .estadoVisual("COMPLETADO")
+                .fecha(s.getFechaRegistro())
+                .descripcion("Solicitud creada en el sistema.")
+                .build());
+                
+        // Etapa 2: Revisión de solicitud
+        String revEstado = "PENDIENTE";
+        if (codEstado.equals("ENVIADA")) revEstado = "EN_PROCESO";
+        else if (codEstado.equals("APROBADA") || codEstado.equals("RECHAZADA")) revEstado = "COMPLETADO";
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder()
+                .nombre("Revisión de solicitud")
+                .estadoVisual(revEstado)
+                .fecha(codEstado.equals("ENVIADA") ? s.getActualizadoEn() : null)
+                .descripcion("Revisión por parte de coordinación.")
+                .build());
+                
+        // Etapa 3: Solicitud aprobada
+        String aprEstado = "PENDIENTE";
+        if (codEstado.equals("APROBADA")) aprEstado = "COMPLETADO";
+        else if (codEstado.equals("RECHAZADA")) aprEstado = "RECHAZADO";
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder()
+                .nombre("Aprobación de solicitud")
+                .estadoVisual(aprEstado)
+                .fecha(codEstado.equals("APROBADA") || codEstado.equals("RECHAZADA") ? s.getActualizadoEn() : null)
+                .descripcion(codEstado.equals("RECHAZADA") ? "Rechazada: " + s.getObservaciones() : "Solicitud aprobada.")
+                .build());
+                
+        // Etapa 4: Anteproyecto
+        boolean tienePdf = anteproyectoRepository.findBySolicitudId(solicitudId)
+                .map(a -> a.getArchivoPdf() != null && !a.getArchivoPdf().isBlank())
+                .orElse(false);
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder()
+                .nombre("Anteproyecto")
+                .estadoVisual(tienePdf ? "COMPLETADO" : (codEstado.equals("APROBADA") ? "EN_PROCESO" : "PENDIENTE"))
+                .fecha(null)
+                .descripcion(tienePdf ? "Anteproyecto cargado." : "Pendiente de cargar.")
+                .build());
+                
+        // Resto de etapas pendientes (simplificadas al no estar completamente desarrolladas en este nivel)
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder().nombre("Observaciones").estadoVisual("PENDIENTE").build());
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder().nombre("Tutoría").estadoVisual("PENDIENTE").build());
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder().nombre("Asignación de jurados").estadoVisual("PENDIENTE").build());
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder().nombre("Evaluación").estadoVisual("PENDIENTE").build());
+        etapas.add(ec.edu.uteq.presustentaciones.dto.EtapaSeguimientoDTO.builder().nombre("Acta").estadoVisual("PENDIENTE").build());
+        
+        int progreso = 10;
+        if (codEstado.equals("ENVIADA")) progreso = 20;
+        if (codEstado.equals("APROBADA")) progreso = 40;
+        if (tienePdf) progreso = 50;
+
+        return ec.edu.uteq.presustentaciones.dto.SeguimientoDTO.builder()
+                .solicitudId(solicitudId)
+                .tituloProyecto(s.getTituloTema())
+                .estadoActual(s.getEstado().getNombre())
+                .porcentajeProgreso(progreso)
+                .etapas(etapas)
+                .build();
+    }
 }

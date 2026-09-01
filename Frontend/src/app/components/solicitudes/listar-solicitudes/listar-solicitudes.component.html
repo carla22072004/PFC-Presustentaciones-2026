@@ -82,6 +82,11 @@
                    title="Ver observaciones de tutores y jurados">
                   <i class="bi bi-chat-left-text"></i> Obs.
                 </a>
+                <a class="btn-ac btn-info"
+                   [routerLink]="['/dashboard/solicitudes/seguimiento', s.id]"
+                   title="Ver progreso y seguimiento de la solicitud">
+                  <i class="bi bi-activity"></i> Seguimiento
+                </a>
                 <!-- Suspension badge -->
                 <span *ngIf="s.estado==='SUSPENDIDA'" class="badge badge-suspendida" [title]="s.motivoSuspension || 'Suspendido'">🚫 Suspendido</span>
               </ng-container>

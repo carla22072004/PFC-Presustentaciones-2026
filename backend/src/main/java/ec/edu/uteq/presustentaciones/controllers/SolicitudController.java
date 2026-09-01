@@ -220,6 +220,16 @@ public class SolicitudController {
         }
     }
 
+    @GetMapping("/{id}/seguimiento")
+    public ResponseEntity<?> obtenerSeguimiento(@PathVariable Long id) {
+        try {
+            validarAccesoSolicitud(id);
+            return ResponseEntity.ok(ResponseWrapper.success(solicitudService.obtenerSeguimiento(id)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
     /**
      * Valida que el usuario actual tenga permisos de revisión O sea el propietario de la solicitud.
      */
