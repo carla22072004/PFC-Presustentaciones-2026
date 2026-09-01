@@ -21,6 +21,14 @@ WORKDIR /app
 # Copy the compiled jar from the build stage and assign ownership
 COPY --from=build --chown=appuser:appgroup /app/target/presustentaciones-1.0.0-SNAPSHOT.jar app.jar
 
+# Directorio de subidas (anteproyectos, actas, tutorias) escribible por el usuario no-root:
+# WORKDIR /app pertenece a root, asi que sin esto Files.createDirectories("uploads/...")
+# falla con "permission denied" ("No se pudo crear el directorio de uploads"). En Compose
+# se monta encima un named volume (uploads_data) para que los archivos sobrevivan a
+# reconstrucciones del contenedor.
+RUN mkdir -p /app/uploads/anteproyectos /app/uploads/actas /app/uploads/tutorias \
+    && chown -R appuser:appgroup /app/uploads
+
 # Switch to the non-root user
 USER appuser
 

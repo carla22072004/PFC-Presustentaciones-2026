@@ -44,6 +44,10 @@ services:
       # vez de arrancar en silencio con un secreto de tutorial publico (ver application.properties).
       - "JWT_SECRET=${JWT_SECRET:?Falta JWT_SECRET -- copia .env.example a .env y genera uno real con openssl rand -hex 32}"
       - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
+    volumes:
+      # Persiste los PDF subidos (anteproyectos, actas, tutorias) entre reconstrucciones
+      # del contenedor -- sin esto, cada `docker compose build` los borra.
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,3 +83,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

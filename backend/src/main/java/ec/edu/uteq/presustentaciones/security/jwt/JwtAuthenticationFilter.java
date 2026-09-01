@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String jwt = getJwtFromRequest(request);
+            boolean desdeHeader = StringUtils.hasText(request.getHeader("Authorization"));
 
             if (StringUtils.hasText(jwt)) {
                 try {
@@ -51,12 +52,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 } catch (io.jsonwebtoken.ExpiredJwtException ex) {
                     log.warn("Token expirado: {}", ex.getMessage());
-                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
-                    return;
+                    // Un token caducado NUNCA debe cortar la petición en endpoints públicos
+                    // (/auth/login, /auth/refresh) ni cuando llega solo por la cookie HttpOnly
+                    // ambiental: hacerlo dejaba al usuario sin poder ni siquiera reautenticarse
+                    // (la cookie jwtToken vieja bloqueaba el propio login). Se limpia la cookie
+                    // caducada y se deja seguir la cadena sin autenticación -- si el endpoint es
+                    // protegido, la capa de autorización responderá 401 por el entry point.
+                    limpiarCookieJwt(response);
+                    if (desdeHeader && !esRutaPublicaDeAuth(request)) {
+                        sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
+                        return;
+                    }
                 } catch (Exception ex) {
                     log.error("Token inválido: {}", ex.getMessage());
-                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
-                    return;
+                    limpiarCookieJwt(response);
+                    if (desdeHeader && !esRutaPublicaDeAuth(request)) {
+                        sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
+                        return;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -64,6 +77,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean esRutaPublicaDeAuth(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri != null && (uri.contains("/auth/login")
+                || uri.contains("/auth/refresh")
+                || uri.contains("/auth/logout")
+                || uri.contains("/auth/register"));
+    }
+
+    /** Borra la cookie jwtToken caducada/ inválida del navegador para que no vuelva a estorbar. */
+    private void limpiarCookieJwt(HttpServletResponse response) {
+        jakarta.servlet.http.Cookie c = new jakarta.servlet.http.Cookie("jwtToken", "");
+        c.setPath("/");
+        c.setMaxAge(0);
+        c.setHttpOnly(true);
+        response.addCookie(c);
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
