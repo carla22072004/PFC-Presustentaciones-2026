@@ -165,4 +165,93 @@ class AuthControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void testLoginUsuarioInexistente() throws Exception {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("noexiste@uteq.edu.ec");
+        loginRequest.setPassword("password");
+
+        when(usuarioRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isUnauthorized())
+                // Si el Controller arroja RuntimeException("Usuario no encontrado") es atrapado por el ExceptionHandler.
+                // Si asume BadCredentials o algo, verificamos el código. 
+                // Segun AuthController linea 48 lanza RuntimeException. El GlobalExceptionHandler (si existe) lo puede manejar a 400 o 500, pero al ser login y fallar, el handler de Spring Security lo ataja o el GlobalExceptionHandler.
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void testRefreshConTokenValido() throws Exception {
+        String refreshToken = "validRefresh";
+        String newAccessToken = "newAccessToken";
+        String newRefreshToken = "newRefreshToken";
+
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", refreshToken);
+
+        when(jwtTokenProvider.getUsernameFromUsedRefreshToken(refreshToken)).thenReturn(null); // No reutilizado
+        when(jwtTokenProvider.getUsernameFromRefreshToken(refreshToken)).thenReturn(dummyUsuario.getEmail());
+        when(jwtTokenProvider.validateRefreshToken(refreshToken)).thenReturn(true);
+        when(usuarioRepository.findByEmail(dummyUsuario.getEmail())).thenReturn(Optional.of(dummyUsuario));
+        
+        when(jwtTokenProvider.generateTokenFromUsername(dummyUsuario.getEmail())).thenReturn(newAccessToken);
+        when(jwtTokenProvider.generateRefreshToken(dummyUsuario.getEmail())).thenReturn(newRefreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(refreshCookie)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.token").value(newAccessToken))
+                .andExpect(jsonPath("$.data.refreshToken").value(newRefreshToken));
+    }
+
+    @Test
+    void testRefreshConTokenReutilizado() throws Exception {
+        String refreshToken = "stolenRefresh";
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", refreshToken);
+
+        when(jwtTokenProvider.getUsernameFromUsedRefreshToken(refreshToken)).thenReturn(dummyUsuario.getEmail());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(refreshCookie)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Token de seguridad comprometido. Todas las sesiones han sido cerradas."));
+    }
+
+    @Test
+    void testRefreshConTokenInvalido() throws Exception {
+        String refreshToken = "invalidRefresh";
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", refreshToken);
+
+        when(jwtTokenProvider.getUsernameFromUsedRefreshToken(refreshToken)).thenReturn(null);
+        when(jwtTokenProvider.getUsernameFromRefreshToken(refreshToken)).thenReturn(dummyUsuario.getEmail());
+        when(jwtTokenProvider.validateRefreshToken(refreshToken)).thenReturn(false); // token invalido o expirado
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(refreshCookie)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Refresh token inválido o expirado"));
+    }
+
+    @Test
+    void testLogout() throws Exception {
+        String accessToken = "validAccessToken";
+        jakarta.servlet.http.Cookie accessCookie = new jakarta.servlet.http.Cookie("jwtToken", accessToken);
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", "refreshT");
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(accessCookie, refreshCookie)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Sesión cerrada correctamente"));
+    }
 }
