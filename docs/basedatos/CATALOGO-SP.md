@@ -2,7 +2,7 @@
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
 **Motor de BD:** PostgreSQL 15.x
-**Migraciones Flyway:** [`V2__stored_procedures.sql`](../../backend/src/main/resources/db/migration/V2__stored_procedures.sql) (1-4), [`V3__stored_procedures_validacion_y_codigos.sql`](../../backend/src/main/resources/db/migration/V3__stored_procedures_validacion_y_codigos.sql) (5-6) — ver la decisión explícita de convención de carpetas en [`../adr/ADR-003-estrategia-hibrida-bd-sp.md`](../adr/ADR-003-estrategia-hibrida-bd-sp.md)
+**Migraciones Flyway:** [`V2__stored_procedures.sql`](../../backend/src/main/resources/db/migration/V2__stored_procedures.sql) (1-4), [`V3__stored_procedures_validacion_y_codigos.sql`](../../backend/src/main/resources/db/migration/V3__stored_procedures_validacion_y_codigos.sql) (5-6) — ver la decisión explícita de convención de carpetas en [`../adr/ADR-006-estrategia-hibrida-bd-sp.md`](../adr/ADR-006-estrategia-hibrida-bd-sp.md)
 
 ---
 

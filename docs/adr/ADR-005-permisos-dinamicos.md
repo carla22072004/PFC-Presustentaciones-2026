@@ -1,4 +1,4 @@
-# ADR-007: Control de Acceso Basado en Permisos Dinámicos (Base de Datos), no Roles Estáticos en Código
+# ADR-005: Control de Acceso Basado en Permisos Dinámicos (Base de Datos), no Roles Estáticos en Código
 
 **Estado:** Aceptado
 **Fecha:** 2026-08-16 (decisión tomada en el código; documentada como ADR el 2026-08-29 durante la
@@ -8,7 +8,7 @@ arquitectónica real y ya implementada).
 
 ## Contexto
 
-ADR-005 (Seguridad OWASP) declaraba como control #1 "Control de acceso RBAC estricto en backend
+ADR-004 (Seguridad OWASP) declaraba como control #1 "Control de acceso RBAC estricto en backend
 (`@PreAuthorize`)", describiendo el enfoque original: cada endpoint anotado con
 `@PreAuthorize("hasRole('ADMIN')")` o similar, con los roles permitidos fijos en el código fuente.
 Este enfoque tiene un problema operativo real: cambiar qué rol puede hacer qué cosa (p. ej. permitir
@@ -46,9 +46,9 @@ del frontend.
   dedicado comparando ambos enfoques, a diferencia de la comparación caché fría/caliente de
   `k6/README.md`); un typo en el string `'CODIGO_PERMISO'` de un `@PreAuthorize` falla en tiempo de
   ejecución (deniega acceso), no en compilación, a diferencia de `hasRole()` con una constante Java.
-- **Corrección de ADR-005 (2026-08-29):** el control #1 de ADR-005 ("`@PreAuthorize` con roles
+- **Corrección de ADR-004 (2026-08-29):** el control #1 de ADR-004 ("`@PreAuthorize` con roles
   estáticos") ya no describe el estado real del código — el mecanismo vigente es el de esta ADR.
-  ADR-005 no se reescribe (el registro histórico de la decisión original se conserva), pero se
+  ADR-004 no se reescribe (el registro histórico de la decisión original se conserva), pero se
   referencia aquí para que la documentación completa quede trazable.
 
 Ver también: `docs/mediciones/sec/owasp/OWASP-AUDIT.md` (control A01, menciona el patrón de

@@ -29,23 +29,25 @@ La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquite
 \midrule
 ADR-001 & Arquitectura general de 3 capas & Separación Angular/Spring Boot/PostgreSQL para independencia de despliegue y escalado \\
 ADR-002 & Autenticación JWT + cookies HTTP-Only & Stateless para escalar horizontalmente sin sesión compartida; cookie HTTP-Only mitiga XSS sobre el token \\
-ADR-003 & Estrategia híbrida JPA + procedimientos almacenados & CRUD simple vía Spring Data JPA; lógica académica compleja (notas ponderadas, reportes, firmas) vía PL/pgSQL para evitar SQL dinámico. Ampliada en la Fase 8 con la decisión explícita de mantener la convención Flyway en vez de espejar en \texttt{db/procs/} \\
-ADR-004 & Frontend Angular (SPA) & Reactividad y componentización para un dominio con múltiples roles y vistas condicionales \\
-ADR-005 & Seguridad alineada a OWASP & JWT de 7 claims, rate limiting, cabeceras HSTS/CSP/X-Frame-Options, BCrypt \\
-ADR-006 & Despliegue con Docker Compose, imágenes ancladas por digest SHA-256 & Reproducibilidad determinista. Ampliada en la Fase 8 con la decisión de Railway como proveedor de producción (Sección~\ref{sec:implementacion}) \\
-ADR-007 & Control de acceso por permisos dinámicos (BD), no roles estáticos en código & Reemplaza el RBAC fijo con \texttt{@PreAuthorize} descrito originalmente en ADR-005 por una verificación contra \texttt{permisos}/\texttt{rol\_permisos}, para que cambiar qué rol puede qué requiera solo datos, no redespliegue \\
+ADR-003 & Frontend Angular (SPA) & Reactividad y componentización para un dominio con múltiples roles y vistas condicionales \\
+ADR-004 & Seguridad alineada a OWASP & JWT de 7 claims, rate limiting, cabeceras HSTS/CSP/X-Frame-Options, BCrypt \\
+ADR-005 & Control de acceso por permisos dinámicos (BD), no roles estáticos en código & Reemplaza el RBAC fijo con \texttt{@PreAuthorize} descrito originalmente en ADR-004 por una verificación contra \texttt{permisos}/\texttt{rol\_permisos}, para que cambiar qué rol puede qué requiera solo datos, no redespliegue \\
+ADR-006 & Estrategia híbrida JPA + procedimientos almacenados (separación CRUD/SP) & CRUD simple vía Spring Data JPA; lógica académica compleja (notas ponderadas, reportes, firmas) vía PL/pgSQL para evitar SQL dinámico. Ampliada en la Fase 8 con la decisión explícita de mantener la convención Flyway en vez de espejar en \texttt{db/procs/} \\
+ADR-007 & Despliegue con Docker Compose, imágenes ancladas por digest SHA-256 & Reproducibilidad determinista. Ampliada en la Fase 8 con la decisión de Railway como proveedor de producción (Sección~\ref{sec:implementacion}) \\
 \bottomrule
 \end{tabular}
-\caption{Resumen de los 7 ADR reales del repositorio (\texttt{docs/adr/}).}
+\caption{Summary of the repository's 7 real ADRs (\texttt{docs/adr/}).}
 \label{tab:adrs}
 \end{table}
 
-\textbf{Corrección de integridad relevante:} ADR-006 afirmaba, en su redacción original, que las
+\textbf{Corrección de integridad relevante:} ADR-007 afirmaba, en su redacción original, que las
 imágenes base ya estaban ancladas por digest SHA-256 en \texttt{docker-compose.yml}. Verificado contra el
 archivo real durante la Fase 8 de este proyecto: esa afirmación era falsa (las imágenes usaban solo tags
 mutables). Se implementó el anclaje real en esa misma revisión, con los tres digests verificados vía
 \texttt{docker pull}, en vez de simplemente corregir el texto de la ADR sin corregir el código que
-describía.
+describía. (Nota: ADR-006 y ADR-007 se renumeraron el 2026-09-01 --- antes eran ADR-003 y ADR-006
+respectivamente --- para que coincidan con los temas específicos que exige la guía de la Entrega Final
+en esos dos números; el contenido no cambió, solo el orden.)
 
 \subsection{Modelo de datos}
 

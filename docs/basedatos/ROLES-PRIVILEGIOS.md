@@ -3,7 +3,7 @@
 ## Qué existía antes de esto
 
 Autorización de **aplicación** (RBAC vía tabla `roles_usuario`, `@PreAuthorize` en los
-controllers, JWT — ver ADR-005) — sólida, pero orientada a "qué puede hacer un usuario
+controllers, JWT — ver ADR-004) — sólida, pero orientada a "qué puede hacer un usuario
 en la API". A nivel de **motor PostgreSQL**, todo el sistema se conectaba con un único
 usuario con privilegios de superusuario (`DB_USERNAME`/`DB_PASSWORD` en `.env`, ver
 `docker-compose.yml`). No existían roles diferenciados en el motor: cualquier conexión

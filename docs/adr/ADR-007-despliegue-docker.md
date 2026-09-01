@@ -1,4 +1,4 @@
-# ADR-006: Despliegue Reproducible mediante Docker Compose y Anclaje Criptográfico (SHA-256)
+# ADR-007: Despliegue Reproducible mediante Docker Compose y Anclaje Criptográfico (SHA-256)
 
 **Estado:** Aceptado  
 **Fecha:** 2026-07-28  

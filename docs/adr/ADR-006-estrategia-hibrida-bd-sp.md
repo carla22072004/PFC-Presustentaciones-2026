@@ -1,4 +1,4 @@
-# ADR-003: Estrategia Híbrida de Acceso a Datos (Spring Data JPA + PL/pgSQL Stored Procedures)
+# ADR-006: Estrategia Híbrida de Acceso a Datos (Spring Data JPA + PL/pgSQL Stored Procedures)
 
 **Estado:** Aceptado  
 **Fecha:** 2026-07-20  

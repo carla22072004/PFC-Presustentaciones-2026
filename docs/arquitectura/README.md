@@ -1,72 +1,77 @@
-# 🏛️ ARQUITECTURA DEL SISTEMA (MODELO C4)
+# 🏛️ SYSTEM ARCHITECTURE (C4 MODEL)
 
-**Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ  
-**Estándar:** Modelo C4 (Simon Brown) - Niveles 1, 2 y 3  
+**Project:** UTEQ Pre-Defense Management System
+**Standard:** C4 Model (Simon Brown) — Levels 1, 2 and 3
+
+*(Rest of this repository's documentation is in Spanish, the language of the academic report; these
+three diagrams and their labels are kept in English per the reviewer's requirement, so they can be
+read/indexed independently of the surrounding prose.)*
 
 ---
 
-## 📌 Nivel 1: Diagrama de Contexto del Sistema (System Context)
+## 📌 Level 1: System Context Diagram
 
-El siguiente diagrama ilustra cómo el **Sistema de Pre-Sustentaciones UTEQ** interactúa con las diferentes personas (roles) y sistemas externos.
+The diagram below shows how the **UTEQ Pre-Defense Management System** interacts with the different
+people (roles) and external systems.
 
 ```mermaid
 graph TD
-    Estudiante["👤 Estudiante Egresado<br/>(Usuario Principal)"]
-    Docente["👤 Docente / Jurado / Presidente<br/>(Evaluador)"]
-    Coordinador["👤 Coordinador de Titulación<br/>(Administrador Académico)"]
+    Estudiante["👤 Graduating Student<br/>(Primary User)"]
+    Docente["👤 Faculty / Committee Member / Chair<br/>(Evaluator)"]
+    Coordinador["👤 Degree Program Coordinator<br/>(Academic Administrator)"]
 
-    Sistema["🏛️ Sistema de Gestión de Pre-Sustentaciones UTEQ<br/>[Sistema de Software]"]
-    MailService["✉️ Servicio de Correo SMTP UTEQ<br/>[Sistema Externo]"]
+    Sistema["🏛️ UTEQ Pre-Defense Management System<br/>[Software System]"]
+    MailService["✉️ UTEQ SMTP Mail Service<br/>[External System]"]
 
-    Estudiante -->|"Registra solicitudes y sube anteproyecto PDF"| Sistema
-    Docente -->|"Evalúa rúbricas y firma actas digitales"| Sistema
-    Coordinador -->|"Asigna jurados masivos y programa salas"| Sistema
-    Sistema -->|"Envía notificaciones de agendamiento y actas"| MailService
+    Estudiante -->|"Submits requests and uploads pre-project PDF"| Sistema
+    Docente -->|"Scores rubrics and digitally signs minutes"| Sistema
+    Coordinador -->|"Assigns committees in bulk and schedules rooms"| Sistema
+    Sistema -->|"Sends scheduling and minutes notifications"| MailService
 ```
 
 ---
 
-## 📌 Nivel 2: Diagrama de Contenedores (Containers)
+## 📌 Level 2: Container Diagram
 
-El diagrama de contenedores describe las aplicaciones de alto nivel y almacenes de datos que conforman el sistema.
+The container diagram describes the high-level applications and data stores that make up the system.
 
 ```mermaid
 graph TD
-    UserBrowser["🌐 Navegador Web / Cliente<br/>(HTML5 / CSS3 / JS)"]
+    UserBrowser["🌐 Web Browser / Client<br/>(HTML5 / CSS3 / JS)"]
 
-    subgraph "Infraestructura de Aplicación UTEQ"
-        Frontend["🎨 Frontend SPA Angular 21<br/>[Contenedor Web / Nginx]<br/>Puerto: 4200"]
-        Backend["⚙️ API REST Spring Boot 3.2.1<br/>[Contenedor Java 17 / JVM]<br/>Puerto: 8080"]
-        PostgreSQL["🗄️ Base de Datos Relacional PostgreSQL 15<br/>[Contenedor BD]<br/>Puerto: 5432"]
-        Redis["⚡ Almacén de Caché Redis 7<br/>[Contenedor In-Memory]<br/>Puerto: 6379"]
+    subgraph "UTEQ Application Infrastructure"
+        Frontend["🎨 Angular 21 SPA Frontend<br/>[Web Container / Nginx]<br/>Port: 4200"]
+        Backend["⚙️ Spring Boot 3.2.1 REST API<br/>[Java 17 / JVM Container]<br/>Port: 8080"]
+        PostgreSQL["🗄️ PostgreSQL 15 Relational Database<br/>[DB Container]<br/>Port: 5432"]
+        Redis["⚡ Redis 7 Cache Store<br/>[In-Memory Container]<br/>Port: 6379"]
     end
 
-    UserBrowser -->|"HTTPS / REST API JSON / Cookies HTTP-Only"| Frontend
-    Frontend -->|"Peticiones HTTP REST / Header Bearer JWT"| Backend
-    Backend -->|"Spring Data JPA + Procedimientos PL/pgSQL"| PostgreSQL
-    Backend -->|"Refresh tokens JWT + caché de solicitudes y API externa de universidades"| Redis
+    UserBrowser -->|"HTTPS / REST API JSON / HTTP-Only Cookies"| Frontend
+    Frontend -->|"HTTP REST Requests / Bearer JWT Header"| Backend
+    Backend -->|"Spring Data JPA + PL/pgSQL Stored Procedures"| PostgreSQL
+    Backend -->|"JWT refresh tokens + request cache and external universities API"| Redis
 ```
 
 ---
 
-## 📌 Nivel 3: Diagrama de Componentes del Backend (Components)
+## 📌 Level 3: Backend Component Diagram
 
-El diagrama de componentes detalla la estructura interna del contenedor Backend (`presustentaciones.jar`).
+The component diagram details the internal structure of the Backend container (`presustentaciones.jar`).
 
 ```mermaid
 graph TD
-    subgraph "Contenedor Backend Spring Boot"
-        SecurityFilter["🔐 JwtAuthenticationFilter<br/>(Validación Token y Cookies)"]
-        AuthController["🎮 AuthController<br/>(Login, Registro, Refresh)"]
-        SolicitudController["🎮 SolicitudController<br/>(CRUD Solicitudes)"]
-        EvaluacionController["🎮 EvaluacionController<br/>(Cálculo Rúbricas)"]
-        ActaController["🎮 ActaController<br/>(Firmas y PDF)"]
+    subgraph "Spring Boot Backend Container"
+        SecurityFilter["🔐 JwtAuthenticationFilter<br/>(Token and Cookie Validation)"]
+        AuthController["🎮 AuthController<br/>(Login, Register, Refresh)"]
+        SolicitudController["🎮 SolicitudController<br/>(Request CRUD)"]
+        EvaluacionController["🎮 EvaluacionController<br/>(Rubric Scoring)"]
+        ActaController["🎮 ActaController<br/>(Signatures and PDF)"]
 
-        SolicitudService["🛠️ SolicitudServiceImpl<br/>(Lógica de Negocio Solicitudes)"]
-        EvaluacionService["🛠️ EvaluacionServiceImpl<br/>(Lógica de Negocio Evaluaciones)"]
-        ActaService["🛠️ ActaServiceImpl<br/>(Lógica de Negocio Actas)"]
+        SolicitudService["🛠️ SolicitudServiceImpl<br/>(Request Business Logic)"]
+        EvaluacionService["🛠️ EvaluacionServiceImpl<br/>(Evaluation Business Logic)"]
+        ActaService["🛠️ ActaServiceImpl<br/>(Minutes Business Logic)"]
 
-        JPARepositories["📦 Spring Data JPA Repositories<br/>(CRUD Elemental)"]
+        JPARepositories["📦 Spring Data JPA Repositories<br/>(Elementary CRUD)"]
         StoredProcedures["🗄️ PL/pgSQL Stored Procedures<br/>(sp_calcular_promedio, sp_generar_reporte)"]
     end
 

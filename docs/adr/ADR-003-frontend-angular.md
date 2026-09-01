@@ -1,4 +1,4 @@
-# ADR-004: Selección del Framework Frontend (Angular 17 SPA)
+# ADR-003: Selección del Framework Frontend (Angular 17 SPA)
 
 **Estado:** Aceptado  
 **Fecha:** 2026-07-22  
