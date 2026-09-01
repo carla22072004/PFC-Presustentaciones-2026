@@ -12,10 +12,17 @@ RUN mvn package -DskipTests -B
 
 # Stage 2: Runtime stage using JRE 17
 FROM eclipse-temurin:17-jre-alpine
+
+# Add a non-root user to run the application
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 
-# Copy the compiled jar from the build stage
-COPY --from=build /app/target/presustentaciones-1.0.0-SNAPSHOT.jar app.jar
+# Copy the compiled jar from the build stage and assign ownership
+COPY --from=build --chown=appuser:appgroup /app/target/presustentaciones-1.0.0-SNAPSHOT.jar app.jar
+
+# Switch to the non-root user
+USER appuser
 
 # Expose backend port
 EXPOSE 8080
