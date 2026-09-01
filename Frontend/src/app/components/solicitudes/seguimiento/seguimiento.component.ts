@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SolicitudService } from '../../../services/solicitud.service';
@@ -20,7 +20,8 @@ export class SeguimientoComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private solicitudService: SolicitudService
+    private solicitudService: SolicitudService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -36,24 +37,30 @@ export class SeguimientoComponent implements OnInit {
 
   cargarSeguimiento(): void {
     if (!this.solicitudId) return;
-    
+
     this.solicitudService.obtenerSeguimiento(this.solicitudId).subscribe({
-      next: (response) => {
-        if (response && response.data) {
-          this.seguimiento = response.data;
+      next: (response: any) => {
+        // El authInterceptor ya desempaqueta el ResponseWrapper -> `response` ES el
+        // SeguimientoDTO. Se acepta también `response.data` por si el interceptor no
+        // estuviera activo (tests / llamadas directas).
+        const data: SeguimientoDTO | null = response?.etapas ? response : (response?.data ?? null);
+        if (data && Array.isArray(data.etapas)) {
+          this.seguimiento = data;
         } else {
-          this.error = 'Error al cargar los datos del seguimiento.';
+          this.error = 'No hay información de seguimiento para esta solicitud todavía.';
         }
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.error = 'No se pudo cargar el seguimiento. ' + (err.error?.message || '');
+        this.error = 'No se pudo cargar el seguimiento. ' + (err?.error?.message || '');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   volver(): void {
-    this.router.navigate(['/solicitudes/listar']);
+    this.router.navigate(['/dashboard/solicitudes/mis-tramites']);
   }
 }
