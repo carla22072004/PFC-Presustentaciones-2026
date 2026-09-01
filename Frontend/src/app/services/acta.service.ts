@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ActaService {
-  private api = 'http://127.0.0.1:8080/api/actas';
+  private api = '/api/actas';
 
   constructor(private http: HttpClient) {}
 

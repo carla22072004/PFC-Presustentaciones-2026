@@ -17,7 +17,7 @@ export interface Usuario {
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
-    private apiUrl = 'http://127.0.0.1:8080/api/usuarios';
+    private apiUrl = '/api/usuarios';
     constructor(private http: HttpClient) {}
 
     listarTodos(): Observable<Usuario[]> {

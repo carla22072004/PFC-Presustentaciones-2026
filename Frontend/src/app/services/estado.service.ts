@@ -4,7 +4,7 @@ import { Observable, timer, switchMap, distinctUntilChanged, shareReplay } from 
 
 @Injectable({ providedIn: 'root' })
 export class EstadoService {
-  private api = 'http://127.0.0.1:8080/api/estado';
+  private api = '/api/estado';
 
   constructor(private http: HttpClient) {}
 

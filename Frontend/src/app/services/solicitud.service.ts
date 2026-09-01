@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SolicitudService {
-    private apiUrl = 'http://127.0.0.1:8080/api/solicitudes';
+    private apiUrl = '/api/solicitudes';
     constructor(private http: HttpClient) {}
 
     registrarSolicitud(usuarioId: number, datos: any): Observable<any> {

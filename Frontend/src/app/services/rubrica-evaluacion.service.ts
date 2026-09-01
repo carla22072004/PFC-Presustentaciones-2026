@@ -95,8 +95,8 @@ export interface ObservacionesCoordinadorDTO {
 
 @Injectable({ providedIn: 'root' })
 export class RubricaEvaluacionService {
-  private api = 'http://127.0.0.1:8080/api/rubrica-evaluacion';
-  private rubricaApi = 'http://127.0.0.1:8080/api/rubricas';
+  private api = '/api/rubrica-evaluacion';
+  private rubricaApi = '/api/rubricas';
 
   constructor(private http: HttpClient) {}
 
@@ -129,6 +129,6 @@ export class RubricaEvaluacionService {
   }
 
   obtenerObservacionesSolicitud(solicitudId: number): Observable<ObservacionesSolicitudDTO> {
-    return this.http.get<ObservacionesSolicitudDTO>(`http://127.0.0.1:8080/api/observaciones/solicitud/${solicitudId}`);
+    return this.http.get<ObservacionesSolicitudDTO>(`/api/observaciones/solicitud/${solicitudId}`);
   }
 }

@@ -20,8 +20,8 @@ export interface Permiso {
 
 @Injectable({ providedIn: 'root' })
 export class RolService {
-    private rolesUrl = 'http://127.0.0.1:8080/api/roles';
-    private permisosUrl = 'http://127.0.0.1:8080/api/permisos';
+    private rolesUrl = '/api/roles';
+    private permisosUrl = '/api/permisos';
 
     constructor(private http: HttpClient) {}
 

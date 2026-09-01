@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SalaService {
-  private api = 'http://127.0.0.1:8080/api/salas';
+  private api = '/api/salas';
   constructor(private http: HttpClient) {}
   listar(): Observable<any[]> { return this.http.get<any[]>(this.api); }
   crear(sala: any): Observable<any> { return this.http.post(this.api, sala); }

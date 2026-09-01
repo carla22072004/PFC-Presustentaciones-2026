@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class RubricaService {
-  private api = 'http://127.0.0.1:8080/api/rubricas';
+  private api = '/api/rubricas';
   constructor(private http: HttpClient) {}
 
   // GET /api/rubricas devuelve una Page<Rubrica> (Spring Data), no un arreglo plano --
