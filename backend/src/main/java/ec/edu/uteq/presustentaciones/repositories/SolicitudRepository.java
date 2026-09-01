@@ -85,6 +85,39 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
         Long getTotal();
     }
 
+    // ── Agregados para el módulo de reportes (COORDINADOR / ADMINISTRADOR) ────
+    // Todos resuelven con GROUP BY en Postgres: nunca cargan la tabla en memoria.
+
+    /**
+     * Cantidad de solicitudes por estado, filtrable por rango de fechaRegistro y carrera.
+     * El rango de fechas NO es opcional a nivel de query (mismo criterio que
+     * buscarConFiltros): el service pasa sentinelas MIN/MAX cuando el usuario no filtra --
+     * un {@code :fecha IS NULL} deja a Postgres sin tipo para el bind ("could not determine
+     * data type of parameter").
+     */
+    @Query("SELECT s.estado.codigo, COUNT(s) FROM Solicitud s " +
+           "WHERE s.fechaRegistro >= :desde AND s.fechaRegistro <= :hasta " +
+           "AND (:carrera IS NULL OR :carrera = '' OR LOWER(s.estudiante.carrera) LIKE LOWER(CONCAT('%', :carrera, '%'))) " +
+           "GROUP BY s.estado.codigo ORDER BY s.estado.codigo")
+    List<Object[]> contarPorEstado(@Param("desde") LocalDateTime desde,
+                                   @Param("hasta") LocalDateTime hasta,
+                                   @Param("carrera") String carrera);
+
+    /** Cantidad de pre-sustentaciones (solicitudes) por período académico de su convocatoria. */
+    @Query("SELECT p.codigo, COUNT(s) FROM Solicitud s JOIN s.convocatoria c JOIN c.periodoAcademico p " +
+           "WHERE s.fechaRegistro >= :desde AND s.fechaRegistro <= :hasta " +
+           "GROUP BY p.codigo ORDER BY p.codigo")
+    List<Object[]> contarPorPeriodo(@Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta);
+
+    /** Estadísticas por carrera: total, completadas y rechazadas. */
+    @Query("SELECT s.estudiante.carrera, COUNT(s), " +
+           "SUM(CASE WHEN s.estado.codigo = 'COMPLETADA' THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN s.estado.codigo = 'RECHAZADA' THEN 1 ELSE 0 END) " +
+           "FROM Solicitud s GROUP BY s.estudiante.carrera ORDER BY COUNT(s) DESC")
+    List<Object[]> estadisticasPorCarrera();
+
+    long countByFechaRegistroBetween(LocalDateTime desde, LocalDateTime hasta);
+
     @Query(value = "SELECT * FROM presus.sp_generar_reporte_defensas(:carrera)", nativeQuery = true)
     List<Object[]> generarReporteDefensasSp(@Param("carrera") String carrera);
 }

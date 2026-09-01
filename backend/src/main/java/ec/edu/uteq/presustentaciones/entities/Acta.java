@@ -1,5 +1,6 @@
 package ec.edu.uteq.presustentaciones.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -67,6 +68,18 @@ public class Acta {
 
     @Column(name = "observaciones_acta", columnDefinition = "TEXT")
     private String observacionesActa;
+
+    /**
+     * Estado del acta en el flujo GENERADA -> REVISADA -> FINALIZADA (catálogo
+     * presus.estados_acta, V19). Complementa las banderas firmada_* : una firma
+     * completa lleva el acta a FINALIZADA; coordinador/administrador pueden moverla
+     * a REVISADA/OBSERVADA/ANULADA vía ActaService.cambiarEstado. Cada transición
+     * queda en presus.historial_estados_acta.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "estado_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private EstadoActa estado;
 
     @OneToOne
     @JoinColumn(name = "solicitud_id", nullable = false)

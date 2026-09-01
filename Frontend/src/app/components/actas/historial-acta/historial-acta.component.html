@@ -1,0 +1,56 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-clock-history me-2"></i>Historial del Acta #{{ actaId }}</h2>
+      <p class="page-subtitle" *ngIf="acta">
+        {{ acta.estudianteNombre }} — {{ acta.tituloTema }}
+      </p>
+    </div>
+    <a class="btn-volver" routerLink="../.." *ngIf="!sinAcceso"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando historial...</p></div>
+
+  <div class="empty-state" *ngIf="sinAcceso">
+    <i class="bi bi-shield-lock"></i>
+    <p>No tienes permiso para consultar el historial de esta acta.</p>
+  </div>
+
+  <ng-container *ngIf="!cargando && !sinAcceso">
+    <div class="acta-resumen" *ngIf="acta">
+      <span class="estado-chip" [ngClass]="estadoClase(acta.estado)">{{ acta.estadoNombre || acta.estado }}</span>
+      <span class="meta"><i class="bi bi-mortarboard me-1"></i>{{ acta.carrera }}</span>
+      <span class="meta"><i class="bi bi-calendar3 me-1"></i>Generada el {{ acta.fechaGeneracion | date:'dd/MM/yyyy' }}</span>
+      <a class="meta link" *ngIf="acta.archivoPdf" [href]="'/api/v1/actas/ver/' + acta.id" target="_blank">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Ver PDF
+      </a>
+    </div>
+
+    <div class="empty-state" *ngIf="historial.length === 0">
+      <i class="bi bi-inbox"></i><p>Este acta todavía no tiene eventos registrados.</p>
+    </div>
+
+    <ul class="timeline" *ngIf="historial.length > 0">
+      <li class="timeline-item" *ngFor="let h of historial">
+        <span class="dot" [ngClass]="estadoClase(h.estadoNuevo)"></span>
+        <div class="tl-card">
+          <div class="tl-top">
+            <span class="tl-fecha">{{ h.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="rol-badge">{{ rolLabel(h.rolUsuario) }}</span>
+          </div>
+          <p class="tl-accion">{{ accionLabel(h.accion) }}</p>
+          <p class="tl-transicion" *ngIf="h.estadoAnterior || h.accion !== 'CREAR'">
+            <span class="estado-chip mini" [ngClass]="estadoClase(h.estadoAnterior)" *ngIf="h.estadoAnterior">{{ h.estadoAnterior }}</span>
+            <i class="bi bi-arrow-right mx-1" *ngIf="h.estadoAnterior"></i>
+            <span class="estado-chip mini" [ngClass]="estadoClase(h.estadoNuevo)">{{ h.estadoNuevo }}</span>
+          </p>
+          <p class="tl-usuario">
+            <i class="bi bi-person me-1"></i>{{ h.usuarioNombre }}
+            <span class="tl-email" *ngIf="h.usuarioEmail">({{ h.usuarioEmail }})</span>
+          </p>
+          <p class="tl-comentario" *ngIf="h.comentario"><i class="bi bi-chat-left-quote me-1"></i>{{ h.comentario }}</p>
+        </div>
+      </li>
+    </ul>
+  </ng-container>
+</div>

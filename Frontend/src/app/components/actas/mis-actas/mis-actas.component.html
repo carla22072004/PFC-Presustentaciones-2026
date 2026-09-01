@@ -1,0 +1,57 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-file-earmark-text me-2"></i>Mis Actas</h2>
+      <p class="page-subtitle">Actas de las pre-sustentaciones donde eres tutor o jurado</p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando"><div class="spinner"></div><p>Cargando...</p></div>
+
+  <ng-container *ngIf="!cargando && pagina">
+    <div class="empty-state" *ngIf="pagina.content.length === 0">
+      <i class="bi bi-inbox"></i><p>Todavía no hay actas asociadas a tus pre-sustentaciones.</p>
+    </div>
+
+    <div class="table-card" *ngIf="pagina.content.length > 0">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>#</th><th>Estudiante</th><th>Tema</th><th>Carrera</th>
+            <th>Estado</th><th>Generada</th><th>Firmas</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of pagina.content">
+            <td>{{ a.id }}</td>
+            <td>{{ a.estudianteNombre }}</td>
+            <td class="tema">{{ a.tituloTema }}</td>
+            <td>{{ a.carrera }}</td>
+            <td><span class="estado-chip" [ngClass]="estadoClase(a.estado)">{{ a.estadoNombre || a.estado }}</span></td>
+            <td>{{ a.fechaGeneracion | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="firma-ok" *ngIf="a.firmada"><i class="bi bi-check-circle-fill"></i> Completa</span>
+              <span class="firma-pend" *ngIf="!a.firmada" [title]="a.firmantesPendientes">
+                <i class="bi bi-hourglass-split"></i> Pendiente
+              </span>
+            </td>
+            <td class="acciones">
+              <a class="btn-mini" [href]="'/api/v1/actas/ver/' + a.id" target="_blank" title="Ver PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+              <a class="btn-mini" [routerLink]="['/dashboard/actas', a.id, 'historial']" title="Ver historial">
+                <i class="bi bi-clock-history"></i>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="paginador" *ngIf="pagina.totalPages > 1">
+      <button (click)="irAPagina(page - 1)" [disabled]="page === 0"><i class="bi bi-chevron-left"></i></button>
+      <span>Página {{ page + 1 }} de {{ pagina.totalPages }}</span>
+      <button (click)="irAPagina(page + 1)" [disabled]="page + 1 >= pagina.totalPages"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </ng-container>
+</div>
