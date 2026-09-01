@@ -40,6 +40,7 @@ class ActaServiceImplTest {
     @Mock private EntityManager entityManager;
     @Mock private NotificacionService notificacionService;
     @Mock private AuditoriaService auditoriaService;
+    @Mock private TutorRepository tutorRepository;
 
     @InjectMocks
     private ActaServiceImpl actaService;
@@ -201,5 +202,36 @@ class ActaServiceImplTest {
 
         assertTrue(resultado.isPresent());
         verify(actaRepository).findBySolicitudId(7L);
+    }
+
+    @Test
+    void eliminarActaExitosoSiEsAdmin() {
+        Acta acta = actaConFirmas(false, false, false, false);
+        acta.setArchivoPdf("test.pdf");
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
+
+        assertDoesNotThrow(() -> actaService.eliminarActa(1L));
+        verify(actaRepository).delete(acta);
+    }
+
+    @Test
+    void eliminarActaLanzaExcepcionSiNoTieneAcceso() {
+        Acta acta = actaConFirmas(false, false, false, false);
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otro@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ESTUDIANTE")));
+
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
+        when(tutorRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> actaService.eliminarActa(1L));
+        assertTrue(ex.getMessage().contains("No tienes permiso"));
+        verify(actaRepository, never()).delete(any());
     }
 }

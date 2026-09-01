@@ -19,6 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * NotificacionServiceImpl.crearNotificacion() resuelve el remitente desde el contexto de
@@ -140,5 +141,33 @@ class NotificacionServiceImplTest {
     void marcarTodasLeidasDelegaAlRepositorio() {
         notificacionService.marcarTodasLeidas(1L);
         verify(notificacionRepository).marcarTodasLeidasPorUsuario(1L);
+    }
+
+    @Test
+    void eliminarNotificacionExitosoSiEsPropietario() {
+        Usuario receptor = Usuario.builder().email("atorres@uteq.edu.ec").build();
+        Notificacion n = Notificacion.builder().id(5L).usuario(receptor).build();
+        when(notificacionRepository.findById(5L)).thenReturn(Optional.of(n));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("atorres@uteq.edu.ec", null,
+                        AuthorityUtils.createAuthorityList("ROLE_ESTUDIANTE")));
+
+        assertDoesNotThrow(() -> notificacionService.eliminarNotificacion(5L));
+        verify(notificacionRepository).delete(n);
+    }
+
+    @Test
+    void eliminarNotificacionLanzaAccessDeniedSiNoEsPropietario() {
+        Usuario receptor = Usuario.builder().email("atorres@uteq.edu.ec").build();
+        Notificacion n = Notificacion.builder().id(5L).usuario(receptor).build();
+        when(notificacionRepository.findById(5L)).thenReturn(Optional.of(n));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otro@uteq.edu.ec", null,
+                        AuthorityUtils.createAuthorityList("ROLE_ESTUDIANTE")));
+
+        assertThrows(AccessDeniedException.class, () -> notificacionService.eliminarNotificacion(5L));
+        verify(notificacionRepository, never()).delete(any());
     }
 }
