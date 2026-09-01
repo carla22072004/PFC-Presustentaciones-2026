@@ -1,0 +1,44 @@
+<div class="chatbot-container">
+  <!-- Botón flotante -->
+  <button class="chatbot-toggle" (click)="toggleChat()" *ngIf="!isOpen">
+    <span class="icon">💬</span>
+  </button>
+
+  <!-- Ventana del chat -->
+  <div class="chatbot-window" *ngIf="isOpen">
+    <!-- Cabecera -->
+    <div class="chatbot-header">
+      <h4>Asistente PFC</h4>
+      <button class="close-btn" (click)="toggleChat()">✖</button>
+    </div>
+
+    <!-- Cuerpo del chat (mensajes) -->
+    <div class="chatbot-body" #chatBody>
+      <div *ngFor="let msg of messages" [ngClass]="{'msg-bot': msg.isBot, 'msg-user': !msg.isBot}" class="message">
+        <div class="msg-text">{{ msg.text }}</div>
+        
+        <!-- Opciones como botones -->
+        <div class="msg-options" *ngIf="msg.options && msg.options.length > 0">
+          <button *ngFor="let option of msg.options" class="option-btn" (click)="selectOption(option)">
+            {{ option }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Indicador de escribiendo -->
+      <div *ngIf="isTyping" class="message msg-bot">
+        <div class="msg-text typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie del chat (input) -->
+    <div class="chatbot-footer">
+      <input type="text" [(ngModel)]="userInput" (keyup.enter)="sendMessage()" placeholder="Escribe tu pregunta..." />
+      <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim() || isTyping">
+        Enviar
+      </button>
+    </div>
+  </div>
+</div>
