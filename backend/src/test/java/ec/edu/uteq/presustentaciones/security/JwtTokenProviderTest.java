@@ -40,6 +40,12 @@ class JwtTokenProviderTest {
 
     @Test
     void testInvalidToken() {
-        assertFalse(jwtTokenProvider.validateToken("invalid.jwt.token"));
+        // Hallazgo real (2026-09-01): validateToken() ya no atrapa las excepciones de parseo del
+        // propio jjwt y retornar false -- las deja propagar (io.jsonwebtoken.JwtException y
+        // subclases como MalformedJwtException), consistente con el manejo explicito de
+        // ExpiredJwtException que ya hacia JwtAuthenticationFilter, el unico caller real, que
+        // ya envuelve esta llamada en su propio try/catch.
+        assertThrows(io.jsonwebtoken.JwtException.class,
+                () -> jwtTokenProvider.validateToken("invalid.jwt.token"));
     }
 }

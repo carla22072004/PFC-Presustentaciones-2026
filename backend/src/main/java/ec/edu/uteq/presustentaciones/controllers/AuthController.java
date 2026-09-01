@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,8 +45,15 @@ public class AuthController {
     @Operation(summary = "Iniciar sesión y obtener tokens", description = "Genera el JWT de acceso y el refresh token. Configura cookies HttpOnly + Secure + SameSite=Strict.")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
 
+        // Hallazgo real de seguridad (2026-09-01): lanzar RuntimeException generica aqui hacia que
+        // el GlobalExceptionHandler devolviera 400, mientras que una contrasena incorrecta (mas
+        // abajo, via authenticationManager.authenticate) devuelve 401 -- un atacante podia
+        // distinguir "email no existe" de "email existe, password incorrecta" por el codigo HTTP
+        // (enumeracion de usuarios). UsernameNotFoundException es una AuthenticationException,
+        // capturada por el mismo handler que ya usa authenticationManager.authenticate() -> 401
+        // en ambos casos, igual que ya hace CustomUserDetailsService para este mismo escenario.
         Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -120,7 +128,7 @@ public class AuthController {
         }
 
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         // 3. Rotación de tokens (Requisito Rotación): invalidar el usado y generar nuevos
         jwtTokenProvider.rotateRefreshToken(refreshToken, email);

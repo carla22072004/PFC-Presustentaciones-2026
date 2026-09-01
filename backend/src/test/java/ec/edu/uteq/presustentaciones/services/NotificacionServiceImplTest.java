@@ -119,11 +119,23 @@ class NotificacionServiceImplTest {
         assertThrows(RuntimeException.class, () -> notificacionService.marcarComoLeida(5L));
     }
 
+    // Hallazgo real (2026-09-01): NotificacionServiceImpl.validarAcceso(Long) es codigo nuevo
+    // (control de acceso real agregado por el equipo) que estas pruebas, escritas antes del
+    // cambio, no ejercitaban -- exige SecurityContextHolder autenticado, y si no es ADMIN,
+    // busca al usuario actual por email (usuarioRepository.findByEmail) para comparar su ID
+    // contra el usuario objetivo. Las pruebas de "delegacion simple" (no prueban autorizacion
+    // en si) se autentican como ADMIN para saltarse esa busqueda, igual que ya hacia el patron
+    // ADMIN en ActaServiceImplTest.
+
     @Test
     void marcarComoLeidaActualizaElFlagYGuarda() {
-        Notificacion n = Notificacion.builder().id(5L).mensaje("x").leida(false).build();
+        Usuario propietario = Usuario.builder().id(1L).email("atorres@uteq.edu.ec").build();
+        Notificacion n = Notificacion.builder().id(5L).mensaje("x").leida(false).usuario(propietario).build();
         when(notificacionRepository.findById(5L)).thenReturn(Optional.of(n));
         when(notificacionRepository.save(any(Notificacion.class))).thenAnswer(inv -> inv.getArgument(0));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
 
         Notificacion resultado = notificacionService.marcarComoLeida(5L);
 
@@ -133,21 +145,28 @@ class NotificacionServiceImplTest {
 
     @Test
     void contarNoLeidasDelegaAlRepositorio() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
         when(notificacionRepository.countByUsuarioIdAndLeidaFalse(1L)).thenReturn(3L);
         assertEquals(3L, notificacionService.contarNoLeidas(1L));
     }
 
     @Test
     void marcarTodasLeidasDelegaAlRepositorio() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
         notificacionService.marcarTodasLeidas(1L);
         verify(notificacionRepository).marcarTodasLeidasPorUsuario(1L);
     }
 
     @Test
     void eliminarNotificacionExitosoSiEsPropietario() {
-        Usuario receptor = Usuario.builder().email("atorres@uteq.edu.ec").build();
+        Usuario receptor = Usuario.builder().id(1L).email("atorres@uteq.edu.ec").build();
         Notificacion n = Notificacion.builder().id(5L).usuario(receptor).build();
         when(notificacionRepository.findById(5L)).thenReturn(Optional.of(n));
+        when(usuarioRepository.findByEmail("atorres@uteq.edu.ec")).thenReturn(Optional.of(receptor));
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("atorres@uteq.edu.ec", null,
@@ -159,9 +178,11 @@ class NotificacionServiceImplTest {
 
     @Test
     void eliminarNotificacionLanzaAccessDeniedSiNoEsPropietario() {
-        Usuario receptor = Usuario.builder().email("atorres@uteq.edu.ec").build();
+        Usuario receptor = Usuario.builder().id(1L).email("atorres@uteq.edu.ec").build();
+        Usuario otro = Usuario.builder().id(2L).email("otro@uteq.edu.ec").build();
         Notificacion n = Notificacion.builder().id(5L).usuario(receptor).build();
         when(notificacionRepository.findById(5L)).thenReturn(Optional.of(n));
+        when(usuarioRepository.findByEmail("otro@uteq.edu.ec")).thenReturn(Optional.of(otro));
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("otro@uteq.edu.ec", null,

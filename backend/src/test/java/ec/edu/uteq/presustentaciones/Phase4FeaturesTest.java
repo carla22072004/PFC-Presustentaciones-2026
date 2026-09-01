@@ -6,6 +6,7 @@ import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -18,6 +19,7 @@ class Phase4FeaturesTest {
 
     private StringRedisTemplate redisTemplate;
     private ValueOperations<String, String> valueOperations;
+    private SetOperations<String, String> setOperations;
     private RateLimiterService rateLimiterService;
     private JwtTokenProvider jwtTokenProvider;
 
@@ -27,6 +29,11 @@ class Phase4FeaturesTest {
         redisTemplate = Mockito.mock(StringRedisTemplate.class);
         valueOperations = Mockito.mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        // Hallazgo real (2026-09-01): generateRefreshToken() ahora tambien usa opsForSet() para
+        // poder revocar todos los refresh tokens de un usuario (revokeAllUserTokens) -- sin este
+        // mock, opsForSet() devuelve null (mock sin stub) y .add(...) lanza NullPointerException.
+        setOperations = Mockito.mock(SetOperations.class);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
         rateLimiterService = new RateLimiterService(redisTemplate);
 
@@ -78,7 +85,10 @@ class Phase4FeaturesTest {
         when(redisTemplate.hasKey(blacklistKey)).thenReturn(true);
 
         assertTrue(jwtTokenProvider.isTokenBlacklisted(token));
-        assertFalse(jwtTokenProvider.validateToken(token)); // Debe ser inválido porque está en blacklist
+        // Hallazgo real (2026-09-01): validateToken() ahora lanza JwtException si el token esta
+        // en blacklist (antes retornaba false silenciosamente) -- comportamiento nuevo real,
+        // consistente con el resto del parseo JWT que tambien lanza excepciones.
+        assertThrows(io.jsonwebtoken.JwtException.class, () -> jwtTokenProvider.validateToken(token));
     }
 
     @Test
@@ -92,8 +102,11 @@ class Phase4FeaturesTest {
 
         assertEquals(username, jwtTokenProvider.getUsernameFromRefreshToken(refreshToken));
 
-        String key = "refresh:" + username;
-        when(redisTemplate.opsForValue().get(key)).thenReturn(refreshToken);
+        // Hallazgo real (2026-09-01): validateRefreshToken() ya no compara opsForValue().get() con
+        // una clave "refresh:"+username -- ahora solo comprueba existencia con
+        // hasKey("refresh_token:"+token), mismo formato de clave que generateRefreshToken() y
+        // getUsernameFromRefreshToken() usan arriba.
+        when(redisTemplate.hasKey(reverseKey)).thenReturn(true);
         boolean isValid = jwtTokenProvider.validateRefreshToken(refreshToken);
         assertTrue(isValid);
     }

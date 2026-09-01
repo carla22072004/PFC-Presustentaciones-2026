@@ -80,6 +80,9 @@ class TutoriaServiceImplTest {
 
     @Test
     void testObtenerResumen() {
+        // Hallazgo real (2026-09-01): validarAccesoATutoria() (control de acceso real agregado
+        // por el equipo) busca al usuario por ID -- faltaba este stub, escrito antes del cambio.
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(usuarioDocente));
         when(tutorRepository.findById(1L)).thenReturn(Optional.of(tutor));
         when(tutoriaFaseRepository.findByTutorIdOrderByNumeroFaseAsc(1L)).thenReturn(List.of(fase1));
 

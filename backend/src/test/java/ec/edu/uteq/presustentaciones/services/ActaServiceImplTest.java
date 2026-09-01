@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.entities.*;
 import ec.edu.uteq.presustentaciones.repositories.*;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,24 @@ class ActaServiceImplTest {
                 .email("atorres@uteq.edu.ec").rol("ESTUDIANTE").build();
         estudiante = Estudiante.builder().id(3L).usuario(usuarioEstudiante).build();
         solicitud = Solicitud.builder().id(7L).estudiante(estudiante).tituloTema("Sistema X").build();
+
+        // Hallazgo real (2026-09-01): ActaServiceImpl.validarAcceso()/firmarActa() ahora exigen un
+        // SecurityContextHolder autenticado (control de acceso real agregado por el equipo). Sin
+        // limpiar el contexto entre tests, SecurityContextHolder (ThreadLocal) queda "sucio" entre
+        // metodos -- algunos tests pasaban solo por herencia accidental del contexto ADMIN dejado
+        // por eliminarActaExitosoSiEsAdmin() al correr antes en el mismo hilo, y fallaban si corrian
+        // en otro orden. Se autentica como ADMIN por defecto aqui (bypassa las reglas de propiedad,
+        // igual que ya hacia eliminarActaExitosoSiEsAdmin) para que cada test sea determinista sin
+        // importar el orden; los tests que SI prueban las reglas de autorizacion (eliminarActa*)
+        // sobreescriben este contexto explicitamente como ya lo hacian.
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     private Acta actaConFirmas(boolean presidente, boolean vocal1, boolean vocal2, boolean tutor) {
