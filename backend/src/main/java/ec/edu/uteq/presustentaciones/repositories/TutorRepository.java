@@ -20,4 +20,10 @@ public interface TutorRepository extends JpaRepository<Tutor, Long> {
 
     @Query(value = "SELECT * FROM presus.sp_obtener_estadisticas_tutores()", nativeQuery = true)
     List<Object[]> obtenerEstadisticasTutoresSp();
+
+    /** Reportes: cuántas tutorías tiene asignadas cada docente (GROUP BY en la base). */
+    @Query("SELECT t.docente.id, COUNT(t) FROM Tutor t GROUP BY t.docente.id")
+    List<Object[]> contarTutoriasPorDocente();
+
+    boolean existsBySolicitudIdAndDocenteUsuarioEmail(Long solicitudId, String email);
 }

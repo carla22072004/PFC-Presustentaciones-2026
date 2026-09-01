@@ -1,0 +1,54 @@
+.page-wrapper { padding: 1.5rem 2rem; color: #1f2937; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.page-title { font-size: 1.4rem; font-weight: 700; color: #15803d; margin: 0; }
+.page-subtitle { color: #6b7280; margin: .25rem 0 0; }
+.pdf-btns button { border: 1px solid #15803d; background: #fff; color: #15803d; border-radius: 8px; padding: .4rem .7rem; margin-left: .4rem; cursor: pointer; font-size: .82rem; }
+.pdf-btns button:hover { background: #15803d; color: #fff; }
+
+.filtros { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: 1.25rem; }
+.filtros label { font-size: .8rem; color: #6b7280; display: flex; align-items: center; gap: .3rem; }
+.filtros input { border: 1px solid #d1d5db; border-radius: 8px; padding: .4rem .6rem; font-size: .85rem; }
+.btn-aplicar { border: none; background: #15803d; color: #fff; border-radius: 8px; padding: .45rem 1rem; cursor: pointer; font-weight: 600; }
+.btn-limpiar { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: .45rem .8rem; cursor: pointer; color: #6b7280; }
+
+.loading-state { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+.spinner { width: 34px; height: 34px; border: 3px solid #d1d5db; border-top-color: #15803d; border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; margin-bottom: 1.5rem; }
+.kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.05); border-top: 3px solid #9ca3af; }
+.kpi.ok { border-top-color: #22c55e; } .kpi.warn { border-top-color: #eab308; } .kpi.bad { border-top-color: #ef4444; }
+.kpi-num { display: block; font-size: 1.6rem; font-weight: 800; color: #15803d; }
+.kpi-lbl { display: block; font-size: .78rem; color: #6b7280; margin-top: .2rem; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+.panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.panel h3 { margin: 0 0 .9rem; font-size: 1rem; color: #166534; }
+.panel h3 .hint { color: #9ca3af; font-weight: 400; font-size: .8rem; }
+
+.barras .fila { display: grid; grid-template-columns: 110px 1fr 44px; align-items: center; gap: .6rem; margin-bottom: .5rem; font-size: .82rem; }
+.barras .etq { color: #4b5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barras .track { background: #f3f4f6; border-radius: 999px; height: 14px; overflow: hidden; }
+.barras .fill { display: block; height: 100%; background: #15803d; border-radius: 999px; }
+.barras .fill.alt { background: #ca8a04; }
+.barras .val { text-align: right; font-variant-numeric: tabular-nums; color: #1f2937; font-weight: 600; }
+
+.chips-actas { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip { padding: .3rem .8rem; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+.est-generada { background: #e0e7ff; color: #3730a3; }
+.est-revisada { background: #fef9c3; color: #854d0e; }
+.est-observada { background: #ffedd5; color: #9a3412; }
+.est-finalizada { background: #dcfce7; color: #166534; }
+.est-anulada { background: #fee2e2; color: #991b1b; }
+
+.mini-tabla { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.mini-tabla th { text-align: left; color: #166534; border-bottom: 1px solid #dcfce7; padding: .45rem .5rem; }
+.mini-tabla td { padding: .4rem .5rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
+
+body.dark-mode .page-wrapper { color: #c9d1d9; }
+body.dark-mode .page-title { color: #3fb950; }
+body.dark-mode .kpi, body.dark-mode .panel { background: #161b22; border-color: #30363d; }
+body.dark-mode .kpi-num { color: #3fb950; }
+body.dark-mode .barras .track { background: #21262d; }
+body.dark-mode .mini-tabla td { color: #c9d1d9; border-bottom-color: #21262d; }
+body.dark-mode .filtros input { background: #0d1117; border-color: #30363d; color: #c9d1d9; }

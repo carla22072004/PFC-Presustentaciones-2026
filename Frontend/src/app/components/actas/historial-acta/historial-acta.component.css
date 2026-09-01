@@ -1,0 +1,49 @@
+.page-wrapper { padding: 1.5rem 2rem; color: #1f2937; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.page-title { font-size: 1.4rem; font-weight: 700; color: #15803d; margin: 0; }
+.page-subtitle { color: #6b7280; margin: .25rem 0 0; }
+.btn-volver { text-decoration: none; color: #15803d; font-weight: 600; border: 1px solid #15803d; border-radius: 8px; padding: .4rem .8rem; white-space: nowrap; }
+.btn-volver:hover { background: #15803d; color: #fff; }
+
+.loading-state, .empty-state { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+.spinner { width: 34px; height: 34px; border: 3px solid #d1d5db; border-top-color: #15803d; border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite; }
+.empty-state i { font-size: 2rem; display: block; margin-bottom: .5rem; color: #9ca3af; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.acta-resumen { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: .8rem 1rem; margin-bottom: 1.5rem; }
+.acta-resumen .meta { color: #4b5563; font-size: .9rem; }
+.acta-resumen .link { color: #15803d; text-decoration: none; font-weight: 600; }
+
+.estado-chip { display: inline-block; padding: .2rem .7rem; border-radius: 999px; font-size: .8rem; font-weight: 700; letter-spacing: .3px; }
+.estado-chip.mini { font-size: .72rem; padding: .1rem .5rem; }
+.est-generada   { background: #e0e7ff; color: #3730a3; }
+.est-revisada   { background: #fef9c3; color: #854d0e; }
+.est-observada  { background: #ffedd5; color: #9a3412; }
+.est-finalizada { background: #dcfce7; color: #166534; }
+.est-anulada    { background: #fee2e2; color: #991b1b; }
+
+.timeline { list-style: none; margin: 0; padding: 0 0 0 1.25rem; border-left: 2px solid #d1d5db; }
+.timeline-item { position: relative; padding: 0 0 1.5rem 1.5rem; }
+.dot { position: absolute; left: -1.9rem; top: .35rem; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #d1d5db; background: #6366f1; }
+.dot.est-revisada { background: #eab308; } .dot.est-observada { background: #f97316; }
+.dot.est-finalizada { background: #22c55e; } .dot.est-anulada { background: #ef4444; }
+
+.tl-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: .9rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.tl-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+.tl-fecha { color: #6b7280; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.rol-badge { background: #15803d; color: #fff; font-size: .68rem; font-weight: 700; padding: .12rem .5rem; border-radius: 6px; letter-spacing: .5px; }
+.tl-accion { font-weight: 700; color: #1f2937; margin: .1rem 0; }
+.tl-transicion { margin: .3rem 0; font-size: .85rem; }
+.tl-usuario { color: #4b5563; font-size: .85rem; margin: .2rem 0 0; }
+.tl-email { color: #9ca3af; }
+.tl-comentario { margin: .4rem 0 0; padding: .4rem .6rem; background: #f9fafb; border-radius: 6px; color: #4b5563; font-size: .85rem; }
+
+body.dark-mode .page-wrapper { color: #c9d1d9; }
+body.dark-mode .page-title { color: #3fb950; }
+body.dark-mode .page-subtitle { color: #8b949e; }
+body.dark-mode .acta-resumen { background: #14261c; border-color: #1f3b2b; }
+body.dark-mode .acta-resumen .meta { color: #9ca3af; }
+body.dark-mode .tl-card { background: #161b22; border-color: #30363d; }
+body.dark-mode .tl-accion { color: #e6edf3; }
+body.dark-mode .tl-comentario { background: #0d1117; color: #9ca3af; }
+body.dark-mode .timeline { border-left-color: #30363d; }
