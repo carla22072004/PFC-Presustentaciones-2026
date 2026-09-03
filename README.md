@@ -9,6 +9,14 @@
 
 Sistema web para la automatización, gestión y evaluación de pre-sustentaciones de trabajos de titulación de la **Universidad Técnica Estatal de Quevedo (UTEQ)**.
 
+## Integrantes / Autores
+- Alava Alvarado, Jean Pierre
+- Moncayo Loor, Xavier Alejandro
+- Zamora Arias, Carla Esthefania
+- Barreto Rosado, Heider Dominick
+
+*(Para los roles específicos CRediT, ver `CONTRIBUTORS.md` y `Informe-Final`).*
+
 ---
 
 ## Requisitos Previos
