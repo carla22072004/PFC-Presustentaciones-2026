@@ -23,12 +23,14 @@ export interface ChatbotResponseWrapper {
 })
 export class ChatbotService {
   // Usar ruta relativa para que pase por Nginx
-  private apiUrl = '/api/v1/chatbot';
+  private apiUrl = '/api/v1/chatbot/ask';
 
   constructor(private http: HttpClient) { }
 
-  sendMessage(message: string): Observable<ChatbotResponseWrapper> {
+  sendMessage(message: string): Observable<ChatbotResponseData> {
     const request: ChatbotRequest = { message };
-    return this.http.post<ChatbotResponseWrapper>(this.apiUrl, request);
+    // Debido a auth.interceptor.ts que desempaqueta ResponseWrapper,
+    // el HTTP Client retorna directamente ChatbotResponseData.
+    return this.http.post<ChatbotResponseData>(this.apiUrl, request);
   }
 }

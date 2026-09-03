@@ -56,12 +56,13 @@ export class ChatbotComponent implements OnInit {
     this.chatbotService.sendMessage(cleanText).subscribe({
       next: (res) => {
         this.isTyping = false;
-        if (res.success && res.data) {
+        // El interceptor desempaqueta el wrapper, res es directamente ChatbotResponseData
+        if (res && res.response) {
           this.messages.push({
-            text: res.data.response,
+            text: res.response,
             isBot: true,
-            options: res.data.options,
-            route: res.data.route
+            options: res.options,
+            route: res.route
           });
         }
         this.scrollToBottom();
