@@ -83,6 +83,10 @@ Corrido con `./mvnw com.github.spotbugs:spotbugs-maven-plugin:4.8.6.4:spotbugs`,
 | `UNSAFE_HASH_EQUALS` | 0 | Media | **Corregido el 17-08, confirmado que se mantiene el 29-08** — `AnteproyectoServiceImpl.verificarIntegridad()` comparaba hashes SHA-256 con `String.equals()` (vulnerable a timing attack); se cambió a `MessageDigest.isEqual()` |
 | `SPRING_CSRF_PROTECTION_DISABLED` | 1 | Informativa | Sin acción — deshabilitado deliberadamente por ser API JWT stateless (ver A05) |
 
+4. La mitigación CSRF se delega al uso de tokens JWT sin cookies (en cabecera `Authorization`) y validación estricta de CORS.
+
+4. **Hallazgo real (auditoría final):** El escáner ZAP y Lighthouse detectaron que la cabecera `Strict-Transport-Security` (HSTS) estaba deshabilitada o ausente. El backend (Spring Security) no la estaba emitiendo debido a que operaba detrás de un proxy inverso (recibiendo peticiones HTTP). Se corrigió habilitando explícitamente `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;` en los archivos de configuración de Nginx locales (`nginx.conf`) y de producción (`Frontend/nginx.railway.conf.template`), cubriendo tanto el frontend como el bloque proxy `/api/`.
+
 ## Escaneo dinámico OWASP ZAP (2026-08-17, re-corrido 2026-08-29)
 
 Corrido con el plan de automatización [`zap.yaml`](../zap/zap.yaml) (imagen oficial `zaproxy/zap-stable`) contra la app real corriendo con la topología de producción (nginx sirviendo el build de Angular + proxy inverso a `/api/v1/` y `/actuator/`, backend Spring Boot, Postgres y Redis, todo vía `docker compose up -d --build`). Reportes completos de la corrida más reciente (2026-08-29): [`docs/mediciones/sec/zap/zap-baseline-report.html`](../zap/zap-baseline-report.html) y [`zap-baseline-report.json`](../zap/zap-baseline-report.json). La corrida del 2026-08-17 se conserva sin modificar como [`zap-baseline-report.PREVIOUS.html`](../zap/zap-baseline-report.PREVIOUS.html)/[`.json`](../zap/zap-baseline-report.PREVIOUS.json).
