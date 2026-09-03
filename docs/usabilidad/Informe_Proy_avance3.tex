@@ -259,7 +259,7 @@ La API expone respuestas bajo el estándar unificado JSON \texttt{ApiResponse<T>
 \textbf{C4. Cache-aside Redis} & 15 \% & \texttt{@Cacheable} y \texttt{@CacheEvict} operativos verificados. & Caché parcial con invalidación incompleta. & \texttt{@Cacheable} sin invalidación. & Caché no verificable. \\ \hline
 \textbf{C5. Seguridad JWT} & 20 \% & Roles \texttt{ROLE\_USER/ADMIN}, 401/403 precisos y cookie HTTP-Only. & Roles con pequeños matices en rutas. & Autenticación sin distinguir roles. & Endpoints no protegidos. \\ \hline
 \textbf{C6. Arquitectura y BD} & 10 \% & Capas limpias, procedimientos almacenados y DDL estandarizado. & Capas correctas con leve mezcla. & Lógica de negocio en controladores. & Sin separación de capas. \\ \hline
-\textbf{C7. Calidad y Usabilidad} & 15 \% & Estudio SUS (91.25 A+), Docker en 1 comando, JaCoCo, k6 y Makefile. & Entrega correcta con evidencias parciales. & Arranca solo con intervención manual. & No arranca desde clonación limpia. \\ \hline
+\textbf{C7. Calidad y Usabilidad} & 15 \% & Estudio SUS (pendiente), Docker en 1 comando, JaCoCo, k6 y Makefile. & Entrega correcta con evidencias parciales. & Arranca solo con intervención manual. & No arranca desde clonación limpia. \\ \hline
 \end{tabular}
 \end{table}
 
@@ -274,3 +274,4 @@ La API expone respuestas bajo el estándar unificado JSON \texttt{ApiResponse<T>
 \end{center}
 
 \end{document}
+
