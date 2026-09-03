@@ -40,23 +40,39 @@ encontramos ahí ya están corregidas o tienen solución documentada.
 
 ---
 
-## Despliegue Rápido (Comando Único)
+## Instrucciones de Ejecución del Proyecto (Despliegue Rápido)
 
-Para levantar el entorno completo (Base de Datos PostgreSQL 15, Caché Redis, Backend Spring Boot y Frontend Angular servido por nginx):
+Para levantar el entorno completo, el proyecto utiliza **Docker**.
+La arquitectura incluye:
+- **PostgreSQL**: Base de datos relacional (puerto 5432).
+- **Redis**: Caché en memoria (puerto 6379).
+- **Backend (Spring Boot)**: Se conecta a PostgreSQL y Redis. Utiliza **Flyway** para aplicar migraciones de base de datos automáticamente al arrancar.
+- **Frontend (Angular)**: Servido por nginx.
+
+### Orden exacto de comandos para ejecución local:
 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/carla22072004/PFC-Presustentaciones-2026.git
 cd PFC-Presustentaciones-2026
 
-# 2. Copiar la plantilla de variables de entorno y generar un JWT_SECRET real
+# 2. Configurar variables de entorno (incluye PostgreSQL y Redis)
 cp .env.example .env
 # Editar .env y reemplazar JWT_SECRET con el resultado de: openssl rand -hex 32
 
-# 3. Construir el frontend (nginx solo sirve el build ya generado, no lo construye)
-cd Frontend && npx ng build --configuration production && cd ..
+# 3. Construir el frontend (Angular via Node/npm)
+cd Frontend
+npm install
+npx ng build --configuration production
+cd ..
 
-# 4. Levantar la infraestructura completa
+# 4. Compilar el backend y ejecutar pruebas (Java 17+ y Maven Wrapper)
+cd backend
+./mvnw clean test
+./mvnw package -DskipTests
+cd ..
+
+# 5. Instrucciones de Docker: Levantar la infraestructura completa
 docker compose up -d --build
 ```
 
@@ -64,7 +80,7 @@ El sistema estará disponible en:
 - **Frontend Angular (servido por nginx):** `http://localhost`
 - **API REST Backend versionada:** `http://localhost:8080/api/v1` (proxied también en `http://localhost/api/v1` vía nginx)
 - **Documentación Swagger / OpenAPI 3.0:** `http://localhost:8080/swagger-ui/index.html`
-- **Estado de salud:** `http://localhost:8080/actuator/health`
+- **Estado de salud (y verificación de Flyway):** `http://localhost:8080/actuator/health`
 
 **Verificación completa de reproducibilidad (Criterio R1):** los pasos 1-2 de arriba (clonar y
 crear `.env`) más `make all` ejecutan **todo** el pipeline — build, contenedores, espera de
@@ -86,17 +102,34 @@ camino en [`docs/entorno/TROUBLESHOOTING.md`](docs/entorno/TROUBLESHOOTING.md).
 
 ## Cómo Compilar el Informe Académico
 
-El informe final y el SRS son documentos LaTeX versionados en el repositorio; ambos se compilan a PDF con
-[`latexmk`](https://mg.readthedocs.io/latexmk.html) (viene con MiKTeX o TeX Live — ver "Requisitos
-Previos").
+El informe final y el SRS son documentos LaTeX versionados en el repositorio. Para compilarlos a PDF, necesitas el **motor utilizado para generar el informe**: **LaTeX con `latexmk`** (parte de distribuciones como MiKTeX o TeX Live).
 
-| Documento | Fuente | Comando | Salida |
-|---|---|---|---|
-| **Informe Final** (12 capítulos, IMRaD) | [`Informe-Final/informe-final.tex`](Informe-Final/informe-final.tex) | `make pdf` | [`Informe-Final/informe-final.pdf`](Informe-Final/informe-final.pdf) |
-| **SRS** (requisitos, ISO/IEC/IEEE 29148) | [`docs/requisitos/SRS-v1.0.0.tex`](docs/requisitos/SRS-v1.0.0.tex) | `cd docs/requisitos && latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.0.tex` | [`docs/requisitos/SRS-v1.0.0.pdf`](docs/requisitos/SRS-v1.0.0.pdf) |
+### Requisitos y Dependencias del Informe:
+- **Motor / Compilador**: `latexmk`
+- **Dependencias**: MiKTeX o TeX Live (con paquetes estándar de LaTeX).
+- **Archivo principal del informe**: `Informe-Final/informe-final.tex`
+- **Estructura de carpetas**:
+  - `Informe-Final/`: Raíz del informe final.
+  - `Informe-Final/secciones/`: Archivos `.tex` de cada capítulo.
+  - `docs/requisitos/`: Raíz del documento de requisitos (SRS).
 
-Ambos PDF ya están compilados y versionados en el repositorio — solo hace falta recompilar si editás el
-`.tex` correspondiente. `latexmk` es incremental: si no hay cambios, termina de inmediato sin recompilar.
+### Orden exacto de comandos para compilar:
+
+**1. Comando para compilar y generar el PDF del Informe Final:**
+```bash
+cd Informe-Final
+latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex
+```
+*(El archivo generado será `Informe-Final/informe-final.pdf`)*
+
+**2. Comando para compilar y generar el PDF del SRS:**
+```bash
+cd docs/requisitos
+latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.0.tex
+```
+*(El archivo generado será `docs/requisitos/SRS-v1.0.0.pdf`)*
+
+Ambos PDF ya están compilados y versionados en el repositorio — solo hace falta recompilar si editas el `.tex` correspondiente. `latexmk` es incremental: si no hay cambios, termina de inmediato sin recompilar.
 
 ## Comandos Disponibles
 
