@@ -6,6 +6,7 @@ import { SolicitudService } from '../../../services/solicitud.service';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
 import { CatalogoService, ModalidadTitulacion, LineaInvestigacion, AreaTematica } from '../../../services/catalogo.service';
+import { OrientacionService, TemaPropuesto } from '../../../services/orientacion.service';
 
 @Component({
     encapsulation: ViewEncapsulation.None,
@@ -27,6 +28,10 @@ export class RegistrarSolicitudComponent implements OnInit {
     areasTematicas: AreaTematica[] = [];
     cargandoAreas = false;
 
+    // Temas guardados en el Centro de Orientación (solo aplica a ESTUDIANTE)
+    temasGuardados: TemaPropuesto[] = [];
+    cargandoTemasGuardados = true;
+
     constructor(
         private fb: FormBuilder,
         private solicitudService: SolicitudService,
@@ -34,6 +39,7 @@ export class RegistrarSolicitudComponent implements OnInit {
         private router: Router,
         private notification: NotificationService,
         private catalogoService: CatalogoService,
+        private orientacionService: OrientacionService,
         private cdr: ChangeDetectorRef
     ) {}
 
@@ -71,6 +77,64 @@ export class RegistrarSolicitudComponent implements OnInit {
                 this.cdr.markForCheck();
             }
         });
+
+        // Temas guardados en el Centro de Orientación: el endpoint es exclusivo de
+        // ESTUDIANTE, así que evitamos la llamada (y un 403 innecesario) para cualquier
+        // otro rol que llegue a esta pantalla.
+        if (this.authService.getRole() === 'ESTUDIANTE') {
+            this.orientacionService.misGuardados().subscribe({
+                next: (data) => {
+                    this.temasGuardados = data || [];
+                    this.cargandoTemasGuardados = false;
+                    this.cdr.markForCheck();
+                },
+                error: () => {
+                    // Silencioso: es una ayuda opcional, no debe interrumpir el registro de la solicitud.
+                    this.temasGuardados = [];
+                    this.cargandoTemasGuardados = false;
+                    this.cdr.markForCheck();
+                }
+            });
+        } else {
+            this.cargandoTemasGuardados = false;
+        }
+    }
+
+    /**
+     * Prellena el formulario con un tema guardado del Centro de Orientación. El
+     * estudiante conserva la posibilidad de editar cualquier campo antes de enviar.
+     */
+    onTemaGuardadoChange(event: Event): void {
+        const id = Number((event.target as HTMLSelectElement).value) || null;
+        if (!id) { return; }
+
+        const tema = this.temasGuardados.find(t => t.id === id);
+        if (!tema) { return; }
+
+        this.solicitudForm.get('tituloTema')?.setValue(tema.titulo);
+
+        if (tema.lineaInvestigacionId) {
+            this.solicitudForm.get('lineaInvestigacion')?.setValue(tema.lineaInvestigacionId);
+            this.areasTematicas = [];
+            this.solicitudForm.get('areaTematica')?.setValue(null);
+            this.cargandoAreas = true;
+            this.catalogoService.listarAreasTematicas(tema.lineaInvestigacionId).subscribe({
+                next: (data) => {
+                    this.areasTematicas = data;
+                    this.cargandoAreas = false;
+                    if (tema.areaId) {
+                        this.solicitudForm.get('areaTematica')?.setValue(tema.areaId);
+                    }
+                    this.cdr.markForCheck();
+                },
+                error: () => {
+                    this.cargandoAreas = false;
+                    this.cdr.markForCheck();
+                }
+            });
+        }
+
+        this.notification.success('Revisa los datos y ajústalos si lo necesitas antes de enviar.', 'Tema aplicado');
     }
 
     /** Al elegir la línea de investigación, carga solo las áreas temáticas que le pertenecen */

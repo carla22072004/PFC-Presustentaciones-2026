@@ -10,6 +10,36 @@
     <form [formGroup]="solicitudForm" (ngSubmit)="enviarFormulario()">
       <div class="form-stack">
 
+        <!-- Temas guardados en el Centro de Orientación (opcional) -->
+        <div class="form-section-card" *ngIf="cargandoTemasGuardados">
+          <div class="d-flex align-items-center gap-2 text-muted py-2">
+            <span class="spinner-border spinner-border-sm"></span>
+            <small>Buscando tus temas guardados...</small>
+          </div>
+        </div>
+
+        <div class="form-section-card" *ngIf="!cargandoTemasGuardados && temasGuardados.length > 0">
+          <label class="label-style"><i class="bi bi-bookmark-heart-fill"></i> Usar un tema guardado</label>
+          <div class="input-wrapper">
+            <select class="input-premium" (change)="onTemaGuardadoChange($event)">
+              <option value="">Selecciona uno de tus {{ temasGuardados.length }} temas guardados...</option>
+              <option *ngFor="let t of temasGuardados" [value]="t.id">{{ t.titulo }}</option>
+            </select>
+          </div>
+          <small class="text-muted mt-2 d-block">
+            Se completa el título y, si el tema lo tiene, la línea de investigación y el área temática. Puedes editar cualquier campo antes de enviar.
+          </small>
+        </div>
+
+        <div class="form-section-card" *ngIf="!cargandoTemasGuardados && temasGuardados.length === 0">
+          <small class="text-muted d-block">
+            <i class="bi bi-lightbulb me-1"></i>
+            ¿No sabes qué tema elegir? Explora ideas en el
+            <a routerLink="/dashboard/orientacion/centro">Centro de Orientación</a>
+            y guarda las que te interesen para usarlas aquí la próxima vez.
+          </small>
+        </div>
+
         <div class="form-section-card">
           <label class="label-style"><i class="bi bi-fonts"></i> Título del Proyecto de Titulación</label>
           <div class="input-wrapper">

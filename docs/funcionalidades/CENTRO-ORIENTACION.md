@@ -29,7 +29,7 @@ Todas las tablas tienen trigger de auditoría genérica (`fn_auditoria_generica`
 | Código | id | Roles con el permiso | Qué habilita |
 |---|---|---|---|
 | `ORIENTACION_TEMAS_VER` | (V22, `MAX+1`) | ADMIN, COORDINADOR, DOCENTE, ESTUDIANTE | Explorar el catálogo y ver el detalle de un tema. |
-| `ORIENTACION_CATALOGO_GESTIONAR` | 27 | ADMIN, COORDINADOR | Reservado para el futuro CRUD del catálogo de temas y recursos. |
+| `ORIENTACION_CATALOGO_GESTIONAR` | 27 | ADMIN, COORDINADOR | CRUD del catálogo de temas propuestos y de recursos de titulación. |
 
 Guardar / quitar / listar la lista personal **no** usa un permiso: es exclusivo del
 rol `ESTUDIANTE` (`@PreAuthorize("hasRole('ESTUDIANTE')")`) y opera **siempre sobre
@@ -47,6 +47,9 @@ Base: `/api/v1/orientacion/temas`
 | GET | `/guardados` | rol `ESTUDIANTE` | Lista de temas guardados del estudiante autenticado, más recientes primero. |
 | POST | `/{temaId}/guardar` | rol `ESTUDIANTE` | Guarda el tema. `201` al crear, `409` si ya estaba guardado. |
 | DELETE | `/{temaId}/guardar` | rol `ESTUDIANTE` | Quita el tema de la lista. `204` al quitar, `400` si no estaba. |
+| POST | `/` | `ORIENTACION_CATALOGO_GESTIONAR` | Crea un tema del catálogo. `201`. Valida que `areaId` pertenezca a `lineaInvestigacionId` si se envían ambos. |
+| PUT | `/{temaId}` | `ORIENTACION_CATALOGO_GESTIONAR` | Edita un tema. `404` si no existe. |
+| DELETE | `/{temaId}` | `ORIENTACION_CATALOGO_GESTIONAR` | Elimina un tema. `204`. `temas_guardados` cae en cascada (FK `ON DELETE CASCADE`, V20). |
 
 Errores estandarizados por `GlobalExceptionHandler`: `IllegalArgumentException` → 400,
 `IllegalStateException` → **409** (nuevo handler), `AccessDeniedException` → 403.
@@ -97,18 +100,26 @@ tabla solo guarda `{clave: bool}` en `pasos_json`.
 (V9) y la relación carrera↔línea correspondiente. Inserción idempotente
 (`WHERE NOT EXISTS` por título); no toca datos existentes.
 
-## 7. Pendiente
+## 7. Frontend de administración
 
-- Interfaz de administración para el CRUD de temas y recursos
-  (`ORIENTACION_CATALOGO_GESTIONAR`); el backend ya existe para recursos.
-- CRUD del catálogo de temas propuestos (hoy solo lectura + semilla).
+`components/orientacion/gestionar-temas.component.ts` → ruta
+`/dashboard/orientacion/gestionar-temas` (`roleGuard(['ADMIN','COORDINADOR'])`),
+entrada de menú para ADMIN y COORDINADOR. Lista con filtro por carrera, alta/edición
+en modal (selects dependientes línea→área, validación de título) y borrado con
+confirmación. Reutiliza la paleta y el modo oscuro del proyecto.
 
-## 8. Pruebas
+## 8. Pendiente
 
-- `TemaServiceImplTest` (10): filtros, marcado de guardados, detalle inexistente,
-  guardar duplicado (409), quitar inexistente, mapeo de DTO.
-- `TemaControllerTest` (7): resolución del estudiante desde el token, códigos de
-  estado, rechazo cuando el usuario no tiene perfil de estudiante.
+- Interfaz de administración para el CRUD de **recursos** (el backend ya existe).
+
+## 9. Pruebas
+
+- `TemaServiceImplTest` (16): filtros, marcado de guardados, detalle inexistente,
+  guardar duplicado (409), quitar inexistente, mapeo de DTO, y CRUD del catálogo
+  (recorte de campos, carrera/área inexistentes, área que no pertenece a la línea,
+  editar/eliminar inexistente).
+- `TemaControllerTest` (10): resolución del estudiante desde el token, códigos de
+  estado, rechazo sin perfil de estudiante, y delegación del CRUD.
 - `RecursoTitulacionServiceImplTest` (7): listar general vs por carrera, crear con
   y sin carrera, carrera/recurso inexistente, eliminar.
 - `ProgresoTitulacionServiceImplTest` (5): estado vacío, cálculo de porcentaje,

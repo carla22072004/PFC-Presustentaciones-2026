@@ -1,13 +1,18 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.dto.GenerarTemaRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest;
 import ec.edu.uteq.presustentaciones.dto.TemaPropuestoDTO;
+import ec.edu.uteq.presustentaciones.entities.AreaTematica;
 import ec.edu.uteq.presustentaciones.entities.Carrera;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.LineaInvestigacion;
 import ec.edu.uteq.presustentaciones.entities.TemaGuardadoEstudiante;
 import ec.edu.uteq.presustentaciones.entities.TemaPropuesto;
+import ec.edu.uteq.presustentaciones.repositories.AreaTematicaRepository;
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
+import ec.edu.uteq.presustentaciones.repositories.LineaInvestigacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.TemaGuardadoEstudianteRepository;
 import ec.edu.uteq.presustentaciones.repositories.TemaPropuestoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +36,9 @@ class TemaServiceImplTest {
     @Mock private TemaPropuestoRepository temaPropuestoRepository;
     @Mock private TemaGuardadoEstudianteRepository temaGuardadoEstudianteRepository;
     @Mock private EstudianteRepository estudianteRepository;
+    @Mock private CarreraRepository carreraRepository;
+    @Mock private LineaInvestigacionRepository lineaInvestigacionRepository;
+    @Mock private AreaTematicaRepository areaTematicaRepository;
 
     @InjectMocks private TemaServiceImpl temaService;
 
@@ -160,5 +168,76 @@ class TemaServiceImplTest {
 
         assertEquals(1, resultados.size());
         assertTrue(resultados.get(0).getGuardado());
+    }
+
+    // ── CRUD del catálogo ────────────────────────────────────────────────
+
+    private GuardarTemaPropuestoRequest reqCrear() {
+        GuardarTemaPropuestoRequest r = new GuardarTemaPropuestoRequest();
+        r.setTitulo("  Nuevo tema  ");
+        r.setProblema("  ");
+        return r;
+    }
+
+    @Test
+    void crearTemaSinCatalogosGuardaYRecortaCampos() {
+        when(temaPropuestoRepository.save(any(TemaPropuesto.class))).thenAnswer(i -> i.getArgument(0));
+
+        TemaPropuestoDTO dto = temaService.crear(reqCrear());
+
+        assertEquals("Nuevo tema", dto.getTitulo());
+        assertNull(dto.getProblema()); // "  " -> null
+        assertNull(dto.getCarreraId());
+        verify(carreraRepository, never()).findById(any());
+    }
+
+    @Test
+    void crearTemaConCarreraInexistenteLanza() {
+        GuardarTemaPropuestoRequest r = reqCrear();
+        r.setCarreraId(9);
+        when(carreraRepository.findById(9)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> temaService.crear(r));
+        verify(temaPropuestoRepository, never()).save(any());
+    }
+
+    @Test
+    void crearTemaConAreaQueNoPerteneceALaLineaLanza() {
+        GuardarTemaPropuestoRequest r = reqCrear();
+        r.setLineaInvestigacionId(1);
+        r.setAreaId(2);
+
+        LineaInvestigacion linea = new LineaInvestigacion();
+        linea.setId(1);
+        LineaInvestigacion otraLinea = new LineaInvestigacion();
+        otraLinea.setId(99);
+        AreaTematica area = new AreaTematica();
+        area.setId(2);
+        area.setLineaInvestigacion(otraLinea);
+
+        when(lineaInvestigacionRepository.findById(1)).thenReturn(Optional.of(linea));
+        when(areaTematicaRepository.findById(2)).thenReturn(Optional.of(area));
+
+        assertThrows(IllegalArgumentException.class, () -> temaService.crear(r));
+    }
+
+    @Test
+    void actualizarTemaInexistenteLanza() {
+        when(temaPropuestoRepository.findById(7)).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> temaService.actualizar(7, reqCrear()));
+    }
+
+    @Test
+    void eliminarTemaInexistenteLanza() {
+        when(temaPropuestoRepository.existsById(7)).thenReturn(false);
+        assertThrows(IllegalArgumentException.class, () -> temaService.eliminar(7));
+        verify(temaPropuestoRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void eliminarTemaExistenteBorra() {
+        when(temaPropuestoRepository.existsById(1)).thenReturn(true);
+        temaService.eliminar(1);
+        verify(temaPropuestoRepository).deleteById(1);
     }
 }

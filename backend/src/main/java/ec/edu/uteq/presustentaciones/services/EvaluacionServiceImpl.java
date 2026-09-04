@@ -9,8 +9,13 @@ import ec.edu.uteq.presustentaciones.repositories.EvaluacionFinalRepository;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.RubricaRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
+import ec.edu.uteq.presustentaciones.security.service.UsuarioActualService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +38,36 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     private final ec.edu.uteq.presustentaciones.repositories.EstadoSolicitudRepository estadoSolicitudRepository;
     private final ec.edu.uteq.presustentaciones.repositories.ResultadoEvaluacionRepository resultadoEvaluacionRepository;
     private final EvaluacionRepository evaluacionSpRepository;
+    private final UsuarioActualService usuarioActualService;
+    private final SolicitudAccessService solicitudAccessService;
+    private final PermisoService permisoService;
+
+    /** ADMIN o titular de EVALUACION_CALIFICAR (ADMIN/COORDINADOR); el resto solo puede
+     * consultar su propia información -- evita que un estudiante o docente lea las
+     * evaluaciones de otro usuario cambiando el id en la URL (IDOR). */
+    private boolean esAdminOCoordinador() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return false;
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return isAdmin || permisoService.tienePermiso(auth, "EVALUACION_CALIFICAR");
+    }
+
+    private void validarAccesoPropioOAdmin(Long usuarioIdObjetivo) {
+        if (esAdminOCoordinador()) return;
+        Long usuarioActualId = usuarioActualService.usuario().getId();
+        if (!usuarioActualId.equals(usuarioIdObjetivo)) {
+            throw new AccessDeniedException("No tienes permiso para consultar las evaluaciones de otro usuario");
+        }
+    }
+
+    private void validarAccesoEstudiantePropioOAdmin(Long estudianteIdObjetivo) {
+        if (esAdminOCoordinador()) return;
+        Long estudianteActualId = usuarioActualService.estudianteIdOrNull();
+        if (estudianteActualId == null || !estudianteActualId.equals(estudianteIdObjetivo)) {
+            throw new AccessDeniedException("No tienes permiso para consultar las evaluaciones de otro estudiante");
+        }
+    }
 
     @Override
     @Transactional
@@ -157,17 +192,21 @@ public class EvaluacionServiceImpl implements EvaluacionService {
 
     @Override
     public List<EvaluacionFinal> listarPorEstudiante(Long estudianteId) {
+        validarAccesoEstudiantePropioOAdmin(estudianteId);
         return evaluacionRepository.findByEstudianteId(estudianteId);
     }
 
     @Override
     public List<EvaluacionFinal> listarPorUsuario(Long usuarioId) {
+        validarAccesoPropioOAdmin(usuarioId);
         return evaluacionRepository.findByUsuarioId(usuarioId);
     }
 
     @Override
     public Optional<EvaluacionFinal> buscarPorSolicitud(Long solicitudId) {
-        return evaluacionRepository.findBySolicitudId(solicitudId);
+        Optional<EvaluacionFinal> evaluacion = evaluacionRepository.findBySolicitudId(solicitudId);
+        evaluacion.ifPresent(e -> solicitudAccessService.validarAcceso(e.getSolicitud(), "EVALUACION_CALIFICAR"));
+        return evaluacion;
     }
 
     @Override

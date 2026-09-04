@@ -3,12 +3,18 @@ package ec.edu.uteq.presustentaciones.services;
 import ec.edu.uteq.presustentaciones.dto.PromedioEvaluacionResult;
 import ec.edu.uteq.presustentaciones.entities.*;
 import ec.edu.uteq.presustentaciones.repositories.*;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
+import ec.edu.uteq.presustentaciones.security.service.UsuarioActualService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +41,9 @@ class EvaluacionServiceImplTest {
     @Mock private EstadoSolicitudRepository estadoSolicitudRepository;
     @Mock private ResultadoEvaluacionRepository resultadoEvaluacionRepository;
     @Mock private EvaluacionRepository evaluacionSpRepository;
+    @Mock private UsuarioActualService usuarioActualService;
+    @Mock private SolicitudAccessService solicitudAccessService;
+    @Mock private PermisoService permisoService;
 
     @InjectMocks
     private EvaluacionServiceImpl evaluacionService;
@@ -47,6 +56,11 @@ class EvaluacionServiceImplTest {
         usuarioEstudiante = Usuario.builder().id(10L).nombre("Ana").apellido("Torres").build();
         Estudiante estudiante = Estudiante.builder().id(3L).usuario(usuarioEstudiante).build();
         solicitud = Solicitud.builder().id(7L).estudiante(estudiante).tituloTema("Sistema X").build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -132,6 +146,64 @@ class EvaluacionServiceImplTest {
         assertEquals("CALIFICADA", solicitud.getEstado().getCodigo());
         assertEquals("APROBADO", resultado.getResultado().getCodigo());
         verify(notificacionService).crearNotificacion(eq(10L), any());
+    }
+
+    @Test
+    void listarPorEstudianteRechazaConsultaDeOtroEstudiante() {
+        // Caso IDOR: el estudiante autenticado (id 99) intenta ver las evaluaciones del
+        // estudiante 3 cambiando el id en la URL.
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otro.estudiante@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ESTUDIANTE")));
+        when(usuarioActualService.estudianteIdOrNull()).thenReturn(99L);
+
+        assertThrows(AccessDeniedException.class, () -> evaluacionService.listarPorEstudiante(3L));
+    }
+
+    @Test
+    void listarPorEstudiantePermiteConsultarLaPropiaInformacion() {
+        // Caso permitido: el estudiante autenticado consulta sus propias evaluaciones.
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("estudiante@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ESTUDIANTE")));
+        when(usuarioActualService.estudianteIdOrNull()).thenReturn(3L);
+        when(evaluacionRepository.findByEstudianteId(3L)).thenReturn(List.of());
+
+        assertDoesNotThrow(() -> evaluacionService.listarPorEstudiante(3L));
+    }
+
+    @Test
+    void listarPorEstudiantePermiteAAdminConsultarCualquierEstudiante() {
+        // Caso administrativo: ADMIN/COORDINADOR conservan su acceso completo.
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
+        when(evaluacionRepository.findByEstudianteId(3L)).thenReturn(List.of());
+
+        assertDoesNotThrow(() -> evaluacionService.listarPorEstudiante(3L));
+        verify(usuarioActualService, never()).estudianteIdOrNull();
+    }
+
+    @Test
+    void listarPorUsuarioRechazaConsultaDeOtroUsuario() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otro@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_DOCENTE")));
+        when(usuarioActualService.usuario()).thenReturn(Usuario.builder().id(99L).build());
+
+        assertThrows(AccessDeniedException.class, () -> evaluacionService.listarPorUsuario(10L));
+    }
+
+    @Test
+    void buscarPorSolicitudPropagaAccessDeniedSiSolicitudAccessServiceLoRechaza() {
+        // Caso IDOR de lectura: la evaluación existe pero SolicitudAccessService decide que
+        // este usuario no participa en la solicitud.
+        EvaluacionFinal evaluacion = EvaluacionFinal.builder().id(1L).solicitud(solicitud).build();
+        when(evaluacionRepository.findBySolicitudId(7L)).thenReturn(Optional.of(evaluacion));
+        doThrow(new AccessDeniedException("No tienes permiso para acceder a la información de esta solicitud"))
+                .when(solicitudAccessService).validarAcceso(solicitud, "EVALUACION_CALIFICAR");
+
+        assertThrows(AccessDeniedException.class, () -> evaluacionService.buscarPorSolicitud(7L));
     }
 
     @Test

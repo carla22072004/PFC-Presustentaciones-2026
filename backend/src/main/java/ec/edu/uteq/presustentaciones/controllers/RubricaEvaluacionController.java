@@ -30,6 +30,8 @@ public class RubricaEvaluacionController {
         try {
             EvaluacionRubricaResponse resp = service.registrarEvaluacion(request);
             return ResponseEntity.ok(resp);
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 400
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -42,6 +44,8 @@ public class RubricaEvaluacionController {
             @PathVariable Long juradoId) {
         try {
             return ResponseEntity.ok(service.obtenerEvaluacionJurado(solicitudId, juradoId));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 404
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -76,6 +80,8 @@ public class RubricaEvaluacionController {
         try {
             ObservacionesSolicitudDTO obs = service.obtenerObservacionesSolicitud(solicitudId);
             return ResponseEntity.ok(obs);
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 400
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

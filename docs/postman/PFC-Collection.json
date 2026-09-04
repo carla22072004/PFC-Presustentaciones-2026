@@ -740,6 +740,445 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "8. Centro de Orientación y Titulación",
+			"item": [
+				{
+					"name": "GET /api/v1/orientacion/temas - Explorar Catálogo de Temas Propuestos (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas"
+							]
+						},
+						"description": "Requiere el permiso dinámico ORIENTACION_TEMAS_VER (@PreAuthorize(\"@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')\") en TemaController). Filtros opcionales: carreraId, lineaInvestigacionId, areaId, nivelDificultad. Hallazgo real (verificado contra la base real, 2026-09-04): ORIENTACION_TEMAS_VER está asignado actualmente a los 4 roles (ADMIN, COORDINADOR, DOCENTE, ESTUDIANTE), así que ningún usuario demo recibe 403 aquí; con {{jwtTokenDocente}} también responde 200. Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/orientacion/temas/{temaId} - Detalle de un Tema Propuesto (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/7",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"7"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_TEMAS_VER. Con un temaId inexistente (ej. 9999) responde 400 con \"Tema propuesto no encontrado\" (IllegalArgumentException -> 400 vía GlobalExceptionHandler; este proyecto no usa 404 para recursos no encontrados) — también verificado. Verificado: 200."
+					}
+				},
+				{
+					"name": "POST /api/v1/orientacion/temas/generar - Generar Ideas de Tema (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"carreraId\": 1,\n  \"lineaInvestigacionId\": 4,\n  \"areaId\": 8\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/generar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"generar"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_TEMAS_VER. carreraId es obligatorio (@NotNull en GenerarTemaRequest); sin él responde 400 — también verificado. Verificado: 200."
+					}
+				},
+				{
+					"name": "GET /api/v1/orientacion/temas/guardados - Mis Temas Guardados (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenEstudiante}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/guardados",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"guardados"
+							]
+						},
+						"description": "@PreAuthorize(\"hasRole('ESTUDIANTE')\") en TemaController. Devuelve solo los temas guardados por el estudiante autenticado; el id se resuelve desde el JWT, nunca desde la URL (evita IDOR). Verificado: 200."
+					}
+				},
+				{
+					"name": "POST /api/v1/orientacion/temas/{temaId}/guardar - Guardar un Tema (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenEstudiante}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/7/guardar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"7",
+								"guardar"
+							]
+						},
+						"description": "hasRole('ESTUDIANTE'). Guarda el tema para el estudiante autenticado. Si el tema ya estaba guardado responde 409 (verificado en una llamada duplicada). Verificado: 201."
+					}
+				},
+				{
+					"name": "DELETE /api/v1/orientacion/temas/{temaId}/guardar - Quitar un Tema Guardado (Éxito)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenEstudiante}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/7/guardar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"7",
+								"guardar"
+							]
+						},
+						"description": "hasRole('ESTUDIANTE'). Si el tema no estaba guardado responde 400 (también verificado). Verificado: 204."
+					}
+				},
+				{
+					"name": "POST /api/v1/orientacion/temas - Crear Tema Propuesto (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"[POSTMAN-TEST] Tema temporal de verificacion\",\n  \"nivelDificultad\": \"BASICO\",\n  \"carreraId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas"
+							]
+						},
+						"description": "Requiere el permiso ORIENTACION_CATALOGO_GESTIONAR. titulo es obligatorio (@NotBlank en GuardarTemaPropuestoRequest); sin él responde 400 (verificado). Con {{jwtTokenDocente}} (rol DOCENTE, sin este permiso) responde 403 (verificado). El tema usado en esta verificación (id 11, prefijo [POSTMAN-TEST]) se creó y se eliminó en la misma sesión de pruebas para no dejar datos ficticios en el catálogo real. Verificado: 201."
+					}
+				},
+				{
+					"name": "PUT /api/v1/orientacion/temas/{temaId} - Actualizar Tema Propuesto (Éxito)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"[POSTMAN-TEST] Tema temporal actualizado\",\n  \"nivelDificultad\": \"INTERMEDIO\",\n  \"carreraId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/11",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"11"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_CATALOGO_GESTIONAR. Con {{jwtTokenDocente}} responde 403 (verificado). El id 11 corresponde al tema temporal [POSTMAN-TEST] de la petición anterior, ya eliminado al cerrar esta verificación; sustitúyelo por el id que te devuelva tu propio POST antes de ejecutar. Verificado: 200 (contra ese tema temporal, antes de eliminarlo)."
+					}
+				},
+				{
+					"name": "DELETE /api/v1/orientacion/temas/{temaId} - Eliminar Tema Propuesto (Éxito)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/temas/11",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"temas",
+								"11"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_CATALOGO_GESTIONAR. Con {{jwtTokenDocente}} responde 403 (verificado). Mismo id temporal que la petición anterior (ya eliminado); sustitúyelo por uno real antes de ejecutar. Verificado: 204."
+					}
+				},
+				{
+					"name": "GET /api/v1/orientacion/recursos - Listar Recursos de Titulación (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/recursos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"recursos"
+							]
+						},
+						"description": "@PreAuthorize(\"isAuthenticated()\"). carreraId es opcional; si el llamante es ESTUDIANTE y no se envía, se filtra automáticamente por la carrera del propio estudiante. Sin token responde 401 (verificado). Verificado: 200."
+					}
+				},
+				{
+					"name": "POST /api/v1/orientacion/recursos - Crear Recurso de Titulación (Éxito)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"[POSTMAN-TEST] Recurso temporal\",\n  \"categoria\": \"GUIA\",\n  \"urlArchivo\": \"https://example.com/postman-test.pdf\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/recursos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"recursos"
+							]
+						},
+						"description": "Requiere el permiso ORIENTACION_CATALOGO_GESTIONAR. titulo, categoria y urlArchivo son obligatorios (@NotBlank en GuardarRecursoRequest); sin titulo responde 400 (verificado). Con {{jwtTokenDocente}} responde 403 (verificado). El recurso usado en esta verificación (id 8, prefijo [POSTMAN-TEST]) se creó y se eliminó en la misma sesión de pruebas. Verificado: 201."
+					}
+				},
+				{
+					"name": "PUT /api/v1/orientacion/recursos/{id} - Actualizar Recurso de Titulación (Éxito)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"[POSTMAN-TEST] Recurso temporal actualizado\",\n  \"categoria\": \"GUIA\",\n  \"urlArchivo\": \"https://example.com/postman-test-v2.pdf\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/recursos/8",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"recursos",
+								"8"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_CATALOGO_GESTIONAR. Con {{jwtTokenDocente}} responde 403 (verificado). El id 8 corresponde al recurso temporal [POSTMAN-TEST] de la petición anterior, ya eliminado al cerrar esta verificación; sustitúyelo por el id que te devuelva tu propio POST. Verificado: 200 (contra ese recurso temporal, antes de eliminarlo)."
+					}
+				},
+				{
+					"name": "DELETE /api/v1/orientacion/recursos/{id} - Eliminar Recurso de Titulación (Éxito)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenAdmin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/recursos/8",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"recursos",
+								"8"
+							]
+						},
+						"description": "Mismo permiso ORIENTACION_CATALOGO_GESTIONAR. Con {{jwtTokenDocente}} responde 403 (verificado). Mismo id temporal que la petición anterior (ya eliminado); sustitúyelo por uno real antes de ejecutar. Verificado: 204."
+					}
+				},
+				{
+					"name": "GET /api/v1/orientacion/progreso - Mi Progreso de Titulación (Éxito)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenEstudiante}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/progreso",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"progreso"
+							]
+						},
+						"description": "@PreAuthorize(\"hasRole('ESTUDIANTE')\") a nivel de clase en ProgresoTitulacionController. Devuelve el checklist de 8 pasos y el porcentaje de avance del estudiante autenticado (id resuelto desde el JWT). Con {{jwtTokenDocente}} responde 403 (verificado). Verificado: 200."
+					}
+				},
+				{
+					"name": "PUT /api/v1/orientacion/progreso - Actualizar Mi Progreso de Titulación (Éxito)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwtTokenEstudiante}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pasos\": {\n    \"tema_definido\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orientacion/progreso",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orientacion",
+								"progreso"
+							]
+						},
+						"description": "hasRole('ESTUDIANTE'). pasos es un mapa parcial {clave: completado}; solo se aplican las claves del catálogo real (tema_definido, tutor_asignado, anteproyecto_elaborado, anteproyecto_aprobado, solicitud_registrada, correcciones_aplicadas, documento_final, pre_sustentacion_programada). Sin pasos responde 400 (@NotNull en ActualizarProgresoRequest, verificado). Con {{jwtTokenDocente}} responde 403 (verificado). El cambio se revirtió (tema_definido:false) tras la verificación para no alterar el estado real del estudiante demo. Verificado: 200."
+					}
+				}
+			]
 		}
 	],
 	"variable": [
@@ -756,6 +1195,11 @@
 		{
 			"key": "jwtTokenEstudiante",
 			"value": "pegar aquí el token obtenido logueándose con el usuario creado en 'Registrar Usuario'",
+			"type": "string"
+		},
+		{
+			"key": "jwtTokenDocente",
+			"value": "pegar aquí el token de la respuesta de iniciar sesión con docente@uteq.edu.ec (usado solo para verificar los casos 403 de Centro de Orientación: ORIENTACION_CATALOGO_GESTIONAR y hasRole('ESTUDIANTE') no incluyen al rol DOCENTE)",
 			"type": "string"
 		},
 		{

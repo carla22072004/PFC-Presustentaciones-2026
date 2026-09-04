@@ -1,0 +1,134 @@
+<div class="tem-wrapper">
+    <div class="tem-header">
+        <div>
+            <h2 class="tem-title"><i class="bi bi-journal-plus me-2"></i>Catálogo de Temas Propuestos</h2>
+            <p class="tem-subtitle">Administra las ideas de tema de titulación que ven los estudiantes en el Centro de Orientación</p>
+        </div>
+        <div class="tem-actions">
+            <button class="tem-btn tem-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+
+    <div class="tem-loading" *ngIf="cargando"><div class="tem-spinner"></div><p>Cargando temas...</p></div>
+
+    <div class="tem-error" *ngIf="error && !cargando">
+        <i class="bi bi-exclamation-triangle"></i>
+        <p>{{ error }}</p>
+        <button class="tem-btn tem-btn-nuevo" (click)="cargar()">Reintentar</button>
+    </div>
+
+    <div class="tem-panel" *ngIf="!cargando && !error">
+        <div class="tem-panel-actions">
+            <select class="tem-filtro" [(ngModel)]="filtroCarreraId" (ngModelChange)="cargar()">
+                <option [ngValue]="undefined">Todas las carreras</option>
+                <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+            </select>
+            <button class="tem-btn tem-btn-nuevo" (click)="abrirNuevo()"><i class="bi bi-plus-lg me-1"></i>Nuevo Tema</button>
+        </div>
+
+        <table class="tem-tabla">
+            <thead><tr><th>Título</th><th>Carrera</th><th>Línea</th><th>Área</th><th>Nivel</th><th class="tem-text-center">Acciones</th></tr></thead>
+            <tbody>
+                <tr *ngFor="let t of temas; trackBy: trackById">
+                    <td>{{ t.titulo }}</td>
+                    <td>{{ t.carreraNombre || '—' }}</td>
+                    <td>{{ t.lineaInvestigacionNombre || '—' }}</td>
+                    <td>{{ t.areaNombre || '—' }}</td>
+                    <td>
+                        <span class="tem-badge" [ngClass]="nivelClase(t.nivelDificultad)" *ngIf="t.nivelDificultad">
+                            {{ t.nivelDificultad | titlecase }}
+                        </span>
+                        <span *ngIf="!t.nivelDificultad">—</span>
+                    </td>
+                    <td class="tem-text-center">
+                        <button class="tem-icon-btn" title="Editar" (click)="abrirEditar(t)"><i class="bi bi-pencil-fill"></i></button>
+                        <button class="tem-icon-btn tem-icon-danger" title="Eliminar" (click)="eliminar(t)"><i class="bi bi-trash3-fill"></i></button>
+                    </td>
+                </tr>
+                <tr *ngIf="temas.length === 0">
+                    <td colspan="6" class="tem-vacio">No hay temas en el catálogo{{ filtroCarreraId ? ' para esta carrera' : '' }}.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal alta / edición -->
+    <div class="tem-modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
+        <div class="tem-modal" (click)="$event.stopPropagation()">
+            <h3>
+                <i class="bi" [ngClass]="modo === 'crear' ? 'bi-plus-lg' : 'bi-pencil-fill'"></i>
+                {{ modo === 'crear' ? 'Nuevo Tema Propuesto' : 'Editar Tema Propuesto' }}
+            </h3>
+
+            <form (ngSubmit)="guardar()">
+                <div class="tem-form-grupo">
+                    <label>Título</label>
+                    <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="500"
+                           placeholder="Título del tema de titulación" required>
+                </div>
+
+                <div class="tem-form-row">
+                    <div class="tem-form-grupo">
+                        <label>Carrera</label>
+                        <select [(ngModel)]="form.carreraId" name="carreraId">
+                            <option [ngValue]="null">Sin carrera</option>
+                            <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="tem-form-grupo">
+                        <label>Nivel de dificultad</label>
+                        <select [(ngModel)]="form.nivelDificultad" name="nivel">
+                            <option value="">Sin definir</option>
+                            <option *ngFor="let n of niveles" [value]="n">{{ n | titlecase }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tem-form-row">
+                    <div class="tem-form-grupo">
+                        <label>Línea de investigación</label>
+                        <select [(ngModel)]="form.lineaInvestigacionId" name="linea" (ngModelChange)="onLineaFormChange()">
+                            <option [ngValue]="null">Sin línea</option>
+                            <option *ngFor="let l of lineas" [ngValue]="l.id">{{ l.nombre }}</option>
+                        </select>
+                    </div>
+                    <div class="tem-form-grupo">
+                        <label>Área temática</label>
+                        <select [(ngModel)]="form.areaId" name="area" [disabled]="!form.lineaInvestigacionId">
+                            <option [ngValue]="null">Sin área</option>
+                            <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tem-form-grupo">
+                    <label>Problema</label>
+                    <textarea [(ngModel)]="form.problema" name="problema" rows="2"></textarea>
+                </div>
+                <div class="tem-form-grupo">
+                    <label>Objetivo general</label>
+                    <textarea [(ngModel)]="form.objetivoGeneral" name="og" rows="2"></textarea>
+                </div>
+                <div class="tem-form-grupo">
+                    <label>Objetivos específicos</label>
+                    <textarea [(ngModel)]="form.objetivosEspecificos" name="oe" rows="2"></textarea>
+                </div>
+                <div class="tem-form-grupo">
+                    <label>Justificación</label>
+                    <textarea [(ngModel)]="form.justificacion" name="just" rows="2"></textarea>
+                </div>
+                <div class="tem-form-grupo">
+                    <label>Beneficiarios</label>
+                    <textarea [(ngModel)]="form.beneficiarios" name="benef" rows="2"></textarea>
+                </div>
+
+                <div class="tem-modal-acciones">
+                    <button type="button" class="tem-btn tem-btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="tem-btn tem-btn-nuevo" [disabled]="!formValido || guardando">
+                        {{ guardando ? 'Guardando...' : 'Guardar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

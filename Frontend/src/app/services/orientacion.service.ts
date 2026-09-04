@@ -27,6 +27,19 @@ export interface FiltroTemas {
   nivelDificultad?: string;
 }
 
+export interface GuardarTemaRequest {
+  titulo: string;
+  problema?: string;
+  objetivoGeneral?: string;
+  objetivosEspecificos?: string;
+  justificacion?: string;
+  beneficiarios?: string;
+  nivelDificultad?: string;
+  carreraId?: number | null;
+  lineaInvestigacionId?: number | null;
+  areaId?: number | null;
+}
+
 export interface RecursoTitulacion {
   id: number;
   titulo: string;
@@ -34,6 +47,13 @@ export interface RecursoTitulacion {
   urlArchivo: string;
   carreraId?: number;
   carreraNombre?: string;
+}
+
+export interface GuardarRecursoRequest {
+  titulo: string;
+  categoria: string;
+  urlArchivo: string;
+  carreraId?: number | null;
 }
 
 export interface PasoProgreso {
@@ -90,11 +110,37 @@ export class OrientacionService {
     return this.http.delete<void>(`${this.api}/${temaId}/guardar`);
   }
 
+  // ── Gestión del catálogo (permiso ORIENTACION_CATALOGO_GESTIONAR) ─────
+  crearTema(req: GuardarTemaRequest): Observable<TemaPropuesto> {
+    return this.http.post<TemaPropuesto>(this.api, req);
+  }
+
+  actualizarTema(temaId: number, req: GuardarTemaRequest): Observable<TemaPropuesto> {
+    return this.http.put<TemaPropuesto>(`${this.api}/${temaId}`, req);
+  }
+
+  eliminarTema(temaId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${temaId}`);
+  }
+
   // ── Recursos de titulación ────────────────────────────────────────────
   recursos(carreraId?: number): Observable<RecursoTitulacion[]> {
     let p = new HttpParams();
     if (carreraId != null) { p = p.set('carreraId', carreraId); }
     return this.http.get<RecursoTitulacion[]>('/api/orientacion/recursos', { params: p });
+  }
+
+  // ── Gestión de recursos (permiso ORIENTACION_CATALOGO_GESTIONAR) ──────
+  crearRecurso(req: GuardarRecursoRequest): Observable<RecursoTitulacion> {
+    return this.http.post<RecursoTitulacion>('/api/orientacion/recursos', req);
+  }
+
+  actualizarRecurso(id: number, req: GuardarRecursoRequest): Observable<RecursoTitulacion> {
+    return this.http.put<RecursoTitulacion>(`/api/orientacion/recursos/${id}`, req);
+  }
+
+  eliminarRecurso(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/orientacion/recursos/${id}`);
   }
 
   // ── Progreso / ruta de titulación (solo estudiante) ───────────────────

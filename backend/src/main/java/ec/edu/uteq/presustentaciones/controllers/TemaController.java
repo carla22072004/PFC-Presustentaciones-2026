@@ -1,6 +1,7 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.dto.GenerarTemaRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest;
 import ec.edu.uteq.presustentaciones.dto.TemaPropuestoDTO;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
@@ -82,6 +83,28 @@ public class TemaController {
     @PreAuthorize("hasRole('ESTUDIANTE')")
     public ResponseEntity<Void> quitarGuardado(@PathVariable Integer temaId) {
         temaService.quitarTemaGuardado(estudianteActual().getId(), temaId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Gestión del catálogo (permiso ORIENTACION_CATALOGO_GESTIONAR) ────────
+
+    @PostMapping
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
+    public ResponseEntity<TemaPropuestoDTO> crear(@RequestBody @Valid GuardarTemaPropuestoRequest request) {
+        return ResponseEntity.status(201).body(temaService.crear(request));
+    }
+
+    @PutMapping("/{temaId}")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
+    public ResponseEntity<TemaPropuestoDTO> actualizar(@PathVariable Integer temaId,
+                                                       @RequestBody @Valid GuardarTemaPropuestoRequest request) {
+        return ResponseEntity.ok(temaService.actualizar(temaId, request));
+    }
+
+    @DeleteMapping("/{temaId}")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer temaId) {
+        temaService.eliminar(temaId);
         return ResponseEntity.noContent().build();
     }
 

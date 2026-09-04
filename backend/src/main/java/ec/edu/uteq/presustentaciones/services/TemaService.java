@@ -1,6 +1,7 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.dto.GenerarTemaRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest;
 import ec.edu.uteq.presustentaciones.dto.TemaPropuestoDTO;
 import java.util.List;
 
@@ -25,4 +26,12 @@ public interface TemaService {
     void quitarTemaGuardado(Long estudianteId, Integer temaPropuestoId);
 
     List<TemaPropuestoDTO> obtenerTemasGuardados(Long estudianteId);
+
+    // ── Gestión del catálogo (permiso ORIENTACION_CATALOGO_GESTIONAR) ─────────
+
+    TemaPropuestoDTO crear(GuardarTemaPropuestoRequest request);
+
+    TemaPropuestoDTO actualizar(Integer temaPropuestoId, GuardarTemaPropuestoRequest request);
+
+    void eliminar(Integer temaPropuestoId);
 }

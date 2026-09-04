@@ -30,6 +30,8 @@ public class EvaluacionJuradoController {
 
             EvaluacionJuradoDTO dto = service.guardarEvaluacion(solicitudId, juradoId, notaJurado, observaciones);
             return ResponseEntity.ok(dto);
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 400
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -45,6 +47,8 @@ public class EvaluacionJuradoController {
                 return ResponseEntity.ok(null);
             }
             return ResponseEntity.ok(dto);
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 400
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
