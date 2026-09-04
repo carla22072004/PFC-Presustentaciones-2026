@@ -74,6 +74,18 @@ public class GlobalExceptionHandler {
                 .body(ResponseWrapper.error(ex.getMessage()));
     }
 
+    /**
+     * IllegalStateException representa un conflicto con el estado actual del recurso
+     * (p. ej. "el tema ya está guardado", "la fase ya fue aprobada"): 409, no 400 ni
+     * el 500 genérico. Conserva el mensaje del servicio para que el frontend lo muestre.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleIllegalStateException(IllegalStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ResponseWrapper.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ResponseWrapper<Object>> handleRuntimeException(RuntimeException ex) {
         // Log the exception for internal debugging (to be added to proper logger later if needed)
