@@ -16,6 +16,14 @@ distinta con login repetido en cada iteración) se conservan como evidencia de u
 (100\,\% de fallos en su check principal) pero se excluyen de esta cifra --- ver
 \texttt{k6/README.md}.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.80\textwidth]{figuras/fig-k6-p95-por-corrida}
+\caption{p95 de latencia por corrida k6 válida (run3--run7, 50 VUs pico). Generado por
+\texttt{scripts/gen-figuras.py} a partir de los archivos \texttt{k6/run3-summary.json}--\texttt{run7-summary.json}.}
+\label{fig:k6-p95}
+\end{figure}
+
 \subsubsection{Efecto de la caché Redis (estadística descriptiva e inferencial)}
 Se midieron 30 muestras de latencia del endpoint \texttt{/api/v1/universidades} en estado de caché fría
 y 30 en caché caliente (\texttt{k6/cache-cold-samples.txt}, \texttt{cache-warm-samples.txt}).
@@ -39,6 +47,15 @@ $p = 3.02 \times 10^{-11}$ (dos colas), tamaño de efecto (correlación biserial
 (separación perfecta entre las dos distribuciones). La caché reduce la latencia media
 \textbf{13.9$\times$} (109.62\,ms $\to$ 7.86\,ms). Reproducible con
 \texttt{scripts/perf-analysis.ipynb}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{figuras/fig-cache-fria-vs-caliente}
+\caption{Distribución de latencia ($n=30$ por escenario): boxplot caché fría vs.\ caliente. Generado
+por \texttt{scripts/gen-figuras.py} a partir de \texttt{k6/cache-cold-samples.txt} y
+\texttt{k6/cache-warm-samples.txt}.}
+\label{fig:cache-boxplot}
+\end{figure}
 
 \subsection{Seguridad}
 
@@ -118,4 +135,13 @@ no cambió, refutando esa hipótesis en vez de solo repetirla. La causa real del
 declarada como no identificada, en vez de atribuida a una explicación no verificada --- ver la nota
 metodológica completa en \texttt{docs/mediciones/perf/lighthouse/LIGHTHOUSE-REPORT.md} y la discusión de
 esta limitación en Sección~\ref{sec:amenazas-validez}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\textwidth]{figuras/fig-lighthouse-scores}
+\caption{Scores Lighthouse por categoría y perfil (media de 3 corridas, build de producción,
+2026-08-30). Generado por \texttt{scripts/gen-figuras.py} a partir de
+\texttt{docs/mediciones/perf/lighthouse/prod-runs/*.json}.}
+\label{fig:lighthouse}
+\end{figure}
 \newpage

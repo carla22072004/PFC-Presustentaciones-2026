@@ -2,12 +2,13 @@
 \label{sec:discusion}
 
 \subsection*{RQ1: ¿Puede automatizarse el flujo completo con trazabilidad verificable?}
-Sí, parcialmente verificado. Los 12 requisitos funcionales están implementados y el flujo completo
-(solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$ acta) se verificó
-manualmente end-to-end contra la topología de producción. Sin embargo, la trazabilidad
-\textbf{automatizada} solo cubre 5 de 12 requisitos con prueba dedicada (Sección~\ref{sec:requisitos}) ---
-la respuesta a RQ1 es ``sí, funcionalmente'' pero ``parcialmente, en términos de verificación
-automatizada continua''.
+Sí, parcialmente verificado. Los 15 requisitos funcionales están implementados y el flujo completo
+(solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$
+acta) se verificó manualmente end-to-end contra la topología de producción. La trazabilidad
+\textbf{automatizada} cubre 12 de 15 requisitos con prueba dedicada --- 8 Must (100\,\%) más
+RF-07, RF-13, RF-14 y RF-15 (Sección~\ref{sec:requisitos}) --- quedando RF-08, RF-09 y RF-10 (Could/Should)
+sin prueba automatizada. La respuesta a RQ1 es ``sí, funcionalmente'' y ``80\,\%, en términos de verificación
+automatizada''.
 
 \subsection*{RQ2: ¿Cuál es el efecto cuantificable de la caché sobre la latencia?}
 Respondida con evidencia estadística fuerte: reducción de latencia de 13.9$\times$ (109.62\,ms a
