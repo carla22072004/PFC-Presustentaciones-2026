@@ -77,7 +77,25 @@ class UsuarioServiceImplTest {
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
         Usuario guardado = usuarioService.crear(usuario);
         assertNotNull(guardado);
-        assertEquals(1L, guardado.getId());
+        assertEquals("jperez@uteq.edu.ec", guardado.getEmail());
+    }
+
+    @Test
+    void testCrearUsuarioIgnoraIdDelClienteParaEvitarSobrescribirUsuarioExistente() {
+        // Hallazgo real: guardar el "usuario" recibido tal cual, con save(usuario), es solo
+        // seguro si id=null. Si el id llega no-nulo (por ejemplo, 1L = el usuario ADMIN real),
+        // Spring Data JPA hace merge() en vez de persist() y SOBRESCRIBE esa fila existente en
+        // lugar de crear una nueva. crear() debe forzar id=null sin importar lo que traiga el
+        // objeto de entrada.
+        usuario.setId(1L); // simula un id de un usuario ya existente llegando en el body
+        when(passwordEncoder.encode(any())).thenReturn("hash");
+
+        org.mockito.ArgumentCaptor<Usuario> captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
+        when(usuarioRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+        usuarioService.crear(usuario);
+
+        assertNull(captor.getValue().getId(), "crear() debe forzar id=null antes de guardar, sin importar el id recibido");
     }
 
     @Test

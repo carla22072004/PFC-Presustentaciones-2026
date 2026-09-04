@@ -51,6 +51,14 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new IllegalArgumentException("Ya existe un usuario con el email: " + usuario.getEmail());
         }
 
+        // Hallazgo real de auditoría (2026-09-04): guardar el "usuario" recibido tal cual, con
+        // save(usuario), es seguro solo si el caller garantiza id=null. Si algún caller (actual
+        // o futuro) reenvía un id -- por bug de frontend o un body manipulado -- Spring Data JPA
+        // ve isNew()=false (id no nulo) y hace entityManager.merge() en vez de persist(): en vez
+        // de crear un usuario nuevo, SOBRESCRIBE silenciosamente la fila existente con ese id
+        // (incluida potencialmente la del propio ADMIN). "crear" nunca debe poder actualizar un
+        // registro existente, así que se fuerza id=null aquí mismo, sin depender del caller.
+        usuario.setId(null);
         auditoriaService.marcarActorActual();
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRolUsuario(resolverRol(usuario.getRol()));

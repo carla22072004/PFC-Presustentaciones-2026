@@ -4,9 +4,11 @@ import ec.edu.uteq.presustentaciones.dto.PerfilRequest;
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.security.dto.RegisterRequest;
 import ec.edu.uteq.presustentaciones.services.IUsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -103,11 +105,26 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Hallazgo real de auditoría (2026-09-04), mismo criterio que AuthController.register():
+     * recibir la entidad Usuario cruda permitía mass-assignment de "activo"/"rolUsuario"/"id" —
+     * este último es el más grave, porque un "id" de un usuario ya existente hacía que
+     * UsuarioServiceImpl.crear() sobrescribiera esa fila en vez de crear una nueva (ver su
+     * comentario). Se usa RegisterRequest (mismo DTO, mismos 5 campos que ya envía
+     * gestion-usuarios.component.ts) en vez de crear un DTO nuevo.
+     */
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Crear nuevo usuario (solo ADMIN)")
-    public ResponseEntity<?> crear(@RequestBody Usuario usuario) {
-        log.info("POST /api/usuarios - Creando usuario: {}", usuario.getEmail());
+    public ResponseEntity<?> crear(@Valid @RequestBody RegisterRequest request) {
+        log.info("POST /api/usuarios - Creando usuario: {}", request.getEmail());
+        Usuario usuario = new Usuario();
+        usuario.setNombre(request.getNombre());
+        usuario.setApellido(request.getApellido());
+        usuario.setEmail(request.getEmail());
+        usuario.setPassword(request.getPassword());
+        usuario.setRol(request.getRol());
+        usuario.setActivo(true);
         try {
             Usuario creado = usuarioService.crear(usuario);
             return ResponseEntity.status(HttpStatus.CREATED).body(ResponseWrapper.success(creado, "Usuario creado exitosamente"));
