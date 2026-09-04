@@ -1,0 +1,176 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-compass me-2"></i>Centro de Orientación y Titulación</h2>
+      <p class="page-subtitle">Explora ideas de tema de titulación y guarda las que te interesen</p>
+    </div>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="tab === 'explorar'" (click)="irA('explorar')">
+      <i class="bi bi-search"></i> Explorar temas
+    </button>
+    <button class="tab-btn" *ngIf="esEstudiante" [class.active]="tab === 'guardados'" (click)="irA('guardados')">
+      <i class="bi bi-bookmark-heart"></i> Mis temas guardados
+      <span class="pill" *ngIf="guardados.length">{{ guardados.length }}</span>
+    </button>
+  </div>
+
+  <!-- ══════════════ EXPLORAR ══════════════ -->
+  <ng-container *ngIf="tab === 'explorar'">
+    <div class="filtros-card">
+      <div class="filtro-item">
+        <label>Carrera</label>
+        <select [(ngModel)]="filtro.carreraId">
+          <option [ngValue]="undefined">Todas</option>
+          <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+      <div class="filtro-item">
+        <label>Línea de investigación</label>
+        <select [(ngModel)]="filtro.lineaInvestigacionId" (ngModelChange)="onLineaChange()">
+          <option [ngValue]="undefined">Todas</option>
+          <option *ngFor="let l of lineas" [ngValue]="l.id">{{ l.nombre }}</option>
+        </select>
+      </div>
+      <div class="filtro-item">
+        <label>Área temática</label>
+        <select [(ngModel)]="filtro.areaId" [disabled]="!filtro.lineaInvestigacionId">
+          <option [ngValue]="undefined">Todas</option>
+          <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+        </select>
+      </div>
+      <div class="filtro-item">
+        <label>Nivel de dificultad</label>
+        <select [(ngModel)]="filtro.nivelDificultad">
+          <option [ngValue]="undefined">Cualquiera</option>
+          <option *ngFor="let n of niveles" [ngValue]="n">{{ n | titlecase }}</option>
+        </select>
+      </div>
+      <div class="filtro-acciones">
+        <button class="btn-primary" (click)="explorar()" [disabled]="cargando">
+          <i class="bi bi-funnel"></i> Aplicar
+        </button>
+        <button class="btn-ghost" (click)="limpiarFiltros()" [disabled]="cargando">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="cargando">
+      <div class="spinner"></div><p>Cargando temas propuestos...</p>
+    </div>
+
+    <div class="error-state" *ngIf="error && !cargando">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ error }}</p>
+      <button class="btn-primary" (click)="explorar()">Reintentar</button>
+    </div>
+
+    <div class="grid" *ngIf="!cargando && !error">
+      <article class="tema-card" *ngFor="let t of temas; trackBy: trackById" (click)="verDetalle(t)">
+        <div class="tema-card-head">
+          <span class="chip" [ngClass]="nivelClase(t.nivelDificultad)" *ngIf="t.nivelDificultad">
+            {{ t.nivelDificultad | titlecase }}
+          </span>
+          <button class="fav-btn" *ngIf="esEstudiante"
+                  [class.on]="t.guardado"
+                  [disabled]="accionEnCurso === t.id"
+                  (click)="t.guardado ? quitar(t, $event) : guardar(t, $event)"
+                  [title]="t.guardado ? 'Quitar de mis temas' : 'Guardar tema'">
+            <i class="bi" [ngClass]="t.guardado ? 'bi-bookmark-heart-fill' : 'bi-bookmark-plus'"></i>
+          </button>
+        </div>
+        <h3 class="tema-titulo">{{ t.titulo }}</h3>
+        <p class="tema-problema" *ngIf="t.problema">{{ t.problema }}</p>
+        <div class="tema-meta">
+          <span *ngIf="t.lineaInvestigacionNombre"><i class="bi bi-diagram-3"></i> {{ t.lineaInvestigacionNombre }}</span>
+          <span *ngIf="t.areaNombre"><i class="bi bi-tag"></i> {{ t.areaNombre }}</span>
+        </div>
+      </article>
+
+      <div class="empty-state" *ngIf="temas.length === 0">
+        <i class="bi bi-inboxes"></i>
+        <p>No hay temas que coincidan con los filtros seleccionados.</p>
+        <small>Prueba a quitar algún filtro o cambiar la línea de investigación.</small>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ GUARDADOS ══════════════ -->
+  <ng-container *ngIf="tab === 'guardados' && esEstudiante">
+    <div class="loading-state" *ngIf="cargandoGuardados">
+      <div class="spinner"></div><p>Cargando tus temas guardados...</p>
+    </div>
+
+    <div class="grid" *ngIf="!cargandoGuardados">
+      <article class="tema-card" *ngFor="let t of guardados; trackBy: trackById" (click)="verDetalle(t)">
+        <div class="tema-card-head">
+          <span class="chip" [ngClass]="nivelClase(t.nivelDificultad)" *ngIf="t.nivelDificultad">
+            {{ t.nivelDificultad | titlecase }}
+          </span>
+          <button class="fav-btn on" [disabled]="accionEnCurso === t.id"
+                  (click)="quitar(t, $event)" title="Quitar de mis temas">
+            <i class="bi bi-bookmark-heart-fill"></i>
+          </button>
+        </div>
+        <h3 class="tema-titulo">{{ t.titulo }}</h3>
+        <p class="tema-problema" *ngIf="t.problema">{{ t.problema }}</p>
+        <div class="tema-meta">
+          <span *ngIf="t.lineaInvestigacionNombre"><i class="bi bi-diagram-3"></i> {{ t.lineaInvestigacionNombre }}</span>
+          <span *ngIf="t.areaNombre"><i class="bi bi-tag"></i> {{ t.areaNombre }}</span>
+        </div>
+      </article>
+
+      <div class="empty-state" *ngIf="guardados.length === 0">
+        <i class="bi bi-bookmark-x"></i>
+        <p>Aún no has guardado ningún tema.</p>
+        <small>Explora el catálogo y toca el marcador para guardarlo aquí.</small>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ DETALLE (modal) ══════════════ -->
+  <div class="modal-backdrop" *ngIf="seleccionado" (click)="cerrarDetalle()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="cerrarDetalle()"><i class="bi bi-x-lg"></i></button>
+      <span class="chip" [ngClass]="nivelClase(seleccionado.nivelDificultad)" *ngIf="seleccionado.nivelDificultad">
+        {{ seleccionado.nivelDificultad | titlecase }}
+      </span>
+      <h2>{{ seleccionado.titulo }}</h2>
+      <div class="tema-meta modal-meta">
+        <span *ngIf="seleccionado.carreraNombre"><i class="bi bi-mortarboard"></i> {{ seleccionado.carreraNombre }}</span>
+        <span *ngIf="seleccionado.lineaInvestigacionNombre"><i class="bi bi-diagram-3"></i> {{ seleccionado.lineaInvestigacionNombre }}</span>
+        <span *ngIf="seleccionado.areaNombre"><i class="bi bi-tag"></i> {{ seleccionado.areaNombre }}</span>
+      </div>
+
+      <section *ngIf="seleccionado.problema">
+        <h4><i class="bi bi-question-circle"></i> Problema</h4><p>{{ seleccionado.problema }}</p>
+      </section>
+      <section *ngIf="seleccionado.objetivoGeneral">
+        <h4><i class="bi bi-bullseye"></i> Objetivo general</h4><p>{{ seleccionado.objetivoGeneral }}</p>
+      </section>
+      <section *ngIf="seleccionado.objetivosEspecificos">
+        <h4><i class="bi bi-list-check"></i> Objetivos específicos</h4><p>{{ seleccionado.objetivosEspecificos }}</p>
+      </section>
+      <section *ngIf="seleccionado.justificacion">
+        <h4><i class="bi bi-lightbulb"></i> Justificación</h4><p>{{ seleccionado.justificacion }}</p>
+      </section>
+      <section *ngIf="seleccionado.beneficiarios">
+        <h4><i class="bi bi-people"></i> Beneficiarios</h4><p>{{ seleccionado.beneficiarios }}</p>
+      </section>
+
+      <div class="modal-acciones" *ngIf="esEstudiante">
+        <button class="btn-primary" *ngIf="!seleccionado.guardado"
+                [disabled]="accionEnCurso === seleccionado.id"
+                (click)="guardar(seleccionado)">
+          <i class="bi bi-bookmark-plus"></i> Guardar tema
+        </button>
+        <button class="btn-ghost" *ngIf="seleccionado.guardado"
+                [disabled]="accionEnCurso === seleccionado.id"
+                (click)="quitar(seleccionado)">
+          <i class="bi bi-bookmark-x"></i> Quitar de mis temas
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

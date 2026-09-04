@@ -50,6 +50,12 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/notas/mis-notas.component').then(m => m.MisNotasComponent),
                 canActivate: [authGuard]
             },
+            // ── Centro de Orientación y Titulación ──────────────────────────
+            {
+                path: 'orientacion/centro',
+                loadComponent: () => import('./components/orientacion/centro-orientacion.component').then(m => m.CentroOrientacionComponent),
+                canActivate: [authGuard]
+            },
             {
                 path: 'horario',
                 loadComponent: () => import('./components/horario/mi-horario.component').then(m => m.MiHorarioComponent),
