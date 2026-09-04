@@ -387,4 +387,27 @@ class AuthControllerIntegrationTest {
 
         verify(usuarioService, never()).crear(any());
     }
+
+    // ── POST /api/v1/usuarios (UsuarioController.crear): mismo hallazgo que /register ──────
+
+    @Test
+    void testCrearUsuarioIgnoraIdDelClienteEnviadoEnElBody() throws Exception {
+        // Mismo patrón que testRegisterIgnoraCamposSensiblesEnviadosPorElCliente: "id" no existe
+        // en RegisterRequest, así que Jackson lo descarta -- nunca llega a la entidad Usuario.
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza2@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\",\"id\":1,\"activo\":false}";
+
+        org.mockito.ArgumentCaptor<Usuario> captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
+        when(usuarioService.crear(captor.capture())).thenReturn(new Usuario());
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        assertNull(captor.getValue().getId());
+        assertEquals(Boolean.TRUE, captor.getValue().getActivo());
+    }
 }
