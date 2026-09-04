@@ -54,7 +54,8 @@ export class LoginComponent implements OnInit {
                         const errMsg = err.error?.message || 'Límite de intentos excedido. Por favor, intente de nuevo en un minuto.';
                         this.notification.error(errMsg, 'Límite Excedido');
                     } else if (err.status === 403) {
-                        this.notification.error('El servidor bloqueó la petición (CORS)', 'Error 403');
+                        const errMsg = err.error?.message || 'Tu cuenta se encuentra inactiva o no tienes permisos de acceso.';
+                        this.notification.error(errMsg, 'Acceso Denegado (403)');
                     } else if (err.status === 401) {
                         this.notification.error('Correo o contraseña incorrectos.', 'Acceso Denegado');
                     } else {

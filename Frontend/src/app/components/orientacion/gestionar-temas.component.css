@@ -70,3 +70,6 @@ body.dark-mode .tem-form-grupo select,
 body.dark-mode .tem-form-grupo textarea { background: #0f172a; border-color: #334155; color: #e2e8f0; }
 body.dark-mode .tem-form-grupo select:disabled { background: #161b22; color: #6e7681; }
 body.dark-mode .tem-btn-cancelar { background: #21262d; color: #c9d1d9; }
+body.dark-mode .tem-btn-refresh { background: #1e293b; color: #818cf8; border: 1px solid #334155; }
+body.dark-mode .tem-icon-btn:hover { background: #334155; }
+body.dark-mode .tem-icon-danger:hover { color: #f87171; background: #450a0a; }
