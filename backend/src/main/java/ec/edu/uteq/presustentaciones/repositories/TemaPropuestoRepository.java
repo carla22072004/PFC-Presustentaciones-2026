@@ -19,6 +19,12 @@ public interface TemaPropuestoRepository extends JpaRepository<TemaPropuesto, In
      * Búsqueda flexible para el explorador de temas propuestos: cada filtro es opcional
      * (null = no filtra). Se hace un solo query con LEFT JOIN FETCH de los catálogos para
      * poblar los nombres en el DTO sin incurrir en N+1.
+     *
+     * El CAST(:nivel AS string) es necesario: sin él, cuando nivel es null el driver de
+     * Postgres no tiene pista de tipo para el parámetro dentro de LOWER(?) y lo envía como
+     * bytea sin tipo, y "function lower(bytea) does not exist" -- hallazgo real al probar
+     * el endpoint contra Postgres de verdad (los tests con repositorio mockeado nunca
+     * ejecutan el SQL real y no lo detectan).
      */
     @Query("""
             SELECT t FROM TemaPropuesto t
@@ -28,7 +34,7 @@ public interface TemaPropuestoRepository extends JpaRepository<TemaPropuesto, In
             WHERE (:carreraId IS NULL OR c.id = :carreraId)
               AND (:lineaId IS NULL OR l.id = :lineaId)
               AND (:areaId IS NULL OR a.id = :areaId)
-              AND (:nivel IS NULL OR LOWER(t.nivelDificultad) = LOWER(:nivel))
+              AND (:nivel IS NULL OR LOWER(t.nivelDificultad) = LOWER(CAST(:nivel AS string)))
             ORDER BY t.titulo ASC
             """)
     List<TemaPropuesto> buscarConFiltros(@Param("carreraId") Integer carreraId,
