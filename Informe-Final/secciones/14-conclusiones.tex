@@ -3,23 +3,38 @@
 
 Este trabajo presentó el diseño, implementación y evaluación empírica del Sistema de Gestión de
 Pre-Sustentaciones UTEQ, siguiendo Design Science Research \cite{peffers2007} de forma instanciada y
-verificable. Los 12 requisitos funcionales están implementados y el flujo académico completo se verificó
-funcionando end-to-end contra una topología de producción real. La evaluación empírica combina
+verificable. Los 15 requisitos funcionales están implementados (12 verificados con prueba automatizada
+real) y el flujo académico completo se verificó funcionando end-to-end contra una topología de
+producción real. La evaluación empírica combina
 estadística descriptiva e inferencial genuina --- el hallazgo más sólido es la reducción de latencia de
 13.9$\times$ por efecto de caché Redis, con significancia estadística fuerte ($p < 10^{-10}$) y tamaño
 de efecto máximo --- y auditoría de seguridad multi-herramienta que confirma ausencia de inyección SQL en
 el código propio; se corrigió la única vulnerabilidad de dependencias que afectaba código servido al
 navegador (\texttt{@angular/core}, detectada por ZAP), y quedan abiertas 14 vulnerabilidades en
-herramientas de build que no se envían a producción.
+herramientas de build que no se envían a producción. A esa auditoría automatizada se sumó una revisión
+manual dirigida del modelo de autorización que encontró y cerró 6 fallos reales de control de acceso
+(IDOR de lectura y de escritura, un endpoint de eliminación sin permiso administrativo, y
+mass-assignment en la creación de usuarios) que las herramientas automatizadas no detectan por no
+evaluar lógica de negocio por recurso (Sección~\ref{sec:seguridad-corregida}).
 
 La contribución más distintiva de este informe no es técnica sino metodológica: el proceso de
 elaboración de este mismo proyecto incluyó la detección real de datos académicos fabricados en fases
 anteriores (usabilidad, rendimiento web, evidencia de trazabilidad, integridad de configuración de
 despliegue, custodia de consentimientos informados) y su corrección sistemática, documentada de forma
 trazable en \texttt{docs/mediciones/DATA-PROVENANCE.md} y en la bitácora de cada fase del proyecto. Esa
-corrección no fue cosmética: implicó reportar una cobertura de código de 38.88\,\% en vez de un
+corrección no fue cosmética: implicó reportar una cobertura de código de 47.5\,\% de líneas en vez de un
 ``$>$60\,\%'' previamente afirmado sin evidencia, y declarar la usabilidad como ``sin datos'' en vez de
 mantener un 91.25/100 fabricado.
+
+Esa misma lógica de corrección continua se aplicó también a la evaluación del propio proyecto: una
+revisión de checkpoint durante el desarrollo calificó el estado del proyecto en ese momento con 6.53
+sobre 10. En vez de tratar esa cifra como un resultado a superar en el reporte final, se documenta aquí
+como el punto de partida real, y las correcciones descritas en este informe (el cierre de los 6 fallos de
+autorización de la Sección~\ref{sec:seguridad-corregida}, la sincronización de las secuencias de
+PostgreSQL, los índices en columnas de alto tráfico, y el crecimiento de 109 a 228 pruebas automatizadas
+con la cobertura subiendo de 38.88\,\% a 47.5\,\% de líneas) como las acciones concretas y verificables
+tomadas después de esa evaluación. Este informe no reporta ni infiere una nota final --- eso corresponde
+a una evaluación posterior por el docente-director, no a una autoevaluación del propio equipo.
 
 Las brechas que quedan (cobertura de pruebas incompleta, ausencia de datos SUS reales, despliegue público
 pendiente, dependencias vulnerables sin corregir) se declaran explícitamente en la

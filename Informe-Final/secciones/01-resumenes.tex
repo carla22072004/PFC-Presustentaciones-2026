@@ -19,8 +19,11 @@ reales; un bug de migración de base de datos que impedía el despliegue desde c
 corregido. Los resultados muestran un sistema funcional con brechas honestamente documentadas --- los 8
 requisitos funcionales de prioridad Must tienen prueba automatizada dedicada (100\,\%), pero 3 de los 15
 requisitos totales (prioridad Could/Should: RF-08, RF-09, RF-10) todavía no la tienen (80\,\% general), y
-la cobertura de código alcanza 38.88\,\% de líneas --- que se declaran explícitamente como trabajo futuro
-en vez de maquillarse. Este informe
+la cobertura de código alcanza 47.5\,\% de líneas (228 pruebas automatizadas) --- que se declaran
+explícitamente como trabajo futuro en vez de maquillarse. Adicionalmente a la auditoría automatizada de
+seguridad, una revisión manual dirigida del modelo de autorización encontró y corrigió 6 fallos reales de
+control de acceso (IDOR y mass-assignment) invisibles a las herramientas de análisis estático/dinámico.
+Este informe
 documenta tanto los resultados positivos como las limitaciones reales del sistema y del proceso de
 desarrollo, priorizando la integridad de la evidencia sobre la completitud aparente.
 
@@ -55,8 +58,10 @@ replaced with real measurements; a database migration bug that prevented deploym
 was identified and fixed. Results show a functional system with honestly documented gaps --- all 8
 Must-priority functional requirements have a dedicated automated test (100\,\%), but 3 of the 15 total
 requirements (Could/Should priority: RF-08, RF-09, RF-10) still lack one (80\,\% overall), and code
-coverage reaches 38.88\,\% of lines --- which are
-explicitly declared as future work rather than papered over. This report documents both the positive
+coverage reaches 47.5\,\% of lines (228 automated tests) --- which are
+explicitly declared as future work rather than papered over. Beyond automated security tooling, a
+targeted manual review of the authorization model found and fixed 6 real access-control flaws (IDOR and
+mass-assignment) invisible to static/dynamic analysis tools. This report documents both the positive
 results and the real limitations of the system and the development process, prioritizing evidence
 integrity over apparent completeness.
 

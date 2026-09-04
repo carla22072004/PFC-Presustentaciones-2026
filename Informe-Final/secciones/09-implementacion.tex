@@ -30,9 +30,16 @@ La autenticación usa JWT con los 7 claims de RFC~7519 (\texttt{jti}, \texttt{is
 almacenados en Redis, rate limiting en \texttt{/api/v1/auth/login} (6 intentos/60s $\rightarrow$
 HTTP~429), y cabeceras de seguridad HTTP (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
 configuradas tanto en Spring Security como en nginx. El control de acceso usa
-\texttt{@PreAuthorize} por rol (ADMIN, DOCENTE, COORDINADOR, ESTUDIANTE). Los procedimientos almacenados
-y las consultas JPA son parametrizados; el análisis estático con find-sec-bugs confirmó 0 hallazgos de la
-regla \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE} (Sección~\ref{sec:evaluacion}).
+\texttt{@PreAuthorize} con un sistema de permisos dinámico (\texttt{presus.permisos}/\texttt{rol\_permisos},
+editable sin recompilar) además de los cuatro roles fijos (ADMIN, DOCENTE, COORDINADOR, ESTUDIANTE). Los
+procedimientos almacenados y las consultas JPA son parametrizados; el análisis estático con find-sec-bugs
+confirmó 0 hallazgos de la regla \texttt{SQL\_NONCONSTANT\_STRING\_PASSED\_TO\_EXECUTE}
+(Sección~\ref{sec:evaluacion}). Más allá del análisis automatizado, una revisión manual dirigida del
+control de acceso \emph{por recurso} (¿puede este usuario ver/modificar \emph{este} registro en
+particular, no solo llamar a este endpoint?) encontró y corrigió 6 fallos reales de autorización --- IDOR
+de lectura y de escritura, un endpoint administrativo sin el permiso correspondiente, y mass-assignment
+en la creación de usuarios --- detallados con su verificación en vivo en
+Sección~\ref{sec:seguridad-corregida}.
 
 \subsection{Integración de API externa y caché}
 
@@ -57,7 +64,10 @@ rompía \texttt{npm ci} en un entorno Linux limpio, y la habilitación del detal
 
 Se sembró un usuario de demostración (\texttt{demo@uteq.edu.ec}, rol Coordinador) además del
 administrador, para que un evaluador externo pueda explorar el flujo académico completo sin necesidad de
-registrarse --- credenciales publicadas en \texttt{README.md}.
+registrarse. Las credenciales de ambos usuarios se entregan al tribunal junto con el enlace de despliegue
+en el momento de la evaluación; se retiraron explícitamente de \texttt{README.md} durante este mismo
+proceso de correcciones para no dejarlas expuestas en texto plano en el historial público del
+repositorio.
 
 \subsection{Capturas reales del sistema}
 
@@ -87,5 +97,13 @@ commit inicial de la estructura del proyecto.
 \caption{Módulo ``Mis Trámites'' --- vista de seguimiento del estado de la solicitud por parte del
 estudiante (fuente: \texttt{Frontend/public/img/MisTramites.png}).}
 \label{fig:cap-tramites}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.70\textwidth]{figuras/cap-mi-horario}
+\caption{Módulo ``Mi Horario'' --- vista del cronograma de pre-sustentación asignado al estudiante
+(fuente: \texttt{Frontend/public/img/MiHorario.png}).}
+\label{fig:cap-horario}
 \end{figure}
 \newpage

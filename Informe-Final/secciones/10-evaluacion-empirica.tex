@@ -57,6 +57,18 @@ por \texttt{scripts/gen-figuras.py} a partir de \texttt{k6/cache-cold-samples.tx
 \label{fig:cache-boxplot}
 \end{figure}
 
+\subsubsection{Índices en columnas de clave foránea de alto tráfico}
+Una auditoría encontró 62 columnas de clave foránea sin índice de soporte en el esquema real. En vez de
+crear los 62 automáticamente, se midió con \texttt{EXPLAIN} contra la base real cuáles participan en
+consultas de endpoints principales (\texttt{solicitud.estudiante\_id} --- ``mis solicitudes'' de cada
+estudiante; \texttt{evaluaciones\_criterio.solicitud\_id}/\texttt{jurado\_id} --- revisión de
+evaluaciones, la tabla más grande de las medidas con 92,409 filas; \texttt{tutoria\_fases.tutor\_id} ---
+``mis tutorías''; \texttt{cronograma.solicitud\_id}; \texttt{historial\_estados\_solicitud.solicitud\_id}).
+Las 6 confirmaron \texttt{Seq Scan} completo antes del índice; después, \texttt{Index Scan}, con el costo
+estimado de Postgres bajando entre 88$\times$ y 207$\times$ según la columna. Una séptima columna
+candidata (\texttt{historial\_cronograma.cronograma\_id}, solo 3,630 filas) se descartó explícitamente
+por bajo tráfico real, para no agregar índices sin justificación medida.
+
 \subsection{Seguridad}
 
 \begin{itemize}[nosep]
@@ -81,6 +93,55 @@ por \texttt{scripts/gen-figuras.py} a partir de \texttt{k6/cache-cold-samples.tx
     (Sección~\ref{sec:trabajo-futuro}).
 \end{itemize}
 
+\subsubsection{Corrección de vulnerabilidades de autorización (IDOR y mass-assignment)}
+\label{sec:seguridad-corregida}
+
+Adicionalmente a la auditoría de herramientas automatizadas (find-sec-bugs, ZAP), una revisión manual
+dirigida de los controladores REST encontró y corrigió 6 fallos reales de control de acceso, cada uno
+verificado end-to-end contra el backend real en Docker con los usuarios de demostración reales (ADMIN,
+COORDINADOR, DOCENTE, ESTUDIANTE) y cubierto con pruebas automatizadas nuevas:
+
+\begin{enumerate}[nosep]
+    \item \textbf{IDOR de lectura en Evaluaciones/Anteproyectos:} \texttt{EvaluacionController},
+    \texttt{EvaluacionJuradoController}, \texttt{RubricaEvaluacionController} y
+    \texttt{AnteproyectoController} exponían notas, observaciones de tribunal y el PDF del anteproyecto
+    de cualquier estudiante a cualquier usuario autenticado que cambiara el id en la URL --- sin ninguna
+    verificación de pertenencia. Corregido con un servicio compartido
+    (\texttt{SolicitudAccessService}) que exige ser el estudiante dueño, un jurado o tutor asignado, o
+    tener el permiso administrativo correspondiente; 403 verificado en vivo.
+    \item \textbf{IDOR de escritura en registro de notas de jurado:} \texttt{EvaluacionJuradoService} y
+    \texttt{RubricaEvaluacionService} permitían que un docente-jurado registrara una nota \emph{a nombre
+    de otro} jurado cambiando el \texttt{juradoId}; ahora se exige que el docente autenticado sea
+    realmente ese jurado (o tenga permiso administrativo).
+    \item \textbf{IDOR en perfil de docentes:} \texttt{GET /api/v1/docentes/usuario/\{usuarioId\}}
+    permitía consultar el perfil de \emph{cualquier} docente sin verificar que correspondiera al usuario
+    autenticado; ahora exige ser el propio docente o tener rol administrativo.
+    \item \textbf{Eliminación de actas sin permiso administrativo:} \texttt{DELETE
+    /api/v1/actas/\{id\}} reutilizaba por error el control de acceso de \emph{lectura} (que permite ver
+    el acta al estudiante dueño, al jurado o al tutor) para autorizar también su \emph{borrado
+    permanente} --- el hallazgo de mayor severidad de este bloque, porque un estudiante podía eliminar
+    el acta oficial de su propia defensa. Corregido exigiendo el permiso administrativo
+    \texttt{ACTAS\_GESTIONAR}, igual que el resto de acciones administrativas del mismo controlador.
+    \item \textbf{Mass-assignment en registro y creación de usuarios:} \texttt{AuthController.register()}
+    y \texttt{UsuarioController.crear()} recibían la entidad \texttt{Usuario} completa del cliente; un
+    \texttt{id} de un usuario ya existente en el body hacía que Spring Data JPA ejecutara
+    \texttt{merge()} en vez de \texttt{persist()}, \textbf{sobrescribiendo silenciosamente esa fila}
+    (potencialmente la del propio ADMIN) en vez de crear un usuario nuevo. Corregido reutilizando un
+    DTO de registro con solo los campos permitidos y forzando \texttt{id = null} antes de guardar.
+    \item \textbf{Secuencias de PostgreSQL desincronizadas:} 8 tablas de catálogo (estados de solicitud,
+    de proceso, de cronograma, jornadas, tipos de evaluador/mensaje, roles de jurado, resultados de
+    evaluación) tenían su secuencia de autoincremento en el valor inicial mientras ya existían filas con
+    id mayor --- el primer alta real por código (no por semilla SQL) habría fallado con una violación de
+    clave duplicada. Corregido con una migración Flyway que sincroniza cada secuencia a
+    \texttt{MAX(id)+1}.
+\end{enumerate}
+
+Ninguno de estos seis hallazgos estaba entre los reportados por find-sec-bugs u OWASP ZAP --- ambas
+herramientas automatizadas no detectan fallos de \emph{lógica} de autorización (¿este usuario debería
+poder ver/modificar \emph{este} recurso en particular?), solo patrones sintácticos conocidos. Esto es en
+sí mismo un hallazgo metodológico: el análisis estático y dinámico automatizado, aunque necesario, no
+sustituye una revisión manual dirigida del modelo de autorización por recurso.
+
 \subsection{Usabilidad}
 
 \textbf{Sin datos reales.} El instrumento SUS \cite{brooke1996} está listo
@@ -91,19 +152,25 @@ porque no existe ninguna medición real que reportar.
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 109 pruebas automatizadas reales: 35.10\,\% de instrucciones (5,699/16,237), 38.88\,\% de
-líneas (1,173/3,017), 23.06\,\% de ramas (255/1,106) --- por debajo del umbral RNF-04 de 60\,\%. El
-porcentaje había bajado respecto a una medición intermedia del 17-08 (23.33\,\%/28.45\,\%) porque se
-agregó código de producción real sin tests proporcionales en ese periodo; se recuperó y superó agregando
-48 tests reales nuevos (2026-08-29) para 5 clases de servicio con lógica de negocio real y 0\,\% de
-cobertura previa, incluyendo las tres que invocan procedimientos almacenados sin prueba dedicada
-(\texttt{sp\_calcular\_promedio\_evaluacion}, \texttt{sp\_generar\_reporte\_defensas},
-\texttt{sp\_firmar\_acta\_digital} vía \texttt{ActaServiceImpl.generarActa()} --- ver
-Sección~\ref{sec:arquitectura}). El salto adicional del 29-08 al 31-08 (37.06\,\%$\to$38.88\,\%
-líneas) no viene de tests nuevos --- el número de tests no cambió --- sino de que
-\texttt{PreSustentacionesApplicationTests} dejó de ser un \texttt{assertTrue(true)} y ahora levanta el
-contexto real de Spring, ejecutando código de inicialización de beans que antes nunca corría bajo test
-(\texttt{docs/mediciones/jacoco/COVERAGE.md}).
+JaCoCo sobre 228 pruebas automatizadas reales (2026-09-04): 43.3\,\% de instrucciones (8,493/19,614),
+47.5\,\% de líneas (1,822/3,839), 34.9\,\% de ramas (506/1,448) --- por debajo del umbral RNF-04 de
+60\,\%, pero con progreso real y verificable respecto a la medición anterior de este mismo informe
+(109 tests; 35.10\,\%/38.88\,\%/23.06\,\%): +119 tests, y las tres métricas suben (+8.2\,pp
+instrucciones, +8.6\,pp líneas, +11.8\,pp ramas), no solo el numerador --- el denominador también creció
+porque se agregó código de producción real en el mismo periodo (Sección~\ref{sec:seguridad-corregida}).
+El salto anterior, del 29-08 al 31-08 (37.06\,\%$\to$38.88\,\% líneas), no vino de tests nuevos --- el
+número de tests no cambió --- sino de que \texttt{PreSustentacionesApplicationTests} dejó de ser un
+\texttt{assertTrue(true)} y empezó a levantar el contexto real de Spring. El salto más reciente sí viene
+de tests nuevos reales: entre otros, 20 tests para el módulo de autorización creado en la corrección de
+IDOR (\texttt{SolicitudAccessServiceTest}, 8 tests, y casos permitido/IDOR/admin en los 4 servicios
+afectados), 6 para el mass-assignment de registro de usuarios, 7 para el control de acceso de docentes, y
+12 para dos controladores que tenían servicio probado pero 0\,\% de cobertura propia
+(\texttt{RecursoTitulacionController}, \texttt{EvaluacionJuradoController}). Además, el proyecto ya
+cuenta con dos clases de prueba de integración real contra PostgreSQL (\texttt{@SpringBootTest} +
+\texttt{@AutoConfigureTestDatabase(replace = NONE)}, sin mocking del repositorio):
+\texttt{PreSustentacionesApplicationTests} y \texttt{TemaPropuestoRepositoryIntegrationTest} (8 tests) ---
+esta última fue, de hecho, la que detectó un bug real de tipos SQL invisible a las pruebas unitarias
+mockeadas (Sección~\ref{sec:seguridad-corregida}).
 
 \subsection{Calidad web (Lighthouse)}
 

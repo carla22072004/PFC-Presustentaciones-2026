@@ -10,8 +10,10 @@ maquillarlo con contenido de relleno:
     una acción del equipo humano que no se completó a la fecha de este informe.
     \item \textbf{Cobertura de pruebas automatizadas:} los 8 requisitos funcionales de prioridad Must
     tienen prueba automatizada dedicada (100\,\%, ver Sección~\ref{sec:requisitos}); quedan 3 de
-    prioridad Could/Should (RF-08, RF-09, RF-10) sin cubrir. Cobertura general de 38.88\,\% de líneas
-    (JaCoCo, 2026-08-31, 109 tests), contra un objetivo de 60\,\%.
+    prioridad Could/Should (RF-08, RF-09, RF-10) sin cubrir. Cobertura general de 47.5\,\% de líneas
+    (JaCoCo, 2026-09-04, 228 tests), contra un objetivo de 60\,\% --- subió 8.6\,pp desde la medición
+    anterior de este mismo informe (38.88\,\%, 109 tests) al cerrar la vulnerabilidad de autorización
+    de la Sección~\ref{sec:seguridad-corregida} con pruebas reales, pero sigue sin alcanzar el umbral.
     \item \textbf{Aplicación real del instrumento SUS:} el cuestionario está listo; aplicarlo a un grupo
     real de al menos 5--10 usuarios (estudiantes, docentes, coordinadores) es la tarea pendiente más
     directa y de menor esfuerzo entre las listadas aquí.
@@ -27,10 +29,14 @@ maquillarlo con contenido de relleno:
     cada redeploy sin un volumen persistente o almacenamiento de objetos externo.
     \item \textbf{Firma real del docente-director sobre el SRS v1.0.0:} la página de aprobación está
     lista; la firma en sí es una acción pendiente del docente, no del equipo de desarrollo.
-    \item \textbf{Rediseño de la rúbrica de cobertura:} priorizar pruebas de integración reales
-    (\texttt{@SpringBootTest} con base de datos real) sobre pruebas unitarias adicionales, dado que
-    actualmente el proyecto no tiene ninguna prueba de integración verdadera (solo unitarias y slice
-    tests \texttt{@WebMvcTest}).
+    \item \textbf{Ampliar las pruebas de integración reales:} el proyecto ya tiene dos clases de prueba
+    de integración verdadera contra PostgreSQL (\texttt{@SpringBootTest} +
+    \texttt{@AutoConfigureTestDatabase(replace = NONE)}, sin mocking del repositorio):
+    \texttt{PreSustentacionesApplicationTests} y \texttt{TemaPropuestoRepositoryIntegrationTest} --- esta
+    última fue precisamente la que detectó un bug real de inferencia de tipos SQL invisible a las
+    pruebas unitarias mockeadas (Sección~\ref{sec:seguridad-corregida}), demostrando el valor del
+    patrón. Sigue pendiente extenderlo a más repositorios/servicios con lógica de negocio compleja, en
+    vez de depender solo de pruebas unitarias y \textit{slice tests} \texttt{@WebMvcTest} para ellos.
 \end{enumerate}
 
 Esta lista se prioriza deliberadamente: los ítems 1--3 son alcanzables en días con el equipo humano
