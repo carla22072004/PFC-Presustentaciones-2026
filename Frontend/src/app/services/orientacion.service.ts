@@ -49,6 +49,13 @@ export interface RecursoTitulacion {
   carreraNombre?: string;
 }
 
+export interface GuardarRecursoRequest {
+  titulo: string;
+  categoria: string;
+  urlArchivo: string;
+  carreraId?: number | null;
+}
+
 export interface PasoProgreso {
   clave: string;
   orden: number;
@@ -121,6 +128,19 @@ export class OrientacionService {
     let p = new HttpParams();
     if (carreraId != null) { p = p.set('carreraId', carreraId); }
     return this.http.get<RecursoTitulacion[]>('/api/orientacion/recursos', { params: p });
+  }
+
+  // ── Gestión de recursos (permiso ORIENTACION_CATALOGO_GESTIONAR) ──────
+  crearRecurso(req: GuardarRecursoRequest): Observable<RecursoTitulacion> {
+    return this.http.post<RecursoTitulacion>('/api/orientacion/recursos', req);
+  }
+
+  actualizarRecurso(id: number, req: GuardarRecursoRequest): Observable<RecursoTitulacion> {
+    return this.http.put<RecursoTitulacion>(`/api/orientacion/recursos/${id}`, req);
+  }
+
+  eliminarRecurso(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/orientacion/recursos/${id}`);
   }
 
   // ── Progreso / ruta de titulación (solo estudiante) ───────────────────

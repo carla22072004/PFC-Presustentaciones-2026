@@ -62,6 +62,11 @@ export const routes: Routes = [
                 canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
             },
             {
+                path: 'orientacion/gestionar-recursos',
+                loadComponent: () => import('./components/orientacion/gestionar-recursos.component').then(m => m.GestionarRecursosComponent),
+                canActivate: [authGuard, roleGuard(['ADMIN', 'COORDINADOR'])]
+            },
+            {
                 path: 'horario',
                 loadComponent: () => import('./components/horario/mi-horario.component').then(m => m.MiHorarioComponent),
                 canActivate: [authGuard]

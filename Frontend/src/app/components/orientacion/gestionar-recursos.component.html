@@ -1,0 +1,103 @@
+<div class="rec-wrapper">
+    <div class="rec-header">
+        <div>
+            <h2 class="rec-title"><i class="bi bi-folder2-open me-2"></i>Recursos de Titulación</h2>
+            <p class="rec-subtitle">Guías, plantillas y reglamentos que ven los estudiantes en el Centro de Orientación</p>
+        </div>
+        <div class="rec-actions">
+            <button class="rec-btn rec-btn-refresh" (click)="cargar()" title="Recargar"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+
+    <div class="rec-loading" *ngIf="cargando"><div class="rec-spinner"></div><p>Cargando recursos...</p></div>
+
+    <div class="rec-error" *ngIf="error && !cargando">
+        <i class="bi bi-exclamation-triangle"></i>
+        <p>{{ error }}</p>
+        <button class="rec-btn rec-btn-nuevo" (click)="cargar()">Reintentar</button>
+    </div>
+
+    <div class="rec-panel" *ngIf="!cargando && !error">
+        <div class="rec-panel-actions">
+            <select class="rec-filtro" [(ngModel)]="filtroCarreraId" (ngModelChange)="cargar()">
+                <option [ngValue]="undefined">Todas las carreras (generales + por carrera)</option>
+                <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+            </select>
+            <button class="rec-btn rec-btn-nuevo" (click)="abrirNuevo()"><i class="bi bi-plus-lg me-1"></i>Nuevo Recurso</button>
+        </div>
+
+        <table class="rec-tabla">
+            <thead><tr><th>Título</th><th>Categoría</th><th>Carrera</th><th>Enlace</th><th class="rec-text-center">Acciones</th></tr></thead>
+            <tbody>
+                <tr *ngFor="let r of recursos; trackBy: trackById">
+                    <td>{{ r.titulo }}</td>
+                    <td><span class="rec-badge">{{ r.categoria }}</span></td>
+                    <td>
+                        <span *ngIf="r.carreraNombre">{{ r.carreraNombre }}</span>
+                        <span *ngIf="!r.carreraNombre" class="rec-general">General</span>
+                    </td>
+                    <td>
+                        <a [href]="r.urlArchivo" target="_blank" rel="noopener noreferrer" class="rec-link">
+                            <i class="bi bi-box-arrow-up-right"></i> Ver
+                        </a>
+                    </td>
+                    <td class="rec-text-center">
+                        <button class="rec-icon-btn" title="Editar" (click)="abrirEditar(r)"><i class="bi bi-pencil-fill"></i></button>
+                        <button class="rec-icon-btn rec-icon-danger" title="Eliminar" (click)="eliminar(r)"><i class="bi bi-trash3-fill"></i></button>
+                    </td>
+                </tr>
+                <tr *ngIf="recursos.length === 0">
+                    <td colspan="5" class="rec-vacio">No hay recursos{{ filtroCarreraId ? ' para esta carrera' : '' }} registrados.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal alta / edición -->
+    <div class="rec-modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
+        <div class="rec-modal" (click)="$event.stopPropagation()">
+            <h3>
+                <i class="bi" [ngClass]="modo === 'crear' ? 'bi-plus-lg' : 'bi-pencil-fill'"></i>
+                {{ modo === 'crear' ? 'Nuevo Recurso' : 'Editar Recurso' }}
+            </h3>
+
+            <form (ngSubmit)="guardar()">
+                <div class="rec-form-grupo">
+                    <label>Título</label>
+                    <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="255"
+                           placeholder="Ej: Plantilla oficial de anteproyecto" required>
+                </div>
+
+                <div class="rec-form-grupo">
+                    <label>Categoría</label>
+                    <input type="text" [(ngModel)]="form.categoria" name="categoria" maxlength="100"
+                           placeholder="Ej: Plantillas" list="rec-categorias-sugeridas" required>
+                    <datalist id="rec-categorias-sugeridas">
+                        <option *ngFor="let c of categoriasSugeridas" [value]="c"></option>
+                    </datalist>
+                </div>
+
+                <div class="rec-form-grupo">
+                    <label>Carrera</label>
+                    <select [(ngModel)]="form.carreraId" name="carreraId">
+                        <option [ngValue]="null">General (todas las carreras)</option>
+                        <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+                    </select>
+                </div>
+
+                <div class="rec-form-grupo">
+                    <label>URL del archivo</label>
+                    <input type="url" [(ngModel)]="form.urlArchivo" name="urlArchivo" maxlength="500"
+                           placeholder="https://..." required>
+                </div>
+
+                <div class="rec-modal-acciones">
+                    <button type="button" class="rec-btn rec-btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="rec-btn rec-btn-nuevo" [disabled]="!formValido || guardando">
+                        {{ guardando ? 'Guardando...' : 'Guardar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
