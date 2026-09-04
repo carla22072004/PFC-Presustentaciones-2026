@@ -27,6 +27,19 @@ export interface FiltroTemas {
   nivelDificultad?: string;
 }
 
+export interface GuardarTemaRequest {
+  titulo: string;
+  problema?: string;
+  objetivoGeneral?: string;
+  objetivosEspecificos?: string;
+  justificacion?: string;
+  beneficiarios?: string;
+  nivelDificultad?: string;
+  carreraId?: number | null;
+  lineaInvestigacionId?: number | null;
+  areaId?: number | null;
+}
+
 export interface RecursoTitulacion {
   id: number;
   titulo: string;
@@ -88,6 +101,19 @@ export class OrientacionService {
 
   quitarGuardado(temaId: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${temaId}/guardar`);
+  }
+
+  // ── Gestión del catálogo (permiso ORIENTACION_CATALOGO_GESTIONAR) ─────
+  crearTema(req: GuardarTemaRequest): Observable<TemaPropuesto> {
+    return this.http.post<TemaPropuesto>(this.api, req);
+  }
+
+  actualizarTema(temaId: number, req: GuardarTemaRequest): Observable<TemaPropuesto> {
+    return this.http.put<TemaPropuesto>(`${this.api}/${temaId}`, req);
+  }
+
+  eliminarTema(temaId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${temaId}`);
   }
 
   // ── Recursos de titulación ────────────────────────────────────────────

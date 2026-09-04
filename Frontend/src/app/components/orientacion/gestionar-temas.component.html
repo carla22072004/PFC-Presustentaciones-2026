@@ -1,0 +1,142 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title"><i class="bi bi-journal-plus me-2"></i>Catálogo de Temas Propuestos</h2>
+      <p class="page-subtitle">Administra las ideas de tema de titulación que ven los estudiantes</p>
+    </div>
+    <button class="btn-primary" (click)="abrirNuevo()"><i class="bi bi-plus-lg"></i> Nuevo tema</button>
+  </div>
+
+  <div class="toolbar">
+    <label>Carrera</label>
+    <select [(ngModel)]="filtroCarreraId" (ngModelChange)="cargar()">
+      <option [ngValue]="undefined">Todas</option>
+      <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+    </select>
+  </div>
+
+  <div class="loading-state" *ngIf="cargando">
+    <div class="spinner"></div><p>Cargando temas...</p>
+  </div>
+
+  <div class="error-state" *ngIf="error && !cargando">
+    <i class="bi bi-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="cargar()">Reintentar</button>
+  </div>
+
+  <div class="table-card" *ngIf="!cargando && !error">
+    <table class="tabla">
+      <thead><tr>
+        <th>Título</th><th>Carrera</th><th>Línea</th><th>Área</th><th>Nivel</th><th class="acciones-col">Acciones</th>
+      </tr></thead>
+      <tbody>
+        <tr *ngFor="let t of temas; trackBy: trackById">
+          <td><strong>{{ t.titulo }}</strong></td>
+          <td>{{ t.carreraNombre || '—' }}</td>
+          <td>{{ t.lineaInvestigacionNombre || '—' }}</td>
+          <td>{{ t.areaNombre || '—' }}</td>
+          <td>
+            <span class="chip" [ngClass]="nivelClase(t.nivelDificultad)" *ngIf="t.nivelDificultad">
+              {{ t.nivelDificultad | titlecase }}
+            </span>
+            <span *ngIf="!t.nivelDificultad">—</span>
+          </td>
+          <td class="acciones-col">
+            <button class="icon-btn" (click)="abrirEditar(t)" title="Editar"><i class="bi bi-pencil"></i></button>
+            <button class="icon-btn danger" (click)="eliminar(t)" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>
+        <tr *ngIf="temas.length === 0">
+          <td colspan="6" class="empty-state">
+            <i class="bi bi-inboxes"></i>
+            <p>No hay temas en el catálogo{{ filtroCarreraId ? ' para esta carrera' : '' }}.</p>
+            <small>Usa "Nuevo tema" para agregar el primero.</small>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal alta / edición -->
+  <div class="modal-backdrop" *ngIf="modalAbierto" (click)="cerrarModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="cerrarModal()"><i class="bi bi-x-lg"></i></button>
+      <h2>{{ modo === 'crear' ? 'Nuevo tema propuesto' : 'Editar tema propuesto' }}</h2>
+
+      <form (ngSubmit)="guardar()">
+        <div class="campo">
+          <label>Título <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="500"
+                 placeholder="Título del tema de titulación" required>
+          <small class="hint" [class.error-text]="form.titulo && !formValido">
+            {{ (form.titulo || '').length }}/500
+          </small>
+        </div>
+
+        <div class="campo-row">
+          <div class="campo">
+            <label>Carrera</label>
+            <select [(ngModel)]="form.carreraId" name="carreraId">
+              <option [ngValue]="null">Sin carrera</option>
+              <option *ngFor="let c of carreras" [ngValue]="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Nivel de dificultad</label>
+            <select [(ngModel)]="form.nivelDificultad" name="nivel">
+              <option value="">Sin definir</option>
+              <option *ngFor="let n of niveles" [value]="n">{{ n | titlecase }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo-row">
+          <div class="campo">
+            <label>Línea de investigación</label>
+            <select [(ngModel)]="form.lineaInvestigacionId" name="linea" (ngModelChange)="onLineaFormChange()">
+              <option [ngValue]="null">Sin línea</option>
+              <option *ngFor="let l of lineas" [ngValue]="l.id">{{ l.nombre }}</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Área temática</label>
+            <select [(ngModel)]="form.areaId" name="area" [disabled]="!form.lineaInvestigacionId">
+              <option [ngValue]="null">Sin área</option>
+              <option *ngFor="let a of areas" [ngValue]="a.id">{{ a.nombre }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Problema</label>
+          <textarea [(ngModel)]="form.problema" name="problema" rows="2"></textarea>
+        </div>
+        <div class="campo">
+          <label>Objetivo general</label>
+          <textarea [(ngModel)]="form.objetivoGeneral" name="og" rows="2"></textarea>
+        </div>
+        <div class="campo">
+          <label>Objetivos específicos</label>
+          <textarea [(ngModel)]="form.objetivosEspecificos" name="oe" rows="2"></textarea>
+        </div>
+        <div class="campo">
+          <label>Justificación</label>
+          <textarea [(ngModel)]="form.justificacion" name="just" rows="2"></textarea>
+        </div>
+        <div class="campo">
+          <label>Beneficiarios</label>
+          <textarea [(ngModel)]="form.beneficiarios" name="benef" rows="2"></textarea>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="btn-ghost" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="!formValido || guardando">
+            <i class="bi" [ngClass]="guardando ? 'bi-hourglass-split' : 'bi-check-lg'"></i>
+            {{ guardando ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
