@@ -5,12 +5,17 @@ import ec.edu.uteq.presustentaciones.entities.*;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionJuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +34,8 @@ class EvaluacionJuradoServiceTest {
     @Mock private EvaluacionJuradoRepository evaluacionJuradoRepo;
     @Mock private SolicitudRepository solicitudRepo;
     @Mock private JuradoRepository juradoRepo;
+    @Mock private SolicitudAccessService solicitudAccessService;
+    @Mock private PermisoService permisoService;
 
     @InjectMocks
     private EvaluacionJuradoService evaluacionJuradoService;
@@ -43,6 +50,19 @@ class EvaluacionJuradoServiceTest {
         Docente docente = Docente.builder().id(1L).usuario(usuarioDocente).build();
         jurado = Jurado.builder().id(3L).solicitud(solicitud).docente(docente)
                 .rolJurado(RolJurado.builder().codigo("VOCAL_1").build()).build();
+
+        // validarPuedeRegistrar() exige un SecurityContextHolder autenticado (mismo patron que
+        // ActaServiceImplTest); se autentica como ADMIN por defecto para bypasear la regla de
+        // "debe ser el propio jurado" y mantener estos tests centrados en la logica de negocio
+        // (umbral 7, comentario por rango), no en la autorizacion -- que ya se prueba aparte.
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_ADMIN")));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -142,13 +162,59 @@ class EvaluacionJuradoServiceTest {
     }
 
     @Test
+    void guardarEvaluacionPermiteAlPropioJuradoRegistrarSuNota() {
+        // Caso permitido: el docente autenticado ES el jurado asignado a esta solicitud.
+        when(solicitudRepo.findById(7L)).thenReturn(Optional.of(solicitud));
+        when(juradoRepo.findById(3L)).thenReturn(Optional.of(jurado));
+        when(evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(7L, 3L)).thenReturn(Optional.empty());
+        when(evaluacionJuradoRepo.save(any(EvaluacionJurado.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("ana.torres@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_DOCENTE")));
+        when(permisoService.esPropioDocente(any(), eq(1L))).thenReturn(true);
+
+        assertDoesNotThrow(() -> evaluacionJuradoService.guardarEvaluacion(7L, 3L, 8.0, "bien"));
+    }
+
+    @Test
+    void guardarEvaluacionRechazaAJuradoQueRegistraANombreDeOtro() {
+        // Caso IDOR de escritura: un docente que NO es el jurado asignado intenta registrar
+        // la nota a nombre de otro cambiando el juradoId.
+        when(solicitudRepo.findById(7L)).thenReturn(Optional.of(solicitud));
+        when(juradoRepo.findById(3L)).thenReturn(Optional.of(jurado));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otro.docente@uteq.edu.ec", null,
+                        org.springframework.security.core.authority.AuthorityUtils.createAuthorityList("ROLE_DOCENTE")));
+        when(permisoService.esPropioDocente(any(), eq(1L))).thenReturn(false);
+        when(permisoService.tienePermiso(any(), eq("EVALUACION_CALIFICAR"))).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> evaluacionJuradoService.guardarEvaluacion(7L, 3L, 8.0, "bien"));
+    }
+
+    @Test
     void obtenerEvaluacionRetornaNullSiNoExiste() {
+        when(solicitudRepo.findById(7L)).thenReturn(Optional.of(solicitud));
         when(evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(7L, 3L)).thenReturn(Optional.empty());
         assertNull(evaluacionJuradoService.obtenerEvaluacion(7L, 3L));
     }
 
     @Test
+    void obtenerEvaluacionPropagaAccessDeniedSiSolicitudAccessServiceLoRechaza() {
+        // Caso IDOR: SolicitudAccessService es quien decide; aquí solo verificamos que
+        // EvaluacionJuradoService no atrapa/oculta ese rechazo (debe seguir siendo 403).
+        when(solicitudRepo.findById(7L)).thenReturn(Optional.of(solicitud));
+        org.mockito.Mockito.doThrow(new AccessDeniedException("No tienes permiso para acceder a la información de esta solicitud"))
+                .when(solicitudAccessService).validarAcceso(solicitud, "EVALUACION_CALIFICAR");
+
+        assertThrows(AccessDeniedException.class, () -> evaluacionJuradoService.obtenerEvaluacion(7L, 3L));
+    }
+
+    @Test
     void obtenerTribunalMapeaTodasLasEvaluacionesDeLaSolicitud() {
+        when(solicitudRepo.findById(7L)).thenReturn(Optional.of(solicitud));
         EvaluacionJurado eval1 = EvaluacionJurado.builder().id(1L).solicitud(solicitud).jurado(jurado)
                 .notaJurado(8.0).resultado("APROBADO").build();
         when(evaluacionJuradoRepo.findBySolicitudId(7L)).thenReturn(List.of(eval1));
