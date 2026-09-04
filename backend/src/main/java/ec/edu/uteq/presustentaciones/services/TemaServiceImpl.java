@@ -1,11 +1,18 @@
 package ec.edu.uteq.presustentaciones.services;
 
 import ec.edu.uteq.presustentaciones.dto.GenerarTemaRequest;
+import ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest;
 import ec.edu.uteq.presustentaciones.dto.TemaPropuestoDTO;
+import ec.edu.uteq.presustentaciones.entities.AreaTematica;
+import ec.edu.uteq.presustentaciones.entities.Carrera;
 import ec.edu.uteq.presustentaciones.entities.Estudiante;
+import ec.edu.uteq.presustentaciones.entities.LineaInvestigacion;
 import ec.edu.uteq.presustentaciones.entities.TemaGuardadoEstudiante;
 import ec.edu.uteq.presustentaciones.entities.TemaPropuesto;
+import ec.edu.uteq.presustentaciones.repositories.AreaTematicaRepository;
+import ec.edu.uteq.presustentaciones.repositories.CarreraRepository;
 import ec.edu.uteq.presustentaciones.repositories.EstudianteRepository;
+import ec.edu.uteq.presustentaciones.repositories.LineaInvestigacionRepository;
 import ec.edu.uteq.presustentaciones.repositories.TemaGuardadoEstudianteRepository;
 import ec.edu.uteq.presustentaciones.repositories.TemaPropuestoRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +30,9 @@ public class TemaServiceImpl implements TemaService {
     private final TemaPropuestoRepository temaPropuestoRepository;
     private final TemaGuardadoEstudianteRepository temaGuardadoEstudianteRepository;
     private final EstudianteRepository estudianteRepository;
+    private final CarreraRepository carreraRepository;
+    private final LineaInvestigacionRepository lineaInvestigacionRepository;
+    private final AreaTematicaRepository areaTematicaRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -100,6 +110,69 @@ public class TemaServiceImpl implements TemaService {
                 .map(TemaGuardadoEstudiante::getTemaPropuesto)
                 .map(t -> mapToDTO(t, true))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TemaPropuestoDTO crear(GuardarTemaPropuestoRequest request) {
+        TemaPropuesto tema = new TemaPropuesto();
+        aplicar(tema, request);
+        return mapToDTO(temaPropuestoRepository.save(tema), null);
+    }
+
+    @Override
+    @Transactional
+    public TemaPropuestoDTO actualizar(Integer temaPropuestoId, GuardarTemaPropuestoRequest request) {
+        TemaPropuesto tema = temaPropuestoRepository.findById(temaPropuestoId)
+                .orElseThrow(() -> new IllegalArgumentException("Tema propuesto no encontrado"));
+        aplicar(tema, request);
+        return mapToDTO(temaPropuestoRepository.save(tema), null);
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Integer temaPropuestoId) {
+        if (!temaPropuestoRepository.existsById(temaPropuestoId)) {
+            throw new IllegalArgumentException("Tema propuesto no encontrado");
+        }
+        // temas_guardados tiene FK ON DELETE CASCADE (V20): al borrar el tema del
+        // catálogo también se quita de la lista de los estudiantes que lo guardaron.
+        temaPropuestoRepository.deleteById(temaPropuestoId);
+    }
+
+    private void aplicar(TemaPropuesto tema, GuardarTemaPropuestoRequest r) {
+        tema.setTitulo(r.getTitulo().trim());
+        tema.setProblema(trimOrNull(r.getProblema()));
+        tema.setObjetivoGeneral(trimOrNull(r.getObjetivoGeneral()));
+        tema.setObjetivosEspecificos(trimOrNull(r.getObjetivosEspecificos()));
+        tema.setJustificacion(trimOrNull(r.getJustificacion()));
+        tema.setBeneficiarios(trimOrNull(r.getBeneficiarios()));
+        tema.setNivelDificultad(trimOrNull(r.getNivelDificultad()));
+
+        Carrera carrera = r.getCarreraId() == null ? null : carreraRepository.findById(r.getCarreraId())
+                .orElseThrow(() -> new IllegalArgumentException("Carrera no encontrada"));
+        LineaInvestigacion linea = r.getLineaInvestigacionId() == null ? null
+                : lineaInvestigacionRepository.findById(r.getLineaInvestigacionId())
+                .orElseThrow(() -> new IllegalArgumentException("Línea de investigación no encontrada"));
+        AreaTematica area = r.getAreaId() == null ? null : areaTematicaRepository.findById(r.getAreaId())
+                .orElseThrow(() -> new IllegalArgumentException("Área temática no encontrada"));
+
+        if (area != null && linea != null && area.getLineaInvestigacion() != null
+                && !area.getLineaInvestigacion().getId().equals(linea.getId())) {
+            throw new IllegalArgumentException("El área temática no pertenece a la línea de investigación indicada");
+        }
+
+        tema.setCarrera(carrera);
+        tema.setLineaInvestigacion(linea);
+        tema.setArea(area);
+    }
+
+    private static String trimOrNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
     private TemaPropuestoDTO mapToDTO(TemaPropuesto entity, Boolean guardado) {

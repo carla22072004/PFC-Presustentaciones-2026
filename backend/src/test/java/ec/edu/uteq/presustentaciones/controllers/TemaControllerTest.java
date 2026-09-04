@@ -133,4 +133,36 @@ class TemaControllerTest {
         assertThrows(IllegalArgumentException.class, () -> temaController.guardar(9));
         verify(temaService, never()).guardarTemaEstudiante(anyLong(), anyInt());
     }
+
+    @Test
+    void crearDelegaYDevuelve201() {
+        var req = new ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest();
+        req.setTitulo("Tema");
+        when(temaService.crear(req)).thenReturn(temaMock);
+
+        ResponseEntity<TemaPropuestoDTO> r = temaController.crear(req);
+
+        assertEquals(HttpStatus.CREATED, r.getStatusCode());
+        verify(temaService).crear(req);
+    }
+
+    @Test
+    void actualizarDelega() {
+        var req = new ec.edu.uteq.presustentaciones.dto.GuardarTemaPropuestoRequest();
+        req.setTitulo("Tema");
+        when(temaService.actualizar(3, req)).thenReturn(temaMock);
+
+        ResponseEntity<TemaPropuestoDTO> r = temaController.actualizar(3, req);
+
+        assertEquals(HttpStatus.OK, r.getStatusCode());
+        verify(temaService).actualizar(3, req);
+    }
+
+    @Test
+    void eliminarDelegaYDevuelve204() {
+        ResponseEntity<Void> r = temaController.eliminar(3);
+
+        assertEquals(HttpStatus.NO_CONTENT, r.getStatusCode());
+        verify(temaService).eliminar(3);
+    }
 }
