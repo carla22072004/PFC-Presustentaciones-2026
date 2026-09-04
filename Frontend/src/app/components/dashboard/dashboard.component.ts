@@ -94,6 +94,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
             desc: 'Consultar los estudiantes que tienes asignados como tutor' },
         { titulo: 'Tutorías',           icon: 'bi-journal-bookmark-fill', image: 'img/MisTramites.png', route: '/dashboard/tutorias/mis-tutorias',
             desc: 'Gestiona las fases de tutoría de los estudiantes asignados' },
+        { titulo: 'Centro de Orientación', icon: 'bi-compass', image: 'img/MisTramites.png', route: '/dashboard/orientacion/centro',
+            desc: 'Consultar el catálogo de temas de titulación propuestos' },
         { titulo: 'Notificaciones',     icon: 'bi-bell',            image: 'img/MisNotas.png',     route: '/dashboard/notificaciones',
             desc: 'Mensajes y alertas del sistema' },
     ];
