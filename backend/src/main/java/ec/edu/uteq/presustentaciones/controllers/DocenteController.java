@@ -2,9 +2,13 @@ package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.entities.Docente;
 import ec.edu.uteq.presustentaciones.repositories.DocenteRepository;
+import ec.edu.uteq.presustentaciones.security.service.UsuarioActualService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,9 +20,11 @@ import java.util.List;
 public class DocenteController {
 
     private final DocenteRepository docenteRepository;
+    private final UsuarioActualService usuarioActualService;
 
-    public DocenteController(DocenteRepository docenteRepository) {
+    public DocenteController(DocenteRepository docenteRepository, UsuarioActualService usuarioActualService) {
         this.docenteRepository = docenteRepository;
+        this.usuarioActualService = usuarioActualService;
     }
 
     @GetMapping
@@ -41,6 +47,13 @@ public class DocenteController {
         return docenteRepository.findByDisponibleTrue();
     }
 
+    /**
+     * Directorio interno por id de Docente (no de Usuario): mismo dato ya expuesto en bloque
+     * por {@code /}, {@code /paginado} y {@code /disponibles} (selección de jurado/tutor,
+     * asignación de sala, etc.), así que no aplica un control de propiedad aquí -- restringirlo
+     * rompería esos flujos sin cerrar ninguna fuga real, ya que el mismo docente ya es visible
+     * listando todos.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Docente> obtener(@PathVariable Long id) {
         return docenteRepository.findById(id)
@@ -48,11 +61,33 @@ public class DocenteController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * A diferencia de {@code /{id}}, este endpoint resuelve el perfil de Docente a partir de un
+     * usuarioId -- pensado para que un docente autenticado consulte su propio perfil (así lo usa
+     * el frontend: firmar-acta-docente y mis-asignaciones siempre pasan authService.getUserId()).
+     * Sin control de propiedad, cualquier autenticado podía enumerar usuarioId ajenos. ADMIN y
+     * COORDINADOR conservan acceso completo (mismo criterio administrativo que el resto del
+     * sistema); cualquier otro usuario solo puede consultar su propio usuarioId.
+     */
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<Docente> obtenerPorUsuario(@PathVariable Long usuarioId) {
+        validarAccesoPropioOAdministrativo(usuarioId);
         return docenteRepository.findByUsuarioId(usuarioId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private void validarAccesoPropioOAdministrativo(Long usuarioIdObjetivo) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean esAdminOCoordinador = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_COORDINADOR"));
+        if (esAdminOCoordinador) {
+            return;
+        }
+        Long usuarioActualId = usuarioActualService.usuario().getId();
+        if (!usuarioActualId.equals(usuarioIdObjetivo)) {
+            throw new AccessDeniedException("No tienes permiso para consultar el perfil de otro docente");
+        }
     }
 }
 //
