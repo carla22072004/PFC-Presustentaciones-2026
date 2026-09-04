@@ -60,3 +60,28 @@
 .timeline-item.pending .timeline-content {
   opacity: 0.7;
 }
+
+body.dark-mode .card {
+  background-color: #161b22;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+body.dark-mode .timeline::before {
+  background-color: #30363d;
+}
+body.dark-mode .timeline-icon {
+  background-color: #161b22;
+}
+body.dark-mode .timeline-content {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+body.dark-mode .timeline-item.completed .timeline-content {
+  background-color: rgba(25, 135, 84, 0.15);
+}
+body.dark-mode .timeline-item.active .timeline-content {
+  background-color: rgba(13, 110, 253, 0.15);
+}
+body.dark-mode .timeline-item.rejected .timeline-content {
+  background-color: rgba(220, 53, 69, 0.15);
+}

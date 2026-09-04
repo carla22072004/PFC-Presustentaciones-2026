@@ -56,6 +56,13 @@ body.dark-mode .usr-tabla td { color: #e2e8f0; border-color: #334155; }
 body.dark-mode .usr-modal { background: #1e293b; }
 body.dark-mode .usr-modal h3 { color: #e2e8f0; }
 body.dark-mode .usr-buscador { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .usr-select-rol { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .usr-form-grupo label { color: #94a3b8; }
+body.dark-mode .usr-form-grupo input,
+body.dark-mode .usr-form-grupo select { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .usr-btn-refresh { background: #1e293b; color: #818cf8; border: 1px solid #334155; }
+body.dark-mode .usr-btn-cancelar { background: #21262d; color: #c9d1d9; }
+body.dark-mode .usr-icon-btn:hover:not(:disabled) { background: #334155; }
 
 .usr-paginacion { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 16px; border-top: 1px solid #f1f5f9; }
 .usr-paginacion-info { font-size: 0.82rem; color: #64748b; }

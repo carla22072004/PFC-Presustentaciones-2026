@@ -70,34 +70,34 @@
           <h3>Evaluación del Coordinador</h3>
           <p class="obs-section-subtitle">Retroalimentación final</p>
         </div>
-        <div class="jurado-nota" *ngIf="observaciones.coordinador?.notaFinal">
-          <span class="jn-value">{{ observaciones.coordinador!.notaFinal!.toFixed(2) }}</span>
+        <div class="jurado-nota" *ngIf="observaciones.coordinador.notaFinal">
+          <span class="jn-value">{{ observaciones.coordinador.notaFinal.toFixed(2) }}</span>
           <span class="jn-max">/ 10</span>
         </div>
       </div>
       
       <!-- Comentario preestablecido (según rango de nota) -->
-      <div class="coord-comentario-pre" *ngIf="observaciones.coordinador?.notaFinal">
+      <div class="coord-comentario-pre" *ngIf="observaciones.coordinador.notaFinal">
         <div class="ccp-header">
           <i class="bi bi-info-circle-fill"></i>
           <span>Comentario según rango de nota:</span>
         </div>
         <div class="ccp-badges">
-          <span class="ccp-badge" [ngClass]="'ccp-' + getRangoClassCoord(observaciones.coordinador!.notaFinal!)">
-            <i class="bi" [ngClass]="getRangoIconCoord(observaciones.coordinador!.notaFinal!)"></i>
-            {{ getRangoLabelCoord(observaciones.coordinador!.notaFinal!) }}
+          <span class="ccp-badge" [ngClass]="'ccp-' + getRangoClassCoord(observaciones.coordinador.notaFinal)">
+            <i class="bi" [ngClass]="getRangoIconCoord(observaciones.coordinador.notaFinal)"></i>
+            {{ getRangoLabelCoord(observaciones.coordinador.notaFinal) }}
           </span>
         </div>
-        <p class="ccp-texto">{{ getComentarioPorRango(observaciones.coordinador!.notaFinal!) }}</p>
+        <p class="ccp-texto">{{ getComentarioPorRango(observaciones.coordinador.notaFinal) }}</p>
       </div>
 
       <!-- Observaciones manuales del coordinador -->
-      <div class="coord-observaciones" *ngIf="observaciones.coordinador?.observaciones">
+      <div class="coord-observaciones" *ngIf="observaciones.coordinador.observaciones">
         <div class="co-header">
           <i class="bi bi-pencil-square"></i>
           <span>Observaciones del coordinador:</span>
         </div>
-        <p class="co-texto">{{ observaciones.coordinador!.observaciones }}</p>
+        <p class="co-texto">{{ observaciones.coordinador.observaciones }}</p>
       </div>
     </div>
 
