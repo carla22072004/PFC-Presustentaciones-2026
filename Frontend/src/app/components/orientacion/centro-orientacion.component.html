@@ -15,6 +15,13 @@
       <i class="bi bi-bookmark-heart"></i> Mis temas guardados
       <span class="pill" *ngIf="guardados.length">{{ guardados.length }}</span>
     </button>
+    <button class="tab-btn" [class.active]="tab === 'recursos'" (click)="irA('recursos')">
+      <i class="bi bi-folder2-open"></i> Recursos de titulación
+    </button>
+    <button class="tab-btn" *ngIf="esEstudiante" [class.active]="tab === 'progreso'" (click)="irA('progreso')">
+      <i class="bi bi-list-check"></i> Mi ruta de titulación
+      <span class="pill" *ngIf="progreso">{{ progreso.porcentaje }}%</span>
+    </button>
   </div>
 
   <!-- ══════════════ EXPLORAR ══════════════ -->
@@ -126,6 +133,80 @@
         <p>Aún no has guardado ningún tema.</p>
         <small>Explora el catálogo y toca el marcador para guardarlo aquí.</small>
       </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════ RECURSOS ══════════════ -->
+  <ng-container *ngIf="tab === 'recursos'">
+    <div class="loading-state" *ngIf="cargandoRecursos">
+      <div class="spinner"></div><p>Cargando recursos...</p>
+    </div>
+
+    <div class="error-state" *ngIf="errorRecursos && !cargandoRecursos">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ errorRecursos }}</p>
+      <button class="btn-primary" (click)="cargarRecursos()">Reintentar</button>
+    </div>
+
+    <ng-container *ngIf="!cargandoRecursos && !errorRecursos">
+      <div class="recursos-grupo" *ngFor="let g of recursosPorCategoria">
+        <h3 class="recursos-cat">{{ g.categoria }}</h3>
+        <ul class="recursos-lista">
+          <li *ngFor="let r of g.items">
+            <a [href]="r.urlArchivo" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-file-earmark-arrow-down"></i>
+              <span>{{ r.titulo }}</span>
+              <small *ngIf="r.carreraNombre">{{ r.carreraNombre }}</small>
+              <small *ngIf="!r.carreraNombre" class="general">General</small>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="empty-state" *ngIf="recursos.length === 0">
+        <i class="bi bi-folder-x"></i>
+        <p>Aún no hay recursos publicados.</p>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <!-- ══════════════ RUTA DE TITULACIÓN ══════════════ -->
+  <ng-container *ngIf="tab === 'progreso' && esEstudiante">
+    <div class="loading-state" *ngIf="cargandoProgreso">
+      <div class="spinner"></div><p>Cargando tu ruta de titulación...</p>
+    </div>
+
+    <div class="error-state" *ngIf="errorProgreso && !cargandoProgreso">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ errorProgreso }}</p>
+      <button class="btn-primary" (click)="cargarProgreso()">Reintentar</button>
+    </div>
+
+    <div class="progreso-card" *ngIf="progreso && !cargandoProgreso">
+      <div class="progreso-head">
+        <div>
+          <strong>{{ progreso.completados }}</strong> de {{ progreso.total }} pasos completados
+        </div>
+        <div class="progreso-pct">{{ progreso.porcentaje }}%</div>
+      </div>
+      <div class="progreso-bar"><div class="progreso-fill" [style.width.%]="progreso.porcentaje"></div></div>
+
+      <ul class="pasos-lista">
+        <li *ngFor="let p of progreso.pasos" [class.done]="p.completado">
+          <button class="paso-check" [disabled]="pasoEnCurso === p.clave" (click)="togglePaso(p)"
+                  [attr.aria-pressed]="p.completado">
+            <i class="bi" [ngClass]="p.completado ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+          </button>
+          <div class="paso-texto">
+            <span class="paso-titulo">{{ p.orden }}. {{ p.titulo }}</span>
+            <small>{{ p.descripcion }}</small>
+          </div>
+        </li>
+      </ul>
+      <p class="progreso-nota">
+        <i class="bi bi-info-circle"></i>
+        Esta lista es una guía personal: marca cada paso a medida que lo completes. No cambia el estado real de tu solicitud.
+      </p>
     </div>
   </ng-container>
 

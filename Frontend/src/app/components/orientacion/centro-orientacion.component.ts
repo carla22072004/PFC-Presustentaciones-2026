@@ -1,12 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OrientacionService, TemaPropuesto, FiltroTemas } from '../../services/orientacion.service';
+import { OrientacionService, TemaPropuesto, FiltroTemas, RecursoTitulacion, ProgresoTitulacion, PasoProgreso } from '../../services/orientacion.service';
 import { CatalogoService, Carrera, LineaInvestigacion, AreaTematica } from '../../services/catalogo.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 
-type Tab = 'explorar' | 'guardados';
+type Tab = 'explorar' | 'guardados' | 'recursos' | 'progreso';
 
 @Component({
   encapsulation: ViewEncapsulation.None,
@@ -38,6 +38,18 @@ export class CentroOrientacionComponent implements OnInit {
   error = '';
   accionEnCurso: number | null = null;
 
+  // Recursos
+  recursos: RecursoTitulacion[] = [];
+  recursosPorCategoria: { categoria: string; items: RecursoTitulacion[] }[] = [];
+  cargandoRecursos = false;
+  errorRecursos = '';
+
+  // Progreso
+  progreso: ProgresoTitulacion | null = null;
+  cargandoProgreso = false;
+  errorProgreso = '';
+  pasoEnCurso: string | null = null;
+
   constructor(
     private orientacion: OrientacionService,
     private catalogo: CatalogoService,
@@ -59,6 +71,7 @@ export class CentroOrientacionComponent implements OnInit {
     });
 
     this.explorar();
+    this.cargarRecursos();
     if (this.esEstudiante) {
       this.cargarGuardados();
     }
@@ -71,6 +84,70 @@ export class CentroOrientacionComponent implements OnInit {
     if (tab === 'guardados' && !this.guardados.length) {
       this.cargarGuardados();
     }
+    if (tab === 'recursos' && !this.recursos.length) {
+      this.cargarRecursos();
+    }
+    if (tab === 'progreso' && !this.progreso) {
+      this.cargarProgreso();
+    }
+  }
+
+  // ── Recursos ─────────────────────────────────────────────────────────
+  cargarRecursos(): void {
+    this.cargandoRecursos = true;
+    this.errorRecursos = '';
+    this.orientacion.recursos().subscribe({
+      next: data => {
+        this.recursos = data || [];
+        this.recursosPorCategoria = this.agruparPorCategoria(this.recursos);
+        this.cargandoRecursos = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.cargandoRecursos = false;
+        this.errorRecursos = 'No se pudieron cargar los recursos de titulación.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private agruparPorCategoria(items: RecursoTitulacion[]) {
+    const mapa = new Map<string, RecursoTitulacion[]>();
+    for (const r of items) {
+      const k = r.categoria || 'Otros';
+      if (!mapa.has(k)) { mapa.set(k, []); }
+      mapa.get(k)!.push(r);
+    }
+    return [...mapa.entries()].map(([categoria, its]) => ({ categoria, items: its }));
+  }
+
+  // ── Progreso ─────────────────────────────────────────────────────────
+  cargarProgreso(): void {
+    if (!this.esEstudiante) { return; }
+    this.cargandoProgreso = true;
+    this.errorProgreso = '';
+    this.orientacion.miProgreso().subscribe({
+      next: p => { this.progreso = p; this.cargandoProgreso = false; this.cdr.markForCheck(); },
+      error: () => {
+        this.cargandoProgreso = false;
+        this.errorProgreso = 'No se pudo cargar tu ruta de titulación.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  togglePaso(paso: PasoProgreso): void {
+    if (!this.esEstudiante || this.pasoEnCurso) { return; }
+    this.pasoEnCurso = paso.clave;
+    const nuevoValor = !paso.completado;
+    this.orientacion.actualizarProgreso({ [paso.clave]: nuevoValor }).subscribe({
+      next: p => { this.progreso = p; this.pasoEnCurso = null; this.cdr.markForCheck(); },
+      error: () => {
+        this.pasoEnCurso = null;
+        this.noti.error('No se pudo actualizar el paso. Intenta nuevamente.', 'Error');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   // ── Filtros ───────────────────────────────────────────────────────────
