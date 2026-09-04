@@ -4,7 +4,9 @@ import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.security.dto.LoginRequest;
 import ec.edu.uteq.presustentaciones.security.dto.LoginResponse;
+import ec.edu.uteq.presustentaciones.security.dto.RegisterRequest;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
+import ec.edu.uteq.presustentaciones.services.IUsuarioService;
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +42,7 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final IUsuarioService usuarioService;
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión y obtener tokens", description = "Genera el JWT de acceso y el refresh token. Configura cookies HttpOnly + Secure + SameSite=Strict.")
@@ -199,19 +202,31 @@ public class AuthController {
         return ResponseEntity.ok(ResponseWrapper.success(null, "Sesión cerrada correctamente"));
     }
 
-    /** Provisión de cuentas: solo un ADMIN puede crear usuarios (incluye poder asignar cualquier rol). */
+    /**
+     * Provisión de cuentas: solo un ADMIN puede crear usuarios (incluye poder asignar cualquier
+     * rol). Hallazgo real de auditoría (2026-09-04): antes recibía la entidad {@link Usuario}
+     * cruda por @RequestBody, sin @Valid -- un body con "id", "activo":false, "rolUsuario":
+     * {"id":N} o "creadoEn" podía pisar esos campos directamente (mass-assignment), y "rol" y
+     * "rolUsuario" podían quedar desincronizados porque nunca pasaba por resolverRol(). Ahora se
+     * usa {@link RegisterRequest} (ya existía, sin usar) con @Valid, y el Usuario se arma en el
+     * controller solo con los 5 campos permitidos -- ningún otro campo del cliente llega a la
+     * entidad. La creación en sí (verificación de email duplicado, encode de password,
+     * resolución de rol) reutiliza {@link IUsuarioService#crear} tal cual la usa
+     * UsuarioController, en vez de duplicar esa lógica aquí.
+     */
     @PostMapping("/register")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Registrar nuevo usuario", description = "Permite a un administrador crear nuevos usuarios en el sistema.")
-    public ResponseEntity<?> register(@RequestBody Usuario usuario) {
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseWrapper.error("El email ya está registrado"));
-        }
-
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        Usuario usuario = new Usuario();
+        usuario.setNombre(request.getNombre());
+        usuario.setApellido(request.getApellido());
+        usuario.setEmail(request.getEmail());
+        usuario.setPassword(request.getPassword());
+        usuario.setRol(request.getRol());
         usuario.setActivo(true);
-        usuarioRepository.save(usuario);
+
+        usuarioService.crear(usuario);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseWrapper.success(null, "Usuario registrado exitosamente"));
