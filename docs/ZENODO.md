@@ -6,8 +6,9 @@
 **Licencia:** MIT Open Source License  
 **Alcance de este documento:** el DOI del **software** (el código de este repositorio). El
 conjunto de datos de mediciones (k6, ZAP, Lighthouse, JaCoCo) se deposita por separado, con su
-propia licencia CC-BY 4.0 y su propio DOI, siguiendo el principio de citación independiente entre
-software y datos — ver [`ZENODO-DATASET.md`](ZENODO-DATASET.md).
+propia licencia CC-BY 4.0 y su propio DOI ([10.5281/zenodo.22398713](https://doi.org/10.5281/zenodo.22398713)),
+siguiendo el principio de citación independiente entre software y datos — ver
+[`ZENODO-DATASET.md`](ZENODO-DATASET.md).
 
 ---
 

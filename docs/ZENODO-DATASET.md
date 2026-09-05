@@ -1,7 +1,7 @@
 # 📊 REGISTRO DE IDENTIFICADOR PERSISTENTE DOI EN ZENODO — DEPÓSITO DEL DATASET DE MEDICIONES
 
 **Proyecto:** Sistema de Gestión de Pre-Sustentaciones UTEQ
-**Estado:** ⏳ Pendiente de depósito — este dataset **todavía no tiene un DOI real asignado**.
+**Estado:** ✅ **Archivado y Verificado** — DOI: [10.5281/zenodo.22398713](https://doi.org/10.5281/zenodo.22398713)
 **Alcance de este documento:** el **conjunto de datos de mediciones empíricas** (rendimiento k6,
 seguridad OWASP ZAP + find-sec-bugs, cobertura JaCoCo, calidad web Lighthouse) — **no** el código
 del software, que se deposita por separado con su propia licencia MIT en un registro Zenodo
@@ -66,4 +66,40 @@ ese snapshot se agregaría a este dataset en un depósito nueva versión.
 
 ## DOI real del dataset
 
-*(pendiente — completar cuando el depósito real se publique; no se fabrica un número de relleno, siguiendo la misma política que [`ZENODO.md`](ZENODO.md))*
+### 📌 Identificador Persistente Asignado
+
+- **DOI (esta versión, v1):** `10.5281/zenodo.22398713`
+- **DOI de concepto (siempre resuelve a la última versión):** `10.5281/zenodo.22398712`
+- **Enlace permanente resolver:** [`https://doi.org/10.5281/zenodo.22398713`](https://doi.org/10.5281/zenodo.22398713)
+- **Registro en Zenodo:** `https://zenodo.org/records/22398713`
+- **Badge oficial:**
+  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22398713.svg)](https://doi.org/10.5281/zenodo.22398713)
+
+### 🏷️ Metadatos del Registro y Cita Académica
+
+- **Título del Registro:** Dataset de mediciones empíricas — Sistema de Gestión de Pre-Sustentaciones UTEQ (rendimiento, seguridad, calidad web)
+- **Tipo de recurso:** Dataset
+- **Licencia:** Creative Commons Attribution 4.0 International (CC-BY 4.0)
+- **Repositorio GitHub del software relacionado:** `https://github.com/carla22072004/PFC-Presustentaciones-2026`
+- **Relación con el software:** este dataset **is supplement to** el software con DOI
+  [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) (ver [`ZENODO.md`](ZENODO.md)).
+- **Autores CRediT:** Jean Pierre Alava Alvarado ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)), Xavier Alejandro Moncayo Loor, Carla Esthefania Zamora Arias, Heider Dominick Barreto Rosado.
+- **Publicado:** 5 de septiembre de 2026, versión v1.
+- **Verificación externa real (2026-09-05):** `curl https://zenodo.org/api/records/22398713` (API pública
+  de Zenodo, no solo el badge) devuelve `resource_type: dataset`, `doi: 10.5281/zenodo.22398713`,
+  `conceptdoi: 10.5281/zenodo.22398712`, `license: cc-by-4.0`, y los mismos 4 autores en el mismo orden
+  (con el ORCID de Jean Pierre Alava Alvarado presente) — coincide exactamente con lo declarado aquí y en
+  `CITATION.cff`.
+- **Formato de Cita BibTeX:**
+
+```bibtex
+@dataset{alava_alvarado_2026_dataset_presustentaciones,
+  author       = {Alava Alvarado, Jean Pierre and Zamora Arias, Carla Esthefania and Barreto Rosado, Heider Dominick and Moncayo Loor, Xavier Alejandro},
+  title        = {Dataset de mediciones empíricas --- Sistema de Gestión de Pre-Sustentaciones UTEQ (rendimiento, seguridad, calidad web)},
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v1},
+  doi          = {10.5281/zenodo.22398713},
+  url          = {https://doi.org/10.5281/zenodo.22398713}
+}
+```
