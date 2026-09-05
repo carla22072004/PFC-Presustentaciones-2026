@@ -15,6 +15,161 @@ La revisión manual encontró y corrigió **3 problemas reales de control de acc
 2. **El secreto JWT hardcodeado (A02) NO estaba realmente corregido pese a que este documento lo afirmaba desde el 17-08** — `application.properties` y `docker-compose.yml` seguían teniendo el mismo valor de respaldo (un secreto de ejemplo de tutoriales públicos de Spring+JWT) como *default* si faltaba `JWT_SECRET`. Corregido de verdad: ambos archivos ahora exigen la variable de entorno explícitamente y fallan al arrancar si falta — ver A02.
 3. `nginx.conf` duplicaba las cabeceras de seguridad en las respuestas proxied de `/api/v1/`/`/actuator/` (además de las que ya agrega Spring Security), lo que recortaba silenciosamente la Content-Security-Policy real del backend por la intersección CSP — ver A05.
 
+## Evidencia reproducible por control (curl real, 2026-09-05)
+
+Hallazgo de la auditoría de la entrega final: este documento cubría los seis controles pero **no
+transcribía ni un solo comando con su salida**, así que ninguna de sus afirmaciones era verificable
+por un tercero sin volver a auditar el código a mano. Esta sección corrige eso: los comandos de
+abajo se ejecutaron contra el sistema real corriendo en Docker (`docker compose up -d`, app en
+`http://localhost:4200`, backend detrás del proxy de nginx) el **2026-09-05**, y las salidas están
+transcritas tal cual, sin editar.
+
+Requisito previo (obtener un token de un usuario sin privilegios administrativos):
+
+```bash
+API=http://localhost:4200/api/v1
+TOKEN=$(curl -s -X POST $API/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"estudiante@uteq.edu.ec","password":"estudiante123"}' \
+  | python -c "import sys,json; print(json.load(sys.stdin)['data']['auth']['token'])")
+```
+
+### A01 — Broken Access Control (comprobación de propiedad y de permiso)
+
+```bash
+# 1. Perfil de OTRO docente (el IDOR corregido en DocenteController)
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" $API/docentes/usuario/1
+# 2. Listado global de solicitudes (exige el permiso SOLICITUDES_REVISAR)
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" $API/solicitudes
+# 3. Reportes de coordinación (exige REPORTES_VER)
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" $API/reportes/resumen
+# 4. Sus PROPIAS solicitudes (debe pasar)
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" $API/solicitudes/mis-solicitudes
+# 5. Sin token
+curl -s -o /dev/null -w "HTTP %{http_code}\n" $API/solicitudes
+```
+
+Salida real:
+
+```
+1. HTTP 403     <- recurso ajeno denegado
+2. HTTP 403     <- sin el permiso requerido
+3. HTTP 403     <- sin el permiso requerido
+4. HTTP 200     <- lo propio sí se permite
+5. HTTP 401     <- sin autenticar
+```
+
+Los tres 403 distinguen correctamente "autenticado pero sin permiso" del 401 de "no autenticado",
+que era justamente el defecto corregido en `GlobalExceptionHandler` (ver A01 más abajo).
+
+### A02 — Cryptographic Failures (el hash no viaja, y el JWT es el declarado)
+
+```bash
+curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
+  -d '{"email":"estudiante@uteq.edu.ec","password":"estudiante123"}' \
+  | python -c "
+import sys,json,base64
+d = json.load(sys.stdin)
+print('password aparece en la respuesta:', 'password' in json.dumps(d).lower())
+print('claves de data:', sorted(d['data'].keys()))
+t = d['data']['auth']['token']
+h = t.split('.')[0]; h += '=' * (-len(h) % 4)
+print('cabecera JWT:', base64.urlsafe_b64decode(h).decode())
+p = t.split('.')[1]; p += '=' * (-len(p) % 4)
+print('claims JWT:', sorted(json.loads(base64.urlsafe_b64decode(p)).keys()))
+"
+```
+
+Salida real:
+
+```
+password aparece en la respuesta: False
+claves de data: ['auth', 'refreshToken']
+cabecera JWT: {"alg":"HS512"}
+claims JWT: ['aud', 'exp', 'iat', 'iss', 'jti', 'nbf', 'sub']
+```
+
+Confirma tres afirmaciones de este documento que hasta ahora sólo estaban escritas: el hash BCrypt
+nunca se serializa de vuelta al cliente (`@JsonProperty(access = WRITE_ONLY)` funciona), la firma es
+**HS512**, y los claims son exactamente los **7 de RFC 7519** declarados, ni uno más ni uno menos.
+
+### A03 — Injection
+
+```bash
+# 1. Tautología en un parámetro numérico usado por una consulta
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" \
+  "$API/catalogos/areas-tematicas?lineaId=1%20OR%201%3D1"
+# 2. Tautología clásica en el campo de login
+curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
+  -d "{\"email\":\"admin@uteq.edu.ec' OR '1'='1\",\"password\":\"x\"}"
+# 3. El esquema sigue respondiendo con normalidad después de los intentos
+curl -s -o /dev/null -w "HTTP %{http_code}\n" -H "Authorization: Bearer $TOKEN" "$API/catalogos/modalidades"
+```
+
+Salida real:
+
+```
+1. HTTP 400
+2. {"success":false,"data":null,"message":"Error de validación en los datos enviados",
+    "errors":{"email":"Email inválido"},"meta":null}
+3. HTTP 200
+```
+
+La inyección no llega siquiera a la capa de datos: el parámetro no castea a número (400) y el email
+no pasa la validación de formato. Ningún intento devolvió filas ni un error de SQL, que es lo que
+delataría concatenación de cadenas. Coincide con los 0 hallazgos de
+`SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE` de find-sec-bugs.
+
+### A04 — Insecure Design (rate limiting de autenticación)
+
+```bash
+for i in $(seq 1 8); do
+  curl -s -o /dev/null -w "intento $i -> HTTP %{http_code}\n" -X POST $API/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"noexiste@uteq.edu.ec","password":"malo"}'
+done
+```
+
+Salida real:
+
+```
+intento 1 -> HTTP 401
+intento 2 -> HTTP 401
+intento 3 -> HTTP 401
+intento 4 -> HTTP 401
+intento 5 -> HTTP 401
+intento 6 -> HTTP 401
+intento 7 -> HTTP 429
+intento 8 -> HTTP 429
+```
+
+El límite documentado (6 intentos por ventana de 60 s por IP) se cumple exactamente: el séptimo
+intento ya recibe `429 Too Many Requests`.
+
+### A05 — Security Misconfiguration (cabeceras de seguridad)
+
+```bash
+curl -s -D - -o /dev/null -X POST $API/auth/login \
+  -H "Content-Type: application/json" -d '{"email":"x","password":"y"}'
+```
+
+Salida real (cabeceras relevantes):
+
+```
+HTTP/1.1 400
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
+  https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com
+  https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+Una sola `Content-Security-Policy` (no dos, como antes de la corrección del 29-08) y **ya sin
+`'unsafe-inline'` ni `'unsafe-eval'` en `script-src`** — ver la corrección del 2026-09-05 más abajo.
+
+---
+
 ## A01:2021 — Broken Access Control
 
 **Hallado (corregido):** `UsuarioController` no tenía ninguna anotación `@PreAuthorize` — cualquier usuario autenticado (de cualquier rol) podía listar/crear/editar/desactivar/eliminar usuarios vía `/api/usuarios/**`, incluyendo asignar el rol `ADMIN` a cualquier cuenta. Corregido: los endpoints de gestión ahora requieren `hasRole('ADMIN')`; `GET /{id}` y `PATCH /{id}/perfil` verifican que el `id` corresponda al usuario autenticado (resuelto desde el JWT, no desde el parámetro de la URL) salvo que quien pide sea ADMIN.
@@ -44,6 +199,10 @@ La revisión manual encontró y corrigió **3 problemas reales de control de acc
 **Hallado (sin corregir, riesgo bajo):** la mayoría de los controladores devuelve entidades JPA directamente en vez de DTOs (documentado también en `CLAUDE.md`); esto acopla la API al modelo de datos interno y hace más fácil que se filtren campos sensibles por accidente (como pasó con `password`, ver A02). Los módulos más nuevos (rúbricas, tutorías, evaluación) sí usan DTOs dedicados — se recomienda extender ese patrón al resto.
 
 ## A05:2021 — Security Misconfiguration
+
+**Hallado y corregido (2026-09-05):** la `Content-Security-Policy` declaraba `script-src 'self' 'unsafe-inline' 'unsafe-eval'`, lo que anula buena parte de la protección contra XSS que esa cabecera debería dar — el propio escaneo dinámico de ZAP lo levanta como alerta `10055`. Se verificó que **no hacían falta**: el `index.html` del build de producción referencia un único script externo con hash (`<script src="main-CPQ423BT.js" type="module">`), sin ningún script inline, y Angular compila AOT (no JIT), así que tampoco necesita `eval`. Además `connect-src` fijaba `http://localhost:8080`, `http://localhost:4200`, `ws://localhost:4200`, `ws://localhost:8080` y `http://universities.hipolabs.com`; los localhost habrían bloqueado las llamadas del frontend en un despliegue real, los `ws://` no correspondían a nada (el estado en tiempo real es *polling*, no WebSocket — ver `EstadoTiempoRealController`) y el origen externo lo consume el **backend** server-side vía `ExternalApiServiceImpl`, nunca el navegador. La política quedó en `script-src 'self'` y `connect-src 'self'`, corregida en las dos capas que la emiten (`SecurityConfig.java` y `nginx/nginx.conf`) — verificado real con `curl -I` tras reconstruir el backend y reiniciar nginx (salida transcrita en la sección de evidencia reproducible, arriba). El frontend llama al backend con rutas relativas (`/api/...`) proxeadas por el mismo nginx, así que `'self'` es suficiente.
+
+**Hallado y corregido (2026-09-05):** `ChatbotController` era el **único** controlador del proyecto sin ninguna anotación de autorización, ni de clase ni de método — quedaba protegido sólo por la regla global de autenticación de `SecurityConfig`, que no distingue rol. Se hizo explícita con `@PreAuthorize("isAuthenticated()")` a nivel de clase, el mismo nivel que usan los demás controladores de consulta general, porque el asistente sólo devuelve texto de ayuda sobre cómo usar los módulos: no consulta la base de datos ni expone datos personales. La comprobación equivalente que el servicio hacía por su cuenta queda como defensa en profundidad, no como única barrera. (El `@CrossOrigin(origins = "*")` que la auditoría anterior también señalaba en este controlador ya no existía al revisarlo.)
 
 **Verificado:** CORS restringido explícitamente a `http://localhost:4200` y `http://localhost:3000` (`SecurityConfig` + `WebConfig`, más `@CrossOrigin` por controlador) — configurado en 3 lugares distintos que hay que mantener sincronizados si se agrega un origen nuevo (riesgo de mantenimiento, no de seguridad activa). CSRF deshabilitado deliberadamente (correcto para una API JWT stateless sin cookies de sesión). Sesión configurada como `STATELESS`.
 
