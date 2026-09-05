@@ -48,19 +48,38 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return event;
     }),
     catchError((err: unknown) => {
-      // Sesión expirada o token inválido: en vez de dejar que cada componente
-      // muestre su propio mensaje generico ("No se pudo cargar..."), se limpia
-      // la sesión y se redirige al login con un aviso claro de por qué.
-      if (err instanceof HttpErrorResponse && err.status === 401 && !url.endsWith('/auth/login')) {
-        const habiaSesion = !!token;
-        localStorage.removeItem('presus_token');
-        localStorage.removeItem('user_id');
-        localStorage.removeItem('user_role');
-        localStorage.removeItem('user_name');
-        localStorage.removeItem('email_noti_configurado');
-        if (habiaSesion && !router.url.includes('/login')) {
-          notification.error('Tu sesión expiró. Por favor, inicia sesión de nuevo.', 'Sesión expirada');
-          router.navigate(['/login']);
+      if (err instanceof HttpErrorResponse) {
+        // Sesión expirada o token inválido: en vez de dejar que cada componente
+        // muestre su propio mensaje genérico ("No se pudo cargar..."), se limpia
+        // la sesión y se redirige al login con un aviso claro de por qué.
+        if (err.status === 401 && !url.endsWith('/auth/login')) {
+          const habiaSesion = !!token;
+          localStorage.removeItem('presus_token');
+          localStorage.removeItem('user_id');
+          localStorage.removeItem('user_role');
+          localStorage.removeItem('user_name');
+          localStorage.removeItem('email_noti_configurado');
+          if (habiaSesion && !router.url.includes('/login')) {
+            notification.error('Tu sesión expiró. Por favor, inicia sesión de nuevo.', 'Sesión expirada');
+            router.navigate(['/login']);
+          }
+        } else if (err.status === 403 && !url.endsWith('/auth/login')) {
+          // Detectar HTTP 403 Forbidden: acceso o acción no autorizada
+          // No rompe la navegación y muestra mensaje claro al usuario
+          let mensaje = 'No tienes permisos para realizar esta acción.';
+          if (err.error) {
+            if (typeof err.error === 'string' && err.error.trim().length > 0) {
+              try {
+                const parsed = JSON.parse(err.error);
+                if (parsed.message) mensaje = parsed.message;
+              } catch {
+                if (err.error.length < 150) mensaje = err.error;
+              }
+            } else if (typeof err.error === 'object' && err.error.message) {
+              mensaje = err.error.message;
+            }
+          }
+          notification.error(mensaje, 'Permiso Denegado (403)');
         }
       }
       return throwError(() => err);

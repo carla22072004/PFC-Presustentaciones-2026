@@ -170,12 +170,7 @@ la confirmación de HTTPS válido en cuanto el despliegue esté confirmado — *
 se haya verificado funcionando**, porque una URL pública inactiva el día de la evaluación reprueba
 automáticamente el criterio P5 sin importar el resto de la documentación.
 
-**Usuario de demostración** (una vez desplegado, para que el tribunal entre sin registrarse):
-- **Email:** `demo@uteq.edu.ec`
-- **Contraseña:** `Demo2026!`
-- **Rol:** Coordinador (acceso a asignación de jurados, cronograma, reportes)
-
-También existe un usuario **Administrador** (`admin@uteq.edu.ec` / `admin123`) para explorar la gestión de usuarios y catálogos.
+**Usuarios de demostración** (una vez desplegado, para que el tribunal entre sin registrarse): existe un usuario con rol **Coordinador** (acceso a asignación de jurados, cronograma, reportes) y otro con rol **Administrador** (gestión de usuarios y catálogos), ambos sembrados por `PreSustentacionesApplication.initDemoData()`. Las credenciales de ambos se entregan al tribunal junto con el enlace de despliegue en el informe de entrega — no se publican en este README para evitar dejarlas expuestas en el historial público del repositorio.
 
 ---
 

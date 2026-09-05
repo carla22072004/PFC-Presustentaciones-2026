@@ -72,6 +72,8 @@ public class AnteproyectoController {
                     "sha256Registrado", ap.getSha256Hash() != null ? ap.getSha256Hash() : "—",
                     "mensaje", ok ? "✓ Archivo íntegro: el hash SHA-256 coincide."
                             : "⚠ Advertencia: el archivo puede haber sido modificado."));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e; // deja que GlobalExceptionHandler lo traduzca a 403, no a 400
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

@@ -6,8 +6,12 @@ import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.AnteproyectoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,22 +38,48 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
     private final SolicitudRepository solicitudRepository;
     private final NotificacionService notificacionService;
     private final UsuarioRepository usuarioRepository;
+    private final SolicitudAccessService solicitudAccessService;
 
     @Value("${app.upload.dir:uploads/anteproyectos}")
     private String uploadDir;
 
     public AnteproyectoServiceImpl(AnteproyectoRepository ar, SolicitudRepository sr,
-                                   NotificacionService ns, UsuarioRepository ur) {
+                                   NotificacionService ns, UsuarioRepository ur,
+                                   SolicitudAccessService sas) {
         this.anteproyectoRepository = ar;
         this.solicitudRepository = sr;
         this.notificacionService = ns;
         this.usuarioRepository = ur;
+        this.solicitudAccessService = sas;
+    }
+
+    /** Solo el estudiante dueño de la solicitud puede subir su propio anteproyecto (ADMIN
+     * incluido como vía administrativa, igual que en el resto de los servicios de este
+     * bloque) -- evita que un tercero suba/reemplace el PDF de otra solicitud (IDOR de
+     * escritura). */
+    private void validarPuedeSubir(Solicitud solicitud) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Usuario no autenticado");
+        }
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) return;
+
+        String email = auth.getName();
+        boolean esDueno = solicitud.getEstudiante() != null && solicitud.getEstudiante().getUsuario() != null
+                && solicitud.getEstudiante().getUsuario().getEmail().equals(email);
+        if (!esDueno) {
+            throw new AccessDeniedException("Solo el estudiante propietario de la solicitud puede subir su anteproyecto");
+        }
     }
 
     @Override
     public Anteproyecto enviarAnteproyecto(Long solicitudId, MultipartFile archivo) {
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        validarPuedeSubir(solicitud);
 
         if (solicitud.getEstado() != null && "SUSPENDIDA".equalsIgnoreCase(solicitud.getEstado().getCodigo())) {
             throw new RuntimeException("Tu trabajo ha sido suspendido y no puedes subir archivos. Motivo: " + solicitud.getMotivoSuspension());
@@ -116,6 +146,7 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
     public boolean verificarIntegridad(Long solicitudId) {
         Anteproyecto ap = anteproyectoRepository.findBySolicitudId(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Anteproyecto no encontrado"));
+        solicitudAccessService.validarAcceso(ap.getSolicitud(), "ANTEPROYECTO_REVISAR");
 
         if (ap.getSha256Hash() == null) return false;
 
@@ -162,7 +193,9 @@ public class AnteproyectoServiceImpl implements AnteproyectoService {
 
     @Override
     public Optional<Anteproyecto> buscarPorSolicitud(Long solicitudId) {
-        return anteproyectoRepository.findBySolicitudId(solicitudId);
+        Optional<Anteproyecto> anteproyecto = anteproyectoRepository.findBySolicitudId(solicitudId);
+        anteproyecto.ifPresent(ap -> solicitudAccessService.validarAcceso(ap.getSolicitud(), "ANTEPROYECTO_REVISAR"));
+        return anteproyecto;
     }
 
     // ── Helpers de notificación ───────────────────────────────────────────────

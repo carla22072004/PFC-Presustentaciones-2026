@@ -175,8 +175,17 @@ public class ActaController {
         }
     }
 
+    /**
+     * Hallazgo real de auditoría (2026-09-04): usaba isAuthenticated() a secas, así que
+     * ActaServiceImpl.eliminarActa() (que reutiliza validarAcceso(), pensado para LECTURA:
+     * admin, jurado, tutor o el propio estudiante dueño) terminaba autorizando también el
+     * borrado permanente del acta a cualquiera de esos participantes -- un estudiante podía
+     * eliminar el acta oficial de su propia defensa, o un docente jurado/tutor sin ningún
+     * permiso administrativo. Se exige ACTAS_GESTIONAR (hoy solo ADMIN), igual que el resto
+     * de acciones administrativas de este controlador (generar/firmar/cambiarEstado).
+     */
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ACTAS_GESTIONAR')")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         try {
             actaService.eliminarActa(id);

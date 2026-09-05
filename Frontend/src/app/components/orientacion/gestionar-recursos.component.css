@@ -60,3 +60,6 @@ body.dark-mode .rec-modal h3 { color: #e2e8f0; }
 body.dark-mode .rec-form-grupo label { color: #94a3b8; }
 body.dark-mode .rec-form-grupo input, body.dark-mode .rec-form-grupo select { background: #0f172a; border-color: #334155; color: #e2e8f0; }
 body.dark-mode .rec-btn-cancelar { background: #21262d; color: #c9d1d9; }
+body.dark-mode .rec-btn-refresh { background: #1e293b; color: #818cf8; border: 1px solid #334155; }
+body.dark-mode .rec-icon-btn:hover { background: #334155; }
+body.dark-mode .rec-icon-danger:hover { color: #f87171; background: #450a0a; }

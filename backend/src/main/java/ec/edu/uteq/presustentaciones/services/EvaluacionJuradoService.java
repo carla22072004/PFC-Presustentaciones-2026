@@ -7,7 +7,11 @@ import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.repositories.EvaluacionJuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.JuradoRepository;
 import ec.edu.uteq.presustentaciones.repositories.SolicitudRepository;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,27 @@ public class EvaluacionJuradoService {
     private final EvaluacionJuradoRepository evaluacionJuradoRepo;
     private final SolicitudRepository solicitudRepo;
     private final JuradoRepository juradoRepo;
+    private final SolicitudAccessService solicitudAccessService;
+    private final PermisoService permisoService;
+
+    /** Solo el propio jurado (docente asignado a esa fila de miembros_tribunal) puede
+     * registrar su nota; ADMIN/COORDINADOR (EVALUACION_CALIFICAR) pueden hacerlo en su
+     * representación -- evita que un jurado registre una nota a nombre de otro (IDOR de
+     * escritura). */
+    private void validarPuedeRegistrar(Jurado jurado) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Usuario no autenticado");
+        }
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin || permisoService.tienePermiso(auth, "EVALUACION_CALIFICAR")) {
+            return;
+        }
+        if (!permisoService.esPropioDocente(auth, jurado.getDocente().getId())) {
+            throw new AccessDeniedException("Solo puedes registrar tu propia evaluación como jurado");
+        }
+    }
 
     /**
      * Registra o actualiza la nota que un jurado le asigna a una solicitud, calculando el
@@ -47,6 +72,8 @@ public class EvaluacionJuradoService {
         if (!jurado.getSolicitud().getId().equals(solicitudId)) {
             throw new RuntimeException("El jurado no pertenece a esta solicitud.");
         }
+
+        validarPuedeRegistrar(jurado);
 
         if (notaJurado < 1 || notaJurado > 10) {
             throw new RuntimeException("La nota debe estar entre 1 y 10.");
@@ -86,6 +113,9 @@ public class EvaluacionJuradoService {
      * @return la evaluación de ese jurado para esa solicitud, o {@code null} si aún no evaluó
      */
     public EvaluacionJuradoDTO obtenerEvaluacion(Long solicitudId, Long juradoId) {
+        Solicitud solicitud = solicitudRepo.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+        solicitudAccessService.validarAcceso(solicitud, "EVALUACION_CALIFICAR");
         return evaluacionJuradoRepo.findBySolicitudIdAndJuradoId(solicitudId, juradoId)
                 .map(this::toDTO)
                 .orElse(null);
@@ -97,6 +127,9 @@ public class EvaluacionJuradoService {
      * @return las evaluaciones registradas por todos los jurados de esa solicitud
      */
     public List<EvaluacionJuradoDTO> obtenerTribunal(Long solicitudId) {
+        Solicitud solicitud = solicitudRepo.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+        solicitudAccessService.validarAcceso(solicitud, "EVALUACION_CALIFICAR");
         return evaluacionJuradoRepo.findBySolicitudId(solicitudId).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());

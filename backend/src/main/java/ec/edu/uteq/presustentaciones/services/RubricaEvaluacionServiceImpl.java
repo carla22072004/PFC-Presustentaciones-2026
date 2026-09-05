@@ -6,7 +6,11 @@ import ec.edu.uteq.presustentaciones.dto.EvaluacionRubricaResponse;
 import ec.edu.uteq.presustentaciones.dto.ObservacionesSolicitudDTO;
 import ec.edu.uteq.presustentaciones.entities.*;
 import ec.edu.uteq.presustentaciones.repositories.*;
+import ec.edu.uteq.presustentaciones.security.service.SolicitudAccessService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +32,26 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
     private final EvaluacionJuradoRepository javaEvaluacionJuradoRepo;
     private final EvaluadorRepository evaluadorRepo;
     private final TipoEvaluadorRepository tipoEvaluadorRepo;
+    private final SolicitudAccessService solicitudAccessService;
+    private final PermisoService permisoService;
+
+    /** Mismo criterio que EvaluacionJuradoService.validarPuedeRegistrar: solo el propio
+     * jurado, o ADMIN/COORDINADOR, puede registrar una evaluación de rúbrica -- evita que
+     * un jurado registre escalas a nombre de otro (IDOR de escritura). */
+    private void validarPuedeRegistrar(Jurado jurado) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Usuario no autenticado");
+        }
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin || permisoService.tienePermiso(auth, "EVALUACION_CALIFICAR")) {
+            return;
+        }
+        if (!permisoService.esPropioDocente(auth, jurado.getDocente().getId())) {
+            throw new AccessDeniedException("Solo puedes registrar tu propia evaluación como jurado");
+        }
+    }
 
     @Override
     @Transactional
@@ -41,6 +65,8 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
         if (!jurado.getSolicitud().getId().equals(req.getSolicitudId())) {
             throw new RuntimeException("El jurado no pertenece a esta solicitud.");
         }
+
+        validarPuedeRegistrar(jurado);
 
         rubricaRepo.findById(req.getRubricaId())
                 .orElseThrow(() -> new RuntimeException("Rúbrica no encontrada: " + req.getRubricaId()));
@@ -108,7 +134,8 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
     public EvaluacionRubricaResponse obtenerEvaluacionJurado(Long solicitudId, Long juradoId) {
         Jurado jurado = juradoRepo.findById(juradoId)
                 .orElseThrow(() -> new RuntimeException("Jurado no encontrado: " + juradoId));
-        
+        solicitudAccessService.validarAcceso(jurado.getSolicitud(), "EVALUACION_CALIFICAR");
+
         Evaluador evaluador = evaluadorRepo.findBySolicitudIdAndDocenteIdAndTipoEvaluadorCodigo(
                 solicitudId, jurado.getDocente().getId(), "JURADO")
                 .orElseThrow(() -> new RuntimeException("Evaluador no registrado para el jurado."));
@@ -119,6 +146,10 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
  
     @Override
     public List<EvaluacionRubricaResponse> obtenerEvaluacionesSolicitud(Long solicitudId) {
+        Solicitud solicitudParaAcceso = solicitudRepo.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+        solicitudAccessService.validarAcceso(solicitudParaAcceso, "EVALUACION_CALIFICAR");
+
         List<Jurado> jurados = juradoRepo.findBySolicitudId(solicitudId);
         return jurados.stream()
                 .map(j -> {
@@ -134,6 +165,9 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
  
     @Override
     public Double calcularNotaTribunal(Long solicitudId) {
+        Solicitud solicitudParaAcceso = solicitudRepo.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+        solicitudAccessService.validarAcceso(solicitudParaAcceso, "EVALUACION_CALIFICAR");
         return promedioTribunal(solicitudId);
     }
  
@@ -215,6 +249,7 @@ public class RubricaEvaluacionServiceImpl implements RubricaEvaluacionService {
     public ObservacionesSolicitudDTO obtenerObservacionesSolicitud(Long solicitudId) {
         Solicitud solicitud = solicitudRepo.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + solicitudId));
+        solicitudAccessService.validarAcceso(solicitud, "EVALUACION_CALIFICAR");
 
         String nombreEstudiante = "";
         if (solicitud.getEstudiante() != null && solicitud.getEstudiante().getUsuario() != null) {

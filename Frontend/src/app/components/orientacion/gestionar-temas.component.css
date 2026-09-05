@@ -42,7 +42,9 @@
 
 .tem-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
 .tem-modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
-.tem-modal h3 { margin: 0 0 16px; font-size: 1.05rem; color: #1e293b; }
+.tem-modal h3 { margin: 0; font-size: 1.05rem; color: #1e293b; }
+.tem-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.tem-modal-cerrar { font-size: 1.2rem; flex-shrink: 0; }
 .tem-form-grupo { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
 .tem-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .tem-form-grupo label { font-size: 0.8rem; color: #64748b; font-weight: 600; }
@@ -70,3 +72,6 @@ body.dark-mode .tem-form-grupo select,
 body.dark-mode .tem-form-grupo textarea { background: #0f172a; border-color: #334155; color: #e2e8f0; }
 body.dark-mode .tem-form-grupo select:disabled { background: #161b22; color: #6e7681; }
 body.dark-mode .tem-btn-cancelar { background: #21262d; color: #c9d1d9; }
+body.dark-mode .tem-btn-refresh { background: #1e293b; color: #818cf8; border: 1px solid #334155; }
+body.dark-mode .tem-icon-btn:hover { background: #334155; }
+body.dark-mode .tem-icon-danger:hover { color: #f87171; background: #450a0a; }

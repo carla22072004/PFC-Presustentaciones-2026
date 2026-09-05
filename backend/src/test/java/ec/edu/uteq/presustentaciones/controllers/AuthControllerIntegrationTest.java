@@ -32,7 +32,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -253,5 +257,157 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Sesión cerrada correctamente"));
+    }
+
+    // ── /register: endurecido contra mass-assignment (auditoría 2026-09-04) ────────────────
+
+    /** Autentica como un ADMIN con USUARIOS_GESTIONAR, igual que testAccesoProtegidoConTokenValido. */
+    private void autenticarComoAdminConGestionUsuarios() {
+        String token = "adminToken";
+        UserDetails adminDetails = new User(dummyUsuario.getEmail(), dummyUsuario.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromToken(token)).thenReturn(dummyUsuario.getEmail());
+        when(userDetailsService.loadUserByUsername(dummyUsuario.getEmail())).thenReturn(adminDetails);
+        when(permisoService.tienePermiso(any(), any())).thenReturn(true);
+    }
+
+    @Test
+    void testRegisterExitosoDelegaEnUsuarioServiceConLosCincoCamposPermitidos() throws Exception {
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\"}";
+
+        org.mockito.ArgumentCaptor<Usuario> captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
+        when(usuarioService.crear(captor.capture())).thenReturn(new Usuario());
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Usuario creado = captor.getValue();
+        assertEquals("Carlos", creado.getNombre());
+        assertEquals("Mendoza", creado.getApellido());
+        assertEquals("cmendoza@uteq.edu.ec", creado.getEmail());
+        assertEquals("password123", creado.getPassword());
+        assertEquals("ESTUDIANTE", creado.getRol());
+        assertEquals(Boolean.TRUE, creado.getActivo());
+    }
+
+    @Test
+    void testRegisterIgnoraCamposSensiblesEnviadosPorElCliente() throws Exception {
+        // Mass-assignment: id, activo=false y rolUsuario no existen en RegisterRequest, así que
+        // Jackson los descarta al deserializar -- nunca llegan a la entidad Usuario real.
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\"," +
+                "\"id\":999,\"activo\":false,\"rolUsuario\":{\"id\":1},\"creadoEn\":\"2020-01-01T00:00:00\"}";
+
+        org.mockito.ArgumentCaptor<Usuario> captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
+        when(usuarioService.crear(captor.capture())).thenReturn(new Usuario());
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        Usuario creado = captor.getValue();
+        assertNull(creado.getId());
+        assertEquals(Boolean.TRUE, creado.getActivo(), "activo debe quedar forzado a true pese al false enviado por el cliente");
+    }
+
+    @Test
+    void testRegisterDatosInvalidosDevuelve400SinLlamarAUsuarioService() throws Exception {
+        autenticarComoAdminConGestionUsuarios();
+        // Falta "nombre" (obligatorio) y password muy corta.
+        String body = "{\"apellido\":\"Mendoza\",\"email\":\"no-es-un-email\",\"password\":\"123\",\"rol\":\"ESTUDIANTE\"}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+
+        verify(usuarioService, never()).crear(any());
+    }
+
+    @Test
+    void testRegisterEmailDuplicadoDevuelve400() throws Exception {
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\"}";
+        when(usuarioService.crear(any(Usuario.class)))
+                .thenThrow(new IllegalArgumentException("Ya existe un usuario con el email: cmendoza@uteq.edu.ec"));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Ya existe un usuario con el email: cmendoza@uteq.edu.ec"));
+    }
+
+    @Test
+    void testRegisterRolInvalidoDevuelve400() throws Exception {
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"SUPERUSUARIO_INVENTADO\"}";
+        when(usuarioService.crear(any(Usuario.class)))
+                .thenThrow(new IllegalArgumentException("Rol inválido o no existe: SUPERUSUARIO_INVENTADO"));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testRegisterSinPermisoUsuariosGestionarDevuelve403() throws Exception {
+        String token = "docenteToken";
+        UserDetails docenteDetails = new User("docente@uteq.edu.ec", "x",
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_DOCENTE")));
+        when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromToken(token)).thenReturn("docente@uteq.edu.ec");
+        when(userDetailsService.loadUserByUsername("docente@uteq.edu.ec")).thenReturn(docenteDetails);
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
+
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\"}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer docenteToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+
+        verify(usuarioService, never()).crear(any());
+    }
+
+    // ── POST /api/v1/usuarios (UsuarioController.crear): mismo hallazgo que /register ──────
+
+    @Test
+    void testCrearUsuarioIgnoraIdDelClienteEnviadoEnElBody() throws Exception {
+        // Mismo patrón que testRegisterIgnoraCamposSensiblesEnviadosPorElCliente: "id" no existe
+        // en RegisterRequest, así que Jackson lo descarta -- nunca llega a la entidad Usuario.
+        autenticarComoAdminConGestionUsuarios();
+        String body = "{\"nombre\":\"Carlos\",\"apellido\":\"Mendoza\",\"email\":\"cmendoza2@uteq.edu.ec\"," +
+                "\"password\":\"password123\",\"rol\":\"ESTUDIANTE\",\"id\":1,\"activo\":false}";
+
+        org.mockito.ArgumentCaptor<Usuario> captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
+        when(usuarioService.crear(captor.capture())).thenReturn(new Usuario());
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header("Authorization", "Bearer adminToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        assertNull(captor.getValue().getId());
+        assertEquals(Boolean.TRUE, captor.getValue().getActivo());
     }
 }

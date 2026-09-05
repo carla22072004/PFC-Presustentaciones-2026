@@ -12,7 +12,7 @@ La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquite
     \item \textbf{Nivel 2 (Contenedores):} cuatro contenedores desplegables --- Frontend Angular (SPA),
     Backend Spring Boot (API REST), PostgreSQL 15 (persistencia), Redis 7 (caché), coordinados por nginx
     como proxy inverso.
-    \item \textbf{Nivel 3 (Componentes):} 25 controladores REST, organizados por dominio (Auth,
+    \item \textbf{Nivel 3 (Componentes):} 30 controladores REST, organizados por dominio (Auth,
     Solicitudes, Jurados, Cronograma, Evaluaciones, Actas, Notificaciones, Reportes, Salas, Usuarios,
     Anteproyectos, y otros de soporte), cada uno delegando a una capa de servicio y, para la lógica
     académica compleja, a procedimientos almacenados PL/pgSQL.

@@ -2,12 +2,13 @@
 \label{sec:discusion}
 
 \subsection*{RQ1: ¿Puede automatizarse el flujo completo con trazabilidad verificable?}
-Sí, parcialmente verificado. Los 12 requisitos funcionales están implementados y el flujo completo
-(solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$ acta) se verificó
-manualmente end-to-end contra la topología de producción. Sin embargo, la trazabilidad
-\textbf{automatizada} solo cubre 5 de 12 requisitos con prueba dedicada (Sección~\ref{sec:requisitos}) ---
-la respuesta a RQ1 es ``sí, funcionalmente'' pero ``parcialmente, en términos de verificación
-automatizada continua''.
+Sí, parcialmente verificado. Los 15 requisitos funcionales están implementados y el flujo completo
+(solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$
+acta) se verificó manualmente end-to-end contra la topología de producción. La trazabilidad
+\textbf{automatizada} cubre 12 de 15 requisitos con prueba dedicada --- 8 Must (100\,\%) más
+RF-07, RF-13, RF-14 y RF-15 (Sección~\ref{sec:requisitos}) --- quedando RF-08, RF-09 y RF-10 (Could/Should)
+sin prueba automatizada. La respuesta a RQ1 es ``sí, funcionalmente'' y ``80\,\%, en términos de verificación
+automatizada''.
 
 \subsection*{RQ2: ¿Cuál es el efecto cuantificable de la caché sobre la latencia?}
 Respondida con evidencia estadística fuerte: reducción de latencia de 13.9$\times$ (109.62\,ms a
@@ -23,10 +24,22 @@ el escaneo dinámico OWASP ZAP (la única \texttt{High} encontrada, \texttt{@ang
 corrigió el 2026-08-29). Sin embargo, existen 14 vulnerabilidades de dependencias de terceros sin
 corregir (5 críticas, todas en herramientas de build de íconos que no llegan a producción) y 9 hallazgos
 de \texttt{PATH\_TRAVERSAL\_IN} sin resolver (riesgo real bajo, porque las entradas son IDs \texttt{Long},
-no cadenas arbitrarias, pero no verificado formalmente). La respuesta honesta es: las vulnerabilidades de
-\textbf{código propio y de código servido al navegador} más críticas (inyección SQL, comparación de hash
-insegura, librería Angular vulnerable) están cerradas y verificadas; las vulnerabilidades restantes están
-en \textbf{herramientas de desarrollo}, no en código que se ejecuta en producción.
+no cadenas arbitrarias, pero no verificado formalmente).
+
+Ese panorama, sin embargo, solo cubre lo que find-sec-bugs y ZAP pueden detectar por patrón sintáctico
+--- ninguna de las dos herramientas evalúa \emph{lógica} de autorización por recurso. Una revisión manual
+dirigida encontró y corrigió 6 fallos reales de ese tipo que las herramientas automatizadas no habían
+señalado: IDOR de lectura en evaluaciones y anteproyectos, IDOR de escritura en el registro de notas de
+jurado, IDOR en el perfil de docentes, un endpoint de eliminación de actas que exigía solo estar
+autenticado en vez de un permiso administrativo, mass-assignment en el registro/creación de usuarios que
+permitía sobrescribir una cuenta existente, y secuencias de PostgreSQL desincronizadas (detalle completo
+en Sección~\ref{sec:seguridad-corregida}). Los 6 están corregidos, verificados en vivo contra el backend
+real, y cubiertos con pruebas automatizadas nuevas. La respuesta honesta a RQ3 es entonces de dos capas:
+las vulnerabilidades de \textbf{código propio y de código servido al navegador} detectables por
+herramienta automatizada (inyección SQL, comparación de hash insegura, librería Angular vulnerable) están
+cerradas y verificadas; las de \textbf{lógica de autorización}, invisibles a esas herramientas, también se
+buscaron activamente y las 6 encontradas se cerraron; las vulnerabilidades restantes conocidas están en
+\textbf{herramientas de desarrollo}, no en código que se ejecuta en producción.
 
 \subsection*{RQ4: ¿Qué tan honesta puede mantenerse la documentación bajo presión de plazos?}
 Esta pregunta se responde con el propio historial del proyecto, no con una medición externa. Se
@@ -36,7 +49,7 @@ archivos de test inexistentes en la matriz de trazabilidad, una afirmación fals
 imágenes Docker por digest, y una afirmación falsa sobre custodia de formularios de consentimiento
 firmados. En cada caso, la corrección fue reemplazar el dato fabricado por una medición real o una
 declaración explícita de ausencia --- nunca por otro dato fabricado más plausible. Esto sugiere que sí es
-posible mantener honestidad bajo presión de plazos, al costo de reportar cifras menos favorables (37.1\,\%
-de cobertura en vez de un ``$>$60\,\%'' fabricado; SUS ``pendiente'' en vez de ``91.25/100''), lo cual es
+posible mantener honestidad bajo presión de plazos, al costo de reportar cifras menos favorables (47.5\,\%
+de cobertura de líneas en vez de un ``$>$60\,\%'' fabricado; SUS ``pendiente'' en vez de ``91.25/100''), lo cual es
 precisamente el trade-off que esta guía exige explícitamente priorizar.
 \newpage
