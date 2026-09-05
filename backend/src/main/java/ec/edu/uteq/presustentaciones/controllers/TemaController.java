@@ -40,6 +40,16 @@ public class TemaController {
 
     // ── Catálogo (cualquier usuario con permiso ORIENTACION_TEMAS_VER) ────────
 
+    /**
+     * Explora el catalogo de temas propuestos con filtros combinables. Si quien consulta es
+     * estudiante, el resultado marca ademas cuales tiene ya guardados.
+     *
+     * @param carreraId            filtra por carrera, opcional
+     * @param lineaInvestigacionId filtra por linea de investigacion, opcional
+     * @param areaId               filtra por area tematica, opcional
+     * @param nivelDificultad      filtra por nivel (BASICO, INTERMEDIO, AVANZADO), opcional
+     * @return 200 con los temas que cumplen los filtros
+     */
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')")
     public ResponseEntity<List<TemaPropuestoDTO>> explorar(
@@ -52,12 +62,22 @@ public class TemaController {
                 carreraId, lineaInvestigacionId, areaId, nivelDificultad, estudianteId));
     }
 
+    /**
+     * @param temaId tema consultado
+     * @return 200 con el detalle del tema
+     */
     @GetMapping("/{temaId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')")
     public ResponseEntity<TemaPropuestoDTO> detalle(@PathVariable Integer temaId) {
         return ResponseEntity.ok(temaService.obtenerDetalle(temaId));
     }
 
+    /**
+     * Sugiere ideas de tema a partir de la carrera, linea y area que indique el estudiante.
+     *
+     * @param request criterios sobre los que generar las sugerencias
+     * @return 200 con las ideas propuestas
+     */
     @PostMapping("/generar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')")
     public ResponseEntity<List<TemaPropuestoDTO>> generarIdeas(@RequestBody @Valid GenerarTemaRequest request) {
@@ -66,12 +86,24 @@ public class TemaController {
 
     // ── Lista personal del estudiante (solo ESTUDIANTE, siempre sobre sí mismo) ─
 
+    /**
+     * Lista personal de temas guardados. Opera siempre sobre el estudiante autenticado; el id
+     * sale del JWT y nunca de la URL.
+     *
+     * @return 200 con los temas que el estudiante autenticado guardo
+     */
     @GetMapping("/guardados")
     @PreAuthorize("hasRole('ESTUDIANTE')")
     public ResponseEntity<List<TemaPropuestoDTO>> misTemasGuardados() {
         return ResponseEntity.ok(temaService.obtenerTemasGuardados(estudianteActual().getId()));
     }
 
+    /**
+     * Guarda un tema en la lista personal del estudiante autenticado.
+     *
+     * @param temaId tema a guardar
+     * @return 200 sin cuerpo
+     */
     @PostMapping("/{temaId}/guardar")
     @PreAuthorize("hasRole('ESTUDIANTE')")
     public ResponseEntity<Void> guardar(@PathVariable Integer temaId) {
@@ -79,6 +111,12 @@ public class TemaController {
         return ResponseEntity.status(201).build();
     }
 
+    /**
+     * Quita un tema de la lista personal del estudiante autenticado.
+     *
+     * @param temaId tema a quitar
+     * @return 200 sin cuerpo
+     */
     @DeleteMapping("/{temaId}/guardar")
     @PreAuthorize("hasRole('ESTUDIANTE')")
     public ResponseEntity<Void> quitarGuardado(@PathVariable Integer temaId) {
@@ -88,12 +126,25 @@ public class TemaController {
 
     // ── Gestión del catálogo (permiso ORIENTACION_CATALOGO_GESTIONAR) ────────
 
+    /**
+     * Publica un tema nuevo en el catalogo (gestion, no lista personal).
+     *
+     * @param request datos del tema, validados con Bean Validation
+     * @return 200 con el tema creado
+     */
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<TemaPropuestoDTO> crear(@RequestBody @Valid GuardarTemaPropuestoRequest request) {
         return ResponseEntity.status(201).body(temaService.crear(request));
     }
 
+    /**
+     * Edita un tema del catalogo.
+     *
+     * @param temaId  tema a actualizar
+     * @param request nuevos datos del tema
+     * @return 200 con el tema actualizado
+     */
     @PutMapping("/{temaId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<TemaPropuestoDTO> actualizar(@PathVariable Integer temaId,
@@ -101,6 +152,12 @@ public class TemaController {
         return ResponseEntity.ok(temaService.actualizar(temaId, request));
     }
 
+    /**
+     * Retira un tema del catalogo.
+     *
+     * @param temaId tema a eliminar
+     * @return 204 sin cuerpo
+     */
     @DeleteMapping("/{temaId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer temaId) {
@@ -110,6 +167,13 @@ public class TemaController {
 
     // ── Helpers de identidad ─────────────────────────────────────────────────
 
+    /**
+     * Resuelve el usuario de la sesion actual a partir del token.
+     *
+     * @return el usuario autenticado
+     * @throws IllegalStateException si no hay sesion, es anonima, o el usuario del token ya
+     *                               no existe en la base
+     */
     private Usuario usuarioActual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
@@ -119,13 +183,24 @@ public class TemaController {
                 .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en el sistema"));
     }
 
+    /**
+     * Resuelve el perfil de estudiante del usuario autenticado.
+     *
+     * @return el estudiante autenticado
+     * @throws IllegalArgumentException si el usuario autenticado no tiene perfil de estudiante
+     */
     private Estudiante estudianteActual() {
         return estudianteRepository.findByUsuarioId(usuarioActual().getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "El usuario autenticado no tiene un perfil de estudiante asociado"));
     }
 
-    /** Devuelve el id del estudiante autenticado, o null si quien consulta no es estudiante. */
+    /**
+     * Variante tolerante de {@link #estudianteActual()} para el catalogo publico: permite que
+     * un docente o coordinador explore los temas sin perfil de estudiante asociado.
+     *
+     * @return id del estudiante autenticado, o null si quien consulta no es estudiante
+     */
     private Long estudianteActualIdOrNull() {
         try {
             return estudianteRepository.findByUsuarioId(usuarioActual().getId())

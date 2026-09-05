@@ -31,7 +31,11 @@ public class PermisoController {
     private final RolUsuarioRepository rolUsuarioRepository;
     private final AuditoriaService auditoriaService;
 
-    /** Catálogo completo de permisos disponibles, agrupado por categoría en el frontend. */
+    /**
+     * Catalogo completo de permisos disponibles, que el frontend agrupa por categoria.
+     *
+     * @return permisos ordenados por categoria y nombre
+     */
     @GetMapping
     public List<Permiso> listar() {
         return permisoRepository.findAllByOrderByCategoriaAscNombreAsc();
@@ -44,6 +48,13 @@ public class PermisoController {
      * ROLES_PERMISOS_GESTIONAR, se rechaza -- de lo contrario un admin podría quitarse
      * a sí mismo (y a todos) el acceso para volver a corregirlo, sin salida salvo tocar
      * la base de datos directamente.
+     *
+     * @param rolId           rol cuyos permisos se reemplazan
+     * @param codigosPermisos lista final de codigos marcados (no un delta); se admiten
+     *                        repetidos, el conteo se hace sobre los distintos
+     * @return 200 con los codigos resultantes del rol; 404 si el rol no existe; 400 si algun
+     *         codigo no existe o si la operacion dejaria al sistema sin ningun rol capaz de
+     *         gestionar permisos
      */
     @PutMapping("/rol/{rolId}")
     @Transactional

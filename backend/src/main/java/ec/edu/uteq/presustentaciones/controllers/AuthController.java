@@ -44,6 +44,16 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final IUsuarioService usuarioService;
 
+    /**
+     * Autentica al usuario y emite el par de tokens. El access token viaja en el cuerpo y el
+     * refresh token se deja además en una cookie HTTP-Only, de modo que JavaScript no pueda
+     * leerlo. Este endpoint está sujeto al rate limiting de 6 intentos por minuto y por IP.
+     *
+     * @param loginRequest correo institucional y contraseña
+     * @param response     respuesta HTTP donde se agrega la cookie del refresh token
+     * @return 200 con el token de acceso y los datos de sesión, o 401 si las credenciales no
+     *         son válidas; 429 si se superó el límite de intentos
+     */
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión y obtener tokens", description = "Genera el JWT de acceso y el refresh token. Configura cookies HttpOnly + Secure + SameSite=Strict.")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
@@ -94,6 +104,15 @@ public class AuthController {
         return ResponseEntity.ok(ResponseWrapper.success(data, "Sesión iniciada correctamente"));
     }
 
+    /**
+     * Renueva el access token a partir del refresh token de la cookie, aplicando rotación:
+     * el refresh usado se invalida y se emite uno nuevo. Si llega un refresh ya utilizado se
+     * trata como reutilización (posible robo de token) y se rechaza.
+     *
+     * @param request  petición de la que se lee la cookie del refresh token
+     * @param response respuesta donde se deja el refresh token rotado
+     * @return 200 con el nuevo access token, o 401 si el refresh falta, expiró o ya fue usado
+     */
     @PostMapping("/refresh")
     @Operation(summary = "Refrescar el token de acceso vencido", description = "Recibe el refresh token, lo valida en Redis y rota ambos tokens (Access y Refresh).")
     public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
@@ -151,6 +170,15 @@ public class AuthController {
         return ResponseEntity.ok(ResponseWrapper.success(data, "Tokens actualizados correctamente"));
     }
 
+    /**
+     * Cierra la sesión: agrega el identificador del token a la lista negra en Redis y borra
+     * la cookie del refresh, de modo que el access token deje de aceptarse aunque no haya
+     * expirado todavía.
+     *
+     * @param request  petición de la que se leen el token y la cookie
+     * @param response respuesta donde se limpia la cookie del refresh token
+     * @return 200 confirmando el cierre de sesión
+     */
     @PostMapping("/logout")
     @Operation(summary = "Cerrar sesión e invalidar tokens", description = "Agrega el token de acceso a la blacklist en Redis y elimina el refresh token.")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {

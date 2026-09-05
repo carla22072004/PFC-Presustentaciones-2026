@@ -24,7 +24,13 @@ public class RubricaEvaluacionController {
     private final RubricaEvaluacionService service;
     private final CriterioRubricaRepository criterioRepo;
 
-    /** RF-07: Jurado registra sus escalas por criterio */
+    /**
+     * RF-07: Un jurado registra su calificacion criterio por criterio segun la escala de la
+     * rubrica.
+     *
+     * @param request solicitud, jurado y escala elegida en cada criterio
+     * @return 200 con la evaluacion registrada, o 400 con el motivo del rechazo
+     */
     @PostMapping("/registrar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> registrar(@RequestBody EvaluacionRubricaRequest request) {
@@ -38,7 +44,13 @@ public class RubricaEvaluacionController {
         }
     }
 
-    /** Obtener evaluación de un jurado específico */
+    /**
+     * Evaluacion registrada por un jurado concreto.
+     *
+     * @param solicitudId solicitud consultada
+     * @param juradoId    jurado del que se quiere la evaluacion
+     * @return 200 con la evaluacion, o 400 si no existe
+     */
     @GetMapping("/solicitud/{solicitudId}/jurado/{juradoId}")
     public ResponseEntity<?> obtenerJurado(
             @PathVariable Long solicitudId,
@@ -52,13 +64,23 @@ public class RubricaEvaluacionController {
         }
     }
 
-    /** Obtener evaluaciones de todos los jurados para una solicitud */
+    /**
+     * @param solicitudId solicitud consultada
+     * @return evaluaciones de todos los jurados del tribunal para esa solicitud
+     */
     @GetMapping("/solicitud/{solicitudId}")
     public List<EvaluacionRubricaResponse> obtenerSolicitud(@PathVariable Long solicitudId) {
         return service.obtenerEvaluacionesSolicitud(solicitudId);
     }
 
-    /** Nota promedio del tribunal lista para usar en la evaluación final (40%) */
+    /**
+     * Nota promedio del tribunal, que es la que entra con peso 40 % en la evaluacion final.
+     *
+     * @param solicitudId solicitud consultada
+     * @return 200 siempre: si ya hay evaluaciones devuelve {@code {nota}}; si todavia no hay
+     *         ninguna devuelve {@code {nota: null, mensaje}} en vez de un error, para que el
+     *         formulario de evaluacion final pueda mostrar el aviso sin tratarlo como fallo
+     */
     @GetMapping("/nota-tribunal/{solicitudId}")
     public ResponseEntity<?> notaTribunal(@PathVariable Long solicitudId) {
         Double nota = service.calcularNotaTribunal(solicitudId);
@@ -69,13 +91,22 @@ public class RubricaEvaluacionController {
         return ResponseEntity.ok(Map.of("nota", nota));
     }
 
-    /** Listar criterios de una rúbrica */
+    /**
+     * @param rubricaId rubrica consultada
+     * @return criterios de esa rubrica, para pintar el formulario de calificacion
+     */
     @GetMapping("/criterios/{rubricaId}")
     public List<CriterioRubrica> criteriosPorRubrica(@PathVariable Long rubricaId) {
         return criterioRepo.findByRubricaIdOrderByOrdenAsc(rubricaId);
     }
 
-    /** Obtener todas las observaciones de una solicitud (tutor, jurados, coordinador) */
+    /**
+     * Observaciones de todos los actores sobre una solicitud (tutor, jurados y coordinador),
+     * consolidadas en una sola respuesta.
+     *
+     * @param solicitudId solicitud consultada
+     * @return 200 con las observaciones consolidadas, o 400 si no existe la solicitud
+     */
     @GetMapping("/observaciones/{solicitudId}")
     public ResponseEntity<?> obtenerObservaciones(@PathVariable Long solicitudId) {
         try {

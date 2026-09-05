@@ -23,9 +23,17 @@ public class RubricaController {
     private final RubricaRepository rubricaRepository;
     private final CriterioRubricaRepository criterioRepository;
 
+    /**
+     * @param pageable pagina y tamano solicitados
+     * @return pagina de rubricas de evaluacion
+     */
     @GetMapping
     public Page<Rubrica> listar(Pageable pageable) { return rubricaRepository.findAll(pageable); }
 
+    /**
+     * @param id rubrica consultada
+     * @return 200 con la rubrica, o 404 si no existe
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Rubrica> obtener(@PathVariable Long id) {
         return rubricaRepository.findById(id)
@@ -33,10 +41,20 @@ public class RubricaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Crea una rubrica de evaluacion.
+     *
+     * @param rubrica datos de la rubrica
+     * @return la rubrica persistida con su id asignado
+     */
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'RUBRICA_GESTIONAR')")
     public Rubrica crear(@RequestBody Rubrica rubrica) { return rubricaRepository.save(rubrica); }
 
+    /**
+     * @param id rubrica a eliminar
+     * @return 204 sin cuerpo
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'RUBRICA_GESTIONAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
@@ -44,6 +62,13 @@ public class RubricaController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Agrega un criterio a una rubrica existente.
+     *
+     * @param rubricaId rubrica a la que se agrega el criterio
+     * @param criterio  criterio con su descripcion y peso
+     * @return 200 con el criterio creado, o el error si la rubrica no existe
+     */
     @PostMapping("/{rubricaId}/criterios")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'RUBRICA_GESTIONAR')")
     public ResponseEntity<?> agregarCriterio(@PathVariable Long rubricaId,
@@ -54,6 +79,10 @@ public class RubricaController {
         return ResponseEntity.ok(criterioRepository.save(criterio));
     }
 
+    /**
+     * @param rubricaId rubrica consultada
+     * @return criterios que componen esa rubrica
+     */
     @GetMapping("/{rubricaId}/criterios")
     public List<CriterioRubrica> criterios(@PathVariable Long rubricaId) {
         return criterioRepository.findByRubricaIdOrderByOrdenAsc(rubricaId);

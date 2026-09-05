@@ -21,6 +21,13 @@ public class NotificacionController {
         this.notificacionService = notificacionService;
     }
 
+    /**
+     * Crea una notificacion dirigida a un usuario concreto.
+     *
+     * @param usuarioId destinatario de la notificacion
+     * @param mensaje   texto que vera el usuario
+     * @return 200 con la notificacion creada
+     */
     @PostMapping("/crear")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'NOTIFICACIONES_ENVIAR')")
     public ResponseEntity<?> crear(@RequestParam Long usuarioId, @RequestParam String mensaje) {
@@ -31,6 +38,10 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * @param pageable pagina y tamano solicitados
+     * @return 200 con la pagina de notificaciones del sistema
+     */
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'NOTIFICACIONES_GLOBAL_VER')")
     public ResponseEntity<?> listar(Pageable pageable) {
@@ -41,6 +52,11 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * @param usuarioId destinatario cuyas notificaciones se consultan
+     * @param pageable  pagina y tamano solicitados
+     * @return 200 con la pagina de notificaciones de ese usuario
+     */
     @GetMapping("/usuario/{usuarioId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> listarPorUsuario(@PathVariable Long usuarioId, Pageable pageable) {
@@ -51,6 +67,12 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * Contador para el badge de la campana del frontend.
+     *
+     * @param usuarioId usuario consultado
+     * @return 200 con la cantidad de notificaciones sin leer
+     */
     @GetMapping("/usuario/{usuarioId}/no-leidas")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> contarNoLeidas(@PathVariable Long usuarioId) {
@@ -61,6 +83,10 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * @param id notificacion a marcar como leida
+     * @return 200 con la notificacion actualizada
+     */
     @PatchMapping("/{id}/marcar-leida")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> marcarLeida(@PathVariable Long id) {
@@ -71,6 +97,10 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * @param usuarioId usuario cuyas notificaciones se marcan todas como leidas
+     * @return 200 al confirmar la operacion
+     */
     @PatchMapping("/usuario/{usuarioId}/marcar-todas-leidas")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> marcarTodasLeidas(@PathVariable Long usuarioId) {
@@ -82,6 +112,10 @@ public class NotificacionController {
         }
     }
 
+    /**
+     * @param id notificacion a eliminar
+     * @return 200 al confirmar el borrado
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {

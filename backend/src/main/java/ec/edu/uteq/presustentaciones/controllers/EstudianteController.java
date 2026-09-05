@@ -25,6 +25,14 @@ public class EstudianteController {
 
     private final EstudianteService estudianteService;
 
+    /**
+     * Listado paginado de estudiantes con búsqueda de texto libre.
+     *
+     * @param page número de página (0 por defecto)
+     * @param size filas por página (20 por defecto)
+     * @param q    búsqueda sobre nombre, apellido, correo o expediente, opcional
+     * @return 200 con la página de estudiantes
+     */
     @GetMapping("/paginado")
     public ResponseEntity<Page<EstudianteDTO>> listarPaginado(
             @RequestParam(defaultValue = "0") int page,
@@ -33,6 +41,10 @@ public class EstudianteController {
         return ResponseEntity.ok(estudianteService.listarPaginado(page, size, q));
     }
 
+    /**
+     * @param id perfil de estudiante consultado
+     * @return 200 con la ficha del estudiante, o el error correspondiente si no existe
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
         try {
@@ -42,6 +54,13 @@ public class EstudianteController {
         }
     }
 
+    /**
+     * Registra un estudiante creando de una vez su usuario autenticable y su perfil académico
+     * (carrera, período de ingreso, semestre, expediente).
+     *
+     * @param req datos del usuario y del perfil académico
+     * @return 200 con el estudiante creado, o el error de validación correspondiente
+     */
     @PostMapping
     public ResponseEntity<?> crear(@RequestBody CrearEstudianteRequest req) {
         try {
@@ -51,6 +70,13 @@ public class EstudianteController {
         }
     }
 
+    /**
+     * Edita los datos académicos de un estudiante (carrera, semestre, estado académico).
+     *
+     * @param id  perfil de estudiante a actualizar
+     * @param req campos a modificar
+     * @return 200 con el estudiante actualizado, o el error correspondiente
+     */
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody ActualizarEstudianteRequest req) {
         try {
@@ -60,6 +86,9 @@ public class EstudianteController {
         }
     }
 
+    /**
+     * @return catálogo de estados académicos posibles, para poblar el selector del formulario
+     */
     @GetMapping("/estados-academicos")
     public List<EstadoAcademico> estadosAcademicos() {
         return estudianteService.listarEstadosAcademicos();

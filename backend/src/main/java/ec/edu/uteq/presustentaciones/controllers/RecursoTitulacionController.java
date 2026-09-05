@@ -28,6 +28,15 @@ public class RecursoTitulacionController {
     private final UsuarioActualService usuarioActual;
     private final EstudianteRepository estudianteRepository;
 
+    /**
+     * Recursos de apoyo a la titulación. Si no se indica carrera, se resuelve la del
+     * estudiante autenticado, de modo que cada quien ve los materiales de su propia carrera
+     * sin tener que pasarla explícitamente.
+     *
+     * @param carreraId carrera de la que se quieren los recursos; si es null se usa la del
+     *                  estudiante autenticado
+     * @return 200 con los recursos correspondientes
+     */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<RecursoTitulacionDTO>> listar(
@@ -45,12 +54,25 @@ public class RecursoTitulacionController {
         return ResponseEntity.ok(recursoService.listar(efectivo));
     }
 
+    /**
+     * Publica un recurso nuevo en el Centro de Orientación.
+     *
+     * @param request datos del recurso, validados con Bean Validation
+     * @return 200 con el recurso creado
+     */
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<RecursoTitulacionDTO> crear(@RequestBody @Valid GuardarRecursoRequest request) {
         return ResponseEntity.status(201).body(recursoService.crear(request));
     }
 
+    /**
+     * Edita un recurso publicado.
+     *
+     * @param id      recurso a actualizar
+     * @param request nuevos datos del recurso
+     * @return 200 con el recurso actualizado
+     */
     @PutMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<RecursoTitulacionDTO> actualizar(@PathVariable Integer id,
@@ -58,6 +80,12 @@ public class RecursoTitulacionController {
         return ResponseEntity.ok(recursoService.actualizar(id, request));
     }
 
+    /**
+     * Retira un recurso del Centro de Orientación.
+     *
+     * @param id recurso a eliminar
+     * @return 204 sin cuerpo
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {

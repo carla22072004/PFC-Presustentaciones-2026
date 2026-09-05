@@ -18,6 +18,14 @@ public class EvaluacionJuradoController {
 
     private final EvaluacionJuradoService service;
 
+    /**
+     * Registra o actualiza la calificación que un jurado da a una solicitud. El jurado se
+     * comprueba contra el usuario autenticado: un docente no puede guardar notas a nombre de
+     * otro miembro del tribunal.
+     *
+     * @param request cuerpo con la solicitud, el jurado y las notas por criterio
+     * @return 200 con la evaluación guardada, o 400 con el motivo del rechazo
+     */
     @PostMapping("/guardar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> guardar(@RequestBody Map<String, Object> request) {
@@ -37,6 +45,13 @@ public class EvaluacionJuradoController {
         }
     }
 
+    /**
+     * Calificación registrada por un jurado concreto sobre una solicitud.
+     *
+     * @param solicitudId solicitud consultada
+     * @param juradoId    jurado del que se quiere ver la calificación
+     * @return 200 con la evaluación, o 400 si no existe o no hay acceso
+     */
     @GetMapping("/{solicitudId}/{juradoId}")
     public ResponseEntity<?> obtener(
             @PathVariable Long solicitudId,
@@ -54,6 +69,13 @@ public class EvaluacionJuradoController {
         }
     }
 
+    /**
+     * Calificaciones de todo el tribunal para una solicitud, usadas para calcular la nota
+     * promedio del jurado.
+     *
+     * @param solicitudId solicitud consultada
+     * @return 200 con una entrada por miembro del tribunal
+     */
     @GetMapping("/tribunal/{solicitudId}")
     public ResponseEntity<List<EvaluacionJuradoDTO>> obtenerTribunal(@PathVariable Long solicitudId) {
         return ResponseEntity.ok(service.obtenerTribunal(solicitudId));

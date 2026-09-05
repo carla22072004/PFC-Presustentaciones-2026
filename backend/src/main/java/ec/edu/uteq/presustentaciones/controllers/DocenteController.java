@@ -28,6 +28,10 @@ public class DocenteController {
         this.usuarioActualService = usuarioActualService;
     }
 
+    /**
+     * @return todos los docentes registrados; para el panel de administración conviene usar
+     *         la versión paginada
+     */
     @GetMapping
     public List<Docente> listar() {
         return docenteRepository.findAll();
@@ -37,12 +41,19 @@ public class DocenteController {
      * Versión paginada -- misma convención que /api/v1/solicitudes/paginado y
      * /api/v1/usuarios/paginado. ERR-02: agrega búsqueda de texto libre ("q") para
      * alimentar un combobox con typeahead en vez de listar los 9,807 docentes de una vez.
+     *
+     * @param q        búsqueda de texto libre sobre el docente, opcional
+     * @param pageable página y tamaño solicitados
+     * @return página de docentes que cumplen el filtro
      */
     @GetMapping("/paginado")
     public Page<Docente> listarPaginado(@RequestParam(required = false) String q, Pageable pageable) {
         return docenteRepository.buscarPaginado(q, pageable);
     }
 
+    /**
+     * @return docentes disponibles para asignación de tribunal o tutoría
+     */
     @GetMapping("/disponibles")
     public List<Docente> disponibles() {
         return docenteRepository.findByDisponibleTrue();
@@ -54,6 +65,9 @@ public class DocenteController {
      * asignación de sala, etc.), así que no aplica un control de propiedad aquí -- restringirlo
      * rompería esos flujos sin cerrar ninguna fuga real, ya que el mismo docente ya es visible
      * listando todos.
+     *
+     * @param id identificador del Docente (no del Usuario)
+     * @return 200 con el docente, o 404 si no existe
      */
     @GetMapping("/{id}")
     public ResponseEntity<Docente> obtener(@PathVariable Long id) {
@@ -69,6 +83,11 @@ public class DocenteController {
      * Sin control de propiedad, cualquier autenticado podía enumerar usuarioId ajenos. ADMIN y
      * COORDINADOR conservan acceso completo (mismo criterio administrativo que el resto del
      * sistema); cualquier otro usuario solo puede consultar su propio usuarioId.
+     *
+     * @param usuarioId identificador del Usuario cuyo perfil de Docente se busca
+     * @return 200 con el docente, o 404 si ese usuario no tiene perfil de docente
+     * @throws AccessDeniedException si un usuario sin rol administrativo pide un usuarioId
+     *                               distinto del suyo
      */
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<Docente> obtenerPorUsuario(@PathVariable Long usuarioId) {
@@ -78,6 +97,12 @@ public class DocenteController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Exige que quien consulta sea ADMIN/COORDINADOR o el dueño del recurso.
+     *
+     * @param usuarioIdObjetivo usuario cuyo perfil se quiere consultar
+     * @throws AccessDeniedException si no se cumple ninguna de las dos condiciones
+     */
     private void validarAccesoPropioOAdministrativo(Long usuarioIdObjetivo) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean esAdminOCoordinador = auth.getAuthorities().stream()

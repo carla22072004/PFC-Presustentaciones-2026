@@ -30,18 +30,36 @@ public class AnteproyectoController {
         this.anteproyectoService = s;
     }
 
+    /**
+     * RF-02: Sube el PDF del anteproyecto de una solicitud. El servicio calcula y guarda el
+     * SHA-256 del archivo, que despues permite verificar que no fue alterado en disco.
+     *
+     * @param solicitudId solicitud a la que pertenece el anteproyecto
+     * @param archivo     PDF enviado como multipart
+     * @return 200 con el anteproyecto registrado
+     */
     @PostMapping(value = "/enviar/{solicitudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Anteproyecto> enviar(@PathVariable Long solicitudId,
             @RequestParam("archivo") MultipartFile archivo) {
         return ResponseEntity.ok(anteproyectoService.enviarAnteproyecto(solicitudId, archivo));
     }
 
+    /**
+     * @param solicitudId solicitud consultada
+     * @return 200 con el anteproyecto de esa solicitud, o el error si aun no se subio
+     */
     @GetMapping("/solicitud/{solicitudId}")
     public ResponseEntity<?> obtenerPorSolicitud(@PathVariable Long solicitudId) {
         return anteproyectoService.buscarPorSolicitud(solicitudId)
                 .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Descarga en linea el PDF del anteproyecto.
+     *
+     * @param solicitudId solicitud cuyo anteproyecto se abre
+     * @return 200 con el PDF, o el estado de error que devuelva el servicio
+     */
     @GetMapping("/ver/{solicitudId}")
     public ResponseEntity<Resource> verPdf(@PathVariable Long solicitudId) {
         Anteproyecto ap = anteproyectoService.buscarPorSolicitud(solicitudId)
@@ -60,7 +78,13 @@ public class AnteproyectoController {
         }
     }
 
-    /** RF-02: Verificar integridad SHA-256 del archivo en disco */
+    /**
+     * RF-02: Recalcula el SHA-256 del archivo en disco y lo compara con el registrado al
+     * subirlo, para detectar alteraciones posteriores.
+     *
+     * @param solicitudId solicitud cuyo anteproyecto se verifica
+     * @return 200 con el resultado de la comparacion de hashes
+     */
     @GetMapping("/verificar/{solicitudId}")
     public ResponseEntity<Map<String, Object>> verificar(@PathVariable Long solicitudId) {
         try {
@@ -79,12 +103,26 @@ public class AnteproyectoController {
         }
     }
 
+    /**
+     * Aprueba el anteproyecto dejando constancia de las observaciones del revisor.
+     *
+     * @param id            anteproyecto a aprobar
+     * @param observaciones comentario del revisor
+     * @return 200 con el anteproyecto aprobado
+     */
     @PostMapping("/aprobar/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ANTEPROYECTO_REVISAR')")
     public ResponseEntity<Anteproyecto> aprobar(@PathVariable Long id, @RequestParam String observaciones) {
         return ResponseEntity.ok(anteproyectoService.aprobarAnteproyecto(id, observaciones));
     }
 
+    /**
+     * Rechaza el anteproyecto indicando que debe corregirse.
+     *
+     * @param id            anteproyecto a rechazar
+     * @param observaciones motivo del rechazo, visible para el estudiante
+     * @return 200 con el anteproyecto rechazado
+     */
     @PostMapping("/rechazar/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'ANTEPROYECTO_REVISAR')")
     public ResponseEntity<Anteproyecto> rechazar(@PathVariable Long id, @RequestParam String observaciones) {

@@ -40,6 +40,10 @@ public class RolController {
      * nuevos que se creen desde aquí sí se pueden eliminar libremente. */
     private static final Set<String> ROLES_PROTEGIDOS = Set.of("ADMIN", "DOCENTE", "COORDINADOR", "ESTUDIANTE");
 
+    /**
+     * @return los roles del sistema, cada uno con su conteo de usuarios asignados y la lista
+     *         de codigos de permiso que tiene concedidos
+     */
     @GetMapping
     public List<RolDTO> listar() {
         return rolUsuarioRepository.findAll().stream()
@@ -47,6 +51,13 @@ public class RolController {
                 .toList();
     }
 
+    /**
+     * Crea un rol nuevo. El codigo se normaliza a mayusculas con guiones bajos, y el id se
+     * calcula como el mayor existente mas uno.
+     *
+     * @param body codigo y nombre del rol; ambos obligatorios
+     * @return 200 con el rol creado, o 400 si falta un campo o el codigo ya existe
+     */
     @PostMapping
     @Transactional
     public ResponseEntity<?> crear(@RequestBody Map<String, String> body) {
@@ -66,6 +77,14 @@ public class RolController {
         return ResponseEntity.ok(toDto(rol));
     }
 
+    /**
+     * Renombra un rol. El codigo no se toca porque lo usan las expresiones @PreAuthorize y el
+     * campo heredado Usuario.rol; renombrarlo dejaria esas referencias huerfanas.
+     *
+     * @param id   rol a renombrar
+     * @param body nuevo nombre visible
+     * @return 200 con el rol actualizado, 404 si no existe, o 400 si el nombre viene vacio
+     */
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<?> renombrar(@PathVariable Short id, @RequestBody Map<String, String> body) {
@@ -84,6 +103,15 @@ public class RolController {
         return ResponseEntity.ok(toDto(rolUsuarioRepository.save(rol)));
     }
 
+    /**
+     * Elimina un rol creado por el equipo. Los cuatro roles base (ADMIN, DOCENTE,
+     * COORDINADOR, ESTUDIANTE) estan protegidos porque el frontend y Usuario.rol todavia
+     * distinguen casos por esos codigos exactos.
+     *
+     * @param id rol a eliminar
+     * @return 204 si se elimino; 404 si no existe; 400 si es un rol base, si tiene usuarios
+     *         asignados, o si la base rechaza el borrado por referencias
+     */
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> eliminar(@PathVariable Short id) {
@@ -109,6 +137,13 @@ public class RolController {
         }
     }
 
+    /**
+     * Arma el DTO de un rol agregando datos que no viven en la entidad: cuantos usuarios lo
+     * tienen asignado y que permisos concretos concede.
+     *
+     * @param rol entidad de rol a convertir
+     * @return el DTO listo para el frontend
+     */
     private RolDTO toDto(RolUsuario rol) {
         return RolDTO.builder()
                 .id(rol.getId())
