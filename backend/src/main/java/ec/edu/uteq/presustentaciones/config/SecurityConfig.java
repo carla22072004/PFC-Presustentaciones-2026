@@ -48,8 +48,18 @@ public class SecurityConfig {
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000)) // 1 año de HSTS
+                        // script-src sin 'unsafe-inline'/'unsafe-eval': el build de produccion de
+                        // Angular es AOT y su index.html solo referencia bundles externos (cero
+                        // scripts inline), asi que no los necesita -- mantenerlos anulaba buena parte
+                        // de la proteccion contra XSS que da esta cabecera (alerta 10055 de ZAP).
+                        // connect-src 'self' a secas: el frontend llama al backend con rutas
+                        // relativas (/api/...) a traves del proxy de nginx, siempre mismo origen.
+                        // Se retiran los origenes localhost (que en un despliegue real bloquearian
+                        // las llamadas del frontend), los ws:// (no hay WebSocket: el estado en
+                        // tiempo real es polling) y universities.hipolabs.com, que consume el
+                        // backend server-side via ExternalApiServiceImpl, nunca el navegador.
                         .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self' http://localhost:8080 http://localhost:4200 ws://localhost:4200 ws://localhost:8080 http://universities.hipolabs.com; frame-ancestors 'none';"))
+                                .policyDirectives("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"))
                         .frameOptions(frame -> frame.deny()) // X-Frame-Options: DENY
                         .contentTypeOptions(contentType -> {}) // X-Content-Type-Options: nosniff
                 )
