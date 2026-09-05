@@ -85,7 +85,16 @@ Se probó localmente antes de escribir este documento:
    REDIS_PORT=${{Redis.REDISPORT}}
    JWT_SECRET=<generar con: openssl rand -hex 32>
    JWT_EXPIRATION=3600000
+   PORT=8080
    ```
+   **`PORT=8080` es obligatorio, no opcional** (corregido el 2026-09-05 al revisar el
+   procedimiento contra el código). `application.properties` declara
+   `server.port=${PORT:8080}`, y Railway inyecta su propia variable `PORT` en cada servicio:
+   sin fijarla, el backend arranca escuchando en el puerto que decida Railway y **no** en 8080,
+   con lo que el `:8080` del `BACKEND_INTERNAL_URL` del paso 6 apunta a un puerto donde no hay
+   nadie y todas las llamadas a `/api/v1/` devuelven 502. Fijarla en 8080 deja consistentes el
+   `EXPOSE 8080` del Dockerfile, el enrutamiento público de Railway y la referencia privada del
+   frontend.
    Railway resuelve las referencias `${{Postgres.PGHOST}}` automáticamente al desplegar (sintaxis de
    variables compartidas de Railway). Activar "Generate Domain" para tener una URL pública de prueba
    directa del backend (útil para verificar `/actuator/health` independientemente del frontend).
@@ -101,9 +110,19 @@ Se probó localmente antes de escribir este documento:
    manual. Confirmar visitando la URL con el navegador y comprobando que no hay advertencias.
 8. **Verificar `/actuator/health`**: `curl https://<dominio-backend>.up.railway.app/actuator/health` debe
    devolver `{"status":"UP","components":{"db":{"status":"UP"},"redis":{"status":"UP"},...}}`.
-9. **Verificar login del usuario demo**: entrar a la URL pública del frontend, iniciar sesión con las
-   credenciales publicadas en `README.md`.
+9. **Verificar login del usuario demo**: entrar a la URL pública del frontend e iniciar sesión.
+   Las credenciales **ya no se publican en `README.md`** (se retiraron para no dejarlas en el
+   historial público del repositorio); están sembradas por
+   `PreSustentacionesApplication.initDemoData()` y se entregan al tribunal junto con el enlace.
+   Comprobar además, con las herramientas de desarrollador del navegador, que **no hay errores de
+   Content-Security-Policy en la consola**: la política de producción usa `script-src 'self'`, que
+   sólo funciona con `inlineCritical` desactivado en `angular.json` (ver ADR-004). Si la interfaz
+   apareciera sin estilos, ése es el motivo.
 10. **Actualizar `README.md`** con la URL pública real, solo después de confirmar los pasos 7-9.
+11. **Volver a medir Lighthouse contra la URL pública**, no contra `localhost`: es la limitación
+    que el informe declara hoy en la Sección de evaluación empírica, y desplegar es lo único que
+    permite cerrarla. Tres corridas por perfil (escritorio y móvil), guardando los JSON completos
+    en `docs/mediciones/perf/lighthouse/prod-runs/` y actualizando la cifra en el informe.
 
 ## Recursos consumidos (estimado — pendiente de confirmar tras el despliegue real)
 
