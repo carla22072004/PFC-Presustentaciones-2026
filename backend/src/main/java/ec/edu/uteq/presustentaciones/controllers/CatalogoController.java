@@ -35,7 +35,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/catalogos")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class CatalogoController {
 
     private static final String PERMISO_GESTIONAR = "@permisoService.tienePermiso(authentication, 'CARRERAS_GESTIONAR')";

@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 import ec.edu.uteq.presustentaciones.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/estado")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class EstadoTiempoRealController {
 
     private final SolicitudRepository solicitudRepo;

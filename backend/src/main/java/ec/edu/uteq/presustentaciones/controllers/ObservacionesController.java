@@ -4,6 +4,7 @@ import ec.edu.uteq.presustentaciones.dto.ObservacionesSolicitudDTO;
 import ec.edu.uteq.presustentaciones.services.RubricaEvaluacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/observaciones")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class ObservacionesController {
 
     private final RubricaEvaluacionService rubricaEvaluacionService;

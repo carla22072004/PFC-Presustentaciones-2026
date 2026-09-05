@@ -8,6 +8,7 @@ import ec.edu.uteq.presustentaciones.repositories.CriterioRubricaRepository;
 import ec.edu.uteq.presustentaciones.services.RubricaEvaluacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/rubrica-evaluacion")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class RubricaEvaluacionController {
 
     private final RubricaEvaluacionService service;
@@ -25,7 +26,7 @@ public class RubricaEvaluacionController {
 
     /** RF-07: Jurado registra sus escalas por criterio */
     @PostMapping("/registrar")
-    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_RUBRICA_REGISTRAR')")
     public ResponseEntity<?> registrar(@RequestBody EvaluacionRubricaRequest request) {
         try {
             EvaluacionRubricaResponse resp = service.registrarEvaluacion(request);

@@ -3,6 +3,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 import ec.edu.uteq.presustentaciones.entities.EvaluacionFinal;
 import ec.edu.uteq.presustentaciones.services.EvaluacionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class EvaluacionController {
      * pesoInstructor / pesoJurado: pesos configurables (deben sumar 100)
      */
     @PostMapping("/evaluar-ponderado")
-    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
     public ResponseEntity<?> evaluarPonderado(
             @RequestParam Long solicitudId,
             @RequestParam Long rubricaId,
@@ -50,7 +51,7 @@ public class EvaluacionController {
 
     /** Endpoint legado: recibe nota final directa */
     @PostMapping("/evaluar")
-    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
     public EvaluacionFinal evaluar(@RequestParam Long solicitudId,
                               @RequestParam Long rubricaId,
                               @RequestParam Double notaFinal,
@@ -59,25 +60,25 @@ public class EvaluacionController {
     }
 
     @GetMapping
-    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
     public ResponseEntity<Page<EvaluacionFinal>> listar(Pageable pageable) {
         return ResponseEntity.ok(evaluacionService.listarEvaluaciones(pageable));
     }
 
     @GetMapping("/estudiante/{estudianteId}")
-    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public List<EvaluacionFinal> listarPorEstudiante(@PathVariable Long estudianteId) {
         return evaluacionService.listarPorEstudiante(estudianteId);
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public List<EvaluacionFinal> listarPorUsuario(@PathVariable Long usuarioId) {
         return evaluacionService.listarPorUsuario(usuarioId);
     }
 
     @GetMapping("/solicitud/{solicitudId}")
-    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EvaluacionFinal> porSolicitud(@PathVariable Long solicitudId) {
         return evaluacionService.buscarPorSolicitud(solicitudId)
                 .map(ResponseEntity::ok)
@@ -90,7 +91,7 @@ public class EvaluacionController {
      * Flujo: GET → EvaluacionController → EvaluacionService → EvaluacionFinalRepository → SP → PostgreSQL
      */
     @PostMapping("/calcular-promedio/{solicitudId}")
-    @org.springframework.security.access.prepost.PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'EVALUACION_CALIFICAR')")
     public ResponseEntity<?> calcularPromedio(@PathVariable Long solicitudId) {
         try {
             Map<String, Object> resultado = evaluacionService.calcularPromedioSP(solicitudId);
