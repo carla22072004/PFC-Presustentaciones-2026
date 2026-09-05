@@ -32,8 +32,10 @@ siquiera es el mecanismo que la guía exige (`@Procedure` o `@NamedStoredProcedu
 Como nada de esto se había invocado nunca desde Java, el error nunca se manifestó (ver
 `docs/observaciones/OBSERVACIONES.md`, OBS-03). Este documento se reescribe con la firma SQL
 real, corregida, y **verificada end-to-end contra un backend corriendo en Docker** (no solo
-leída del código) para cada uno de los 6 procedimientos, incluyendo los 2 nuevos que
-completan las 5 categorías funcionales exigidas por la guía.
+leída del código) para cada uno de los 6 procedimientos originales, incluyendo los 2 nuevos que
+completan las 5 categorías funcionales exigidas por la guía. **Actualización 2026-09-05:** se
+añaden 4 rutinas más que existían en las migraciones y estaban conectadas o activas sin figurar
+en este catálogo (ítems 7-10 más abajo) — el esquema real tiene 10 rutinas, no 6.
 
 ## 📌 Introducción y Estrategia Híbrida de Acceso a Datos
 
@@ -42,8 +44,10 @@ El sistema implementa una **estrategia de acceso a datos híbrida**:
 2. **Procedimientos y Funciones PL/pgSQL**: obligatorios para uniones multi-tabla, cálculos agregados, actualizaciones masivas, validaciones cruzadas y generación de códigos secuenciales — columna `tipo_acceso = SP`.
 
 ### 🛡️ Protección contra inyección SQL
-Los 6 procedimientos están parametrizados nativamente (`IN`/`INOUT`), invocados desde Java
-exclusivamente vía JPA 2.1 `@Procedure`/`@NamedStoredProcedureQuery` — **cero** usos de
+Las 10 rutinas están parametrizadas nativamente (`IN`/`INOUT`), invocadas desde Java
+mayoritariamente vía JPA 2.1 `@Procedure`/`@NamedStoredProcedureQuery` (9 de 10; la excepción,
+`sp_obtener_estadisticas_tutores`, usa `@Query(nativeQuery = true)` sin parámetros — ver ítem 7)
+— **cero** usos de
 `createNativeQuery` con concatenación de cadenas en todo el backend (verificado con
 [`../../scripts/audit-sql-dynamic.sh`](../../scripts/audit-sql-dynamic.sh), que además
 rechaza automáticamente `EXECUTE IMMEDIATE`/`sp_executesql`/concatenación en cualquier
@@ -223,6 +227,68 @@ String generarCodigoExpediente(@Param("p_anio") Integer anio, @Param("p_codigo")
 
 ---
 
+### 7. `sp_obtener_estadisticas_tutores` — categoría: consultas multi-tabla ⚠️ mecanismo pendiente de corregir
+* **Tipo:** `FUNCTION` sin parámetros, `RETURNS TABLE` (definida en [`V10__actualizar_procedimientos_fase3.sql`](../../backend/src/main/resources/db/migration/V10__actualizar_procedimientos_fase3.sql))
+* **Propósito:** Estadísticas consolidadas por tutor: tutorías activas, completadas y fases aprobadas, cruzando `docente`, `usuarios`, `tutores` y `tutoria_fases`.
+* **Firma SQL real:**
+```sql
+CREATE OR REPLACE FUNCTION presus.sp_obtener_estadisticas_tutores()
+RETURNS TABLE (
+    tutor_docente_id BIGINT, tutor_nombre TEXT,
+    tutorias_activas BIGINT, tutorias_completadas BIGINT, total_fases_aprobadas BIGINT
+)
+```
+* **Tablas que afecta (solo lectura):** `presus.docente`, `presus.usuarios`, `presus.tutores`, `presus.tutoria_fases`.
+* **Invocación real desde Java** (`TutorRepository.java`):
+```java
+@Query(value = "SELECT * FROM presus.sp_obtener_estadisticas_tutores()", nativeQuery = true)
+List<Object[]> obtenerEstadisticasTutoresSp();
+```
+* **⚠️ Pendiente:** esta es la única de las 10 rutinas que **no** usa `@Procedure`/`@NamedStoredProcedureQuery` — sigue en `@Query(nativeQuery = true)`, que no es el mecanismo que exige la guía. No se convirtió en esta corrección porque cambiar a `@NamedStoredProcedureQuery` con `ParameterMode.REF_CURSOR` sobre una `FUNCTION RETURNS TABLE` (en vez de una `PROCEDURE` con `INOUT refcursor`, que es el único caso probado en este catálogo) requiere revalidar el mapeo contra un backend corriendo, y no fue posible ejecutar la suite de integración en esta pasada. Queda como tarea explícita, no como corrección silenciosa.
+* **Flujo real:** `TutorServiceImpl.obtenerEstadisticasTutoresSP()` → `GET /api/v1/tutores/estadisticas` en `TutorController` (permiso `EVALUACION_RUBRICA_REGISTRAR`).
+* **Prueba unitaria:** no confirmada en esta pasada — verificar si `TutorServiceImplTest` la cubre.
+
+---
+
+### 8. `sp_registrar_tutoria_avance` — categoría: actualizaciones masivas ✅ conectado y con mecanismo correcto
+* **Tipo:** `PROCEDURE` (definida en [`V10__actualizar_procedimientos_fase3.sql`](../../backend/src/main/resources/db/migration/V10__actualizar_procedimientos_fase3.sql))
+* **Propósito:** Valida y registra el avance de una fase de tutoría: rechaza si la tutoría ya está `COMPLETADA`, exige que la fase anterior esté `APROBADA` antes de aceptar la siguiente, e inserta o actualiza la fila de `tutoria_fases` correspondiente.
+* **Firma SQL real:**
+```sql
+CREATE OR REPLACE PROCEDURE presus.sp_registrar_tutoria_avance(
+    p_tutor_id BIGINT, p_numero_fase INT, p_archivo_pdf VARCHAR,
+    p_tamano_bytes BIGINT, p_sha256 VARCHAR
+)
+```
+* **Tablas que afecta:** lee y escribe (`INSERT`/`UPDATE`) `presus.tutoria_fases`; lee `presus.tutores`.
+* **Invocación real desde Java** (`TutoriaFaseRepository.java`) — ya usa el mecanismo correcto:
+```java
+@org.springframework.data.jpa.repository.query.Procedure(procedureName = "presus.sp_registrar_tutoria_avance")
+void spRegistrarTutoriaAvance(@Param("p_tutor_id") Long tutorId, @Param("p_numero_fase") Integer numeroFase,
+                               @Param("p_archivo_pdf") String archivoPdf, @Param("p_tamano_bytes") Long tamanoBytes,
+                               @Param("p_sha256") String sha256);
+```
+* **Flujo real:** `TutoriaServiceImpl.registrarAvanceSP()` → `POST /api/v1/tutorias/{tutorId}/registrar-avance` en `TutoriaController`.
+* **Prueba unitaria:** no confirmada en esta pasada — verificar si `TutoriaServiceImplTest` la cubre.
+
+---
+
+### 9. `fn_auditoria_generica` — categoría: trigger de auditoría (no invocado desde Java)
+* **Tipo:** `FUNCTION ... RETURNS TRIGGER` (definida en [`V15__auditoria.sql`](../../backend/src/main/resources/db/migration/V15__auditoria.sql))
+* **Propósito:** Registra en `presus.auditoria` cada `INSERT`/`UPDATE`/`DELETE` sobre las tablas de mayor valor auditable (`usuarios`, `roles_usuario`, `permisos`, y por extensión el flujo de negocio crítico), guardando el antes/después completo de la fila vía `to_jsonb`. Nunca persiste el hash de contraseña. Identifica al actor leyendo el GUC de sesión `presus.usuario_actual`, fijado por `AuditoriaService.marcarActorActual()` antes de cada operación relevante.
+* **No se invoca desde Java** — se dispara solo mediante los `CREATE TRIGGER` de `V15` (p. ej. `trg_auditoria_usuarios`, `trg_auditoria_roles_usuario`, `trg_auditoria_permisos`), por eso no aparece en ninguna columna `Tipo_Acceso = SP` de `matriz.csv`: es auditoría a nivel de motor, corre incluso si algo escribe directo a la base sin pasar por el backend.
+* **Verificación:** disparar manualmente un `UPDATE presus.usuarios ...` y confirmar la fila resultante en `presus.auditoria`.
+
+---
+
+### 10. `fn_auditoria_rol_permisos` — categoría: trigger de auditoría (no invocado desde Java)
+* **Tipo:** `FUNCTION ... RETURNS TRIGGER` (definida en [`V15__auditoria.sql`](../../backend/src/main/resources/db/migration/V15__auditoria.sql))
+* **Propósito:** Variante de `fn_auditoria_generica` para `presus.rol_permisos`, cuya clave es compuesta (`rol_id`, `permiso_id`) sin columna `id`. Audita por `rol_id` (la unidad de negocio real: "a qué rol se le tocaron los permisos"), registrando `ASIGNAR_PERMISO`/`QUITAR_PERMISO` en `presus.auditoria`.
+* **No se invoca desde Java** — se dispara solo mediante `trg_auditoria_rol_permisos` (`AFTER INSERT OR DELETE ON presus.rol_permisos`), definido en `V15`.
+* **Verificación:** disparar manualmente un `INSERT`/`DELETE` sobre `presus.rol_permisos` y confirmar la fila resultante en `presus.auditoria` con acción `ASIGNAR_PERMISO`/`QUITAR_PERMISO`.
+
+---
+
 ## 📊 Cobertura de las categorías funcionales exigidas por la guía
 
 La guía enumera 6 categorías (multi-tabla, agregados, **reportes**, actualizaciones masivas,
@@ -240,9 +306,23 @@ trazable en vez de implícito.
 | Validaciones cruzadas | `sp_validar_conflicto_jurado` | ✅ Conectado y verificado (Fase 3) | ✅ `CronogramaServiceImplTest` |
 | Generación de códigos secuenciales | `sp_generar_codigo_expediente` | ✅ Conectado y verificado (Fase 3) | ✅ `SolicitudServiceImplTest` |
 
-**Total: 6 procedimientos, 6 conectados desde código Java real vía JPA 2.1, 6 verificados end-to-end
-contra un backend corriendo en Docker, y (actualizado 2026-08-29) 6 con prueba unitaria dedicada**
-— antes de esta fecha, `sp_calcular_promedio_evaluacion` y `sp_generar_reporte_defensas` solo
+**Total real en el esquema: 10 rutinas** — 6 documentadas arriba desde el inicio (1-6, todas conectadas
+desde Java vía JPA 2.1 con `@Procedure`/`@NamedStoredProcedureQuery`, verificadas end-to-end contra
+Docker y con prueba unitaria dedicada) + 4 que esta actualización (2026-09-05) añade al catálogo por
+estar conectadas y sin documentar: `sp_obtener_estadisticas_tutores` y `sp_registrar_tutoria_avance`
+(7-8, ambas invocadas desde Java — la primera todavía vía `@Query(nativeQuery = true)`, mecanismo
+pendiente de corregir; ver ítem 7) y `fn_auditoria_generica`/`fn_auditoria_rol_permisos` (9-10,
+triggers de motor que no se invocan desde Java, por lo que no tienen fila en `matriz.csv`).
+Antes de esta fecha, `sp_calcular_promedio_evaluacion` y `sp_generar_reporte_defensas` solo
 estaban verificados manualmente (brecha que declaraba explícitamente `docs/mediciones/jacoco/COVERAGE.md`);
 `sp_asignar_jurado_masivo` tampoco tenía prueba dedicada pese a que `JuradoServiceImplTest` ya
 existía para otras responsabilidades de esa clase. Supera el mínimo de 6 exigido por el criterio P1.
+
+**Pendiente explícito (no resuelto en esta corrección):** decidir cuál de las dos rutas paralelas
+que calculan el promedio de evaluación se conserva — `EvaluacionServiceImpl.calcularPromedioSp()`
+(expuesto en `POST /api/v1/evaluaciones/calcular-promedio/{solicitudId}`, sin llamadores en código
+de producción, solo en tests) vs. `calcularPromedioSP()` (con P mayúscula, el que sí expone el
+endpoint real de negocio). Ambas resuelven contra objetos SQL distintos (la `PROCEDURE` de dos
+parámetros de `V2`/`V3` vs. las `FUNCTION` huérfanas de un parámetro de `V10`, ver advertencia al
+inicio de este documento) y mantener las dos es confuso para quien audite el código. Requiere
+decidir con el equipo cuál eliminar, no es un cambio mecánico.
