@@ -23,6 +23,14 @@ public class ExternalApiController {
 
     private final ExternalApiService externalApiService;
 
+    /**
+     * Universidades de Ecuador consumidas de la API externa de Hipo Labs. La llamada la hace
+     * el backend (no el navegador) y su resultado se cachea en Redis, de modo que este
+     * endpoint responde desde caché salvo la primera consulta de cada ventana.
+     *
+     * @return 200 con la lista de universidades; si la API externa falla tras los reintentos,
+     *         el servicio devuelve lo que tenga en caché en vez de propagar el error
+     */
     @GetMapping
     @PreAuthorize("isAuthenticated()") // Permite acceso a cualquier usuario autenticado en la plataforma
     @Operation(summary = "Obtener listado de universidades de Ecuador", description = "Consume la API de Hipo Labs con timeouts, reintentos y caché Redis activa.")

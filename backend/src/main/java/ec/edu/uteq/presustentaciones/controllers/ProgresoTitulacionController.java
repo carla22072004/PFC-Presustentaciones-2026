@@ -23,11 +23,23 @@ public class ProgresoTitulacionController {
     private final ProgresoTitulacionService progresoService;
     private final UsuarioActualService usuarioActual;
 
+    /**
+     * Ruta de titulación del estudiante autenticado. El id sale del token, no de la URL, así
+     * que un estudiante nunca puede consultar el progreso de otro.
+     *
+     * @return 200 con el checklist de progreso del estudiante autenticado
+     */
     @GetMapping
     public ResponseEntity<ProgresoTitulacionDTO> miProgreso() {
         return ResponseEntity.ok(progresoService.obtener(usuarioActual.estudiante().getId()));
     }
 
+    /**
+     * Actualiza el checklist del estudiante autenticado (marcar/desmarcar hitos).
+     *
+     * @param request hitos a actualizar, validado con Bean Validation
+     * @return 200 con el progreso ya actualizado
+     */
     @PutMapping
     public ResponseEntity<ProgresoTitulacionDTO> actualizar(@RequestBody @Valid ActualizarProgresoRequest request) {
         return ResponseEntity.ok(

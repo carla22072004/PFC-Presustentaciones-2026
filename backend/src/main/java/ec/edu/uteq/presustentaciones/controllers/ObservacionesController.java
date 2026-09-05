@@ -18,6 +18,13 @@ public class ObservacionesController {
 
     private final RubricaEvaluacionService rubricaEvaluacionService;
 
+    /**
+     * Observaciones registradas sobre una solicitud (las que el revisor deja al rechazar o
+     * al pedir correcciones).
+     *
+     * @param solicitudId solicitud consultada
+     * @return 200 con las observaciones de esa solicitud
+     */
     @GetMapping("/solicitud/{solicitudId}")
     public ResponseEntity<?> obtenerObservaciones(@PathVariable Long solicitudId) {
         try {

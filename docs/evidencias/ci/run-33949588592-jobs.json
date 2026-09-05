@@ -1,0 +1,353 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 101261711131,
+      "run_id": 33949588592,
+      "workflow_name": "CI",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTodNb88AAAAXk6sXGw",
+      "head_sha": "581d45d980036be6b78bd14c885109be2a75a5a1",
+      "url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/jobs/101261711131",
+      "html_url": "https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592/job/101261711131",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-05T06:21:28Z",
+      "started_at": "2026-09-05T06:21:30Z",
+      "completed_at": "2026-09-05T06:22:02Z",
+      "name": "Frontend — build de producción",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-05T06:21:31Z",
+          "completed_at": "2026-09-05T06:21:32Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-05T06:21:32Z",
+          "completed_at": "2026-09-05T06:21:34Z"
+        },
+        {
+          "name": "Configurar Node 20",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-05T06:21:34Z",
+          "completed_at": "2026-09-05T06:21:39Z"
+        },
+        {
+          "name": "Instalar dependencias",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-05T06:21:39Z",
+          "completed_at": "2026-09-05T06:21:46Z"
+        },
+        {
+          "name": "Build de producción (ng build)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-05T06:21:46Z",
+          "completed_at": "2026-09-05T06:22:00Z"
+        },
+        {
+          "name": "Publicar build de producción",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-05T06:22:00Z",
+          "completed_at": "2026-09-05T06:22:01Z"
+        },
+        {
+          "name": "Post Configurar Node 20",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-09-05T06:22:01Z",
+          "completed_at": "2026-09-05T06:22:01Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-09-05T06:22:01Z",
+          "completed_at": "2026-09-05T06:22:01Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-09-05T06:22:01Z",
+          "completed_at": "2026-09-05T06:22:01Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/check-runs/101261711131",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000337,
+      "runner_name": "GitHub Actions 1000000337",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 101261711262,
+      "run_id": 33949588592,
+      "workflow_name": "CI",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTodNb88AAAAXk6sXng",
+      "head_sha": "581d45d980036be6b78bd14c885109be2a75a5a1",
+      "url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/jobs/101261711262",
+      "html_url": "https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592/job/101261711262",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-05T06:21:28Z",
+      "started_at": "2026-09-05T06:21:30Z",
+      "completed_at": "2026-09-05T06:21:52Z",
+      "name": "Entorno — genera docs/entorno/versions.txt desde el runner real de CI",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-05T06:21:31Z",
+          "completed_at": "2026-09-05T06:21:32Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-05T06:21:32Z",
+          "completed_at": "2026-09-05T06:21:34Z"
+        },
+        {
+          "name": "Configurar JDK 17 (Temurin)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-05T06:21:34Z",
+          "completed_at": "2026-09-05T06:21:34Z"
+        },
+        {
+          "name": "Configurar Node 20",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-05T06:21:34Z",
+          "completed_at": "2026-09-05T06:21:39Z"
+        },
+        {
+          "name": "Instalar dependencias del frontend (para que 'npx ng version' resuelva el Angular CLI local)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-05T06:21:39Z",
+          "completed_at": "2026-09-05T06:21:46Z"
+        },
+        {
+          "name": "Generar docs/entorno/versions.txt con las versiones reales de este runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-05T06:21:46Z",
+          "completed_at": "2026-09-05T06:21:49Z"
+        },
+        {
+          "name": "Publicar versions.txt como artefacto verificable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-05T06:21:49Z",
+          "completed_at": "2026-09-05T06:21:50Z"
+        },
+        {
+          "name": "Post Configurar Node 20",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-09-05T06:21:50Z",
+          "completed_at": "2026-09-05T06:21:50Z"
+        },
+        {
+          "name": "Post Configurar JDK 17 (Temurin)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-09-05T06:21:50Z",
+          "completed_at": "2026-09-05T06:21:50Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-09-05T06:21:50Z",
+          "completed_at": "2026-09-05T06:21:50Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-09-05T06:21:50Z",
+          "completed_at": "2026-09-05T06:21:50Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/check-runs/101261711262",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000338,
+      "runner_name": "GitHub Actions 1000000338",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 101261711346,
+      "run_id": 33949588592,
+      "workflow_name": "CI",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOTodNb88AAAAXk6sX8g",
+      "head_sha": "581d45d980036be6b78bd14c885109be2a75a5a1",
+      "url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/actions/jobs/101261711346",
+      "html_url": "https://github.com/carla22072004/PFC-Presustentaciones-2026/actions/runs/33949588592/job/101261711346",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-05T06:21:28Z",
+      "started_at": "2026-09-05T06:21:31Z",
+      "completed_at": "2026-09-05T06:23:10Z",
+      "name": "Backend — build, tests, JaCoCo, análisis estático de seguridad",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-05T06:21:32Z",
+          "completed_at": "2026-09-05T06:21:34Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-05T06:21:34Z",
+          "completed_at": "2026-09-05T06:22:01Z"
+        },
+        {
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-05T06:22:01Z",
+          "completed_at": "2026-09-05T06:22:02Z"
+        },
+        {
+          "name": "Configurar JDK 17 (Temurin)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-05T06:22:02Z",
+          "completed_at": "2026-09-05T06:22:04Z"
+        },
+        {
+          "name": "Compilar y ejecutar pruebas (JaCoCo se genera en la fase test)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-05T06:22:04Z",
+          "completed_at": "2026-09-05T06:22:45Z"
+        },
+        {
+          "name": "Publicar reporte de cobertura JaCoCo",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-05T06:22:45Z",
+          "completed_at": "2026-09-05T06:22:46Z"
+        },
+        {
+          "name": "Publicar resultados de pruebas (surefire)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-05T06:22:46Z",
+          "completed_at": "2026-09-05T06:22:47Z"
+        },
+        {
+          "name": "Análisis estático de seguridad (SpotBugs + find-sec-bugs)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-09-05T06:22:47Z",
+          "completed_at": "2026-09-05T06:23:06Z"
+        },
+        {
+          "name": "Publicar reporte SpotBugs / find-sec-bugs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-09-05T06:23:06Z",
+          "completed_at": "2026-09-05T06:23:07Z"
+        },
+        {
+          "name": "Post Configurar JDK 17 (Temurin)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-09-05T06:23:07Z",
+          "completed_at": "2026-09-05T06:23:07Z"
+        },
+        {
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-09-05T06:23:07Z",
+          "completed_at": "2026-09-05T06:23:07Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-09-05T06:23:07Z",
+          "completed_at": "2026-09-05T06:23:08Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-09-05T06:23:08Z",
+          "completed_at": "2026-09-05T06:23:08Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/carla22072004/PFC-Presustentaciones-2026/check-runs/101261711346",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000339,
+      "runner_name": "GitHub Actions 1000000339",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

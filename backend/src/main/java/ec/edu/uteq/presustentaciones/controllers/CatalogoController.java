@@ -50,13 +50,18 @@ public class CatalogoController {
     private final AuditoriaService auditoriaService;
     private final CatalogoAdminService catalogoAdminService;
 
-    /** Lista todas las modalidades de titulación disponibles */
+    /**
+     * @return 200 con todas las modalidades de titulación disponibles para elegir al crear
+     *         una solicitud
+     */
     @GetMapping("/modalidades")
     public ResponseEntity<List<ModalidadTitulacion>> listarModalidades() {
         return ResponseEntity.ok(modalidadRepo.findAll());
     }
 
-    /** Lista todas las líneas de investigación institucionales disponibles */
+    /**
+     * @return 200 con las líneas de investigación institucionales
+     */
     @GetMapping("/lineas-investigacion")
     public ResponseEntity<List<LineaInvestigacion>> listarLineasInvestigacion() {
         return ResponseEntity.ok(lineaInvestigacionRepo.findAll());
@@ -65,6 +70,9 @@ public class CatalogoController {
     /**
      * Lista las áreas temáticas. Si se pasa lineaId, filtra solo las de esa línea
      * (uso típico: poblar el segundo dropdown dependiente del formulario de registro de tema).
+     *
+     * @param lineaId línea de investigación por la que filtrar; si es null devuelve todas
+     * @return 200 con las áreas temáticas correspondientes
      */
     @GetMapping("/areas-tematicas")
     public ResponseEntity<List<AreaTematica>> listarAreasTematicas(
@@ -75,13 +83,21 @@ public class CatalogoController {
         return ResponseEntity.ok(areaTematicaRepo.findAll());
     }
 
-    /** Lista todas las convocatorias activas */
+    /**
+     * @return 200 con las convocatorias de titulación marcadas como activas
+     */
     @GetMapping("/convocatorias")
     public ResponseEntity<List<ConvocatoriaTitulacion>> listarConvocatoriasActivas() {
         return ResponseEntity.ok(convocatoriaRepo.findByActivaTrue());
     }
 
-    /** Retorna la convocatoria activa actual (para autocompletar en el formulario) */
+    /**
+     * Convocatoria vigente, para autocompletar el formulario de solicitud.
+     *
+     * @return 200 con la convocatoria activa; si no hay ninguna devuelve igualmente 200 con
+     *         un mensaje de error en el cuerpo, no un 404, para que el formulario pueda
+     *         mostrar el aviso sin tratarlo como fallo de red
+     */
     @GetMapping("/convocatoria-activa")
     public ResponseEntity<?> convocatoriaActiva() {
         return convocatoriaRepo.findFirstByActivaTrue()
@@ -89,13 +105,19 @@ public class CatalogoController {
                 .orElse(ResponseEntity.ok(Map.of("error", "No hay convocatoria activa")));
     }
 
-    /** Lista todas las carreras -- usado por Gestión de Estudiantes para elegir la carrera al registrar/editar */
+    /**
+     * @return 200 con todas las carreras; lo usa Gestión de Estudiantes para elegir la
+     *         carrera al registrar o editar un estudiante
+     */
     @GetMapping("/carreras")
     public ResponseEntity<List<Carrera>> listarCarreras() {
         return ResponseEntity.ok(carreraRepo.findAll());
     }
 
-    /** Lista todos los períodos académicos -- usado por Gestión de Estudiantes para el período de ingreso */
+    /**
+     * @return 200 con todos los períodos académicos; lo usa Gestión de Estudiantes para
+     *         asignar el período de ingreso
+     */
     @GetMapping("/periodos-academicos")
     public ResponseEntity<List<PeriodoAcademico>> listarPeriodosAcademicos() {
         return ResponseEntity.ok(periodoAcademicoRepo.findAll());
@@ -108,11 +130,20 @@ public class CatalogoController {
     // permiso dedicado porque en Spring Security el @PreAuthorize de método reemplaza
     // -- no combina con -- el de clase.
 
+    /**
+     * @return 200 con todas las facultades
+     */
     @GetMapping("/facultades")
     public ResponseEntity<List<Facultad>> listarFacultades() {
         return ResponseEntity.ok(facultadRepo.findAll());
     }
 
+    /**
+     * Crea una facultad. El código se normaliza a mayúsculas sin espacios sobrantes.
+     *
+     * @param req código y nombre de la facultad; ambos obligatorios
+     * @return 200 con la facultad creada, o 400 si falta algún campo o el código ya existe
+     */
     @PostMapping("/facultades")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -130,6 +161,14 @@ public class CatalogoController {
         return ResponseEntity.ok(facultad);
     }
 
+    /**
+     * Renombra una facultad. El código no se modifica para no dejar huérfanas las
+     * referencias existentes.
+     *
+     * @param id  facultad a actualizar
+     * @param req nuevo nombre
+     * @return 200 con la facultad actualizada, 404 si no existe, o 400 si el nombre viene vacío
+     */
     @PutMapping("/facultades/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -147,6 +186,13 @@ public class CatalogoController {
         return ResponseEntity.ok(facultadRepo.save(facultad));
     }
 
+    /**
+     * Elimina una facultad.
+     *
+     * @param id facultad a eliminar
+     * @return 204 si se eliminó, 404 si no existe, o 400 si tiene carreras u otros registros
+     *         asociados que impiden el borrado
+     */
     @DeleteMapping("/facultades/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     public ResponseEntity<?> eliminarFacultad(@PathVariable Integer id) {
@@ -161,6 +207,13 @@ public class CatalogoController {
         }
     }
 
+    /**
+     * Crea una carrera dentro de una facultad existente.
+     *
+     * @param req código, nombre, facultadId y modalidad de estudio; los tres primeros obligatorios
+     * @return 200 con la carrera creada, o 400 si falta un campo, el código ya existe o la
+     *         facultad indicada no existe
+     */
     @PostMapping("/carreras")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -185,6 +238,15 @@ public class CatalogoController {
         return ResponseEntity.ok(carrera);
     }
 
+    /**
+     * Actualiza una carrera. La modalidad y la facultad sólo se tocan si vienen en el cuerpo;
+     * el código nunca se modifica.
+     *
+     * @param id  carrera a actualizar
+     * @param req nombre (obligatorio) y, opcionalmente, modalidad de estudio y facultadId
+     * @return 200 con la carrera actualizada, 404 si no existe, o 400 si el nombre viene
+     *         vacío o la facultad indicada no existe
+     */
     @PutMapping("/carreras/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -212,6 +274,13 @@ public class CatalogoController {
         return ResponseEntity.ok(carreraRepo.save(carrera));
     }
 
+    /**
+     * Elimina una carrera.
+     *
+     * @param id carrera a eliminar
+     * @return 204 si se eliminó, 404 si no existe, o 400 si tiene estudiantes u otros
+     *         registros asociados
+     */
     @DeleteMapping("/carreras/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     public ResponseEntity<?> eliminarCarrera(@PathVariable Integer id) {
@@ -226,6 +295,13 @@ public class CatalogoController {
         }
     }
 
+    /**
+     * Crea una modalidad de titulación. El código se normaliza a mayúsculas y los espacios
+     * internos se sustituyen por guiones bajos.
+     *
+     * @param req código y nombre; ambos obligatorios
+     * @return 200 con la modalidad creada, o 400 si falta un campo o el código ya existe
+     */
     @PostMapping("/modalidades")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -243,6 +319,13 @@ public class CatalogoController {
         return ResponseEntity.ok(modalidad);
     }
 
+    /**
+     * Renombra una modalidad, sin tocar su código.
+     *
+     * @param id  modalidad a actualizar
+     * @param req nuevo nombre
+     * @return 200 con la modalidad actualizada, 404 si no existe, o 400 si el nombre viene vacío
+     */
     @PutMapping("/modalidades/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -260,6 +343,12 @@ public class CatalogoController {
         return ResponseEntity.ok(modalidadRepo.save(modalidad));
     }
 
+    /**
+     * Elimina una modalidad de titulación.
+     *
+     * @param id modalidad a eliminar
+     * @return 204 si se eliminó, 404 si no existe, o 400 si hay solicitudes asociadas
+     */
     @DeleteMapping("/modalidades/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     public ResponseEntity<?> eliminarModalidad(@PathVariable Short id) {
@@ -274,6 +363,14 @@ public class CatalogoController {
         }
     }
 
+    /**
+     * Crea un período académico validando que el rango de fechas tenga sentido.
+     *
+     * @param req código, nombre, fecha de inicio y fecha de fin (obligatorios) más el
+     *            indicador de activo (si no viene, el período se crea inactivo)
+     * @return 200 con el período creado, o 400 si falta un campo, si la fecha de fin no es
+     *         posterior a la de inicio, o si el código ya existe
+     */
     @PostMapping("/periodos-academicos")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -298,6 +395,15 @@ public class CatalogoController {
         return ResponseEntity.ok(periodo);
     }
 
+    /**
+     * Actualiza un período académico. Las fechas que no vengan en el cuerpo conservan su
+     * valor actual, y el rango resultante se vuelve a validar.
+     *
+     * @param id  período a actualizar
+     * @param req nombre (obligatorio) y, opcionalmente, fechas y estado activo
+     * @return 200 con el período actualizado, 404 si no existe, o 400 si el nombre viene
+     *         vacío o el rango de fechas resultante es inválido
+     */
     @PutMapping("/periodos-academicos/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     @Transactional
@@ -325,6 +431,13 @@ public class CatalogoController {
         return ResponseEntity.ok(periodoAcademicoRepo.save(periodo));
     }
 
+    /**
+     * Elimina un período académico.
+     *
+     * @param id período a eliminar
+     * @return 204 si se eliminó, 404 si no existe, o 400 si hay estudiantes o convocatorias
+     *         asociadas
+     */
     @DeleteMapping("/periodos-academicos/{id}")
     @PreAuthorize(PERMISO_GESTIONAR)
     public ResponseEntity<?> eliminarPeriodo(@PathVariable Integer id) {

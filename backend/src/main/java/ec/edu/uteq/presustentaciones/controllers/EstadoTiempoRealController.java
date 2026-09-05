@@ -27,9 +27,17 @@ public class EstadoTiempoRealController {
     private final EvaluacionRepository evaluacionRepo;
 
     /**
-     * Devuelve el estado completo de una solicitud en un solo request.
-     * Incluye: estado solicitud, anteproyecto, cronograma, evaluación, acta.
-     * Pensado para polling cada 15s en el frontend.
+     * Devuelve el estado completo de una solicitud en un solo request: estado de la
+     * solicitud, anteproyecto, cronograma, evaluación y acta. Pensado para que el frontend
+     * haga polling cada 15 s sin encadenar cinco llamadas distintas.
+     *
+     * @param id solicitud consultada
+     * @return 200 con el mapa de estado. Las claves de un módulo que todavía no existe para
+     *         esa solicitud (sin anteproyecto, sin cronograma, sin evaluación) se
+     *         <b>omiten</b> del mapa en vez de venir en null, así que el frontend debe
+     *         comprobar presencia. La única excepción es {@code actaGenerada}, que siempre
+     *         viene (false si aún no hay acta), más {@code timestamp} con la marca de tiempo
+     *         del servidor
      */
     @GetMapping("/solicitud/{id}")
     public ResponseEntity<Map<String, Object>> estadoSolicitud(@PathVariable Long id) {
@@ -73,8 +81,11 @@ public class EstadoTiempoRealController {
     }
 
     /**
-     * Estado resumido para la lista de mis-asignaciones del docente.
-     * Devuelve el estado de múltiples solicitudes en un solo request.
+     * Estado resumido de varias solicitudes en un solo request, para la lista de
+     * "mis asignaciones" del docente: evita una llamada por fila de la tabla.
+     *
+     * @param solicitudIds identificadores de las solicitudes a consultar
+     * @return 200 con un mapa de id de solicitud a su estado resumido
      */
     @PostMapping("/solicitudes/batch")
     public ResponseEntity<Map<Long, Map<String, Object>>> estadoBatch(

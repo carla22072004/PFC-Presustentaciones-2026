@@ -35,6 +35,13 @@ public class UsuarioController {
     private final IUsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Listado completo de usuarios, sin paginar. Se conserva para usos puntuales; el panel de
+     * administración usa siempre {@code /paginado}, porque esta tabla puede tener decenas de
+     * miles de filas tras la carga de datos de las pruebas k6.
+     *
+     * @return 200 con todos los usuarios
+     */
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar todos los usuarios (solo ADMIN) — sin paginar, uso interno/pequeñas instalaciones")
@@ -47,7 +54,16 @@ public class UsuarioController {
         }
     }
 
-    /** La tabla puede tener decenas de miles de filas (datos de carga k6) — el panel de admin siempre usa este endpoint paginado. */
+    /**
+     * Listado paginado con búsqueda de texto libre. La tabla puede tener decenas de miles de
+     * filas (datos de carga k6), así que el panel de administración usa siempre este endpoint
+     * y nunca el listado completo.
+     *
+     * @param page número de página (0 por defecto)
+     * @param size filas por página (20 por defecto)
+     * @param q    búsqueda de texto libre sobre nombre/apellido/email, opcional
+     * @return 200 con la página de usuarios
+     */
     @GetMapping("/paginado")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar usuarios paginado, con búsqueda opcional (solo ADMIN)")
@@ -70,6 +86,13 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Ficha de un usuario. Un usuario no administrador sólo puede consultar la suya: la
+     * identidad se resuelve por el email del JWT, no por el id recibido en la URL.
+     *
+     * @param id usuario consultado
+     * @return 200 con el usuario, o 403 si se pide el de otra persona sin ser ADMIN
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID (propio usuario o ADMIN)")
     public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
@@ -83,6 +106,12 @@ public class UsuarioController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseWrapper.error("Usuario no encontrado")));
     }
 
+    /**
+     * Búsqueda de un usuario por su correo institucional.
+     *
+     * @param email correo exacto a buscar
+     * @return 200 con el usuario encontrado, o el error correspondiente si no existe
+     */
     @GetMapping("/email/{email}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Buscar usuario por email (solo ADMIN)")
@@ -93,6 +122,12 @@ public class UsuarioController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseWrapper.error("Usuario no encontrado")));
     }
 
+    /**
+     * Usuarios con la cuenta activa, para los selectores del frontend que no deben ofrecer
+     * cuentas desactivadas.
+     *
+     * @return 200 con los usuarios activos
+     */
     @GetMapping("/activos")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Listar usuarios activos (solo ADMIN)")
@@ -112,6 +147,10 @@ public class UsuarioController {
      * UsuarioServiceImpl.crear() sobrescribiera esa fila en vez de crear una nueva (ver su
      * comentario). Se usa RegisterRequest (mismo DTO, mismos 5 campos que ya envía
      * gestion-usuarios.component.ts) en vez de crear un DTO nuevo.
+     *
+     * @param request datos del nuevo usuario, validados con Bean Validation; el DTO acota los
+     *                campos aceptados para que el cliente no pueda fijar id, activo ni rolUsuario
+     * @return 200 con el usuario creado, o el error de validación/duplicado correspondiente
      */
     @PostMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
@@ -133,6 +172,13 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Actualización administrativa de un usuario (incluye su rol).
+     *
+     * @param id      usuario a actualizar
+     * @param usuario campos a modificar
+     * @return 200 con el usuario actualizado, o el error correspondiente si no existe
+     */
     @PutMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Actualizar usuario, incluido su rol (solo ADMIN)")
@@ -149,6 +195,12 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Reactiva una cuenta previamente desactivada.
+     *
+     * @param id usuario a activar
+     * @return 200 con el usuario ya activo
+     */
     @PatchMapping("/{id}/activar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Activar usuario (solo ADMIN)")
@@ -162,6 +214,12 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Desactiva una cuenta sin borrarla, conservando su historial y sus referencias.
+     *
+     * @param id usuario a desactivar
+     * @return 200 con el usuario ya inactivo
+     */
     @PatchMapping("/{id}/desactivar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Desactivar usuario (solo ADMIN)")
@@ -175,6 +233,14 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Edición del propio perfil (datos de contacto). Comprueba explícitamente la propiedad
+     * del recurso antes de tocar nada.
+     *
+     * @param id  usuario cuyo perfil se edita
+     * @param req campos editables del perfil
+     * @return 200 con el perfil actualizado, o 403 si se intenta editar el de otra persona
+     */
     @PatchMapping("/{id}/perfil")
     @Operation(summary = "Actualizar correo de notificaciones y teléfono del perfil propio")
     public ResponseEntity<?> actualizarPerfil(
@@ -193,6 +259,13 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Eliminación permanente de un usuario. Preferir desactivar cuando el usuario ya tenga
+     * historial académico asociado.
+     *
+     * @param id usuario a eliminar
+     * @return 200 al confirmar el borrado, o el error si la base lo rechaza por referencias
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Eliminar usuario (solo ADMIN)")
@@ -206,7 +279,14 @@ public class UsuarioController {
         }
     }
 
-    /** El id del path coincide con el usuario autenticado (resuelto por email del JWT, no por el id recibido). */
+    /**
+     * Comprueba que el id del path corresponda al usuario autenticado. La identidad se
+     * resuelve por el email del JWT y nunca por el id recibido, que es justamente lo que
+     * hace que este control no se pueda saltar cambiando el número de la URL.
+     *
+     * @param id identificador que llega en la ruta
+     * @return true si ese id es el del usuario autenticado
+     */
     private boolean esUsuarioActual(Long id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return usuarioRepository.findByEmail(auth.getName())
