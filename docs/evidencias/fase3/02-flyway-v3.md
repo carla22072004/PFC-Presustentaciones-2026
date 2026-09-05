@@ -1,6 +1,6 @@
 # Evidencia 02 — Nueva Migración Flyway V3
 
-Se creó el archivo de migración versionado [`V3__actualizar_procedimientos_fase3.sql`](file:///C:/Users/carla/OneDrive/Documentos/PROYECTO%20PFC/backend/src/main/resources/db/migration/V3__actualizar_procedimientos_fase3.sql) conteniendo:
+Se creó el archivo de migración versionado [`V3__stored_procedures_validacion_y_codigos.sql`](../../../backend/src/main/resources/db/migration/V3__stored_procedures_validacion_y_codigos.sql) conteniendo:
 
 1.  La corrección de `sp_calcular_promedio_evaluacion` para integrarse con `evaluaciones_finales` y `resultados_evaluacion`.
 2.  La corrección de `sp_generar_reporte_defensas` con los nombres y columnas exactas del esquema físico.
