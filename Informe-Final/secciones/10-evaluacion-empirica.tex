@@ -186,17 +186,33 @@ fórmula de cálculo) se documenta en el Anexo B (Sección~\ref{anexo:sus}).
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 228 pruebas automatizadas reales (2026-09-05, \texttt{mvn clean verify} sobre Postgres/Redis
-reales en Docker, ver \texttt{docs/mediciones/jacoco/2026-09-05/}): 44.39\,\% de instrucciones
-(9,303/20,957), 48.03\,\% de líneas (1,866/3,885), 32.07\,\% de ramas (506/1,578) --- por debajo del
-umbral RNF-04 de 60\,\%, pero con progreso real y verificable respecto a la medición anterior de este
-mismo informe (109 tests; 35.10\,\%/38.88\,\%/23.06\,\%): +119 tests, y las métricas de instrucciones y
-líneas suben (+9.3\,pp instrucciones, +9.2\,pp líneas), no solo el numerador --- el denominador también
-creció porque se agregó código de producción real en el mismo periodo
-(Sección~\ref{sec:seguridad-corregida}). La cobertura de ramas también sube frente a esa misma medición
-(+9.0\,pp, a 32.07\,\%) aunque queda por debajo de una cifra intermedia no versionada (34.9\,\%) que una
-versión previa de este párrafo citaba sin archivo crudo respaldándola en el repositorio --- se reemplaza
-aquí por la única cifra que hoy se puede recalcular desde un CSV versionado.
+JaCoCo sobre 395 pruebas automatizadas reales (2026-09-05, \texttt{mvn clean verify} sobre Postgres/Redis
+reales en Docker, 0 fallos, ver \texttt{docs/mediciones/jacoco/2026-09-05-cierre/}): 60.48\,\% de
+instrucciones (12,674/20,957), 63.17\,\% de líneas (2,454/3,885), 45.75\,\% de ramas (722/1,578). La
+cobertura de líneas supera el umbral RNF-04 de 60\,\%; la de ramas sigue por debajo y se declara como
+brecha abierta en la Sección~\ref{sec:trabajo-futuro} en vez de omitirse.
+
+El avance más relevante está en la capa que peor estaba: los controladores pasaron de
+8.75\,\%/0\,\% (líneas/ramas) el 30-08 a \textbf{72.00\,\% de líneas (833/1,157) y 77.41\,\% de ramas
+(257/332)}, superando el umbral de 70\,\% exigido para esa capa. Se llegó ahí con 158 pruebas nuevas en
+11 clases, priorizando los controladores que exponen procedimientos almacenados
+(\texttt{Reporte}, \texttt{Solicitud}, \texttt{Jurado}, \texttt{Tutoria}, \texttt{Evaluacion},
+\texttt{Cronograma}, \texttt{Tutor}) y los dos mayores huecos de ramas (\texttt{Catalogo}, con 102 ramas
+sin ejercitar, y \texttt{Rol}/\texttt{Permiso}, que concentran las salvaguardas de administración). Las
+pruebas verifican comportamiento y no sólo delegación: comprobaciones de propiedad del recurso (un
+estudiante no puede abrir ni enviar la solicitud de otro), la salvaguarda que impide dejar al sistema sin
+ningún rol capaz de gestionar permisos, la protección de los cuatro roles base, y la generación real de
+PDF con iText comprobando la cabecera \texttt{\%PDF-} de la respuesta.
+
+Una precisión metodológica sobre el alcance de la medición: el \texttt{jacoco-maven-plugin} excluye
+\texttt{config/}, \texttt{entities/} y \texttt{dto/} (ver \texttt{<excludes>} en \texttt{pom.xml}), de
+modo que los porcentajes se calculan sobre los paquetes donde vive la lógica. Consecuencia verificada en
+esta corrida: las dos pruebas de integración contra PostgreSQL no mueven la cifra, porque lo que
+ejercitan en exclusiva --- arranque del contexto, configuración, entidades y repositorios --- queda fuera
+del alcance medido. Se deja anotado para que no se lea como una anomalía.
+Una versión previa de este párrafo citaba además una cifra intermedia de ramas (34.9\,\%) que no tenía
+archivo crudo respaldándola en el repositorio; queda reemplazada por la que sí se puede recalcular desde
+el CSV versionado.
 El salto anterior, del 29-08 al 31-08 (37.06\,\%$\to$38.88\,\% líneas), no vino de tests nuevos --- el
 número de tests no cambió --- sino de que \texttt{PreSustentacionesApplicationTests} dejó de ser un
 \texttt{assertTrue(true)} y empezó a levantar el contexto real de Spring. El salto más reciente sí viene

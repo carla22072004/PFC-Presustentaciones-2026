@@ -10,10 +10,11 @@ maquillarlo con contenido de relleno:
     una acción del equipo humano que no se completó a la fecha de este informe.
     \item \textbf{Cobertura de pruebas automatizadas:} los 8 requisitos funcionales de prioridad Must
     tienen prueba automatizada dedicada (100\,\%, ver Sección~\ref{sec:requisitos}); quedan 3 de
-    prioridad Could/Should (RF-08, RF-09, RF-10) sin cubrir. Cobertura general de 48.03\,\% de líneas
-    (JaCoCo, 2026-09-05, 228 tests), contra un objetivo de 60\,\% --- subió 9.2\,pp desde la medición
-    anterior de este mismo informe (38.88\,\%, 109 tests) al cerrar la vulnerabilidad de autorización
-    de la Sección~\ref{sec:seguridad-corregida} con pruebas reales, pero sigue sin alcanzar el umbral.
+    prioridad Could/Should (RF-08, RF-09, RF-10) sin cubrir. Cobertura general de 63.17\,\% de líneas
+    (JaCoCo, 2026-09-05, 395 tests), por encima del objetivo de 60\,\% en líneas; la cobertura de
+    ramas (45.75\,\%) sí sigue por debajo y se declara como brecha abierta. La capa de controladores,
+    que era el hueco más grande del producto, pasó de 8.75\,\% a 72.00\,\% de líneas y de 0\,\% a
+    77.41\,\% de ramas, superando el umbral de 70\,\% que exige la guía para esa capa.
     \item \textbf{Aplicación real del instrumento SUS:} el cuestionario está listo; aplicarlo a un grupo
     real de al menos 5--10 usuarios (estudiantes, docentes, coordinadores) es la tarea pendiente más
     directa y de menor esfuerzo entre las listadas aquí.

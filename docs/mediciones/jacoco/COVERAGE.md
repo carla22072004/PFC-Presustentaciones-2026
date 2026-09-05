@@ -1,20 +1,42 @@
 # Cobertura de pruebas (JaCoCo) — datos reales
 
 **Cómo se generó:** `cd backend && ./mvnw clean verify` (JaCoCo corre en la fase `test` vía `jacoco-maven-plugin`, ver `backend/pom.xml`).
-**Reporte crudo archivado (HTML + XML + CSV):** [`docs/mediciones/jacoco/2026-09-05/`](2026-09-05/) — cifra de cierre vigente, corrida sobre Postgres/Redis reales en Docker (228 tests, 29 clases de prueba, 0 fallos/errores); `2026-08-30/`, `2026-08-29/` y `2026-08-17/` se conservan como snapshots históricos. El reporte también se regenera y publica como artefacto en el job `backend` de [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) en cada push.
-**Última actualización:** 2026-09-05 — corrida de cierre para unificar la cifra de cobertura, que hasta esta fecha aparecía contradicha dentro del propio informe académico (37,1% líneas en 5 lugares del documento, 38,88% en otros 3; ninguna de las dos ya era la vigente). Esta es ahora **la única cifra válida**, reemplaza a las dos anteriores en todo el documento académico y en cualquier otro lugar del repositorio que las cite.
+**Reporte crudo archivado (XML + CSV):** [`docs/mediciones/jacoco/2026-09-05-cierre/`](2026-09-05-cierre/) — **cifra de cierre vigente**, corrida sobre Postgres/Redis reales en Docker (395 tests, 40 clases de prueba, 0 fallos/errores). [`2026-09-05/`](2026-09-05/) es la corrida previa del mismo día, antes de agregar las pruebas de controladores; `2026-08-30/`, `2026-08-29/` y `2026-08-17/` se conservan como snapshots históricos. El reporte también se regenera y publica como artefacto en el job `backend` de [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) en cada push.
+**Última actualización:** 2026-09-05 (segunda corrida del día) — tras cerrar el hueco de cobertura de la capa de controladores, que era la brecha más grande de la rúbrica.
+
+## Alcance de la medición
+
+El `jacoco-maven-plugin` **excluye** de la medición `config/**`, `entities/**`, `dto/**` y la clase
+`PreSustentacionesApplication` (ver `<excludes>` en `backend/pom.xml`). Es decir, los porcentajes de
+abajo se calculan sobre los paquetes donde vive la lógica: `controllers`, `services`, `security` y
+`enums`. Consecuencia práctica verificada en esta corrida: las dos pruebas de integración contra
+PostgreSQL (`PreSustentacionesApplicationTests`, `TemaPropuestoRepositoryIntegrationTest`) **no mueven
+la cifra**, porque el código que ejercitan de forma exclusiva —arranque del contexto, configuración,
+entidades y repositorios— está fuera del alcance medido. Se deja anotado para que nadie interprete
+como sospechoso que la cifra sea idéntica con y sin esas dos clases.
 
 ## ⚠️ Corrección de cifra (2026-09-05): la que estaba en el informe académico ya no es la vigente
 
 Antes de esta fecha, `ChatbotController`, `ChatbotService` y `ReporteServiceImpl` se habían agregado al backend **después** de que se generara el snapshot `2026-08-30/`, así que JaCoCo nunca los había medido — la cifra publicada (35,10% instrucciones / 38,88% líneas / 23,06% ramas) estaba desactualizada respecto al código real incluso antes de que el informe la citara. La corrida de hoy (`2026-09-05/`) sí los incluye:
 
-| Métrica | 2026-08-30 (obsoleta) | **2026-09-05 (vigente)** |
-|---|---|---|
-| Instrucciones | 35.10% (5,699 / 16,237) | **44.39%** (9,303 / 20,957) |
-| Líneas | 38.88% (1,173 / 3,017) | **48.03%** (1,866 / 3,885) |
-| Ramas | 23.06% (255 / 1,106) | **32.07%** (506 / 1,578) |
-| Controladores (líneas / ramas) | 8.75% / 0.00% | **21.18% / 12.35%** |
-| Tests / archivos | 109 / 15 | **228 / 29** |
+| Métrica | 2026-08-30 (obsoleta) | 2026-09-05 (primera corrida) | **2026-09-05 cierre (vigente)** |
+|---|---|---|---|
+| Instrucciones | 35.10% (5,699 / 16,237) | 44.39% (9,303 / 20,957) | **60.48%** (12,674 / 20,957) |
+| Líneas | 38.88% (1,173 / 3,017) | 48.03% (1,866 / 3,885) | **63.17%** (2,454 / 3,885) |
+| Ramas | 23.06% (255 / 1,106) | 32.07% (506 / 1,578) | **45.75%** (722 / 1,578) |
+| Controladores — líneas | 8.75% | 21.18% | **72.00%** (833 / 1,157) |
+| Controladores — ramas | 0.00% | 12.35% | **77.41%** (257 / 332) |
+| Tests / archivos | 109 / 15 | 228 / 29 | **395 / 40** |
+
+**La capa de controladores supera el umbral del 70 % en líneas y en ramas**, que era el criterio de
+aceptación pendiente más pesado de la rúbrica. Se llegó ahí agregando 158 pruebas en 11 clases nuevas,
+priorizando los controladores que exponen procedimientos almacenados (`Reporte`, `Solicitud`, `Jurado`,
+`Tutoria`, `Evaluacion`, `Cronograma`, `Tutor`) más los dos mayores huecos de ramas (`Catalogo`, con 102
+ramas sin ejercitar, y `Rol`/`Permiso`, que concentran las salvaguardas de administración). Las pruebas
+cubren comportamiento real —comprobaciones de propiedad del recurso, validaciones de entrada,
+traducción de errores del servicio a códigos HTTP, generación real de PDF con iText— y no sólo llamadas
+de delegación. El global sigue por debajo del 60 % objetivo en ramas (45.75 %), brecha que se declara
+en vez de maquillarse.
 
 La cobertura global subió porque se agregaron 119 tests nuevos reales en 14 clases (`RubricaEvaluacionServiceImplTest`, `EvaluacionJuradoServiceTest`, `EvaluacionServiceImplTest`, `UsuarioServiceImplTest`, `ReporteServiceImplTest` y otras — 228 tests / 29 archivos en total hoy, frente a 109/15 el 30-08), no por un cambio de denominador favorable. **`ChatbotController` y `ChatbotService` siguen en 0%: no existe ningún archivo de test para ninguno de los dos** (verificado en esta corrida — cero `*Chatbot*` en `backend/target/surefire-reports/`), así que siguen bajando el promedio del paquete de controladores. La cobertura de controladores, aunque más que duplicada, **sigue muy por debajo del 70% que exige la guía** — es el hueco más grande de la rúbrica (ver `docs/basedatos/CATALOGO-SP.md` para qué controladores exponen los procedimientos almacenados, que son la prioridad).
 
