@@ -57,7 +57,12 @@ public class ReporteController {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    /** RF-11: PDF del cronograma de pre-sustentaciones */
+    /**
+     * RF-11: Genera el PDF con el cronograma completo de pre-sustentaciones.
+     *
+     * @return 200 con el PDF como adjunto descargable
+     * @throws Exception si iText falla al construir el documento o las fuentes
+     */
     @GetMapping("/cronograma/pdf")
     public ResponseEntity<byte[]> reporteCronograma() throws Exception {
         List<Cronograma> lista = cronogramaRepo.findReporteCronograma();
@@ -106,7 +111,13 @@ public class ReporteController {
         return pdfResponse(baos, "cronograma_presustentaciones.pdf");
     }
 
-    /** RF-11: PDF de estadísticas de evaluaciones */
+    /**
+     * RF-11: Genera el PDF de estadísticas de evaluaciones (totales, aprobados, reprobados,
+     * nota promedio y detalle por estudiante).
+     *
+     * @return 200 con el PDF como adjunto descargable
+     * @throws Exception si iText falla al construir el documento o las fuentes
+     */
     @GetMapping("/estadisticas/pdf")
     public ResponseEntity<byte[]> reporteEstadisticas() throws Exception {
         List<EvaluacionFinal> evals = evaluacionFinalRepo.findAllWithRelationships();
@@ -182,6 +193,9 @@ public class ReporteController {
      * necesario aquí: el procedimiento devuelve un REFCURSOR y Postgres solo lo mantiene
      * abierto dentro de la misma transacción que lo abrió -- sin esto, Hibernate hace el
      * fetch del cursor en una transacción/conexión ya cerrada ("cursor ... does not exist").
+     *
+     * @param carrera nombre o parte del nombre de la carrera por la que se filtra
+     * @return 200 con las filas del reporte que devuelve el procedimiento
      */
     @GetMapping("/defensas")
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -190,7 +204,12 @@ public class ReporteController {
         return ResponseEntity.ok(solicitudRepo.generarReporteDefensas(carrera));
     }
 
-    /** RF-11: JSON de estadísticas para gráficas */
+    /**
+     * RF-11: Mismas estadísticas que el PDF pero en JSON, para las gráficas del dashboard.
+     *
+     * @return 200 con totales, aprobados, reprobados, nota promedio, tasa de aprobación y
+     *         solicitudes pendientes; la tasa es 0 cuando todavía no hay evaluaciones
+     */
     @GetMapping("/estadisticas/json")
     public ResponseEntity<Map<String, Object>> estadisticasJson() {
         List<EvaluacionFinal> evals = evaluacionFinalRepo.findAllWithRelationships();
@@ -216,7 +235,14 @@ public class ReporteController {
     // El @PreAuthorize('REPORTES_VER') de la clase protege también estos endpoints.
     // Todo se agrega con COUNT/GROUP BY en la base (ver ReporteServiceImpl).
 
-    /** Resumen general del proceso de pre-sustentaciones para el dashboard. */
+    /**
+     * Resumen general del proceso de pre-sustentaciones para el dashboard.
+     *
+     * @param desde   inicio del rango de fechas, opcional
+     * @param hasta   fin del rango de fechas, opcional
+     * @param carrera filtro por carrera, opcional
+     * @return 200 con el resumen agregado
+     */
     @GetMapping("/resumen")
     public ResponseEntity<?> resumen(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -225,7 +251,14 @@ public class ReporteController {
         return ResponseEntity.ok(reporteService.resumen(desde, hasta, carrera));
     }
 
-    /** Cantidad de solicitudes/pre-sustentaciones por estado. */
+    /**
+     * Cantidad de solicitudes/pre-sustentaciones agrupadas por estado.
+     *
+     * @param desde   inicio del rango de fechas, opcional
+     * @param hasta   fin del rango de fechas, opcional
+     * @param carrera filtro por carrera, opcional
+     * @return 200 con el conteo por estado
+     */
     @GetMapping("/solicitudes-por-estado")
     public ResponseEntity<?> solicitudesPorEstado(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -234,7 +267,13 @@ public class ReporteController {
         return ResponseEntity.ok(reporteService.solicitudesPorEstado(desde, hasta, carrera));
     }
 
-    /** Cantidad de pre-sustentaciones por período académico. */
+    /**
+     * Cantidad de pre-sustentaciones agrupadas por período académico.
+     *
+     * @param desde inicio del rango de fechas, opcional
+     * @param hasta fin del rango de fechas, opcional
+     * @return 200 con el conteo por período
+     */
     @GetMapping("/sustentaciones-por-periodo")
     public ResponseEntity<?> sustentacionesPorPeriodo(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -242,7 +281,14 @@ public class ReporteController {
         return ResponseEntity.ok(reporteService.sustentacionesPorPeriodo(desde, hasta));
     }
 
-    /** Actas: generadas, revisadas, observadas, finalizadas, anuladas y pendientes de firma. */
+    /**
+     * Estado de las actas: generadas, revisadas, observadas, finalizadas, anuladas y
+     * pendientes de firma.
+     *
+     * @param desde inicio del rango de fechas, opcional
+     * @param hasta fin del rango de fechas, opcional
+     * @return 200 con el conteo por estado de acta
+     */
     @GetMapping("/actas")
     public ResponseEntity<?> resumenActas(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -250,13 +296,21 @@ public class ReporteController {
         return ResponseEntity.ok(reporteService.resumenActas(desde, hasta));
     }
 
-    /** Actividad por docente: como jurado, como tutor y actas firmadas. */
+    /**
+     * Actividad por docente: participaciones como jurado, como tutor y actas firmadas.
+     *
+     * @return 200 con una fila por docente
+     */
     @GetMapping("/actividad-docente")
     public ResponseEntity<?> actividadDocente() {
         return ResponseEntity.ok(reporteService.actividadPorDocente());
     }
 
-    /** Estadísticas por carrera/programa. */
+    /**
+     * Estadísticas por carrera/programa: total, completadas y rechazadas.
+     *
+     * @return 200 con una fila por carrera
+     */
     @GetMapping("/por-carrera")
     public ResponseEntity<?> porCarrera() {
         return ResponseEntity.ok(reporteService.estadisticasPorCarrera());

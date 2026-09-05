@@ -28,6 +28,13 @@ public class SolicitudController {
         this.usuarioRepository = usuarioRepository;
     }
 
+    /**
+     * Crea una solicitud en nombre de un estudiante (uso administrativo).
+     *
+     * @param estudianteId perfil de estudiante al que pertenecerá la solicitud
+     * @param datos        cuerpo de la solicitud (tema, modalidad, línea, área)
+     * @return 200 con la solicitud creada, o 400 con el motivo del rechazo
+     */
     @PostMapping("/crear/{estudianteId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> crear(@PathVariable Long estudianteId, @RequestBody Solicitud datos) {
@@ -39,8 +46,14 @@ public class SolicitudController {
     }
 
     /**
-     * Crear solicitud — el backend resuelve el usuario desde el JWT,
-     * ignorando el usuarioId del path para evitar inconsistencias.
+     * Crea la solicitud del propio estudiante autenticado. El backend resuelve el usuario
+     * desde el JWT e ignora deliberadamente el usuarioId del path, de modo que un cliente
+     * no puede crear solicitudes a nombre de otra persona.
+     *
+     * @param usuarioId ignorado; se conserva en la ruta por compatibilidad del frontend
+     * @param datos     cuerpo de la solicitud (tema, modalidad, línea, área)
+     * @return 200 con la solicitud creada, o 400 si el usuario del token no existe o el
+     *         servicio rechaza la creación
      */
     @PostMapping("/crear-por-usuario/{usuarioId}")
     public ResponseEntity<?> crearPorUsuario(@PathVariable Long usuarioId, @RequestBody Solicitud datos) {
@@ -58,8 +71,11 @@ public class SolicitudController {
     }
 
     /**
-     * Listar MIS solicitudes — el backend obtiene el usuarioId desde el JWT,
-     * sin depender de ningún parámetro enviado por el cliente.
+     * Lista las solicitudes del usuario autenticado, resolviendo su identidad desde el JWT
+     * sin depender de ningún parámetro del cliente.
+     *
+     * @return 200 con las solicitudes propias; si la resolución del usuario falla devuelve
+     *         200 con lista vacía en vez de un error, para no romper la pantalla del estudiante
      */
     @GetMapping("/mis-solicitudes")
     public ResponseEntity<?> listarMisSolicitudes() {
@@ -76,7 +92,13 @@ public class SolicitudController {
         }
     }
 
-    /** Listar solicitudes del usuario logueado (por usuarioId) — se mantiene por compatibilidad */
+    /**
+     * Lista las solicitudes de un usuario por id. Se mantiene por compatibilidad con la
+     * versión anterior del frontend.
+     *
+     * @param usuarioId usuario cuyas solicitudes se consultan
+     * @return 200 con las solicitudes, o 200 con lista vacía si el servicio falla
+     */
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> listarPorUsuario(@PathVariable Long usuarioId) {
         try {
@@ -87,6 +109,14 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * Envía la solicitud a revisión. Exige ser el propietario de la solicitud o tener
+     * permiso de revisión.
+     *
+     * @param id solicitud a enviar
+     * @return 200 con la solicitud actualizada, o 400 si no es propietario o la transición
+     *         de estado no es válida
+     */
     @PostMapping("/enviar/{id}")
     public ResponseEntity<?> enviar(@PathVariable Long id) {
         try {
@@ -98,6 +128,10 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * @param id solicitud a aprobar
+     * @return 200 con la solicitud aprobada, o 400 si no está en un estado que lo permita
+     */
     @PostMapping("/aprobar/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> aprobar(@PathVariable Long id) {
@@ -108,6 +142,10 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * @param id solicitud a rechazar
+     * @return 200 con la solicitud rechazada, o 400 si la transición no es válida
+     */
     @PostMapping("/rechazar/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> rechazar(@PathVariable Long id) {
@@ -118,6 +156,13 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * Rechaza la solicitud dejando constancia del motivo para el estudiante.
+     *
+     * @param id   solicitud a rechazar
+     * @param body cuerpo con la clave "observacion"; si falta se registra cadena vacía
+     * @return 200 con la solicitud rechazada, o 400 si la transición no es válida
+     */
     @PostMapping("/rechazar-con-observacion/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> rechazarConObservacion(
@@ -131,6 +176,14 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * Suspende una solicitud en curso (por ejemplo, si el estudiante se retira del período).
+     *
+     * @param id   solicitud a suspender
+     * @param body cuerpo con la clave "motivo"
+     * @return 200 con la solicitud suspendida, o 400 si falta el motivo o la transición
+     *         no es válida
+     */
     @PostMapping("/suspender/{id}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_SUSPENDER')")
     public ResponseEntity<?> suspender(
@@ -144,7 +197,12 @@ public class SolicitudController {
         }
     }
 
-    /** ADMIN, COORDINADOR y DOCENTE pueden ver TODAS las solicitudes */
+    /**
+     * Listado completo sin paginar. ADMIN, COORDINADOR y DOCENTE pueden ver todas las
+     * solicitudes; para volúmenes grandes conviene usar /paginado.
+     *
+     * @return 200 con todas las solicitudes
+     */
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> listar() {
@@ -176,19 +234,35 @@ public class SolicitudController {
         )));
     }
 
-    /** Conteo de solicitudes por estado, para los contadores de las pestañas de filtro */
+    /**
+     * Conteo de solicitudes agrupadas por estado, para los contadores de las pestañas de
+     * filtro del frontend.
+     *
+     * @return 200 con un mapa estado a cantidad
+     */
     @GetMapping("/contar-por-estado")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> contarPorEstado() {
         return ResponseEntity.ok(ResponseWrapper.success(solicitudService.contarPorEstado()));
     }
 
+    /**
+     * @param estudianteId perfil de estudiante consultado
+     * @return 200 con las solicitudes de ese estudiante
+     */
     @GetMapping("/estudiante/{estudianteId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
     public ResponseEntity<?> listarPorEstudiante(@PathVariable Long estudianteId) {
         return ResponseEntity.ok(ResponseWrapper.success(solicitudService.listarPorEstudiante(estudianteId)));
     }
 
+    /**
+     * Detalle de una solicitud. Un estudiante sólo puede abrir la suya; quien tiene permiso
+     * de revisión (o es ADMIN) puede abrir cualquiera.
+     *
+     * @param id solicitud consultada
+     * @return 200 con la solicitud, 404 si no existe, o 403 si no es propietario ni revisor
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> obtener(@PathVariable Long id) {
         try {
@@ -206,7 +280,10 @@ public class SolicitudController {
      * Llama a presus.sp_generar_reporte_defensas(p_carrera)
      * Flujo: GET → SolicitudController → SolicitudService → SolicitudRepository → SP → PostgreSQL
      *
-     * @param carrera nombre o parte del nombre de la carrera (búsqueda ILIKE)
+     * @param carrera nombre o parte del nombre de la carrera (búsqueda ILIKE); vacío
+     *                devuelve todas las carreras
+     * @return 200 con las filas del reporte que devuelve el procedimiento, o 400 con el
+     *         error si el cursor del procedimiento falla
      */
     @GetMapping("/reporte-defensas")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'SOLICITUDES_REVISAR')")
@@ -220,6 +297,13 @@ public class SolicitudController {
         }
     }
 
+    /**
+     * Línea de tiempo del trámite (estados por los que pasó la solicitud). Exige la misma
+     * comprobación de propiedad que el detalle.
+     *
+     * @param id solicitud consultada
+     * @return 200 con el seguimiento, o 403 si no es propietario ni revisor
+     */
     @GetMapping("/{id}/seguimiento")
     public ResponseEntity<?> obtenerSeguimiento(@PathVariable Long id) {
         try {
@@ -231,7 +315,12 @@ public class SolicitudController {
     }
 
     /**
-     * Valida que el usuario actual tenga permisos de revisión O sea el propietario de la solicitud.
+     * Valida que el usuario actual tenga permiso de revisión (o sea ADMIN) o bien sea el
+     * propietario de la solicitud.
+     *
+     * @param solicitudId solicitud sobre la que se comprueba el acceso
+     * @throws RuntimeException si la solicitud no existe o si el usuario autenticado no es
+     *                          revisor ni propietario
      */
     private void validarAccesoSolicitud(Long solicitudId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

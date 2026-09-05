@@ -30,7 +30,15 @@ public class JuradoController {
 
     // ── Jurados ───────────────────────────────────────────────────────────────
 
-    /** Asignar un jurado manualmente a una solicitud */
+    /**
+     * Asigna manualmente un docente como jurado de una solicitud, con un rol concreto.
+     *
+     * @param solicitudId solicitud a la que se asigna el tribunal
+     * @param docenteId   docente que actuará como jurado
+     * @param rol         código de rol en el tribunal (PRESIDENTE, VOCAL_1, VOCAL_2)
+     * @return 200 con el {@link Jurado} asignado, o 400 con el motivo si el servicio lo
+     *         rechaza (docente ya asignado, rol inexistente, etc.)
+     */
     @PostMapping("/asignar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarJurado(
@@ -45,7 +53,14 @@ public class JuradoController {
         }
     }
 
-    /** Asignación automática de los 3 jurados (PRESIDENTE, VOCAL_1, VOCAL_2) */
+    /**
+     * Asigna automáticamente los tres jurados del tribunal repartiendo carga entre los
+     * docentes disponibles.
+     *
+     * @param solicitudId solicitud a la que se asigna el tribunal
+     * @return 200 con la lista de jurados resultante, o 400 con el motivo si no hay
+     *         suficientes docentes disponibles
+     */
     @PostMapping("/asignar-automatico/{solicitudId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarAutomaticamente(@PathVariable Long solicitudId) {
@@ -58,20 +73,31 @@ public class JuradoController {
         }
     }
 
-    /** Listar jurados de una solicitud */
+    /**
+     * @param solicitudId solicitud consultada
+     * @return 200 con los jurados asignados a esa solicitud
+     */
     @GetMapping("/solicitud/{solicitudId}")
     public ResponseEntity<?> listarPorSolicitud(@PathVariable Long solicitudId) {
         return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarPorSolicitud(solicitudId)));
     }
 
-    /** Listar todos los jurados */
+    /**
+     * @param pageable página y tamaño solicitados
+     * @return 200 con la página de todas las asignaciones de tribunal
+     */
     @GetMapping
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> listarTodos(Pageable pageable) {
         return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarTodos(pageable)));
     }
 
-    /** Eliminar un jurado */
+    /**
+     * Retira a un docente del tribunal.
+     *
+     * @param juradoId asignación de jurado a eliminar
+     * @return 204 sin cuerpo
+     */
     @DeleteMapping("/{juradoId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Void> eliminarJurado(@PathVariable Long juradoId) {
@@ -79,7 +105,13 @@ public class JuradoController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Sugerir docentes disponibles para asignar (sin los ya asignados) */
+    /**
+     * Sugiere docentes candidatos para completar el tribunal, excluyendo a los ya asignados.
+     *
+     * @param solicitudId solicitud para la que se buscan candidatos
+     * @param cantidad    número máximo de sugerencias (5 por defecto)
+     * @return 200 con la lista de docentes sugeridos
+     */
     @GetMapping("/sugerencias/{solicitudId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> sugerirDocentes(
@@ -90,7 +122,13 @@ public class JuradoController {
 
     // ── Tutor ─────────────────────────────────────────────────────────────────
 
-    /** Asignar tutor a una solicitud */
+    /**
+     * Asigna un docente como tutor de la solicitud.
+     *
+     * @param solicitudId solicitud a tutorar
+     * @param docenteId   docente que asumirá la tutoría
+     * @return 200 con el {@link Tutor} creado, o 400 con el motivo si ya tiene tutor
+     */
     @PostMapping("/tutor/asignar")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<?> asignarTutor(
@@ -104,7 +142,10 @@ public class JuradoController {
         }
     }
 
-    /** Obtener el tutor activo de una solicitud */
+    /**
+     * @param solicitudId solicitud consultada
+     * @return 200 con el tutor activo, o 404 si la solicitud no tiene tutor asignado
+     */
     @GetMapping("/tutor/solicitud/{solicitudId}")
     public ResponseEntity<?> obtenerTutor(@PathVariable Long solicitudId) {
         return juradoService.obtenerTutorDeSolicitud(solicitudId)
@@ -112,7 +153,12 @@ public class JuradoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** Eliminar tutor */
+    /**
+     * Retira la tutoría asignada.
+     *
+     * @param tutorId tutoría a eliminar
+     * @return 204 sin cuerpo
+     */
     @DeleteMapping("/tutor/{tutorId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
     public ResponseEntity<Void> eliminarTutor(@PathVariable Long tutorId) {
@@ -122,20 +168,35 @@ public class JuradoController {
 
     // ── Vistas del docente como jurado ────────────────────────────────────────
 
-    /** Listar todas las asignaciones de un docente como jurado */
+    /**
+     * @param docenteId docente consultado
+     * @return 200 con todas las solicitudes en las que ese docente es jurado
+     */
     @GetMapping("/docente/{docenteId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR') or @permisoService.esPropioDocente(authentication, #docenteId)")
     public ResponseEntity<?> listarPorDocente(@PathVariable Long docenteId) {
         return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarPorDocente(docenteId)));
     }
 
-    /** Listar tutorias de un docente */
+    /**
+     * @param docenteId docente consultado
+     * @return 200 con todas las tutorías a cargo de ese docente
+     */
     @GetMapping("/tutor/docente/{docenteId}")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR') or @permisoService.esPropioDocente(authentication, #docenteId)")
     public ResponseEntity<?> listarTutoriasPorDocente(@PathVariable Long docenteId) {
         return ResponseEntity.ok(ResponseWrapper.success(juradoService.listarTutoriasPorDocente(docenteId)));
     }
 
+    /**
+     * Datos del jurado que un usuario concreto ocupa en una solicitud, usados por la
+     * pantalla de calificación para saber con qué rol firma quien está viendo la página.
+     *
+     * @param solicitudId solicitud consultada
+     * @param usuarioId   usuario del que se quiere conocer su rol en ese tribunal
+     * @return 200 con id, rol, confirmación y nombre del docente; o 200 con datos nulos
+     *         si ese usuario no es jurado de la solicitud
+     */
     @GetMapping("/info/{solicitudId}/{usuarioId}")
     public ResponseEntity<?> obtenerInfoJurado(@PathVariable Long solicitudId, @PathVariable Long usuarioId) {
         Optional<Jurado> juradoOpt = juradoService.obtenerInfoJurado(solicitudId, usuarioId);
@@ -162,6 +223,12 @@ public class JuradoController {
      * Flujo: POST → JuradoController → JuradoService → JuradoRepository → SP → PostgreSQL
      *
      * Body esperado: { "solicitudIds": [1,2,3], "docenteIds": [4,5,6], "rol": "PRESIDENTE" }
+     *
+     * @param body mapa con solicitudIds, docenteIds y rol; los ids llegan como enteros JSON
+     *             y se convierten a Long para el procedimiento
+     * @return 200 con el número de asignaciones ejecutadas y el rol aplicado; 400 si falta
+     *         alguna de las tres claves o si el procedimiento rechaza el lote (en cuyo caso
+     *         la transacción revierte el lote completo)
      */
     @PostMapping("/asignar-masivo")
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'TRIBUNAL_TUTOR_ASIGNAR')")
