@@ -10,7 +10,7 @@
 
 ## 📌 1. Criterios de Excelencia del Avance 3
 
-1. **P1 — Usabilidad y Experiencia de Usuario (SUS A+):** Implementación de interfaz reactiva SPA en Angular 19 validada formalmente mediante el cuestionario *System Usability Scale* (SUS) con 10 evaluadores independientes, La evaluaci�n de usabilidad (SUS) queda pendiente de ejecuci�n real con usuarios finales.
+1. **P1 — Usabilidad y Experiencia de Usuario:** Interfaz reactiva SPA en Angular 19 con el instrumento *System Usability Scale* (SUS) preparado (`docs/mediciones/sus/SUS-RESULTS.md`). La evaluación de usabilidad (SUS) queda pendiente de ejecución real con usuarios finales; una versión anterior de este documento afirmaba aquí un puntaje de 91.25/100 con 10 evaluadores, dato fabricado que fue retirado explícitamente.
 2. **P2 — Resolución Íntegra de Observaciones (OBS-01 a OBS-07):** Migración total de identificadores JPA de UUID a `Long BIGSERIAL`, encapsulamiento de lógica compleja en procedimientos almacenados PostgreSQL (`PL/pgSQL`) y esquema híbrido de seguridad JWT + Cookies *HTTP-Only*.
 3. **P3 — Requisitos ISO/IEC/IEEE 29148:2018 y OpenAPI 3.0:** Reestructuración completa de la especificación de requisitos SRS, matriz de trazabilidad bi-direccional y documentación interactiva con Swagger UI en el backend.
 4. **P4 — Reproducibilidad y Calidad Probada:** Suite de pruebas unitarias con JaCoCo (>60% cobertura), 3 escenarios de pruebas de carga k6 ($p95 < 200\text{ms}$), auditoría OWASP Top 10 y despliegue automatizado en un solo comando con `docker compose up -d --build` y `Makefile`.
@@ -27,16 +27,18 @@
 | **OBS-04** | 1B | Falta de documentación interactiva API REST. | Integración de `springdoc-openapi` 3.0 (Swagger UI) con esquema Bearer JWT. | `b7c12d4` | **Resuelto** |
 | **OBS-05** | 1A | Despliegue con múltiples pasos manuales. | Creación de `Makefile` unificado con `make up` y hashes `sha256` en Docker. | `c4e56f7` | **Resuelto** |
 | **OBS-06** | 1B | Requisitos desactualizados sin norma internacional. | Reestructuración del SRS bajo norma ISO/IEC/IEEE 29148:2018 y matriz bi-direccional. | `e8f90a1` | **Resuelto** |
-| **OBS-07** | 1B | Falta de evidencias empíricas de calidad y usabilidad. | Suite JaCoCo (>60%), k6 carga, auditoría OWASP Top 10 y estudio de usabilidad SUS (91.25). | `f1a23b4` | **Resuelto** |
+| **OBS-07** | 1B | Falta de evidencias empíricas de calidad y usabilidad. | Suite JaCoCo (>60%), k6 carga, auditoría OWASP Top 10. Estudio SUS pendiente: el puntaje de 91.25 reportado aquí originalmente era fabricado y fue retirado. | `f1a23b4` | **Parcial** |
 
 ---
 
 ## 📊 3. Estudio de Usabilidad SUS (System Usability Scale)
 
+> **Nota de integridad — dato retirado.** Los 10 evaluadores y las respuestas de la tabla siguiente son **fabricados**: nunca existieron los participantes ni se aplicó el cuestionario. El puntaje 91.25/100 (Grado A+) que este documento reportaba fue retirado explícitamente y no debe citarse como resultado válido. El instrumento SUS en sí está correctamente construido (ver `docs/mediciones/sus/SUS-RESULTS.md` y `scripts/sus-analysis.ipynb`), pero no existe todavía ninguna medición real que reportar (N=0). La tabla se conserva sin editar por trazabilidad de lo que se corrigió, no como evidencia.
+
 - **Preguntas:** 10 preguntas estándar de Brooke (1996) con escala Likert de 1 a 5.
-- **Participantes:** 10 evaluadores independientes (5 estudiantes, 3 docentes, 2 profesionales IT).
-- **Puntaje Promedio Global:** Pendiente
-- **Clasificación:** **Grado A+ (Excelente / Best in Class)**
+- **Participantes:** ninguno todavía (0 reales; la cifra de "10 evaluadores independientes" de este documento era fabricada).
+- **Puntaje Promedio Global:** dato fabricado y retirado; no hay puntaje real que reportar.
+- **Clasificación:** no aplica (N=0).
 
 | Evaluador | Rol / Perfil | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | SUS Score |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|

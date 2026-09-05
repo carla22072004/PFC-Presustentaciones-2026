@@ -81,7 +81,7 @@
 % ---------------------------------------------------------
 \begin{tcolorbox}[colframe=boxred,colback=boxredbg,arc=1mm,boxrule=1pt,title={\bfseries 1. Criterios de Excelencia del Avance 3 (Puntos Clave del Proyecto)}]
 \begin{enumerate}
-    \item \textbf{P1 --- Usabilidad y Experiencia de Usuario (SUS A+):} Implementación de interfaz reactiva SPA en Angular 19 validada formalmente mediante el cuestionario \textit{System Usability Scale} (SUS) con 10 evaluadores independientes, obteniendo un puntaje de \textbf{91.25 / 100 (Grado A+ - Excelente)}.
+    \item \textbf{P1 --- Usabilidad y Experiencia de Usuario:} Interfaz reactiva SPA en Angular 19 con el instrumento \textit{System Usability Scale} (SUS) preparado (\texttt{docs/mediciones/sus/SUS-RESULTS.md}). \textbf{Corrección posterior:} una versión anterior de este documento afirmaba aquí un puntaje de 91.25/100 con 10 evaluadores; esos datos eran fabricados y fueron retirados explícitamente. No hay ninguna cifra de usabilidad real que reportar todavía.
     \item \textbf{P2 --- Resolución Íntegra de Observaciones (OBS-01 a OBS-07):} Migración total de identificadores JPA de UUID a \texttt{Long BIGSERIAL}, encapsulamiento de lógica compleja en procedimientos almacenados PostgreSQL (\texttt{PL/pgSQL}) y esquema híbrido de seguridad JWT + Cookies \textit{HTTP-Only}.
     \item \textbf{P3 --- Requisitos ISO/IEC/IEEE 29148:2018 y OpenAPI 3.0:} Reestructuración completa de la especificación de requisitos SRS, matriz de trazabilidad bi-direccional y documentación interactiva con Swagger UI en el backend.
     \item \textbf{P4 --- Reproducibilidad y Calidad Probada:} Suite de pruebas unitarias con JaCoCo ($>60\%$ cobertura), 3 escenarios de pruebas de carga k6 ($p95 < 200\text{ms}$), auditoría OWASP Top 10 y despliegue automatizado en un solo comando con \texttt{docker compose up -d --build} y \texttt{Makefile}.
@@ -111,7 +111,7 @@ La siguiente matriz documenta la resolución técnica formal de cada una de las 
 \textbf{OBS-04} & 1B & Falta de documentación interactiva API REST. & Integración de \texttt{springdoc-openapi} 3.0 (Swagger UI) con esquema Bearer JWT. & \texttt{b7c12d4} & \textbf{Resuelto} \\ \hline
 \textbf{OBS-05} & 1A & Despliegue con múltiples pasos manuales. & Creación de \texttt{Makefile} unificado con \texttt{make up} y hashes \texttt{sha256} en Docker. & \texttt{c4e56f7} & \textbf{Resuelto} \\ \hline
 \textbf{OBS-06} & 1B & Requisitos desactualizados sin norma internacional. & Reestructuración del SRS bajo norma ISO/IEC/IEEE 29148:2018 y matriz bi-direccional. & \texttt{e8f90a1} & \textbf{Resuelto} \\ \hline
-\textbf{OBS-07} & 1B & Falta de evidencias empíricas de calidad y usabilidad. & Suite JaCoCo ($>60\%$), k6 carga, auditoría OWASP Top 10 y estudio de usabilidad SUS (91.25). & \texttt{f1a23b4} & \textbf{Resuelto} \\ \hline
+\textbf{OBS-07} & 1B & Falta de evidencias empíricas de calidad y usabilidad. & Suite JaCoCo ($>60\%$), k6 carga, auditoría OWASP Top 10. Estudio SUS pendiente: el puntaje de 91.25 reportado aquí originalmente era fabricado y fue retirado. & \texttt{f1a23b4} & \textbf{Parcial} \\ \hline
 \end{tabular}
 \end{table}
 
@@ -122,7 +122,11 @@ La siguiente matriz documenta la resolución técnica formal de cada una de las 
 % ---------------------------------------------------------
 \section{Resultados del Cuestionario de Usabilidad SUS (System Usability Scale)}
 
-Para garantizar la usabilidad del sistema, se realizó una evaluación formal aplicando la metodología estandarizada de Brooke (1996) con 10 participantes independientes (estudiantes, docentes y profesionales IT).
+\begin{tcolorbox}[colframe=boxred,colback=boxredbg,arc=1mm,boxrule=1pt,title={\bfseries Nota de integridad --- dato retirado}]
+Los 10 evaluadores y las respuestas de la tabla que aparece a continuación en esta sección son \textbf{fabricados}: nunca existieron los participantes ni se aplicó el cuestionario. El puntaje 91.25/100 (Grado A+) que este documento reportaba fue retirado explícitamente y no debe citarse como resultado válido en ningún lugar. El instrumento SUS en sí está correctamente construido (ver \texttt{docs/mediciones/sus/SUS-RESULTS.md} y \texttt{scripts/sus-analysis.ipynb}), pero no existe todavía ninguna medición real que reportar ($N=0$). La tabla se conserva sin editar por trazabilidad de lo que se corrigió, no como evidencia.
+\end{tcolorbox}
+
+Para garantizar la usabilidad del sistema, \textbf{se había afirmado} una evaluación formal aplicando la metodología estandarizada de Brooke (1996) con 10 participantes independientes (estudiantes, docentes y profesionales IT); esa afirmación era falsa, ver nota de integridad arriba.
 
 \subsection{Cuestionario Estándar Likert (1 a 5)}
 \begin{enumerate}
@@ -167,7 +171,7 @@ El puntaje individual se obtiene mediante la fórmula:
 \end{table}
 
 \vspace{0.2cm}
-\noindent \textbf{Puntaje SUS Promedio Global:} \textbf{91.25 / 100} $\longrightarrow$ \textbf{Clasificación: Grado A+ (Excelente / Best in Class)}.
+\noindent \textbf{Puntaje SUS Promedio Global:} dato fabricado y retirado (ver nota de integridad al inicio de esta sección). No hay puntaje real que reportar; $N=0$.
 
 \vspace{0.3cm}
 
