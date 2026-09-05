@@ -42,7 +42,9 @@
 
 .tem-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
 .tem-modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
-.tem-modal h3 { margin: 0 0 16px; font-size: 1.05rem; color: #1e293b; }
+.tem-modal h3 { margin: 0; font-size: 1.05rem; color: #1e293b; }
+.tem-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.tem-modal-cerrar { font-size: 1.2rem; flex-shrink: 0; }
 .tem-form-grupo { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
 .tem-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .tem-form-grupo label { font-size: 0.8rem; color: #64748b; font-weight: 600; }

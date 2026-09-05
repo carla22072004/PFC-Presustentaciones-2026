@@ -55,10 +55,15 @@
     <!-- Modal alta / edición -->
     <div class="tem-modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
         <div class="tem-modal" (click)="$event.stopPropagation()">
-            <h3>
-                <i class="bi" [ngClass]="modo === 'crear' ? 'bi-plus-lg' : 'bi-pencil-fill'"></i>
-                {{ modo === 'crear' ? 'Nuevo Tema Propuesto' : 'Editar Tema Propuesto' }}
-            </h3>
+            <div class="tem-modal-header">
+                <h3>
+                    <i class="bi" [ngClass]="modo === 'crear' ? 'bi-plus-lg' : 'bi-pencil-fill'"></i>
+                    {{ modo === 'crear' ? 'Nuevo Tema Propuesto' : 'Editar Tema Propuesto' }}
+                </h3>
+                <button type="button" class="tem-icon-btn tem-modal-cerrar" title="Cerrar" (click)="cerrarModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
 
             <form (ngSubmit)="guardar()">
                 <div class="tem-form-grupo">
