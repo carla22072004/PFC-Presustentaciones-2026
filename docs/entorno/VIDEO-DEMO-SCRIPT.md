@@ -1,8 +1,9 @@
 # Guion para el video de reproducibilidad (`make all`, 5-7 min)
 
-**Estado:** ⏳ Pendiente de grabar — este documento es el guion/checklist para grabarlo, no el
-video en sí. Una vez grabado y subido, enlazar el video desde `README.md` (sección "Video de
-Reproducibilidad") y actualizar el estado de este archivo.
+**Estado:** ✅ Grabado — [ver el video en Google Drive](https://drive.google.com/file/d/1Qi5-PW55kQmecrN3RNWKiIcxRcNXCQDR/view).
+Este documento es el guion/checklist que se siguió al grabarlo, y queda como referencia del
+procedimiento (por si se necesita regrabar una versión posterior del sistema). Enlazado también
+desde `README.md`, sección "Video de Reproducibilidad".
 
 **Por qué existe este documento en vez de solo el video:** graba una persona del equipo con su
 propia voz y pantalla — no es algo que se pueda generar automáticamente. Este guion deja el
