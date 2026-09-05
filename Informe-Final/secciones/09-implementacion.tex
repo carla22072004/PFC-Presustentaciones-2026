@@ -25,8 +25,8 @@ CI/CD & GitHub Actions (\texttt{.github/workflows/ci.yml}, \texttt{backup.yml}) 
 
 El workflow \texttt{.github/workflows/ci.yml} corre en cada \textit{push}, levantando Postgres y Redis
 reales (no simulados) para ejecutar build, la suite de tests con JaCoCo y el análisis estático de
-seguridad del backend. El Anexo C (Sección~\ref{anexo:ci}) declara explícitamente qué evidencia de
-corridas reales de este workflow existe hoy y qué falta capturar antes del examen final.
+seguridad del backend. El Anexo C (Sección~\ref{anexo:ci}) documenta tres corridas verdes reales
+verificadas contra la API pública de GitHub, con sus datos crudos versionados en el repositorio.
 
 \subsection{Seguridad implementada}
 

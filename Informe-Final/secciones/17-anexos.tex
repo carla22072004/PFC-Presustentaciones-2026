@@ -62,16 +62,48 @@ participantes reclutados. Una versión anterior de este proyecto publicó un pun
 \subsection{Anexo C --- Corridas de integración continua}
 \label{anexo:ci}
 
-\textbf{Brecha declarada.} La guía pide capturas de tres corridas verdes de CI. El workflow
-\texttt{.github/workflows/ci.yml} existe, corre en cada \textit{push} y ejecuta build, tests, JaCoCo y
-análisis estático de seguridad del backend contra Postgres/Redis reales (no simulados). Sin embargo, no
-se generaron ni versionaron capturas de pantalla de corridas reales del panel de GitHub Actions durante
-la elaboración de este informe, y no fue posible capturarlas al cierre de esta corrección por una falla
-temporal de la herramienta de navegador disponible en este entorno de trabajo. En vez de sustituir esta
-evidencia con una captura simulada o de otro proyecto, se declara la brecha: falta que el equipo entre a
-\url{https://github.com/carla22072004/PFC-Presustentaciones-2026/actions}, localice tres corridas
-recientes con estado \textit{success} en la rama que se va a defender, y capture pantalla de cada una
-antes del examen final.
+La guía pide capturas de tres corridas verdes de CI. Se optó por una forma de evidencia
+\textbf{más fuerte que una imagen}: los datos crudos de la API pública de GitHub, que cualquier tercero
+puede volver a consultar con el mismo comando y obtener el mismo resultado, mientras que una captura de
+pantalla sólo se puede creer o no creer. Los JSON de respuesta están versionados sin editar en
+\texttt{docs/evidencias/ci/}, junto con un resumen legible en su \texttt{README.md}.
+
+Comando de reproducción (no requiere autenticación, el repositorio es público):
+
+\begin{lstlisting}[language=bash,style=codigobase,caption={Consulta de las corridas de CI contra la API publica de GitHub.},label={lst:ci-api}]
+REPO=carla22072004/PFC-Presustentaciones-2026
+curl -s "https://api.github.com/repos/$REPO/actions/runs?per_page=8"
+curl -s "https://api.github.com/repos/$REPO/actions/runs/<RUN_ID>/jobs"
+\end{lstlisting}
+
+Las tres corridas capturadas el 2026-09-05 (Tabla~\ref{tab:ci-runs}) corresponden a tres commits
+distintos de la rama \texttt{main} y las tres terminaron en \texttt{success}, con sus \textbf{tres jobs}
+y la totalidad de sus pasos en verde --- 35 pasos por corrida, ninguno fallido ni omitido.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{1.7cm}p{2.2cm}p{6.4cm}}
+\toprule
+\textbf{Run ID} & \textbf{Commit} & \textbf{Conclusión} & \textbf{Commit defendido} \\
+\midrule
+33978578357 & \texttt{99a6636} & \texttt{success} & Cobertura de cierre (63.17\,\%, 395 tests) \\
+33949588592 & \texttt{581d45d} & \texttt{success} & Diagramas C4, listados y anexos \\
+33944802465 & \texttt{76250b7} & \texttt{success} & Merge de la rama del equipo \\
+\bottomrule
+\end{tabular}
+\caption{Corridas verdes de integración continua verificadas contra la API de GitHub.}
+\label{tab:ci-runs}
+\end{table}
+
+Los tres jobs que ejecuta cada corrida son sustantivos, no decorativos: \textbf{Backend} levanta
+Postgres y Redis reales como \textit{service containers} (no mocks), compila, corre la suite completa
+con JaCoCo y publica cobertura y resultados de surefire como artefactos, y después corre SpotBugs +
+find-sec-bugs; \textbf{Frontend} hace el build de producción de Angular; y \textbf{Entorno} regenera
+\texttt{docs/entorno/versions.txt} con las versiones reales de la máquina de CI, para que las versiones
+declaradas en este informe no dependan de la máquina de un integrante. Que las tres estén en verde
+significa que, en una máquina limpia y contra una base de datos real, el proyecto compila, sus 395
+pruebas pasan y el análisis estático de seguridad corre sin romper el pipeline.
 
 \subsection{Anexo D --- Checklist de estándares empíricos de Ralph et al. (2021)}
 \label{anexo:ralph}
