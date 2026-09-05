@@ -59,9 +59,14 @@ test:
 	set -a; [ -f .env ] && . ./.env; set +a; cd backend && ./mvnw test
 
 bench:
-	@echo "Corriendo las 5 pruebas de carga k6 contra localhost:8080/api/v1..."
+	@echo "Corriendo 5 pruebas de carga k6 independientes contra localhost:8080/api/v1..."
 	@echo "Requiere el backend corriendo (make up, o mvnw spring-boot:run) y k6 instalado."
-	cd k6 && k6 run load-test.js
+	@mkdir -p k6/runs
+	@for i in 1 2 3 4 5; do \
+		echo "--- Corrida $$i/5 ---"; \
+		(cd k6 && k6 run --summary-export=runs/run-$$i-summary.json load-test.js) || exit 1; \
+	done
+	@echo "5 corridas completas. Resumenes crudos en k6/runs/run-{1..5}-summary.json"
 
 audit:
 	@echo "Analisis estatico de seguridad (SpotBugs + find-sec-bugs, incluye SQL dinamico)..."
