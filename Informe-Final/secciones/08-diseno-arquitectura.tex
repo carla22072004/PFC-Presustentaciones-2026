@@ -3,20 +3,44 @@
 
 \subsection{Modelo C4}
 
-La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquitectura/README.md}):
+La arquitectura se documenta en tres niveles del modelo C4 (\texttt{docs/arquitectura/README.md}), cuyos
+diagramas se muestran en las Figuras~\ref{fig:c4-contexto}, \ref{fig:c4-contenedores} y
+\ref{fig:c4-componentes} --- se mantienen en inglés, como el resto de esa documentación, para que sean
+legibles/indexables de forma independiente del texto circundante en español:
 
 \begin{itemize}[nosep]
-    \item \textbf{Nivel 1 (Contexto):} el sistema se relaciona con cuatro tipos de actores (Estudiante,
+    \item \textbf{Nivel 1 (Contexto, Figura~\ref{fig:c4-contexto}):} el sistema se relaciona con cuatro tipos de actores (Estudiante,
     Docente/Jurado, Coordinador, Administrador) y un sistema externo (API de universidades de Hipo Labs,
     consumida vía \texttt{ExternalApiServiceImpl} con caché Redis de 10 minutos).
-    \item \textbf{Nivel 2 (Contenedores):} cuatro contenedores desplegables --- Frontend Angular (SPA),
+    \item \textbf{Nivel 2 (Contenedores, Figura~\ref{fig:c4-contenedores}):} cuatro contenedores desplegables --- Frontend Angular (SPA),
     Backend Spring Boot (API REST), PostgreSQL 15 (persistencia), Redis 7 (caché), coordinados por nginx
     como proxy inverso.
-    \item \textbf{Nivel 3 (Componentes):} 30 controladores REST, organizados por dominio (Auth,
+    \item \textbf{Nivel 3 (Componentes, Figura~\ref{fig:c4-componentes}):} 29 controladores REST, organizados por dominio (Auth,
     Solicitudes, Jurados, Cronograma, Evaluaciones, Actas, Notificaciones, Reportes, Salas, Usuarios,
     Anteproyectos, y otros de soporte), cada uno delegando a una capa de servicio y, para la lógica
     académica compleja, a procedimientos almacenados PL/pgSQL.
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figuras/fig-c4-contexto}
+\caption{C4 Nivel 1 --- Diagrama de contexto del sistema.}
+\label{fig:c4-contexto}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figuras/fig-c4-contenedores}
+\caption{C4 Nivel 2 --- Diagrama de contenedores.}
+\label{fig:c4-contenedores}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/fig-c4-componentes}
+\caption{C4 Nivel 3 --- Diagrama de componentes del backend.}
+\label{fig:c4-componentes}
+\end{figure}
 
 \subsection{Resumen de los siete Registros de Decisión Arquitectónica (ADR)}
 
@@ -49,14 +73,152 @@ describía. (Nota: ADR-006 y ADR-007 se renumeraron el 2026-09-01 --- antes eran
 respectivamente --- para que coincidan con los temas específicos que exige la guía de la Entrega Final
 en esos dos números; el contenido no cambió, solo el orden.)
 
+\subsection{Modelo de calidad (ISO/IEC 25010)}
+
+La Tabla~\ref{tab:iso25010} mapea las ocho características del modelo de calidad de producto de software
+ISO/IEC 25010:2011 \cite{iso25010} contra la evidencia empírica real de este proyecto, en vez de afirmar
+cumplimiento genérico sin sustento. Las cifras remiten a la Sección~\ref{sec:evaluacion} (evaluación
+empírica) y a la Sección~\ref{sec:seguridad-corregida} (correcciones de seguridad).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{9.5cm}}
+\toprule
+\textbf{Característica} & \textbf{Evidencia real en este proyecto} \\
+\midrule
+Adecuación funcional & 8/8 requisitos Must con prueba automatizada dedicada (100\,\%); 12/15 requisitos
+totales (80\,\%); matriz de trazabilidad de 15 filas validada contra el código real
+(Sección~\ref{sec:requisitos}). \\
+Eficiencia de desempeño & p95 de \texttt{http\_req\_duration} entre 6.17 y 8.53\,ms en caché caliente
+(5 corridas k6 independientes); prueba de Mann-Whitney U entre caché fría/caliente con
+$p = 3.02\times10^{-11}$ (Sección~\ref{sec:evaluacion}). \\
+Compatibilidad & API REST versionada (\texttt{/api/v1}) documentada con OpenAPI 3.0/Swagger UI; JSON como
+formato de intercambio estándar en los 29 controladores. \\
+Usabilidad & Instrumento SUS \cite{brooke1996} construido y verificado por autotest, pero \textbf{sin
+datos reales todavía} ($N=0$) --- declarado explícitamente como brecha en vez de fabricado
+(Sección~\ref{sec:evaluacion}). \\
+Fiabilidad & 228 pruebas automatizadas reales (0 fallos), \texttt{/actuator/health} como verificación de
+arranque, migraciones Flyway versionadas y reproducibles end-to-end. \\
+Seguridad & Auditoría OWASP ZAP (0 hallazgos High), SpotBugs/find-sec-bugs (0 SQL dinámico), 6 fallos
+reales de autorización (IDOR/mass-assignment) encontrados y corregidos por revisión manual dirigida
+(Sección~\ref{sec:seguridad-corregida}). \\
+Mantenibilidad & Arquitectura en capas (controlador/servicio/repositorio) con 29 controladores
+organizados por dominio; 7 ADRs documentando decisiones y alternativas descartadas (Tabla~\ref{tab:adrs}). \\
+Portabilidad & Despliegue reproducible con Docker Compose y las tres imágenes base ancladas por digest
+SHA-256 (ADR-007); \textbf{sin despliegue público todavía} --- brecha declarada explícitamente
+(Sección~\ref{sec:trabajo-futuro}). \\
+\bottomrule
+\end{tabular}
+\caption{Características de calidad ISO/IEC 25010 mapeadas a evidencia real del proyecto.}
+\label{tab:iso25010}
+\end{table}
+
 \subsection{Modelo de datos}
 
 El esquema relacional (\texttt{presus}, PostgreSQL 15) modela 13 entidades principales (usuarios,
 solicitudes, anteproyectos, jurados, cronogramas, evaluaciones, actas, rúbricas, salas, notificaciones,
 entre otras) con claves foráneas que garantizan integridad referencial. Los identificadores son
 \texttt{BIGINT} autoincrementales (migrados desde UUID en una corrección temprana documentada en
-OBS-01), y cuatro procedimientos almacenados PL/pgSQL puros (\texttt{sp\_calcular\_promedio\_evaluacion},
-\texttt{sp\_asignar\_jurado\_masivo}, \texttt{sp\_firmar\_acta\_digital},
-\texttt{sp\_generar\_reporte\_defensas}) encapsulan la lógica académica que involucra uniones
+OBS-01), y diez rutinas PL/pgSQL puras (ocho procedimientos/funciones invocados desde Java, más dos
+funciones de trigger de auditoría que corren solo a nivel de motor --- catálogo completo en
+\texttt{docs/basedatos/CATALOGO-SP.md}) encapsulan la lógica académica que involucra uniones
 multi-tabla, versionados vía Flyway en \texttt{backend/src/main/resources/db/migration/}.
+
+El Listado~\ref{lst:sp-firmar-acta} muestra uno de esos procedimientos, \texttt{sp\_firmar\_acta\_digital}
+(firma digital multi-actor de actas), y el Listado~\ref{lst:acta-service-firma} el método
+\texttt{ActaServiceImpl.firmarActa()} que lo invoca vía JPA 2.1 \texttt{@Procedure}
+(\texttt{ActaRepository.firmarActaDigital}).
+
+\begin{lstlisting}[language=SQL,style=codigobase,caption={\texttt{sp\_firmar\_acta\_digital}: procedimiento almacenado PL/pgSQL (migracion V10).},label={lst:sp-firmar-acta}]
+CREATE OR REPLACE PROCEDURE presus.sp_firmar_acta_digital(
+    p_acta_id BIGINT,
+    p_rol VARCHAR,
+    p_observacion TEXT
+) AS $$
+BEGIN
+    IF UPPER(p_rol) = 'PRESIDENTE' THEN
+        UPDATE presus.actas
+        SET firmada_presidente = true,
+            fecha_firma_presidente = NOW(),
+            observaciones_acta = COALESCE(observaciones_acta, '') ||
+                E'\n[PRESIDENTE]: ' || COALESCE(p_observacion, 'Firma registrada')
+        WHERE id = p_acta_id;
+    ELSIF UPPER(p_rol) = 'VOCAL_1' OR UPPER(p_rol) = 'VOCAL1' THEN
+        UPDATE presus.actas
+        SET firmada_vocal1 = true,
+            fecha_firma_vocal1 = NOW(),
+            observaciones_acta = COALESCE(observaciones_acta, '') ||
+                E'\n[VOCAL_1]: ' || COALESCE(p_observacion, 'Firma registrada')
+        WHERE id = p_acta_id;
+    -- ... ramas analogas para VOCAL_2 y TUTOR (omitidas por espacio) ...
+    ELSE
+        RAISE EXCEPTION 'Rol invalido para firma de acta: %', p_rol;
+    END IF;
+
+    -- Consolidar el estado general de firmas
+    UPDATE presus.actas
+    SET firmada = (firmada_presidente AND firmada_vocal1 AND firmada_vocal2 AND firmada_tutor)
+    WHERE id = p_acta_id;
+END;
+$$ LANGUAGE plpgsql;
+\end{lstlisting}
+
+\begin{lstlisting}[language=Java,style=codigobase,caption={Invocacion real desde Java (repositorio JPA 2.1 \texttt{@Procedure} y servicio que lo llama).},label={lst:acta-service-firma}]
+// ActaRepository.java
+@Procedure(procedureName = "presus.sp_firmar_acta_digital")
+void firmarActaDigital(@Param("p_acta_id") Long actaId,
+                        @Param("p_rol") String rol,
+                        @Param("p_observacion") String observacion);
+
+// ActaServiceImpl.java
+@Override
+@Transactional
+public Acta firmarActa(Long actaId, String rol, String observacion) {
+    // ... validacion de rol y de que el usuario autenticado es
+    // el presidente/vocal/tutor correspondiente (omitido por espacio) ...
+
+    // Persiste la firma via sp_firmar_acta_digital (Fase 3 / Criterio P1) -- el
+    // procedimiento es la fuente de verdad de firmada_*/fecha_firma_*/observaciones_acta;
+    // se refresca la entidad para que el resto del metodo vea lo que el SP
+    // realmente persistio, en vez de sobreescribirlo con el save() final.
+    actaRepository.firmarActaDigital(actaId, rolNormalizado, observacion);
+    entityManager.refresh(acta);
+
+    acta.actualizarEstadoFirma();
+    // ... notificacion al estudiante y persistencia final (omitido) ...
+    return acta;
+}
+\end{lstlisting}
+
+Un segundo caso, más complejo, es el de un procedimiento que devuelve un conjunto de filas
+(\texttt{sp\_calcular\_promedio\_evaluacion}): PostgreSQL rechaza la sintaxis \texttt{CALL} que Hibernate
+genera contra una \texttt{FUNCTION}, así que la única forma de que la firma coincida es declararlo como
+\texttt{PROCEDURE} con un parámetro \texttt{INOUT refcursor}, mapeado en Java con
+\texttt{ParameterMode.REF\_CURSOR} (Listado~\ref{lst:namedstoredprocedure}).
+
+\begin{lstlisting}[language=Java,style=codigobase,caption={Mapeo JPA 2.1 de un procedimiento con retorno de conjunto de filas via \texttt{REF\_CURSOR} (\texttt{Evaluacion.java}).},label={lst:namedstoredprocedure}]
+@NamedStoredProcedureQuery(
+        name = "Evaluacion.calcularPromedioEvaluacion",
+        procedureName = "presus.sp_calcular_promedio_evaluacion",
+        resultSetMappings = "PromedioEvaluacionMapping",
+        parameters = {
+                @StoredProcedureParameter(mode = ParameterMode.IN,
+                        name = "p_solicitud_id", type = Long.class),
+                @StoredProcedureParameter(mode = ParameterMode.REF_CURSOR,
+                        name = "p_resultado", type = void.class)
+        }
+)
+@SqlResultSetMapping(
+        name = "PromedioEvaluacionMapping",
+        classes = @ConstructorResult(
+                targetClass = ec.edu.uteq.presustentaciones.dto.PromedioEvaluacionResult.class,
+                columns = {
+                        @ColumnResult(name = "solicitud_id", type = Long.class),
+                        @ColumnResult(name = "nota_final", type = Double.class),
+                        @ColumnResult(name = "estado_resultado", type = String.class)
+                }
+        )
+)
+\end{lstlisting}
 \newpage

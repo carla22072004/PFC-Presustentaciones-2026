@@ -14,9 +14,13 @@ completa} en el sentido estricto de Kitchenham y Charters \cite{kitchenham2007} 
 pre-registrado, no hay doble revisor independiente, y la cobertura de bases de datos es incompleta. Se
 presenta como lo que realmente es: una búsqueda dirigida y honesta, reportada con la disciplina de
 PRISMA en la medida de lo posible, no como una SLR formal. Esta limitación se declara también en la
-Sección~\ref{sec:amenazas-validez}.
+Sección~\ref{sec:amenazas-validez}. Las palabras clave usadas, sin cadena booleana exacta ni fecha
+verificable por consulta, se listan en el Anexo A (Sección~\ref{anexo:busqueda}).
 
 \subsection{Diagrama de flujo (adaptado de PRISMA 2020)}
+
+La Figura~\ref{fig:prisma} resume las cuatro etapas de esa búsqueda dirigida: identificación, cribado,
+elegibilidad e inclusión en la comparación directa.
 
 \begin{figure}[H]
 \centering
@@ -87,7 +91,7 @@ Lu et al. \cite{lu2018} & Rate limiting de autenticación & ACSAC 2018 & Halló 
 Bacchelli \& Bird \cite{bacchelli2013} & Revisión de código & ICSE 2013 & Contrasta con la ausencia de un proceso formal de code review en este proyecto (Sección~\ref{sec:amenazas-validez}) \\
 Mäder \& Egyed \cite{mader2015} & Trazabilidad de requisitos & Empirical SE 2015 & Fundamenta el valor de \texttt{matriz.csv} más allá de un requisito administrativo \\
 McIntosh et al. \cite{mcintosh2016} & Revisión de código y calidad & Empirical SE 2016 & Contexto para la ausencia de un proceso formal de code review en este proyecto (Sección~\ref{sec:amenazas-validez}) \\
-Maximilien \& Williams \cite{maximilien2003} & TDD y reducción de defectos & ICSE 2003 & Contrasta con la cobertura de 47.5\,\% de líneas de este proyecto (Sección~\ref{sec:evaluacion}); TDD no se practicó formalmente \\
+Maximilien \& Williams \cite{maximilien2003} & TDD y reducción de defectos & ICSE 2003 & Contrasta con la cobertura de 48.03\,\% de líneas de este proyecto (Sección~\ref{sec:evaluacion}); TDD no se practicó formalmente \\
 Gallaba et al. \cite{gallaba2022} & Datos operacionales de CI & ICSE 2022 & Fundamenta el diseño del pipeline propio (\texttt{.github/workflows/ci.yml}) \\
 \bottomrule
 \end{tabular}

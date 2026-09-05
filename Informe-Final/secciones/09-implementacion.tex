@@ -23,6 +23,11 @@ CI/CD & GitHub Actions (\texttt{.github/workflows/ci.yml}, \texttt{backup.yml}) 
 \caption{The system's real technology stack.}
 \end{table}
 
+El workflow \texttt{.github/workflows/ci.yml} corre en cada \textit{push}, levantando Postgres y Redis
+reales (no simulados) para ejecutar build, la suite de tests con JaCoCo y el análisis estático de
+seguridad del backend. El Anexo C (Sección~\ref{anexo:ci}) declara explícitamente qué evidencia de
+corridas reales de este workflow existe hoy y qué falta capturar antes del examen final.
+
 \subsection{Seguridad implementada}
 
 La autenticación usa JWT con los 7 claims de RFC~7519 (\texttt{jti}, \texttt{iss}, \texttt{sub},
@@ -71,9 +76,12 @@ repositorio.
 
 \subsection{Capturas reales del sistema}
 
-Las siguientes imágenes muestran pantallas reales del sistema en producción (Angular 21, sobre nginx,
-build multi-stage). Son los mismos archivos PNG versionados en \texttt{Frontend/public/img/} desde el
-commit inicial de la estructura del proyecto.
+Las Figuras~\ref{fig:cap-solicitud}, \ref{fig:cap-anteproyecto}, \ref{fig:cap-tramites} y
+\ref{fig:cap-horario} muestran pantallas reales del sistema en producción (Angular 21, sobre nginx,
+build multi-stage), en el orden del flujo real de un estudiante: crear la solicitud, cargar el
+anteproyecto, dar seguimiento al trámite y consultar el horario asignado.
+Son los mismos archivos PNG versionados en \texttt{Frontend/public/img/} desde el commit inicial de la
+estructura del proyecto.
 
 \begin{figure}[H]
 \centering

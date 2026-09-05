@@ -13,10 +13,36 @@
 \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 \usepackage[table]{xcolor}
 \usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{seqsplit}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Listado}
+\renewcommand{\lstlistlistingname}{Índice de listados}
+\lstdefinestyle{codigobase}{
+    basicstyle=\ttfamily\footnotesize,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\bfseries\color{blue!60!black},
+    commentstyle=\itshape\color{gray!70!black},
+    stringstyle=\color{orange!70!black},
+    breaklines=true,
+    breakatwhitespace=false,
+    frame=single,
+    framerule=0.4pt,
+    xleftmargin=1.5em,
+    tabsize=4,
+    showstringspaces=false,
+    columns=flexible,
+    captionpos=b
+}
+\lstdefinelanguage{plpgsql}[]{SQL}{
+    morekeywords={PROCEDURE, INOUT, REFCURSOR, LANGUAGE, PLPGSQL, RAISE, EXCEPTION, ELSIF, COALESCE, UPPER}
+}
+\lstset{style=codigobase}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{Sistema de Gestión de Pre-Sustentaciones UTEQ --- Informe Final}
@@ -33,6 +59,7 @@
 \newpage
 \listoffigures
 \listoftables
+\lstlistoflistings
 \newpage
 \input{secciones/02-siglas}
 
@@ -50,5 +77,6 @@
 \input{secciones/14-conclusiones}
 \input{secciones/15-declaraciones}
 \input{secciones/16-referencias}
+\input{secciones/17-anexos}
 
 \end{document}

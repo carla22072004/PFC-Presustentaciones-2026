@@ -1,0 +1,117 @@
+\section{Anexos}
+\label{sec:anexos}
+
+Esta sección reúne el material de apoyo exigido por la guía de la Entrega Final que no encaja como
+prosa dentro de los capítulos anteriores. Donde el material solicitado no existe todavía de forma real,
+se declara la brecha explícitamente en vez de fabricarlo --- la misma política de integridad aplicada en
+el resto de este informe (Sección~\ref{sec:discusion}).
+
+\subsection{Anexo A --- Cadena de búsqueda de la revisión de trabajos relacionados}
+\label{anexo:busqueda}
+
+\textbf{Brecha declarada.} La búsqueda dirigida de la Sección~\ref{sec:trabajos-relacionados} reporta el
+número de consultas ejecutadas (24) y el número de resultados aproximado (\textasciitilde200), pero
+\textbf{no se registraron las cadenas de búsqueda booleanas exactas ni la fecha de cada consulta} en su
+momento --- así lo declara \texttt{docs/checklists/PRISMA-2020.md} en el criterio ``Estrategia de
+búsqueda completa y reproducible'': \textit{``se reporta el número de consultas (24) pero no las
+cadenas de búsqueda exactas ni las fechas de ejecución --- no es reproducible palabra por palabra''}. No
+se reconstruye aquí una cadena de búsqueda aproximada a partir de memoria, porque presentarla como si
+fuera la consulta real ejecutada sería exactamente el tipo de dato fabricado que este informe corrige en
+otros lugares (Secciones~\ref{sec:evaluacion} y \ref{sec:discusion}). Quedan como palabras clave
+efectivamente usadas, sin cadena booleana ni fecha verificable: \textit{software requirements
+traceability}, \textit{JWT authentication Spring Boot}, \textit{stored procedures vs ORM performance},
+\textit{System Usability Scale}, \textit{OWASP dependency scanning}, \textit{CI/CD reproducibility},
+entre otras relacionadas con cada uno de los 13 trabajos comparados en la Tabla de la
+Sección~\ref{sec:trabajos-relacionados}.
+
+\subsection{Anexo B --- Protocolo del instrumento SUS (System Usability Scale)}
+\label{anexo:sus}
+
+El instrumento sigue la forma estándar de Brooke~\cite{brooke1996}: diez enunciados de alternancia de
+polaridad (impares en sentido positivo, pares en sentido negativo), cada uno respondido en una escala
+Likert de 1 (totalmente en desacuerdo) a 5 (totalmente de acuerdo).
+
+\begin{enumerate}[nosep]
+    \item Creo que me gustaría utilizar este sistema con frecuencia.
+    \item Encontré el sistema innecesariamente complejo.
+    \item Pensé que el sistema era fácil de usar.
+    \item Creo que necesitaría el apoyo de un técnico para poder utilizar este sistema.
+    \item Encontré que las diversas funciones del sistema estaban bien integradas.
+    \item Pensé que había demasiada inconsistencia en el sistema.
+    \item Imagino que la mayoría de las personas aprenderían a usar el sistema muy rápidamente.
+    \item Encontré el sistema muy pesado/incómodo de usar.
+    \item Me sentí muy confiado/seguro al usar el sistema.
+    \item Necesité aprender muchas cosas antes de poder empezar a usar el sistema.
+\end{enumerate}
+
+\textbf{Cálculo de la puntuación:} para los ítems impares (1,3,5,7,9) se resta 1 a la respuesta; para los
+pares (2,4,6,8,10) se resta la respuesta de 5. La suma de las diez contribuciones se multiplica por 2.5,
+dando un puntaje individual entre 0 y 100 (no es un porcentaje). El script
+\texttt{scripts/sus-analysis.ipynb} implementa exactamente esta fórmula y trae tres casos de autotest que
+pasan.
+
+\textbf{Estado real (Sección~\ref{sec:evaluacion}):} el instrumento está listo pero \textbf{no se ha
+aplicado a participantes reales} ($N=0$). El protocolo de consentimiento informado individual para cuando
+se aplique está redactado como plantilla en \texttt{docs/etica/consentimientos/plantilla-consentimiento.md}
+(explica qué se recoge, para qué, cuánto tiempo se conserva, quién lo verá y cómo se retira el
+consentimiento), pero no existe todavía ninguna aprobación fechada previa a una recogida real, ni
+participantes reclutados. Una versión anterior de este proyecto publicó un puntaje fabricado de
+91.25/100 con diez evaluadores inexistentes; esa cifra fue retirada explícitamente y se documenta en
+\texttt{docs/mediciones/sus/SUS-RESULTS.md} y en la Sección~\ref{sec:evaluacion} de este informe.
+
+\subsection{Anexo C --- Corridas de integración continua}
+\label{anexo:ci}
+
+\textbf{Brecha declarada.} La guía pide capturas de tres corridas verdes de CI. El workflow
+\texttt{.github/workflows/ci.yml} existe, corre en cada \textit{push} y ejecuta build, tests, JaCoCo y
+análisis estático de seguridad del backend contra Postgres/Redis reales (no simulados). Sin embargo, no
+se generaron ni versionaron capturas de pantalla de corridas reales del panel de GitHub Actions durante
+la elaboración de este informe, y no fue posible capturarlas al cierre de esta corrección por una falla
+temporal de la herramienta de navegador disponible en este entorno de trabajo. En vez de sustituir esta
+evidencia con una captura simulada o de otro proyecto, se declara la brecha: falta que el equipo entre a
+\url{https://github.com/carla22072004/PFC-Presustentaciones-2026/actions}, localice tres corridas
+recientes con estado \textit{success} en la rama que se va a defender, y capture pantalla de cada una
+antes del examen final.
+
+\subsection{Anexo D --- Checklist de estándares empíricos de Ralph et al. (2021)}
+\label{anexo:ralph}
+
+Además de \texttt{docs/checklists/RALPH-2021-GENERAL.md} (Estándar General, resumido en la
+Tabla~\ref{tab:ralph-general}), el repositorio aplica dos checklists adicionales de la misma familia
+--- \texttt{RALPH-2021-BENCHMARKING.md} (para las mediciones de rendimiento con k6) y
+\texttt{RALPH-2021-ENGINEERING-RESEARCH.md} (para el proceso de desarrollo como tal) --- referenciados
+desde la Sección~\ref{sec:marco-teorico} pero no reproducidos aquí en extenso por brevedad.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{7.5cm}p{1.3cm}p{5cm}}
+\toprule
+\textbf{Criterio (Estándar General)} & \textbf{Cumple} & \textbf{Evidencia resumida} \\
+\midrule
+Afirmaciones empíricas basadas en datos, no en opinión & Sí & Toda cifra citada tiene archivo crudo de origen (\texttt{DATA-PROVENANCE.md}) \\
+Método de recolección reproducible (comandos documentados) & Sí & Comandos exactos en \texttt{k6/README.md}, \texttt{LIGHTHOUSE-REPORT.md}, \texttt{OWASP-AUDIT.md} \\
+Contexto/entorno de medición declarado & Sí & \texttt{docs/entorno/versions.txt} + notas metodológicas explícitas \\
+Se reportan resultados negativos, no solo favorables & Sí & Endpoint inexistente en k6, 233 hallazgos find-sec-bugs, 14 vulnerabilidades npm sin corregir \\
+Correlación vs. causalidad distinguidas & Parcial & Cache fría/caliente sí aísla variable; runs 1--2 de k6 no lo hacen, y el reporte lo aclara \\
+Amenazas a la validez discutidas sistemáticamente & No & Sin sección dedicada por reporte individual (sí existe una transversal en Sección~\ref{sec:amenazas-validez} de este informe) \\
+Tamaño de muestra justificado & Parcial & $n=30$ en caché sigue convención CLT sin justificación explícita en texto; 5 corridas k6 siguen el mínimo de la guía, no un cálculo de poder \\
+Artefactos disponibles para verificación independiente & Sí & \texttt{DATA-PROVENANCE.md} enlaza cada archivo crudo referenciado \\
+\bottomrule
+\end{tabular}
+\caption{Checklist de estándares empíricos generales de Ralph et al.~\cite{ralph2021} --- 5/8 cumplidos, 2 parciales, 1 no cumplido.}
+\label{tab:ralph-general}
+\end{table}
+
+\subsection{Anexo E --- Matriz de trazabilidad completa}
+\label{anexo:matriz}
+
+La Tabla~\ref{tab:matriz-completa} reproduce íntegramente \texttt{docs/trazabilidad/matriz.csv} (15
+filas, 9 columnas), validada por \texttt{scripts/validate-traceability.sh} y por un parseo estricto con
+\texttt{csv.reader} de Python que confirma que las 15 filas tienen exactamente 9 campos cada una ---
+cinco de ellas (RF-05, RF-07, RF-08, RF-09, RF-10) tenían comas sin escapar en la columna de evidencia
+empírica que rompían el conteo de columnas; se corrigieron entre comillas en la corrección del 2026-09-05
+sin alterar el contenido de la evidencia. La columna ``Módulo'' se abrevia en algunas filas por espacio;
+el CSV original tiene el nombre completo.
+
+\input{secciones/matriz-completa-generada}

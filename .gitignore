@@ -59,6 +59,7 @@ backend/.env
 *.fls
 *.lof
 *.lot
+*.lol
 *.out
 *.toc
 *.synctex.gz
