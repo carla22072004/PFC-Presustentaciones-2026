@@ -78,6 +78,8 @@ audit:
 docs:
 	@echo "Regenerando figuras de rendimiento (docs/mediciones/perf/figuras/)..."
 	python scripts/gen-figuras.py
+	@echo "Copiando figuras regeneradas a Informe-Final/figuras/ (hallazgo real 2026-09-06: este paso no existia, asi que el PDF podia quedar compilando contra una figura vieja sin que nada lo advirtiera)..."
+	cp docs/mediciones/perf/figuras/fig-lighthouse-scores.png docs/mediciones/perf/figuras/fig-k6-p95-por-corrida.png docs/mediciones/perf/figuras/fig-cache-fria-vs-caliente.png Informe-Final/figuras/
 	@echo "Validando la matriz de trazabilidad contra el repositorio real..."
 	./scripts/validate-traceability.sh || true
 

@@ -38,6 +38,34 @@ traducción de errores del servicio a códigos HTTP, generación real de PDF con
 de delegación. El global sigue por debajo del 60 % objetivo en ramas (45.75 %), brecha que se declara
 en vez de maquillarse.
 
+### Desglose por paquete (cierre 2026-09-05), para el criterio P1 de la guía de la Entrega Final
+
+La guía pide cobertura ≥70 % (líneas y ramas) "en los módulos de dominio, servicios y controladores" para
+el nivel Excelente de P1, y ≥65 % en dos de tres capas para Satisfactorio. Este proyecto no tiene un
+paquete llamado literalmente "dominio" (las entidades JPA están excluidas de la medición por diseño, ver
+arriba), así que la comparación más honesta es paquete por paquete tal como existen en el código real:
+
+| Paquete | Líneas | Ramas |
+|---|---|---|
+| `controllers` | **72.00 %** (833/1157) | **77.41 %** (257/332) |
+| `services` | 59.64 % (1482/2485) | 40.87 % (412/1008) |
+| `security` | 68.97 % (20/29) | 57.14 % (8/14) |
+| `security.jwt` | 56.92 % (74/130) | 47.83 % (22/46) |
+| `security.service` | 50.98 % (26/51) | 57.50 % (23/40) |
+| `security.dto` | 90.48 % (19/21) | 0.00 % (0/130) |
+| `enums` | 0.00 % (0/12) | 0.00 % (0/8) |
+
+**Lectura honesta:** solo `controllers` supera 70 % en ambas métricas. `services` — el paquete más grande
+(2,485 líneas medidas, casi el doble que `controllers`) — es el que más pesa sobre el promedio global y el
+que está más lejos del umbral, sobre todo en ramas (40.87 %). Ninguna otra capa individual llega a 65 % en
+líneas *y* ramas a la vez, así que, tomado de forma estricta, el criterio P1 no alcanza el nivel
+Satisfactorio (≥65 % en dos de tres capas) todavía — queda en un punto intermedio entre "En desarrollo" e
+"Insuficiente" según cómo se interprete la agregación de las sub-capas de `security`. La siguiente mejora
+con más impacto real sería agregar pruebas a `services`, no a `controllers` (que ya está resuelto).
+`enums` en 0 % son enumeraciones sin lógica (getters generados), matemáticamente correctas pero triviales
+de cubrir si se quisiera subir el número sin agregar valor real — se deja igual a propósito, en vez de
+inflar el porcentaje con tests sin contenido.
+
 La cobertura global subió porque se agregaron 119 tests nuevos reales en 14 clases (`RubricaEvaluacionServiceImplTest`, `EvaluacionJuradoServiceTest`, `EvaluacionServiceImplTest`, `UsuarioServiceImplTest`, `ReporteServiceImplTest` y otras — 228 tests / 29 archivos en total hoy, frente a 109/15 el 30-08), no por un cambio de denominador favorable. **`ChatbotController` y `ChatbotService` siguen en 0%: no existe ningún archivo de test para ninguno de los dos** (verificado en esta corrida — cero `*Chatbot*` en `backend/target/surefire-reports/`), así que siguen bajando el promedio del paquete de controladores. La cobertura de controladores, aunque más que duplicada, **sigue muy por debajo del 70% que exige la guía** — es el hueco más grande de la rúbrica (ver `docs/basedatos/CATALOGO-SP.md` para qué controladores exponen los procedimientos almacenados, que son la prioridad).
 
 Una versión anterior de este documento (y el badge de `README.md`) afirmaba `>60%` de cobertura sin que existiera ni una sola clase de prueba en el repositorio. Esa cifra era falsa. La cobertura real ha fluctuado a medida que se agregan tests reales *y* código nuevo (el denominador también crece):

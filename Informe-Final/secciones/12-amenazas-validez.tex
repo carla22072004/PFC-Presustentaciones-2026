@@ -9,17 +9,21 @@ declarada, no eficiencia real de tarea (tiempo para completar un flujo).
 
 \subsection{Validez interna}
 Las mediciones de rendimiento y Lighthouse se ejecutaron en la máquina de desarrollo personal de un
-integrante del equipo. El First Contentful Paint medido (2.8--6.1\,s) es alto para un bundle de
-$\sim$100\,KB transferido servido en localhost sin latencia de red real; los audits que sí miden trabajo
-real de la aplicación (\texttt{server-response-time}, \texttt{bootup-time},
-\texttt{mainthread-work-breakdown}, Total Blocking Time) puntúan perfecto, así que la causa no está en el
-código de la aplicación. La hipótesis inicial (2026-08-17) fue contención de CPU por aplicaciones de
+integrante del equipo. La hipótesis inicial (2026-08-17) fue contención de CPU por aplicaciones de
 escritorio activas (Discord, Steam, Brave), confirmadas corriendo con \texttt{Get-Process | Sort CPU}.
-\textbf{Esa hipótesis se puso a prueba el 2026-08-30} en vez de repetirse sin verificar: se cerraron esas
-aplicaciones y se remidió --- el promedio de Performance no cambió de forma apreciable (65/61 vs. 64/61).
-La amenaza a la validez interna sigue siendo real (algo en el entorno de medición local infla FCP/LCP de
-forma no representativa de un despliegue real), pero la causa concreta ya no puede afirmarse como
-``aplicaciones de escritorio'' con la evidencia disponible; queda declarada como no identificada.
+Esa hipótesis se puso a prueba el 2026-08-30 en vez de repetirse sin verificar: se cerraron esas
+aplicaciones y se remidió --- el promedio de Performance no cambió de forma apreciable, refutando la
+hipótesis. El 2026-09-06 se identificó y verificó una causa real distinta para desktop: una imagen del
+logo institucional de 333\,KB (2444$\times$2826\,px) mostrada en pantalla a 68\,px, y cabeceras de caché
+de nginx que forzaban revalidación de red incluso para bundles con hash inmutables --- corregidas ambas,
+Performance en desktop subió de 65 a 68.3. En mobile, sin embargo, el puntaje no se movió pese a que el
+Largest Contentful Paint sí mejoró de forma real (7.6--7.8\,s $\to$ 6.7--6.8\,s): bajo el
+\emph{throttling} de CPU 4$\times$ que aplica el perfil mobile de Lighthouse, el Total Blocking Time pasó
+de 0\,ms a 90--100\,ms, evidencia de que el cuello de botella ahí es tiempo de ejecución de JavaScript del
+framework (Angular + \texttt{zone.js}) sobre una CPU simulada más lenta, no peso de red --- una amenaza a
+la validez interna con causa raíz ahora identificada y verificada (no solo descartada por eliminación,
+como en la ronda anterior), pero que requiere un cambio de arquitectura (detección de cambios
+\emph{zoneless}, \emph{server-side rendering}) fuera del alcance de esta entrega para cerrarse.
 
 \subsection{Validez externa}
 Los 50 usuarios concurrentes de k6 son un valor fijado por el RNF-01, no derivado de datos reales de uso
