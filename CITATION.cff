@@ -1,9 +1,9 @@
-# ORCID de cada integrante: PENDIENTE (Fase 10). Es obligatorio según la guía y se obtiene con
-# un registro gratuito, personal e intransferible en https://orcid.org/register -- no es algo
-# que se pueda generar por fuera, cada integrante debe crear el suyo. Una vez que los 4 tengan
-# uno, agregar `orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"` bajo su bloque de autor
-# correspondiente aquí abajo. Ver docs/ZENODO.md para el mismo patrón aplicado al DOI del
-# software (campo `doi:`, comentado más abajo): tampoco se fabrica un valor de relleno.
+# ORCID: 2 de 4 integrantes registrados (Alava Alvarado, Barreto Rosado -- este ultimo verificado
+# 2026-09-06 contra la API publica de ORCID, https://pub.orcid.org/v3.0/{id}/person, antes de
+# agregarlo aqui). Moncayo Loor y Zamora Arias no se registraron porque no asistieron al examen
+# de sustentacion en el que se coordino el tramite (ver Informe-Final/secciones/00-portada.tex).
+# Es un registro gratuito, personal e intransferible en https://orcid.org/register -- no es algo
+# que se pueda generar por fuera, cada integrante debe crear el suyo.
 cff-version: 1.2.0
 message: "If you use this software in your academic work or research, please cite it as below."
 authors:
@@ -22,7 +22,7 @@ authors:
   - family-names: "Barreto Rosado"
     given-names: "Heider Dominick"
     affiliation: "Universidad Técnica Estatal de Quevedo"
-    # orcid: "https://orcid.org/PENDIENTE — registrar en orcid.org/register"
+    orcid: "https://orcid.org/0009-0004-5561-1391"
 title: "Sistema de Gestión de Pre-Sustentaciones de Titulación UTEQ"
 version: "1.0.1"
 date-released: "2026-09-06"

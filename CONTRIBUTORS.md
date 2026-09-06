@@ -37,7 +37,7 @@ revisión de código y documentación que aplica a los cuatro):
 - **Moncayo Loor, Xavier Alejandro:** Desarrollo frontend (Angular), diseño de interfaz.
 - **Zamora Arias, Carla Esthefania:** Diseño de base de datos, curación de datos de prueba,
   documentación técnica, redacción del primer borrador de varios documentos.
-- **Barreto Rosado, Heider Dominick:** Pruebas, infraestructura Docker, análisis formal de resultados
+- **Barreto Rosado, Heider Dominick** ([ORCID: 0009-0004-5561-1391](https://orcid.org/0009-0004-5561-1391)): Pruebas, infraestructura Docker, análisis formal de resultados
   empíricos.
 
 Ver también la tabla CRediT y las declaraciones completas (ética, conflictos de interés, financiamiento,
