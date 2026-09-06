@@ -35,6 +35,8 @@ class SolicitudServiceImplTest {
     @Mock private ConvocatoriaTitulacionRepository convocatoriaTitulacionRepository;
     @Mock private CarreraRepository carreraRepository;
     @Mock private PeriodoAcademicoRepository periodoAcademicoRepository;
+    @Mock private LineaInvestigacionRepository lineaInvestigacionRepository;
+    @Mock private AreaTematicaRepository areaTematicaRepository;
     @Mock private AuditoriaService auditoriaService;
     @Mock private EstadoAcademicoRepository estadoAcademicoRepository;
 
@@ -243,5 +245,320 @@ class SolicitudServiceImplTest {
         List<java.util.Map<String, Object>> reporte = solicitudService.generarReporteDefensasSP("Inexistente");
 
         assertTrue(reporte.isEmpty());
+    }
+
+    // ── crearSolicitud: validaciones y ramas restantes ──────────────────────
+
+    @Test
+    void crearSolicitudLanzaSiTituloVacio() {
+        Solicitud datos = Solicitud.builder().tituloTema("  ").build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("obligatorio"));
+    }
+
+    @Test
+    void crearSolicitudLanzaSiTituloExcede300Caracteres() {
+        Solicitud datos = Solicitud.builder().tituloTema("A".repeat(301)).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("300 caracteres"));
+    }
+
+    @Test
+    void crearSolicitudLanzaSiModalidadIndicadaNoExiste() {
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("Modalidad no encontrada"));
+    }
+
+    @Test
+    void crearSolicitudUsaConvocatoriaExplicitaSiViene() {
+        ConvocatoriaTitulacion otraConv = ConvocatoriaTitulacion.builder().id(2).codigo("CONV-2026-02").build();
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .convocatoria(ConvocatoriaTitulacion.builder().id(2).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findById(2)).thenReturn(Optional.of(otraConv));
+        when(solicitudRepository.save(any(Solicitud.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Solicitud creada = solicitudService.crearSolicitud(5L, datos);
+
+        assertEquals("CONV-2026-02", creada.getConvocatoria().getCodigo());
+        verify(convocatoriaTitulacionRepository, never()).findFirstByActivaTrue();
+    }
+
+    @Test
+    void crearSolicitudLanzaSiConvocatoriaExplicitaNoExiste() {
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .convocatoria(ConvocatoriaTitulacion.builder().id(99).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findById(99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("Convocatoria no encontrada"));
+    }
+
+    @Test
+    void crearSolicitudResuelveLineaDeInvestigacionSiViene() {
+        LineaInvestigacion linea = LineaInvestigacion.builder().id(3).nombre("IA").build();
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .lineaInvestigacion(LineaInvestigacion.builder().id(3).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findFirstByActivaTrue()).thenReturn(Optional.of(convocatoria));
+        when(lineaInvestigacionRepository.findById(3)).thenReturn(Optional.of(linea));
+        when(solicitudRepository.save(any(Solicitud.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Solicitud creada = solicitudService.crearSolicitud(5L, datos);
+
+        assertEquals("IA", creada.getLineaInvestigacion().getNombre());
+    }
+
+    @Test
+    void crearSolicitudLanzaSiLineaDeInvestigacionIndicadaNoExiste() {
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .lineaInvestigacion(LineaInvestigacion.builder().id(99).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findFirstByActivaTrue()).thenReturn(Optional.of(convocatoria));
+        when(lineaInvestigacionRepository.findById(99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("Línea de investigación no encontrada"));
+    }
+
+    @Test
+    void crearSolicitudResuelveAreaTematicaValidaParaLaLinea() {
+        LineaInvestigacion linea = LineaInvestigacion.builder().id(3).nombre("IA").build();
+        AreaTematica area = AreaTematica.builder().id(7).nombre("Visión por computador").lineaInvestigacion(linea).build();
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .lineaInvestigacion(LineaInvestigacion.builder().id(3).build())
+                .areaTematica(AreaTematica.builder().id(7).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findFirstByActivaTrue()).thenReturn(Optional.of(convocatoria));
+        when(lineaInvestigacionRepository.findById(3)).thenReturn(Optional.of(linea));
+        when(areaTematicaRepository.findById(7)).thenReturn(Optional.of(area));
+        when(solicitudRepository.save(any(Solicitud.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Solicitud creada = solicitudService.crearSolicitud(5L, datos);
+
+        assertEquals("Visión por computador", creada.getAreaTematica().getNombre());
+    }
+
+    @Test
+    void crearSolicitudLanzaSiAreaTematicaNoPerteneceALaLinea() {
+        LineaInvestigacion lineaElegida = LineaInvestigacion.builder().id(3).nombre("IA").build();
+        LineaInvestigacion otraLinea = LineaInvestigacion.builder().id(4).nombre("Redes").build();
+        AreaTematica areaDeOtraLinea = AreaTematica.builder().id(7).nombre("Seguridad de redes").lineaInvestigacion(otraLinea).build();
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .lineaInvestigacion(LineaInvestigacion.builder().id(3).build())
+                .areaTematica(AreaTematica.builder().id(7).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findFirstByActivaTrue()).thenReturn(Optional.of(convocatoria));
+        when(lineaInvestigacionRepository.findById(3)).thenReturn(Optional.of(lineaElegida));
+        when(areaTematicaRepository.findById(7)).thenReturn(Optional.of(areaDeOtraLinea));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("no pertenece a la línea"));
+    }
+
+    @Test
+    void crearSolicitudLanzaSiAreaTematicaIndicadaNoExiste() {
+        Solicitud datos = Solicitud.builder().tituloTema("Sistema X").modalidadTitulacion(modalidad)
+                .areaTematica(AreaTematica.builder().id(99).build()).build();
+        when(estudianteRepository.findById(5L)).thenReturn(Optional.of(estudiante));
+        when(estadoSolicitudRepository.findByCodigo("CREADA")).thenReturn(Optional.of(estado("CREADA")));
+        when(modalidadTitulacionRepository.findById((short) 1)).thenReturn(Optional.of(modalidad));
+        when(convocatoriaTitulacionRepository.findFirstByActivaTrue()).thenReturn(Optional.of(convocatoria));
+        when(areaTematicaRepository.findById(99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> solicitudService.crearSolicitud(5L, datos));
+        assertTrue(ex.getMessage().contains("Área temática no encontrada"));
+    }
+
+    // ── crearPerfilEstudiante (via crearSolicitudPorUsuario) ────────────────
+
+    @Test
+    void crearSolicitudPorUsuarioLanzaSiUsuarioNoExiste() {
+        when(estudianteRepository.findByUsuarioId(999L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> solicitudService.crearSolicitudPorUsuario(999L, Solicitud.builder().build()));
+        assertTrue(ex.getMessage().contains("Usuario no encontrado"));
+    }
+
+    @Test
+    void crearSolicitudPorUsuarioLanzaSiUsuarioNoEsEstudiante() {
+        Usuario docenteUsuario = Usuario.builder().id(300L).rol("DOCENTE").build();
+        when(estudianteRepository.findByUsuarioId(300L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(300L)).thenReturn(Optional.of(docenteUsuario));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> solicitudService.crearSolicitudPorUsuario(300L, Solicitud.builder().build()));
+        assertTrue(ex.getMessage().contains("no tiene rol de estudiante"));
+    }
+
+    @Test
+    void crearSolicitudPorUsuarioLanzaSiNoHayCarrerasConfiguradas() {
+        when(estudianteRepository.findByUsuarioId(201L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(201L)).thenReturn(Optional.of(usuarioEstudiante));
+        when(carreraRepository.findAll()).thenReturn(List.of());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> solicitudService.crearSolicitudPorUsuario(201L, Solicitud.builder().build()));
+        assertTrue(ex.getMessage().contains("No hay carreras configuradas"));
+    }
+
+    // ── Consultas simples ────────────────────────────────────────────────────
+
+    @Test
+    void listarPorUsuarioDevuelveVacioSiNoTienePerfilDeEstudiante() {
+        when(estudianteRepository.findByUsuarioId(999L)).thenReturn(Optional.empty());
+        assertTrue(solicitudService.listarPorUsuario(999L).isEmpty());
+    }
+
+    @Test
+    void listarPorUsuarioDelegaAlRepositorioSiTienePerfil() {
+        when(estudianteRepository.findByUsuarioId(201L)).thenReturn(Optional.of(estudiante));
+        when(solicitudRepository.findByEstudianteId(5L)).thenReturn(List.of());
+        assertTrue(solicitudService.listarPorUsuario(201L).isEmpty());
+    }
+
+    @Test
+    void contarPorEstadoIncluyeElTotalGeneralYCadaEstado() {
+        when(solicitudRepository.count()).thenReturn(42L);
+        SolicitudRepository.EstadoConteo c1 = mock(SolicitudRepository.EstadoConteo.class);
+        when(c1.getCodigo()).thenReturn("CREADA");
+        when(c1.getTotal()).thenReturn(10L);
+        when(solicitudRepository.contarAgrupadoPorEstado()).thenReturn(List.of(c1));
+
+        java.util.Map<String, Long> conteos = solicitudService.contarPorEstado();
+
+        assertEquals(42L, conteos.get("TODAS"));
+        assertEquals(10L, conteos.get("CREADA"));
+    }
+
+    @Test
+    void obtenerPorIdDelega() {
+        Solicitud s = Solicitud.builder().id(10L).build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        assertEquals(Optional.of(s), solicitudService.obtenerPorId(10L));
+    }
+
+    @Test
+    void listarPorEstudianteDelega() {
+        when(solicitudRepository.findByEstudianteId(5L)).thenReturn(List.of());
+        assertTrue(solicitudService.listarPorEstudiante(5L).isEmpty());
+    }
+
+    @Test
+    void rechazarSolicitudDelegaARechazarConObservacionSinMotivo() {
+        Solicitud s = Solicitud.builder().id(10L).estudiante(estudiante).tituloTema("X").estado(estado("ENVIADA")).build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(estadoSolicitudRepository.findByCodigo("RECHAZADA")).thenReturn(Optional.of(estado("RECHAZADA")));
+        when(solicitudRepository.save(any(Solicitud.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Solicitud rechazada = solicitudService.rechazarSolicitud(10L);
+
+        assertEquals("RECHAZADA", rechazada.getEstado().getCodigo());
+        assertNull(rechazada.getObservaciones());
+    }
+
+    @Test
+    void listarSolicitudesDelegaConLimiteFijo() {
+        when(solicitudRepository.findAllWithEstudiante(any())).thenReturn(List.of());
+        assertTrue(solicitudService.listarSolicitudes().isEmpty());
+    }
+
+    @Test
+    void listarSolicitudesPaginadoAcotaPaginaYTamanio() {
+        when(solicitudRepository.buscarConFiltros(any(), any(), any(), any(), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        solicitudService.listarSolicitudesPaginado(-1, 1000, "ENVIADA", "texto", null, null);
+        verify(solicitudRepository).buscarConFiltros(eq("ENVIADA"), eq("texto"), any(), any(), any());
+    }
+
+    // ── obtenerSeguimiento ───────────────────────────────────────────────────
+
+    @Test
+    void obtenerSeguimientoLanzaSiSolicitudNoExiste() {
+        when(solicitudRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> solicitudService.obtenerSeguimiento(99L));
+    }
+
+    @Test
+    void obtenerSeguimientoEstadoEnviadaSinPdf() {
+        Solicitud s = Solicitud.builder().id(10L).tituloTema("X").estado(estado("ENVIADA"))
+                .fechaRegistro(java.time.LocalDateTime.now()).actualizadoEn(java.time.LocalDateTime.now()).build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(anteproyectoRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+
+        var dto = solicitudService.obtenerSeguimiento(10L);
+
+        assertEquals(20, dto.getPorcentajeProgreso());
+        assertEquals("EN_PROCESO", dto.getEtapas().get(1).getEstadoVisual());
+        assertEquals("PENDIENTE", dto.getEtapas().get(2).getEstadoVisual());
+        assertEquals("PENDIENTE", dto.getEtapas().get(3).getEstadoVisual());
+    }
+
+    @Test
+    void obtenerSeguimientoEstadoAprobadaConPdf() {
+        Solicitud s = Solicitud.builder().id(10L).tituloTema("X").estado(estado("APROBADA"))
+                .fechaRegistro(java.time.LocalDateTime.now()).actualizadoEn(java.time.LocalDateTime.now()).build();
+        Anteproyecto ap = Anteproyecto.builder().archivoPdf("doc.pdf").build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(anteproyectoRepository.findBySolicitudId(10L)).thenReturn(Optional.of(ap));
+
+        var dto = solicitudService.obtenerSeguimiento(10L);
+
+        assertEquals(50, dto.getPorcentajeProgreso()); // tienePdf=true fuerza 50 al final
+        assertEquals("COMPLETADO", dto.getEtapas().get(1).getEstadoVisual());
+        assertEquals("COMPLETADO", dto.getEtapas().get(2).getEstadoVisual());
+        assertEquals("COMPLETADO", dto.getEtapas().get(3).getEstadoVisual());
+    }
+
+    @Test
+    void obtenerSeguimientoEstadoRechazadaIncluyeObservaciones() {
+        Solicitud s = Solicitud.builder().id(10L).tituloTema("X").estado(estado("RECHAZADA"))
+                .observaciones("Tema duplicado")
+                .fechaRegistro(java.time.LocalDateTime.now()).actualizadoEn(java.time.LocalDateTime.now()).build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(anteproyectoRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+
+        var dto = solicitudService.obtenerSeguimiento(10L);
+
+        assertEquals("RECHAZADO", dto.getEtapas().get(2).getEstadoVisual());
+        assertTrue(dto.getEtapas().get(2).getDescripcion().contains("Tema duplicado"));
+    }
+
+    @Test
+    void obtenerSeguimientoEstadoCreadaEsProgresoMinimo() {
+        Solicitud s = Solicitud.builder().id(10L).tituloTema("X").estado(estado("CREADA"))
+                .fechaRegistro(java.time.LocalDateTime.now()).build();
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(s));
+        when(anteproyectoRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+
+        var dto = solicitudService.obtenerSeguimiento(10L);
+
+        assertEquals(10, dto.getPorcentajeProgreso());
+        assertEquals("PENDIENTE", dto.getEtapas().get(1).getEstadoVisual());
+        assertEquals("PENDIENTE", dto.getEtapas().get(2).getEstadoVisual());
     }
 }

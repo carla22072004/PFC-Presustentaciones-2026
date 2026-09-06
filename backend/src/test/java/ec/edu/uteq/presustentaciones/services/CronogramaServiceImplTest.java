@@ -54,7 +54,7 @@ class CronogramaServiceImplTest {
     @BeforeEach
     void setUp() {
         solicitud = Solicitud.builder().id(10L).tituloTema("Sistema X").build();
-        sala = Sala.builder().id(1L).nombre("Aula 1").build();
+        sala = Sala.builder().id(1L).nombre("Aula 1").disponible(true).build();
         Usuario usuarioDocente = Usuario.builder().id(50L).nombre("Ana").apellido("Torres").build();
         docente = Docente.builder().id(1L).usuario(usuarioDocente).build();
 
@@ -130,5 +130,160 @@ class CronogramaServiceImplTest {
         assertNotNull(resultado);
         assertEquals("PROGRAMADO", resultado.getEstado().getCodigo());
         verify(juradoRepository, times(3)).validarConflictoJurado(anyLong(), anyLong(), any(), anyInt(), isNull());
+    }
+
+    // ── asignarAutomatico ────────────────────────────────────────────────────
+
+    @Test
+    void asignarAutomaticoDevuelveElExistenteSiYaEstaProgramado() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal, secretario));
+        when(tutorRepository.findBySolicitudId(10L)).thenReturn(Optional.of(tutorCompletado));
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        Cronograma existente = Cronograma.builder().id(5L)
+                .estado(EstadoCronograma.builder().codigo("PROGRAMADO").build()).build();
+        when(cronogramaRepository.findBySolicitudId(10L)).thenReturn(Optional.of(existente));
+
+        Cronograma resultado = cronogramaService.asignarAutomatico(10L);
+
+        assertSame(existente, resultado);
+        verify(salaRepository, never()).findAll();
+    }
+
+    @Test
+    void asignarAutomaticoLanzaSiNoHaySalasDisponibles() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal, secretario));
+        when(tutorRepository.findBySolicitudId(10L)).thenReturn(Optional.of(tutorCompletado));
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(cronogramaRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+        when(salaRepository.findAll()).thenReturn(List.of());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> cronogramaService.asignarAutomatico(10L));
+        assertTrue(ex.getMessage().contains("No hay salas disponibles"));
+    }
+
+    @Test
+    void asignarAutomaticoEncuentraLaPrimeraFranjaLibre() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal, secretario));
+        when(tutorRepository.findBySolicitudId(10L)).thenReturn(Optional.of(tutorCompletado));
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(cronogramaRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+        when(salaRepository.findAll()).thenReturn(List.of(sala));
+        when(cronogramaRepository.findConflictos(anyLong(), any(), any())).thenReturn(List.of());
+        when(estadoCronogramaRepository.findByCodigo("PROGRAMADO"))
+                .thenReturn(Optional.of(EstadoCronograma.builder().codigo("PROGRAMADO").build()));
+        when(cronogramaRepository.save(any(Cronograma.class))).thenAnswer(inv -> {
+            Cronograma c = inv.getArgument(0);
+            c.setId(99L);
+            return c;
+        });
+
+        Cronograma resultado = cronogramaService.asignarAutomatico(10L);
+
+        assertNotNull(resultado);
+        assertEquals("PROGRAMADO", resultado.getEstado().getCodigo());
+        assertFalse(resultado.getFechaInicio().getDayOfWeek().getValue() >= 6, "no debe caer en fin de semana");
+    }
+
+    @Test
+    void asignarAutomaticoLanzaSiNoHayDisponibilidadEn30Dias() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal, secretario));
+        when(tutorRepository.findBySolicitudId(10L)).thenReturn(Optional.of(tutorCompletado));
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(cronogramaRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+        when(salaRepository.findAll()).thenReturn(List.of(sala));
+        // toda franja tiene conflicto -> nunca se libera un slot
+        when(cronogramaRepository.findConflictos(anyLong(), any(), any()))
+                .thenReturn(List.of(Cronograma.builder().id(1L).build()));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> cronogramaService.asignarAutomatico(10L));
+        assertTrue(ex.getMessage().contains("No se encontró disponibilidad"));
+    }
+
+    @Test
+    void asignarAutomaticoValidaPrerequisitosPrimero() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal)); // tribunal incompleto
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> cronogramaService.asignarAutomatico(10L));
+        assertTrue(ex.getMessage().contains("tribunal no está completo"));
+        verifyNoInteractions(salaRepository);
+    }
+
+    // ── estaDisponible / franjasDisponibles ──────────────────────────────────
+
+    @Test
+    void estaDisponibleEsFalsoSiHayConflicto() {
+        LocalDateTime inicio = LocalDateTime.of(2026, 9, 10, 9, 0);
+        when(cronogramaRepository.findConflictos(1L, inicio, inicio.plusMinutes(45)))
+                .thenReturn(List.of(Cronograma.builder().id(1L).build()));
+        assertFalse(cronogramaService.estaDisponible(1L, inicio, 45));
+    }
+
+    @Test
+    void estaDisponibleEsVerdaderoSinConflictos() {
+        LocalDateTime inicio = LocalDateTime.of(2026, 9, 10, 9, 0);
+        when(cronogramaRepository.findConflictos(1L, inicio, inicio.plusMinutes(45))).thenReturn(List.of());
+        assertTrue(cronogramaService.estaDisponible(1L, inicio, 45));
+    }
+
+    @Test
+    void franjasDisponiblesGeneraSlotsDe8a17ConLaDuracionIndicada() {
+        List<LocalDateTime> franjas = cronogramaService.franjasDisponibles(LocalDate.of(2026, 9, 10), 45);
+
+        assertFalse(franjas.isEmpty());
+        assertEquals(LocalTime.of(8, 0), franjas.get(0).toLocalTime());
+        franjas.forEach(f -> assertFalse(f.plusMinutes(45).toLocalTime().isAfter(LocalTime.of(17, 0))));
+    }
+
+    // ── delegados simples ────────────────────────────────────────────────────
+
+    @Test
+    void listarCronogramasDelega() {
+        org.springframework.data.domain.Pageable pageable = mock(org.springframework.data.domain.Pageable.class);
+        org.springframework.data.domain.Page<Cronograma> pagina = org.springframework.data.domain.Page.empty();
+        when(cronogramaRepository.findAll(pageable)).thenReturn(pagina);
+        assertSame(pagina, cronogramaService.listarCronogramas(pageable));
+    }
+
+    @Test
+    void listarPorEstudianteDelega() {
+        when(cronogramaRepository.findByEstudianteId(5L)).thenReturn(List.of());
+        assertTrue(cronogramaService.listarPorEstudiante(5L).isEmpty());
+    }
+
+    @Test
+    void listarPorUsuarioDelega() {
+        when(cronogramaRepository.findByUsuarioId(50L)).thenReturn(List.of());
+        assertTrue(cronogramaService.listarPorUsuario(50L).isEmpty());
+    }
+
+    @Test
+    void buscarPorSolicitudDelega() {
+        when(cronogramaRepository.findBySolicitudId(10L)).thenReturn(Optional.empty());
+        assertTrue(cronogramaService.buscarPorSolicitud(10L).isEmpty());
+    }
+
+    @Test
+    void eliminarDelega() {
+        cronogramaService.eliminar(5L);
+        verify(cronogramaRepository).deleteById(5L);
+    }
+
+    @Test
+    void crearCronogramaNoPropagaFalloDeNotificacion() {
+        when(juradoRepository.findBySolicitudId(10L)).thenReturn(List.of(presidente, vocal, secretario));
+        when(tutorRepository.findBySolicitudId(10L)).thenReturn(Optional.of(tutorCompletado));
+        when(solicitudRepository.findById(10L)).thenReturn(Optional.of(solicitud));
+        when(salaRepository.findById(1L)).thenReturn(Optional.of(sala));
+        when(cronogramaRepository.findConflictos(anyLong(), any(), any())).thenReturn(List.of());
+        when(juradoRepository.validarConflictoJurado(anyLong(), anyLong(), any(), anyInt(), isNull()))
+                .thenReturn(Boolean.TRUE);
+        when(estadoCronogramaRepository.findByCodigo("PROGRAMADO"))
+                .thenReturn(Optional.of(EstadoCronograma.builder().codigo("PROGRAMADO").build()));
+        when(cronogramaRepository.save(any(Cronograma.class))).thenAnswer(inv -> inv.getArgument(0));
+        // La solicitud del fixture no tiene estudiante asociado: notificarProgramacion() falla
+        // con NPE real al intentar leerlo, y esa excepcion debe quedar atrapada sin propagarse
+        // (mismo efecto que un fallo real de notificacion, sin necesitar un mock adicional).
+
+        assertDoesNotThrow(() ->
+                cronogramaService.crearCronograma(10L, 1L, LocalDate.now().plusDays(5), LocalTime.of(9, 0)));
     }
 }

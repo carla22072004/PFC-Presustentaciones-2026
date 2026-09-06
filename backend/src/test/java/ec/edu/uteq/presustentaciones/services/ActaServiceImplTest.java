@@ -378,4 +378,217 @@ class ActaServiceImplTest {
 
         verify(actaRepository).findMisActas(eq("docente@uteq.edu.ec"), any());
     }
+
+    // ── listarActas / buscarActas ────────────────────────────────────────────
+
+    @Test
+    void listarActasDelegaAlRepositorio() {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<Acta> pagina = org.springframework.data.domain.Page.empty();
+        when(actaRepository.findAll(pageable)).thenReturn(pagina);
+        assertSame(pagina, actaService.listarActas(pageable));
+    }
+
+    @Test
+    void buscarActasLimpiaFiltrosVaciosAntesDeDelegar() {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<Acta> pagina = org.springframework.data.domain.Page.empty();
+        when(actaRepository.buscarConFiltros(eq("FINALIZADA"), isNull(), isNull(), isNull(), eq("sistema"), eq(pageable)))
+                .thenReturn(pagina);
+
+        actaService.buscarActas("FINALIZADA", "   ", null, null, "sistema", pageable);
+
+        verify(actaRepository).buscarConFiltros(eq("FINALIZADA"), isNull(), isNull(), isNull(), eq("sistema"), eq(pageable));
+    }
+
+    // ── validarAcceso: rutas de propiedad (no solo admin/ajeno) ─────────────
+
+    @Test
+    void obtenerDetalleLoPermiteAlPropioEstudiante() {
+        Acta acta = actaConEstado("GENERADA");
+        autenticarComo("atorres@uteq.edu.ec", "ESTUDIANTE"); // email del estudiante del fixture
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
+
+        assertDoesNotThrow(() -> actaService.obtenerDetalle(1L));
+    }
+
+    @Test
+    void obtenerDetalleLoPermiteAlJuradoAsignado() {
+        Acta acta = actaConEstado("GENERADA");
+        Usuario usuarioJurado = Usuario.builder().id(50L).email("jurado@uteq.edu.ec").build();
+        Docente docenteJurado = Docente.builder().id(1L).usuario(usuarioJurado).build();
+        Jurado jurado = Jurado.builder().id(1L).solicitud(solicitud).docente(docenteJurado)
+                .rolJurado(RolJurado.builder().codigo("PRESIDENTE").build()).build();
+        autenticarComo("jurado@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of(jurado));
+
+        assertDoesNotThrow(() -> actaService.obtenerDetalle(1L));
+    }
+
+    @Test
+    void obtenerDetalleLoPermiteAlTutorAsignado() {
+        Acta acta = actaConEstado("GENERADA");
+        Usuario usuarioTutor = Usuario.builder().id(60L).email("tutor@uteq.edu.ec").build();
+        Docente docenteTutor = Docente.builder().id(2L).usuario(usuarioTutor).build();
+        Tutor tutor = Tutor.builder().id(1L).docente(docenteTutor).build();
+        autenticarComo("tutor@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of());
+        when(tutorRepository.findBySolicitudId(7L)).thenReturn(Optional.of(tutor));
+
+        assertDoesNotThrow(() -> actaService.obtenerDetalle(1L));
+    }
+
+    @Test
+    void validarAccesoLanzaSiNoHayAutenticacion() {
+        SecurityContextHolder.clearContext();
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+
+        assertThrows(RuntimeException.class, () -> actaService.obtenerDetalle(1L));
+    }
+
+    // ── firmarActa: rutas autorizadas para jurado/tutor (no admin) ──────────
+
+    @Test
+    void firmarActaPermiteAlJuradoConElRolCorrecto() {
+        Usuario usuarioPresidente = Usuario.builder().id(50L).email("presidente@uteq.edu.ec").build();
+        Docente docentePresidente = Docente.builder().id(1L).usuario(usuarioPresidente).build();
+        Jurado jurado = Jurado.builder().id(1L).solicitud(solicitud).docente(docentePresidente)
+                .rolJurado(RolJurado.builder().codigo("PRESIDENTE").build()).build();
+        Acta acta = actaConFirmas(false, false, false, false);
+        autenticarComo("presidente@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of(jurado));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+        doAnswer(inv -> { acta.setFirmadaPresidente(true); return null; })
+                .when(entityManager).refresh(acta);
+
+        assertDoesNotThrow(() -> actaService.firmarActa(1L, "presidente", null));
+        verify(actaRepository).firmarActaDigital(1L, "PRESIDENTE", null);
+    }
+
+    @Test
+    void firmarActaRechazaJuradoConRolQueNoLeCorresponde() {
+        Usuario usuarioVocal = Usuario.builder().id(51L).email("vocal@uteq.edu.ec").build();
+        Docente docenteVocal = Docente.builder().id(2L).usuario(usuarioVocal).build();
+        Jurado jurado = Jurado.builder().id(2L).solicitud(solicitud).docente(docenteVocal)
+                .rolJurado(RolJurado.builder().codigo("VOCAL_1").build()).build();
+        Acta acta = actaConFirmas(false, false, false, false);
+        autenticarComo("vocal@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+        when(juradoRepository.findBySolicitudId(7L)).thenReturn(List.of(jurado));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.firmarActa(1L, "presidente", null));
+        assertTrue(ex.getMessage().contains("No eres el PRESIDENTE"));
+        verify(actaRepository, never()).firmarActaDigital(anyLong(), anyString(), any());
+    }
+
+    @Test
+    void firmarActaPermiteAlTutorAsignado() {
+        Usuario usuarioTutor = Usuario.builder().id(60L).email("tutor@uteq.edu.ec").build();
+        Docente docenteTutor = Docente.builder().id(3L).usuario(usuarioTutor).build();
+        Tutor tutor = Tutor.builder().id(1L).docente(docenteTutor).build();
+        Acta acta = actaConFirmas(false, false, false, false);
+        autenticarComo("tutor@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+        when(tutorRepository.findBySolicitudId(7L)).thenReturn(Optional.of(tutor));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> actaService.firmarActa(1L, "tutor", null));
+        verify(actaRepository).firmarActaDigital(1L, "TUTOR", null);
+    }
+
+    @Test
+    void firmarActaRechazaSiNoEsElTutorAsignado() {
+        Acta acta = actaConFirmas(false, false, false, false);
+        autenticarComo("impostor@uteq.edu.ec", "DOCENTE");
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+        when(tutorRepository.findBySolicitudId(7L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.firmarActa(1L, "tutor", null));
+        assertTrue(ex.getMessage().contains("No eres el tutor"));
+    }
+
+    // ── cambiarEstado: ramas restantes ───────────────────────────────────────
+
+    @Test
+    void cambiarEstadoLanzaSiNuevoEstadoEsBlanco() {
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.cambiarEstado(1L, "  ", null));
+        assertTrue(ex.getMessage().contains("Debe indicar el nuevo estado"));
+    }
+
+    @Test
+    void cambiarEstadoLanzaSiYaEstaEnEseEstado() {
+        Acta acta = actaConEstado("REVISADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.cambiarEstado(1L, "REVISADA", null));
+        assertTrue(ex.getMessage().contains("ya está en estado"));
+    }
+
+    @Test
+    void cambiarEstadoLanzaSiElCodigoDestinoNoExiste() {
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(estadoActaRepository.findByCodigo("INVALIDO")).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> actaService.cambiarEstado(1L, "INVALIDO", null));
+        assertTrue(ex.getMessage().contains("Estado de acta inválido"));
+    }
+
+    @Test
+    void cambiarEstadoAdminPuedeAnularDesdeCualquierEstado() {
+        // FINALIZADA solo permite -> ANULADA en TRANSICIONES; se prueba igual la ruta explicita
+        // del bypass de ADMIN, no solo la transicion ya permitida por el mapa.
+        Acta acta = actaConEstado("FINALIZADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Acta resultado = actaService.cambiarEstado(1L, "ANULADA", "Error administrativo");
+
+        assertEquals("ANULADA", resultado.getEstado().getCodigo());
+        assertEquals("Error administrativo", resultado.getObservacionesActa());
+    }
+
+    @Test
+    void cambiarEstadoDeObservadaARevisadaEsValido() {
+        Acta acta = actaConEstado("OBSERVADA");
+        autenticarComo("coord@uteq.edu.ec", "COORDINADOR");
+        when(permisoService.tienePermiso(any(), eq("ACTAS_GESTIONAR"))).thenReturn(false);
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Acta resultado = actaService.cambiarEstado(1L, "REVISADA", null);
+
+        assertEquals("REVISADA", resultado.getEstado().getCodigo());
+    }
+
+    @Test
+    void cambiarEstadoNoPropagaFalloDeNotificacion() {
+        Acta acta = actaConEstado("GENERADA");
+        when(actaRepository.findDetalleById(1L)).thenReturn(Optional.of(acta));
+        when(actaRepository.save(any(Acta.class))).thenAnswer(inv -> inv.getArgument(0));
+        doThrow(new RuntimeException("smtp caido")).when(notificacionService).crearNotificacion(anyLong(), anyString());
+
+        assertDoesNotThrow(() -> actaService.cambiarEstado(1L, "REVISADA", null));
+    }
+
+    // ── eliminarActa: borra tambien el archivo fisico si existe ─────────────
+
+    @Test
+    void eliminarActaSinArchivoPdfNoIntentaBorrarNada() {
+        Acta acta = actaConFirmas(false, false, false, false); // sin archivoPdf
+        when(actaRepository.findById(1L)).thenReturn(Optional.of(acta));
+
+        assertDoesNotThrow(() -> actaService.eliminarActa(1L));
+        verify(actaRepository).delete(acta);
+    }
 }
