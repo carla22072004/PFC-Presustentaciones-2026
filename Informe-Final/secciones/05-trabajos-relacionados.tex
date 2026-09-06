@@ -24,39 +24,12 @@ elegibilidad e inclusión en la comparación directa.
 
 \begin{figure}[H]
 \centering
-\begin{tabular}{|p{11cm}|}
-\hline
-\textbf{Identificación} \\
-24 consultas de búsqueda web dirigidas (no bases de datos académicas indexadas directamente) $\rightarrow$
-$\sim$200 resultados de página de búsqueda revisados (t\'itulo/snippet) \\
-\hline
-\end{tabular}
-\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
-\begin{tabular}{|p{11cm}|}
-\hline
-\textbf{Cribado (screening)} \\
-32 trabajos distintos identificados con cita completa verificable (autores, año, venue, DOI cuando
-disponible) mediante snowballing y verificación cruzada (2+ fuentes independientes por cita) \\
-\hline
-\end{tabular}
-\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
-\begin{tabular}{|p{11cm}|}
-\hline
-\textbf{Elegibilidad} \\
-32 trabajos verificados retenidos como citables en este informe (Sección de Referencias). Ningún trabajo
-se excluyó por no ser relevante --- todos los identificados durante la búsqueda dirigida resultaron
-pertinentes a alguna sección del informe (metodología, seguridad, rendimiento, requisitos, calidad) \\
-\hline
-\end{tabular}
-\\ \vspace{2mm} $\downarrow$ \vspace{2mm}
-\begin{tabular}{|p{11cm}|}
-\hline
-\textbf{Incluidos en la comparación directa (Tabla~\ref{tab:trabajos-relacionados})} \\
-13 trabajos empíricos comparados explícitamente por dominio, método y relación con este proyecto \\
-\hline
-\end{tabular}
+\includegraphics[width=0.75\textwidth]{figuras/fig-prisma-flujo.pdf}
 \caption{Literature search flow diagram, adapted from PRISMA 2020 \cite{page2021} to this team's real
-database-access limitations.}
+database-access limitations. Fuente Mermaid versionada en \texttt{docs/checklists/PRISMA-2020.md}
+(mismo mecanismo de renderizado que los 3 diagramas C4 del Capítulo 6), a partir de las mismas cifras
+citadas en el cuerpo del texto — 24 consultas, 32 trabajos identificados, 32 elegibles, 13 incluidos en
+la comparación directa (Tabla~\ref{tab:trabajos-relacionados}).}
 \label{fig:prisma}
 \end{figure}
 

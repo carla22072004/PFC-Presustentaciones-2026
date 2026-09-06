@@ -44,6 +44,33 @@ que el proyecto contenga una SLR formal, porque no la contiene y el propio infor
 | **Financiamiento / conflictos de interés** | ✅ Sí (no aplica) | Proyecto académico de pregrado sin financiamiento externo; declarado en la sección de declaraciones del informe (`15-declaraciones.tex`) |
 | **Registro y protocolo (pre-registro)** | 🔴 No | No hubo protocolo pre-registrado (p. ej. en PROSPERO) — esperado, dado que esto no se presenta como una SLR formal |
 
+## Fuente versionada del diagrama de flujo (Figura del capítulo 5)
+
+**Corrección (2026-09-06):** el diagrama del capítulo 5 era hasta ahora una tabla LaTeX apilada, no un
+diagrama de flujo real con cajas y flechas — se corrige aquí. La fuente Mermaid queda versionada en este
+archivo (antes no existía en ningún lado, ni siquiera para los diagramas C4 del capítulo de arquitectura);
+las cifras son las mismas ya citadas en el cuerpo del texto, no se inventa ningún número nuevo.
+
+```mermaid
+flowchart TD
+    A["Identificación<br/>24 consultas de búsqueda web dirigidas<br/>(no bases académicas indexadas directamente)<br/>~200 resultados de página revisados (título/snippet)"]
+    B["Cribado (screening)<br/>32 trabajos distintos identificados con cita completa<br/>verificable (autores, año, venue, DOI cuando disponible)<br/>vía snowballing + verificación cruzada (2+ fuentes)"]
+    C["Elegibilidad<br/>32 trabajos retenidos como citables en el informe<br/>0 excluidos por relevancia — todos pertinentes a<br/>alguna sección (metodología, seguridad, rendimiento, requisitos, calidad)"]
+    D["Incluidos en la comparación directa<br/>13 trabajos empíricos comparados explícitamente<br/>por dominio, método y relación con este proyecto<br/>(Tabla de trabajos relacionados)"]
+
+    A --> B --> C --> D
+```
+
+**Cómo se regenera el PDF vectorial** (mismo mecanismo usado para los 3 diagramas C4 del capítulo de
+arquitectura):
+
+```bash
+npx -y @mermaid-js/mermaid-cli@10 -i prisma-flow.mmd -o prisma-flow.pdf -b white
+pdfcrop --margins 5 prisma-flow.pdf Informe-Final/figuras/fig-prisma-flujo.pdf
+```
+
+(donde `prisma-flow.mmd` es el bloque \`\`\`mermaid de arriba, guardado tal cual en un archivo local).
+
 ## Resumen
 
 **6/16 ítems evaluados cumplidos, 4 parciales, 6 no cumplidos.** El patrón es consistente con lo que el

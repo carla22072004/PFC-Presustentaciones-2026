@@ -1,0 +1,143 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "catalogos status is 200": {
+                    "name": "catalogos status is 200",
+                    "path": "::catalogos status is 200",
+                    "id": "a8051716b980dbe59508c152c032a33e",
+                    "passes": 3124,
+                    "fails": 0
+                },
+                "universidades status is 200": {
+                    "passes": 3124,
+                    "fails": 0,
+                    "name": "universidades status is 200",
+                    "path": "::universidades status is 200",
+                    "id": "61f70fb479d096a7d1fcacbc86e7293f"
+                }
+            }
+    },
+    "metrics": {
+        "http_req_duration": {
+            "avg": 5.575507201152159,
+            "min": 2.5107,
+            "med": 4.9289,
+            "max": 561.2409,
+            "p(90)": 7.3666,
+            "p(95)": 8.766559999999998,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_sent": {
+            "count": 2986735,
+            "rate": 24740.662361391238
+        },
+        "http_req_blocked": {
+            "max": 11.8755,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.010041574651944305,
+            "min": 0,
+            "med": 0
+        },
+        "iteration_duration": {
+            "avg": 1011.5493779449428,
+            "min": 1006.2997,
+            "med": 1010.4046000000001,
+            "max": 1660.4973,
+            "p(90)": 1015.01746,
+            "p(95)": 1017.66556
+        },
+        "data_received": {
+            "count": 24182264,
+            "rate": 200314.13190591944
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 6248,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 6249,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_sending": {
+            "p(95)": 0,
+            "avg": 0.008408033285325654,
+            "min": 0,
+            "med": 0,
+            "max": 1.526,
+            "p(90)": 0
+        },
+        "vus_max": {
+            "max": 50,
+            "value": 50,
+            "min": 50
+        },
+        "http_req_receiving": {
+            "min": 0,
+            "med": 0,
+            "max": 17.5096,
+            "p(90)": 0.506,
+            "p(95)": 0.53296,
+            "avg": 0.0759634021443431
+        },
+        "iterations": {
+            "count": 3124,
+            "rate": 25.87769896458381
+        },
+        "http_reqs": {
+            "count": 6249,
+            "rate": 51.76368144356089
+        },
+        "http_req_waiting": {
+            "avg": 5.491135765722515,
+            "min": 2.5107,
+            "med": 4.8585,
+            "max": 560.7359,
+            "p(90)": 7.262459999999998,
+            "p(95)": 8.55285999999999
+        },
+        "vus": {
+            "value": 3,
+            "min": 1,
+            "max": 50
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 561.2409,
+            "p(90)": 7.3666,
+            "p(95)": 8.766559999999998,
+            "avg": 5.575507201152159,
+            "min": 2.5107,
+            "med": 4.9289
+        },
+        "http_req_connecting": {
+            "avg": 0.004038998239718356,
+            "min": 0,
+            "med": 0,
+            "max": 2.9605,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "setup_data": {
+        "token": "eyJhbGciOiJIUzUxMiJ9.eyJqdGkiOiJlMTQwMDBhMC00ZTZkLTQyOTAtOTMwNC02NmFiNzA1M2IxMTMiLCJpc3MiOiJQRkMtUHJlc3VzdGVudGFjaW9uZXMtVVRFUSIsInN1YiI6ImFkbWluQHV0ZXEuZWR1LmVjIiwiYXVkIjpbIlBGQy1Gcm9udGVuZC1Bbmd1bGFyIl0sImlhdCI6MTc4ODY2NDk1NSwibmJmIjoxNzg4NjY0OTU1LCJleHAiOjE3ODg2Njg1NTV9.t0U-VHu-LPzGuUrm9ktMyAu0hID-az2bNlPXZL9G1o281lwG_jzfs0MZlCcejhz35bqjh-wNsuBJ6FIkm829Mg"
+    }
+}

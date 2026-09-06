@@ -52,6 +52,33 @@ Media de p95 sobre las 5 corridas válidas: **7.45 ms**. Las corridas `run1`/`ru
 distinta, 100% de fallos en su check principal) se excluyen de este promedio — ver la sección
 anterior.
 
+## Corrida 8 (2026-09-06) — con datos crudos por petición (NDJSON)
+
+Las corridas `run3`-`run7` solo archivan el resumen agregado que exporta `--summary-export`; ninguna
+conserva el detalle petición-por-petición. Se agrega `run8` con ambos archivos, ejecutada contra el
+stack real en Docker (`BASE_URL=http://localhost:4200/api/v1`, misma configuración de `load-test.js`
+sin modificar):
+
+```bash
+k6 run --out json=k6/run8-raw.ndjson --summary-export=k6/run8-summary.json k6/load-test.js
+```
+
+| Métrica | Run 8 |
+|---|---|
+| Fecha | 2026-09-06 |
+| Requests totales | 6,249 |
+| `http_req_duration` p95 | 8.77 ms |
+| `http_req_duration` avg | 5.58 ms |
+| `http_req_failed` | 0.00 % |
+| Umbral `p(95)<500ms` | ✅ |
+| Umbral `http_req_failed<1%` | ✅ |
+
+Consistente con el rango de `run3`-`run7` (p95 6.17-8.53 ms). Datos crudos:
+[`run8-summary.json`](run8-summary.json) (resumen agregado, igual que las corridas anteriores) y
+[`run8-raw.ndjson.gz`](run8-raw.ndjson.gz) (**75.243 líneas**, un evento JSON por punto de métrica y
+por petición HTTP real — descomprimir con `gunzip run8-raw.ndjson.gz`; se versiona comprimido, 434 KB
+en vez de 21,9 MB sin comprimir, sin perder ni un byte del contenido original).
+
 ## Análisis estadístico: caché fría vs caché caliente (`GET /api/v1/universidades`)
 
 Requisito: comparar los escenarios de caché fría (sin entrada en Redis, dispara la llamada real a la API externa de Hipo Labs) y caché caliente (respuesta servida desde Redis, TTL 10 min) con percentiles, media, IC 95% y un test no paramétrico (Wilcoxon/Mann-Whitney) con tamaño de efecto.

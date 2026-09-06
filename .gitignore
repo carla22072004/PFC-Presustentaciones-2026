@@ -19,6 +19,8 @@ yarn-error.log
 *.tar
 *.gz
 *.7z
+# Excepcion: evidencia cruda de k6 (NDJSON por peticion), comprimida para no versionar 21.9 MB sin comprimir
+!k6/run8-raw.ndjson.gz
 
 # Spring Boot / Maven
 .mvn/wrapper/maven-wrapper.jar
