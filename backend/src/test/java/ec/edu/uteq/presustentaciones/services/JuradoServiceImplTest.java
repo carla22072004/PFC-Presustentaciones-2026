@@ -296,9 +296,11 @@ class JuradoServiceImplTest {
     // ── obtenerTutorDeSolicitud / eliminarTutor / delegados simples ─────────
 
     @Test
-    void obtenerTutorDeSolicitudFiltraSoloActivos() {
-        when(tutorRepository.findBySolicitudId(50L)).thenReturn(Optional.of(tutorCompletado)); // estado COMPLETADA
-        assertTrue(juradoService.obtenerTutorDeSolicitud(50L).isEmpty());
+    void obtenerTutorDeSolicitudDevuelveTutorCompletado() {
+        // El tutor de un proyecto ya calificado está en "COMPLETADA" y sigue siendo el tutor
+        // que debe firmar el acta: no se filtra por estado.
+        when(tutorRepository.findBySolicitudId(50L)).thenReturn(Optional.of(tutorCompletado));
+        assertEquals(Optional.of(tutorCompletado), juradoService.obtenerTutorDeSolicitud(50L));
     }
 
     @Test
@@ -306,6 +308,12 @@ class JuradoServiceImplTest {
         Tutor activo = Tutor.builder().id(2L).estado("ACTIVO").build();
         when(tutorRepository.findBySolicitudId(50L)).thenReturn(Optional.of(activo));
         assertEquals(Optional.of(activo), juradoService.obtenerTutorDeSolicitud(50L));
+    }
+
+    @Test
+    void obtenerTutorDeSolicitudVacioSiNoHay() {
+        when(tutorRepository.findBySolicitudId(50L)).thenReturn(Optional.empty());
+        assertTrue(juradoService.obtenerTutorDeSolicitud(50L).isEmpty());
     }
 
     @Test

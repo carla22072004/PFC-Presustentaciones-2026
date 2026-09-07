@@ -165,8 +165,12 @@ public class JuradoServiceImpl implements JuradoService {
 
     @Override
     public Optional<Tutor> obtenerTutorDeSolicitud(Long solicitudId) {
-        return tutorRepository.findBySolicitudId(solicitudId)
-                .filter(t -> "ACTIVO".equals(t.getEstado()));
+        // Antes filtraba estado == "ACTIVO", pero cuando la tutoría termina el registro pasa a
+        // "COMPLETADA" y ESE es justo el estado normal cuando ya hay acta que firmar. El filtro
+        // hacía que "Firmar Acta" respondiera 404 ("No tienes un rol asignado") a todo tutor de
+        // un proyecto ya calificado. El tutor se quita con un DELETE, así que si la fila existe,
+        // ese docente es el tutor — sin importar si la tutoría sigue en curso o ya cerró.
+        return tutorRepository.findBySolicitudId(solicitudId);
     }
 
     @Override
