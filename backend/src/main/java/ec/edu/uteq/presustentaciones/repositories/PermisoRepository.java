@@ -42,6 +42,18 @@ public interface PermisoRepository extends JpaRepository<Permiso, Short> {
             "WHERE rp.rol_id = :rolId", nativeQuery = true)
     List<String> findCodigosPorRol(@Param("rolId") Short rolId);
 
+    /**
+     * Todos los códigos de permiso del usuario (vía su rol). Lo usa el frontend para
+     * mostrar/ocultar módulos: al quitar un permiso a un rol, el módulo desaparece del
+     * panel sin necesidad de que el usuario vuelva a iniciar sesión. Misma unión que
+     * {@link #usuarioTienePermiso}, pero devolviendo la lista completa.
+     */
+    @Query(value = "SELECT p.codigo FROM presus.permisos p " +
+            "JOIN presus.rol_permisos rp ON rp.permiso_id = p.id " +
+            "JOIN presus.usuarios u ON u.rol_id = rp.rol_id " +
+            "WHERE u.email = :email", nativeQuery = true)
+    List<String> findCodigosPorEmail(@Param("email") String email);
+
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM presus.rol_permisos WHERE rol_id = :rolId", nativeQuery = true)

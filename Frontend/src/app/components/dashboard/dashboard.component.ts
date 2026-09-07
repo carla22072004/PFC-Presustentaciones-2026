@@ -5,6 +5,16 @@ import { AuthService } from '../../services/auth.service';
 import { NotificacionService } from '../../services/notificacion.service';
 import { filter, Subscription } from 'rxjs';
 
+/** Un módulo del panel. `permiso` opcional: si está y el usuario no lo tiene, el módulo se oculta. */
+interface Modulo {
+    titulo: string;
+    icon: string;
+    image: string;
+    route: string;
+    desc: string;
+    permiso?: string;
+}
+
 @Component({
     encapsulation: ViewEncapsulation.None,
     selector: 'app-dashboard',
@@ -21,83 +31,85 @@ export class DashboardComponent implements OnInit, OnDestroy {
     notiBadge = 0;
     darkMode = false;
     mostrarAlertaEmail = false;
+    misPermisos: string[] = [];
     private sub!: Subscription;
     private badgeSub!: Subscription;
+    private permisosSub!: Subscription;
 
     // ── MÓDULOS POR ROL ─────────────────────────────────────────────────────
 
-    modulosEstudiante = [
+    modulosEstudiante: Modulo[] = [
         { titulo: 'Mis Trámites',        icon: 'bi-journal-text',   image: 'img/MisTramites.png',    route: '/dashboard/solicitudes/mis-tramites',  desc: 'Seguimiento de tus solicitudes de pre-sustentación' },
         { titulo: 'Nueva Solicitud',     icon: 'bi-plus-circle',    image: 'img/NuevaSolicitud.png', route: '/dashboard/solicitudes/registrar',     desc: 'Crear una nueva solicitud de pre-sustentación' },
         { titulo: 'Mis Notas',           icon: 'bi-mortarboard',    image: 'img/MisNotas.png',       route: '/dashboard/notas',                     desc: 'Consulta tus calificaciones y resultados' },
-        { titulo: 'Centro de Orientación', icon: 'bi-compass',       image: 'img/MisTramites.png',    route: '/dashboard/orientacion/centro',        desc: 'Explora ideas de tema de titulación y guarda las que te interesen' },
+        { titulo: 'Centro de Orientación', icon: 'bi-compass',       image: 'img/MisTramites.png',    route: '/dashboard/orientacion/centro',        desc: 'Explora ideas de tema de titulación y guarda las que te interesen', permiso: 'ORIENTACION_TEMAS_VER' },
         { titulo: 'Mi Horario',          icon: 'bi-calendar3',      image: 'img/MiHorario.png',      route: '/dashboard/horario',                   desc: 'Fecha y hora de tu pre-sustentación' },
         { titulo: 'Tutorías',            icon: 'bi-journal-bookmark-fill', image: 'img/MisTramites.png', route: '/dashboard/tutorias/mis-tutorias', desc: 'Seguimiento de las fases de tutoría de tu anteproyecto' },
         { titulo: 'Notificaciones',      icon: 'bi-bell',           image: 'img/MisNotas.png',       route: '/dashboard/notificaciones',            desc: 'Mensajes y alertas del sistema' },
     ];
 
     // El COORDINADOR gestiona TODO el flujo: revisa → asigna tribunal → programa → evalúa
-    modulosCoordinador = [
+    modulosCoordinador: Modulo[] = [
         { titulo: 'Gestionar Solicitudes', icon: 'bi-clipboard2-check', image: 'img/MisTramites.png', route: '/dashboard/admin/revisar-solicitudes',
-            desc: 'Aprobar, rechazar y hacer seguimiento de todas las solicitudes' },
+            desc: 'Aprobar, rechazar y hacer seguimiento de todas las solicitudes', permiso: 'SOLICITUDES_REVISAR' },
         { titulo: 'Gestionar Estudiantes', icon: 'bi-mortarboard-fill', image: 'img/MisTramites.png', route: '/dashboard/admin/estudiantes',
-            desc: 'Registrar estudiantes y administrar carrera, semestre y estado académico' },
+            desc: 'Registrar estudiantes y administrar carrera, semestre y estado académico', permiso: 'ESTUDIANTES_GESTIONAR' },
         { titulo: 'Centro de Orientación', icon: 'bi-compass', image: 'img/MisTramites.png', route: '/dashboard/orientacion/centro',
-            desc: 'Consultar el catálogo de temas de titulación propuestos' },
+            desc: 'Consultar el catálogo de temas de titulación propuestos', permiso: 'ORIENTACION_TEMAS_VER' },
         { titulo: 'Gestionar Temas Propuestos', icon: 'bi-journal-plus', image: 'img/MisTramites.png', route: '/dashboard/orientacion/gestionar-temas',
-            desc: 'Crear, editar y eliminar los temas del catálogo de orientación' },
+            desc: 'Crear, editar y eliminar los temas del catálogo de orientación', permiso: 'ORIENTACION_CATALOGO_GESTIONAR' },
         { titulo: 'Gestionar Recursos de Titulación', icon: 'bi-folder2-open', image: 'img/MisTramites.png', route: '/dashboard/orientacion/gestionar-recursos',
-            desc: 'Crear, editar y eliminar guías, plantillas y reglamentos de titulación' },
+            desc: 'Crear, editar y eliminar guías, plantillas y reglamentos de titulación', permiso: 'ORIENTACION_CATALOGO_GESTIONAR' },
         { titulo: 'Reportes',              icon: 'bi-graph-up-arrow',   image: 'img/MisNotas.png',    route: '/dashboard/reportes',
-            desc: 'Solicitudes por estado, sustentaciones por período, actividad por docente y por carrera' },
+            desc: 'Solicitudes por estado, sustentaciones por período, actividad por docente y por carrera', permiso: 'REPORTES_VER' },
         { titulo: 'Actas',                 icon: 'bi-folder2-open',     image: 'img/MisTramites.png', route: '/dashboard/actas/gestion',
-            desc: 'Consultar, buscar y cambiar el estado de las actas; ver su historial' },
+            desc: 'Consultar, buscar y cambiar el estado de las actas; ver su historial', permiso: 'ACTAS_VER' },
         { titulo: 'Notificaciones',        icon: 'bi-bell',             image: 'img/MisNotas.png',    route: '/dashboard/notificaciones',
             desc: 'Mensajes y alertas del sistema' },
     ];
 
     // El ADMIN es el administrador del sistema: controla usuarios y roles, no el flujo de solicitudes
-    modulosAdministrador = [
+    modulosAdministrador: Modulo[] = [
         { titulo: 'Gestionar Usuarios y Roles', icon: 'bi-people-fill', image: 'img/MisTramites.png', route: '/dashboard/admin/usuarios',
-            desc: 'Crear, activar, desactivar y asignar roles a los usuarios del sistema' },
+            desc: 'Crear, activar, desactivar y asignar roles a los usuarios del sistema', permiso: 'USUARIOS_GESTIONAR' },
         { titulo: 'Gestionar Roles',            icon: 'bi-shield-lock-fill', image: 'img/MisTramites.png', route: '/dashboard/admin/roles',
-            desc: 'Crear, renombrar y eliminar los roles del sistema' },
+            desc: 'Crear, renombrar y eliminar los roles del sistema', permiso: 'ROLES_PERMISOS_GESTIONAR' },
         { titulo: 'Gestionar Permisos',         icon: 'bi-key-fill',    image: 'img/MisTramites.png', route: '/dashboard/admin/permisos',
-            desc: 'Asignar qué puede hacer cada rol dentro del sistema' },
+            desc: 'Asignar qué puede hacer cada rol dentro del sistema', permiso: 'ROLES_PERMISOS_GESTIONAR' },
         { titulo: 'Auditoría',                  icon: 'bi-clock-history', image: 'img/MisTramites.png', route: '/dashboard/admin/auditoria',
-            desc: 'Quién creó, modificó, aprobó o eliminó información, y cuándo' },
+            desc: 'Quién creó, modificó, aprobó o eliminó información, y cuándo', permiso: 'AUDITORIA_VER' },
         { titulo: 'Gestión de Respaldos',       icon: 'bi-database-fill-down', image: 'img/MisTramites.png', route: '/dashboard/admin/respaldos',
-            desc: 'Generar, descargar, restaurar y eliminar respaldos completos de la base de datos' },
+            desc: 'Generar, descargar, restaurar y eliminar respaldos completos de la base de datos', permiso: 'BACKUPS_GESTIONAR' },
         { titulo: 'Gestionar Estudiantes',       icon: 'bi-mortarboard-fill', image: 'img/MisTramites.png', route: '/dashboard/admin/estudiantes',
-            desc: 'Registrar estudiantes y administrar carrera, semestre y estado académico' },
+            desc: 'Registrar estudiantes y administrar carrera, semestre y estado académico', permiso: 'ESTUDIANTES_GESTIONAR' },
         { titulo: 'Gestión de Carreras',         icon: 'bi-mortarboard',  image: 'img/MisTramites.png', route: '/dashboard/admin/carreras',
-            desc: 'Administrar facultades, carreras, modalidades de titulación y períodos académicos' },
+            desc: 'Administrar facultades, carreras, modalidades de titulación y períodos académicos', permiso: 'CARRERAS_GESTIONAR' },
         { titulo: 'Centro de Orientación',       icon: 'bi-compass',      image: 'img/MisTramites.png', route: '/dashboard/orientacion/centro',
-            desc: 'Consultar el catálogo de temas de titulación propuestos' },
+            desc: 'Consultar el catálogo de temas de titulación propuestos', permiso: 'ORIENTACION_TEMAS_VER' },
         { titulo: 'Gestionar Temas Propuestos',  icon: 'bi-journal-plus', image: 'img/MisTramites.png', route: '/dashboard/orientacion/gestionar-temas',
-            desc: 'Crear, editar y eliminar los temas del catálogo de orientación' },
+            desc: 'Crear, editar y eliminar los temas del catálogo de orientación', permiso: 'ORIENTACION_CATALOGO_GESTIONAR' },
         { titulo: 'Gestionar Recursos de Titulación', icon: 'bi-folder2-open', image: 'img/MisTramites.png', route: '/dashboard/orientacion/gestionar-recursos',
-            desc: 'Crear, editar y eliminar guías, plantillas y reglamentos de titulación' },
+            desc: 'Crear, editar y eliminar guías, plantillas y reglamentos de titulación', permiso: 'ORIENTACION_CATALOGO_GESTIONAR' },
         { titulo: 'Reportes',                    icon: 'bi-graph-up-arrow', image: 'img/MisNotas.png',  route: '/dashboard/reportes',
-            desc: 'Reportes generales del sistema y de las actas: solicitudes, períodos, docentes y carreras' },
+            desc: 'Reportes generales del sistema y de las actas: solicitudes, períodos, docentes y carreras', permiso: 'REPORTES_VER' },
         { titulo: 'Gestión de Actas',            icon: 'bi-folder2-open', image: 'img/MisTramites.png', route: '/dashboard/actas/gestion',
-            desc: 'Listar, buscar, filtrar actas; cambiar su estado y consultar el historial completo' },
+            desc: 'Listar, buscar, filtrar actas; cambiar su estado y consultar el historial completo', permiso: 'ACTAS_VER' },
         { titulo: 'Notificaciones',             icon: 'bi-bell',        image: 'img/MisNotas.png',    route: '/dashboard/notificaciones',
             desc: 'Mensajes y alertas del sistema' },
     ];
 
     // El DOCENTE solo ve sus asignaciones como jurado/tutor y puede firmar actas
-    modulosDocente = [
+    modulosDocente: Modulo[] = [
         { titulo: 'Mis Asignaciones',   icon: 'bi-person-badge',    image: 'img/MisTramites.png',  route: '/dashboard/jurado/mis-asignaciones',
             desc: 'Ver las pre-sustentaciones donde eres jurado o tutor' },
         { titulo: 'Mis Actas',          icon: 'bi-file-earmark-text', image: 'img/MisTramites.png', route: '/dashboard/actas/mis-actas',
-            desc: 'Consultar el estado, el detalle y el historial de las actas de tus pre-sustentaciones' },
+            desc: 'Consultar el estado, el detalle y el historial de las actas de tus pre-sustentaciones', permiso: 'ACTAS_VER_PROPIAS' },
         { titulo: 'Mis Estudiantes',    icon: 'bi-mortarboard-fill', image: 'img/MisTramites.png', route: '/dashboard/docente/mis-estudiantes',
             desc: 'Consultar los estudiantes que tienes asignados como tutor' },
         { titulo: 'Tutorías',           icon: 'bi-journal-bookmark-fill', image: 'img/MisTramites.png', route: '/dashboard/tutorias/mis-tutorias',
-            desc: 'Gestiona las fases de tutoría de los estudiantes asignados' },
+            desc: 'Gestiona las fases de tutoría de los estudiantes asignados', permiso: 'TUTORIA_GESTIONAR' },
         { titulo: 'Centro de Orientación', icon: 'bi-compass', image: 'img/MisTramites.png', route: '/dashboard/orientacion/centro',
-            desc: 'Consultar el catálogo de temas de titulación propuestos' },
+            desc: 'Consultar el catálogo de temas de titulación propuestos', permiso: 'ORIENTACION_TEMAS_VER' },
         { titulo: 'Notificaciones',     icon: 'bi-bell',            image: 'img/MisNotas.png',     route: '/dashboard/notificaciones',
             desc: 'Mensajes y alertas del sistema' },
     ];
@@ -159,14 +171,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         this.sub = this.router.events
             .pipe(filter(e => e instanceof NavigationEnd))
-            .subscribe((e: any) => { this.urlActual = e.urlAfterRedirects; });
+            .subscribe((e: any) => {
+                this.urlActual = e.urlAfterRedirects;
+                // Al volver al inicio, refrescar permisos: si un admin acaba de quitar un
+                // permiso a este rol, el módulo debe desaparecer sin cerrar sesión.
+                if (this.esInicio()) { this.authService.refrescarPermisos(); }
+            });
+
+        // Permisos del usuario → controlan qué módulos se ven en el panel
+        this.permisosSub = this.authService.permisos$.subscribe(p => this.misPermisos = p || []);
+        this.authService.refrescarPermisos();
 
         this.cargarBadgeNoti();
         // Suscribirse al badge reactivo — se actualiza automáticamente cuando se marcan leídas
         this.badgeSub = this.notiService.badge$.subscribe(n => this.notiBadge = n);
     }
 
-    ngOnDestroy(): void { this.sub?.unsubscribe(); this.badgeSub?.unsubscribe(); }
+    ngOnDestroy(): void { this.sub?.unsubscribe(); this.badgeSub?.unsubscribe(); this.permisosSub?.unsubscribe(); }
 
     cargarBadgeNoti(): void {
         const uid = this.authService.getUserId();
@@ -176,12 +197,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         });
     }
 
-    get modulosPermitidos() {
+    private modulosDelRol(): Modulo[] {
         if (this.userRole === 'ESTUDIANTE')  return this.modulosEstudiante;
         if (this.userRole === 'DOCENTE')     return this.modulosDocente;
         if (this.userRole === 'ADMIN')       return this.modulosAdministrador;
         if (this.userRole === 'COORDINADOR') return this.modulosCoordinador;
         return [];
+    }
+
+    get modulosPermitidos(): Modulo[] {
+        // Un módulo sin `permiso` siempre se ve; con `permiso`, solo si el usuario lo tiene.
+        return this.modulosDelRol().filter(m => !m.permiso || this.misPermisos.includes(m.permiso));
     }
 
     get rolLabel(): string {

@@ -30,6 +30,21 @@ public class PermisoService {
         return permisoRepository.usuarioTienePermiso(email, codigoPermiso);
     }
 
+    /**
+     * Códigos de permiso del usuario autenticado. El frontend los usa para ocultar los
+     * módulos cuyo permiso se ha retirado al rol (sin re-login).
+     */
+    public java.util.List<String> permisosDe(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return java.util.List.of();
+        }
+        String email = authentication.getName();
+        if (email == null || "anonymousUser".equals(email)) {
+            return java.util.List.of();
+        }
+        return permisoRepository.findCodigosPorEmail(email);
+    }
+
     public boolean esPropioDocente(Authentication authentication, Long docenteId) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;

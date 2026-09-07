@@ -1,13 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
     private apiUrl = '/api/auth';
+
+    /**
+     * Permisos del usuario en curso (códigos). El JWT no los lleva — se consultan a
+     * /api/me/permisos. El panel se suscribe a esto para mostrar/ocultar módulos: si a un rol
+     * se le quita un permiso, el módulo asociado desaparece al recargar, sin cerrar sesión.
+     */
+    private _permisos = new BehaviorSubject<string[]>([]);
+    permisos$ = this._permisos.asObservable();
 
     constructor(private http: HttpClient, private router: Router) {}
 
@@ -26,12 +34,32 @@ export class AuthService {
         );
     }
 
+    /** Recarga los permisos del usuario desde el backend y notifica a los suscriptores. */
+    refrescarPermisos(): void {
+        if (!this.isLoggedIn()) { this._permisos.next([]); return; }
+        this.http.get<string[]>('/api/me/permisos').subscribe({
+            next: (codigos) => this._permisos.next(Array.isArray(codigos) ? codigos : []),
+            // Ante un fallo transitorio de red no se vacía la lista: mejor mantener el panel
+            // como estaba que ocultar de golpe todos los módulos con permiso.
+            error: () => {}
+        });
+    }
+
+    tienePermiso(codigo: string): boolean {
+        return this._permisos.value.includes(codigo);
+    }
+
+    get permisosActuales(): string[] {
+        return this._permisos.value;
+    }
+
     logout(): void {
         localStorage.removeItem('presus_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('user_role');
         localStorage.removeItem('user_name');
         localStorage.removeItem('email_noti_configurado');
+        this._permisos.next([]);
         this.router.navigate(['/login']);
     }
 
