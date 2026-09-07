@@ -50,8 +50,12 @@ public class TemaController {
      * @param nivelDificultad      filtra por nivel (BASICO, INTERMEDIO, AVANZADO), opcional
      * @return 200 con los temas que cumplen los filtros
      */
+    // "Quien puede gestionar el catálogo, puede verlo": la pantalla "Gestionar Temas
+    // Propuestos" necesita listar para poder editar, así que ORIENTACION_CATALOGO_GESTIONAR
+    // también autoriza la lectura — de lo contrario ese permiso por sí solo es inútil.
     @GetMapping
-    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER') " +
+            "or @permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<List<TemaPropuestoDTO>> explorar(
             @RequestParam(required = false) Integer carreraId,
             @RequestParam(required = false) Integer lineaInvestigacionId,
@@ -67,7 +71,8 @@ public class TemaController {
      * @return 200 con el detalle del tema
      */
     @GetMapping("/{temaId}")
-    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER')")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'ORIENTACION_TEMAS_VER') " +
+            "or @permisoService.tienePermiso(authentication, 'ORIENTACION_CATALOGO_GESTIONAR')")
     public ResponseEntity<TemaPropuestoDTO> detalle(@PathVariable Integer temaId) {
         return ResponseEntity.ok(temaService.obtenerDetalle(temaId));
     }
