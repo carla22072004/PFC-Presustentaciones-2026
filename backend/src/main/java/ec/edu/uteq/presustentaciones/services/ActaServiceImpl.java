@@ -305,7 +305,12 @@ public class ActaServiceImpl implements ActaService {
     @Transactional(readOnly = true)
     public Page<ActaResumenDTO> buscarActas(String estado, String carrera, LocalDate desde, LocalDate hasta,
                                             String q, Pageable pageable) {
-        return actaRepository.buscarConFiltros(limpiar(estado), limpiar(carrera), desde, hasta, limpiar(q), pageable)
+        // Postgres no puede inferir el tipo de un parámetro de fecha que llega null dentro de
+        // "(:desde IS NULL OR ...)" -> se sustituye por un rango abierto (mismo enfoque que
+        // SolicitudRepository.buscarConFiltros).
+        LocalDate desdeSeguro = desde != null ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate hastaSeguro = hasta != null ? hasta : LocalDate.of(9999, 12, 31);
+        return actaRepository.buscarConFiltros(limpiar(estado), limpiar(carrera), desdeSeguro, hastaSeguro, limpiar(q), pageable)
                 .map(ActaResumenDTO::de);
     }
 

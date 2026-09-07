@@ -48,25 +48,28 @@ public interface ActaRepository extends JpaRepository<Acta, Long> {
     boolean esParticipante(@Param("actaId") Long actaId, @Param("email") String email);
 
     /**
-     * Búsqueda/filtrado administrativo. Los parámetros nulos/vacíos no filtran. El
+     * Búsqueda/filtrado administrativo. Los parámetros String nulos/vacíos no filtran; el
      * {@code OR :param = ''} extra le da a Hibernate la pista de tipo String para el bind
-     * (sin él, un parámetro null se enlaza como bytea y Postgres falla en LOWER()) --
-     * mismo patrón que SolicitudRepository.buscarConFiltros / AuditoriaRepository.
+     * (sin él, un parámetro null se enlaza como bytea y Postgres falla en LOWER()).
+     *
+     * Las fechas NUNCA llegan null: {@code ActaServiceImpl.buscarActas} sustituye por
+     * sentinelas (1900-01-01 / 9999-12-31) cuando el usuario no filtra por fecha. Un
+     * {@code :desde IS NULL} dejaba a Postgres sin tipo para el bind ("could not determine
+     * data type of parameter") — mismo motivo por el que SolicitudRepository.buscarConFiltros
+     * usa sentinelas en vez de comprobar null.
      */
     @Query(value = "SELECT a FROM Acta a " +
             "JOIN FETCH a.solicitud s JOIN FETCH s.estudiante e JOIN FETCH e.usuario u JOIN FETCH a.estado est " +
             "WHERE (:estado IS NULL OR :estado = '' OR est.codigo = :estado) " +
             "AND (:carrera IS NULL OR :carrera = '' OR LOWER(e.carrera) LIKE LOWER(CONCAT('%', :carrera, '%'))) " +
-            "AND (:desde IS NULL OR a.fechaGeneracion >= :desde) " +
-            "AND (:hasta IS NULL OR a.fechaGeneracion <= :hasta) " +
+            "AND a.fechaGeneracion >= :desde AND a.fechaGeneracion <= :hasta " +
             "AND (:q IS NULL OR :q = '' OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :q, '%')))",
            countQuery = "SELECT COUNT(a) FROM Acta a JOIN a.solicitud s JOIN s.estudiante e JOIN e.usuario u JOIN a.estado est " +
             "WHERE (:estado IS NULL OR :estado = '' OR est.codigo = :estado) " +
             "AND (:carrera IS NULL OR :carrera = '' OR LOWER(e.carrera) LIKE LOWER(CONCAT('%', :carrera, '%'))) " +
-            "AND (:desde IS NULL OR a.fechaGeneracion >= :desde) " +
-            "AND (:hasta IS NULL OR a.fechaGeneracion <= :hasta) " +
+            "AND a.fechaGeneracion >= :desde AND a.fechaGeneracion <= :hasta " +
             "AND (:q IS NULL OR :q = '' OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "     OR LOWER(u.apellido) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "     OR LOWER(s.tituloTema) LIKE LOWER(CONCAT('%', :q, '%')))")

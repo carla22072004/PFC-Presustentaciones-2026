@@ -393,12 +393,16 @@ class ActaServiceImplTest {
     void buscarActasLimpiaFiltrosVaciosAntesDeDelegar() {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
         org.springframework.data.domain.Page<Acta> pagina = org.springframework.data.domain.Page.empty();
-        when(actaRepository.buscarConFiltros(eq("FINALIZADA"), isNull(), isNull(), isNull(), eq("sistema"), eq(pageable)))
+        // Sin filtro de fecha -> el service pasa un rango abierto con sentinelas (Postgres no
+        // puede inferir el tipo de un parámetro de fecha null en "(:desde IS NULL OR ...)").
+        java.time.LocalDate desdeMin = java.time.LocalDate.of(1900, 1, 1);
+        java.time.LocalDate hastaMax = java.time.LocalDate.of(9999, 12, 31);
+        when(actaRepository.buscarConFiltros(eq("FINALIZADA"), isNull(), eq(desdeMin), eq(hastaMax), eq("sistema"), eq(pageable)))
                 .thenReturn(pagina);
 
         actaService.buscarActas("FINALIZADA", "   ", null, null, "sistema", pageable);
 
-        verify(actaRepository).buscarConFiltros(eq("FINALIZADA"), isNull(), isNull(), isNull(), eq("sistema"), eq(pageable));
+        verify(actaRepository).buscarConFiltros(eq("FINALIZADA"), isNull(), eq(desdeMin), eq(hastaMax), eq("sistema"), eq(pageable));
     }
 
     // ── validarAcceso: rutas de propiedad (no solo admin/ajeno) ─────────────
