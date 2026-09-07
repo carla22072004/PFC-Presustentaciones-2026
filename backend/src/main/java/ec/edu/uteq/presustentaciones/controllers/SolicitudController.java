@@ -2,6 +2,7 @@ package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.PermisoService;
 import ec.edu.uteq.presustentaciones.services.SolicitudService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,10 +23,13 @@ public class SolicitudController {
 
     private final SolicitudService solicitudService;
     private final UsuarioRepository usuarioRepository;
+    private final PermisoService permisoService;
 
-    public SolicitudController(SolicitudService solicitudService, UsuarioRepository usuarioRepository) {
+    public SolicitudController(SolicitudService solicitudService, UsuarioRepository usuarioRepository,
+                               PermisoService permisoService) {
         this.solicitudService = solicitudService;
         this.usuarioRepository = usuarioRepository;
+        this.permisoService = permisoService;
     }
 
     /**
@@ -325,9 +329,14 @@ public class SolicitudController {
     private void validarAccesoSolicitud(Long solicitudId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
+        // CustomUserDetailsService solo carga "ROLE_<rol>" como authority, nunca los permisos
+        // finos. Por eso no se puede comprobar "SOLICITUDES_REVISAR" contra getAuthorities():
+        // un COORDINADOR (que sí tiene el permiso en rol_permisos) daba 403 "no eres
+        // propietario". Se usa el mismo permisoService que protege el resto del controlador.
         boolean esRevisor = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("SOLICITUDES_REVISAR") || a.getAuthority().equals("ROLE_ADMIN"));
-        
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+                || permisoService.tienePermiso(auth, "SOLICITUDES_REVISAR");
+
         if (!esRevisor) {
             Solicitud solicitud = solicitudService.obtenerPorId(solicitudId)
                     .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
