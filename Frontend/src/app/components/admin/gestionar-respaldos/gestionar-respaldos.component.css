@@ -202,9 +202,184 @@ body.dark-mode .bkp-empty { color: #6e7681; }
 body.dark-mode .bkp-empty i { color: #30363d; }
 body.dark-mode .bkp-empty p { color: #8b949e; }
 
+/* ══════════════════════════════════════════════════════════════════════
+   FASE 1 — panel de estado, cronograma, badges, modal
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Tarjetas de estado ─────────────────────────────────────────────── */
+.bkp-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.bkp-card-stat {
+    background: #fff;
+    border: 1px solid #e9eef5;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+}
+.bkp-stat-label {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    color: #94a3b8; display: flex; align-items: center; gap: 6px;
+}
+.bkp-stat-label i { font-size: 0.85rem; }
+.bkp-stat-value { font-size: 1.15rem; font-weight: 700; color: #0f2f4f; line-height: 1.25; }
+.bkp-stat-value-sm { font-size: 0.95rem; }
+.bkp-stat-value.bkp-muted { color: #94a3b8; font-weight: 600; }
+.bkp-stat-sub { font-size: 0.78rem; color: #64748b; }
+
+/* ── Paneles ────────────────────────────────────────────────────────── */
+.bkp-panel {
+    background: #fff;
+    border: 1px solid #e9eef5;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+}
+.bkp-panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.bkp-panel-head h3 {
+    margin: 0; font-size: 1rem; font-weight: 700; color: #0f2f4f;
+    display: flex; align-items: center; gap: 8px;
+}
+.bkp-panel-head h3 i { color: #1e3a5f; }
+.bkp-panel .bkp-note { margin-bottom: 14px; }
+
+/* ── Switch ─────────────────────────────────────────────────────────── */
+.bkp-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.bkp-switch input { display: none; }
+.bkp-slider {
+    width: 40px; height: 22px; border-radius: 999px; background: #cbd5e1;
+    position: relative; transition: background .15s ease; flex-shrink: 0;
+}
+.bkp-slider::after {
+    content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; top: 2px; left: 2px; transition: transform .15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.bkp-switch input:checked + .bkp-slider { background: #16a34a; }
+.bkp-switch input:checked + .bkp-slider::after { transform: translateX(18px); }
+.bkp-switch-txt { font-size: 0.85rem; font-weight: 600; color: #475569; }
+
+/* ── Formulario ─────────────────────────────────────────────────────── */
+.bkp-form { display: flex; flex-direction: column; gap: 14px; }
+.bkp-form-off { opacity: .55; pointer-events: none; }
+.bkp-field { display: flex; flex-direction: column; gap: 5px; max-width: 460px; }
+.bkp-field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.bkp-field label small { font-weight: 400; color: #94a3b8; }
+.bkp-field input, .bkp-field select, .bkp-field textarea {
+    padding: 9px 12px; border: 1px solid #d8e0ea; border-radius: 8px;
+    font-size: 0.9rem; color: #1e293b; background: #fff; font-family: inherit;
+}
+.bkp-field input:focus, .bkp-field select:focus, .bkp-field textarea:focus {
+    outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+.bkp-field textarea { resize: vertical; }
+.bkp-field-sm { max-width: 120px; }
+.bkp-hint { font-size: 0.76rem; color: #64748b; line-height: 1.5; }
+.bkp-hint code, .bkp-field code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #f1f5f9; color: #475569; padding: 1px 5px; border-radius: 4px; font-size: 0.92em;
+}
+.bkp-cron-desc {
+    font-size: 0.85rem; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 6px;
+}
+
+.bkp-retencion {
+    border: 1px dashed #d8e0ea; border-radius: 10px; padding: 14px; background: #fafbfd;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.bkp-retencion-title {
+    font-size: 0.82rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px;
+}
+.bkp-retencion-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.bkp-form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.bkp-btn-ghost-line {
+    background: #fff; color: #475569; border: 1px solid #d8e0ea;
+}
+.bkp-btn-ghost-line:not(:disabled):hover { background: #f1f5f9; }
+
+/* ── Badges ─────────────────────────────────────────────────────────── */
+.bkp-badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px;
+    border-radius: 999px; white-space: nowrap; letter-spacing: .02em;
+}
+.bkp-b-tipo    { background: #ede9fe; color: #6d28d9; }
+.bkp-b-dif     { background: #cffafe; color: #0e7490; }
+.bkp-b-auto    { background: #dcfce7; color: #15803d; }
+.bkp-b-manual  { background: #e2e8f0; color: #475569; }
+.bkp-b-evento  { background: #fef3c7; color: #b45309; }
+.bkp-badge.bkp-ok   { background: #dcfce7; color: #15803d; }
+.bkp-badge.bkp-fail { background: #fee2e2; color: #b91c1c; }
+
+.bkp-switch-inline { margin: 2px 0 4px; }
+.bkp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; word-break: break-all; }
+body.dark-mode .bkp-b-dif { background: #164e63; color: #a5f3fc; }
+
+.bkp-table-scroll { overflow-x: auto; }
+.bkp-panel .bkp-table { border: 1px solid #eef2f7; border-radius: 10px; overflow: hidden; }
+.bkp-notas { max-width: 280px; white-space: pre-wrap; font-size: 0.82rem; color: #475569; }
+.bkp-empty-sm { padding: 22px 12px; }
+.bkp-empty-sm p { margin: 0 0 3px; }
+
+/* ── Modal ──────────────────────────────────────────────────────────── */
+.bkp-modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .5);
+    display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+}
+.bkp-modal {
+    background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 440px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .25); display: flex; flex-direction: column; gap: 12px;
+}
+.bkp-modal h3 {
+    margin: 0 0 4px; font-size: 1.05rem; color: #0f2f4f;
+    display: flex; align-items: center; gap: 8px;
+}
+.bkp-modal .bkp-field { max-width: none; }
+.bkp-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODO OSCURO — Fase 1
+   ══════════════════════════════════════════════════════════════════════ */
+body.dark-mode .bkp-card-stat,
+body.dark-mode .bkp-panel { background: #161b22; border-color: #30363d; box-shadow: none; }
+body.dark-mode .bkp-stat-value,
+body.dark-mode .bkp-panel-head h3 { color: #e6edf3; }
+body.dark-mode .bkp-panel-head h3 i { color: #60a5fa; }
+body.dark-mode .bkp-stat-sub,
+body.dark-mode .bkp-switch-txt,
+body.dark-mode .bkp-field label,
+body.dark-mode .bkp-hint { color: #8b949e; }
+body.dark-mode .bkp-field input,
+body.dark-mode .bkp-field select,
+body.dark-mode .bkp-field textarea { background: #0d1117; border-color: #30363d; color: #c9d1d9; }
+body.dark-mode .bkp-retencion { background: #0d1117; border-color: #30363d; }
+body.dark-mode .bkp-retencion-title { color: #adbac7; }
+body.dark-mode .bkp-cron-desc { background: #172554; border-color: #1e3a8a; color: #bfdbfe; }
+body.dark-mode .bkp-btn-ghost-line { background: #161b22; border-color: #30363d; color: #adbac7; }
+body.dark-mode .bkp-btn-ghost-line:not(:disabled):hover { background: #21262d; }
+body.dark-mode .bkp-b-tipo   { background: #2e1065; color: #c4b5fd; }
+body.dark-mode .bkp-b-manual { background: #21262d; color: #adbac7; }
+body.dark-mode .bkp-modal { background: #161b22; }
+body.dark-mode .bkp-modal h3 { color: #e6edf3; }
+body.dark-mode .bkp-notas { color: #8b949e; }
+body.dark-mode .bkp-panel .bkp-table { border-color: #30363d; }
+body.dark-mode .bkp-hint code, body.dark-mode .bkp-field code { background: #0d1117; color: #adbac7; }
+
 /* ── Responsivo ───────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .bkp-wrapper { padding: 16px; }
     .bkp-header-actions { width: 100%; }
     .bkp-btn-primary { flex: 1 1 auto; justify-content: center; }
+    .bkp-panel { padding: 14px; }
 }

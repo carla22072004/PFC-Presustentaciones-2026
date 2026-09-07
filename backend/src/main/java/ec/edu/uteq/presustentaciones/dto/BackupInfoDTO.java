@@ -19,8 +19,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BackupInfoDTO {
 
-    /** Nombre del archivo, p. ej. {@code respaldo_20260907_013045.dump}. */
+    /** Nombre del archivo, p. ej. {@code respaldo_FULL_AUTOMATICO_20260907_230000.dump}. */
     private String nombre;
+
+    /** FULL | DIFERENCIAL (leído del nombre del archivo; los formatos antiguos son FULL). */
+    private String tipo;
+
+    /** MANUAL | AUTOMATICO | EVENTO (leído del nombre del archivo; los antiguos son MANUAL). */
+    private String origen;
 
     /** Tamaño en bytes. */
     private long tamanoBytes;

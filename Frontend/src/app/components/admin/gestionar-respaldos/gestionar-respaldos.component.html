@@ -1,86 +1,351 @@
 <div class="bkp-wrapper">
+
     <div class="bkp-header">
         <div class="bkp-header-text">
             <h2 class="bkp-title"><i class="bi bi-database-fill-down"></i> Gestión de Respaldos</h2>
             <p class="bkp-subtitle">
-                Genera, descarga, restaura y elimina respaldos completos de la base de datos
-                (dumps <code>pg_dump</code> en formato custom comprimido).
+                Cronograma de respaldos: FULL + diferencial automáticos, retención GFS, archivado
+                continuo de WAL (PITR) y bitácora de pruebas de restauración.
             </p>
         </div>
         <div class="bkp-header-actions">
-            <button class="bkp-btn bkp-btn-ghost" (click)="cargar()" [disabled]="cargando" title="Recargar lista">
+            <button class="bkp-btn bkp-btn-ghost" (click)="cargarTodo()" [disabled]="cargando" title="Recargar">
                 <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button class="bkp-btn bkp-btn-ghost-line" (click)="generarDiferencial()" [disabled]="generandoDif">
+                <span class="bkp-spinner bkp-spinner-sm" *ngIf="generandoDif"></span>
+                <i class="bi bi-layers-half" *ngIf="!generandoDif"></i>
+                <span>{{ generandoDif ? 'Generando…' : 'Diferencial' }}</span>
             </button>
             <button class="bkp-btn bkp-btn-primary" (click)="generar()" [disabled]="generando">
                 <span class="bkp-spinner bkp-spinner-sm" *ngIf="generando"></span>
                 <i class="bi bi-plus-circle" *ngIf="!generando"></i>
-                <span>{{ generando ? 'Generando respaldo…' : 'Generar respaldo ahora' }}</span>
+                <span>{{ generando ? 'Generando…' : 'Respaldo FULL' }}</span>
             </button>
         </div>
     </div>
 
-    <div class="bkp-note">
-        <i class="bi bi-info-circle"></i>
-        <span>
-            Los respaldos se guardan en el servidor. <strong>Descárgalos</strong> para conservarlos
-            fuera de él. <strong>Restaurar</strong> reemplaza todo el contenido actual de la base y
-            no se puede deshacer.
-        </span>
-    </div>
+    <div class="bkp-loading" *ngIf="cargando"><span class="bkp-spinner"></span><p>Cargando…</p></div>
 
-    <div class="bkp-loading" *ngIf="cargando">
-        <span class="bkp-spinner"></span>
-        <p>Cargando respaldos…</p>
-    </div>
+    <ng-container *ngIf="!cargando">
 
-    <div class="bkp-card" *ngIf="!cargando">
-        <table class="bkp-table">
-            <thead>
-                <tr>
-                    <th>Archivo</th>
-                    <th class="bkp-num">Tamaño</th>
-                    <th>Fecha de creación</th>
-                    <th class="bkp-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let r of respaldos" [class.bkp-row-busy]="ocupado === r.nombre">
-                    <td>
-                        <span class="bkp-file">
-                            <i class="bi bi-file-earmark-zip"></i>
-                            <span class="bkp-file-name">{{ r.nombre }}</span>
-                        </span>
-                    </td>
-                    <td class="bkp-num">{{ r.tamanoLegible }}</td>
-                    <td class="bkp-fecha">{{ fecha(r.fechaCreacion) }}</td>
-                    <td class="bkp-center">
-                        <div class="bkp-actions">
-                            <span class="bkp-spinner bkp-spinner-sm" *ngIf="ocupado === r.nombre"></span>
-                            <button class="bkp-ico" title="Descargar" [disabled]="ocupado === r.nombre"
-                                    (click)="descargar(r)">
-                                <i class="bi bi-download"></i>
-                            </button>
-                            <button class="bkp-ico" title="Restaurar esta copia" [disabled]="ocupado === r.nombre"
-                                    (click)="restaurar(r)">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>
-                            <button class="bkp-ico bkp-ico-danger" title="Eliminar" [disabled]="ocupado === r.nombre"
-                                    (click)="eliminar(r)">
-                                <i class="bi bi-trash3"></i>
-                            </button>
+        <!-- ── PANEL DE ESTADO ─────────────────────────────────────────────── -->
+        <div class="bkp-cards" *ngIf="estado as e">
+            <div class="bkp-card-stat">
+                <span class="bkp-stat-label"><i class="bi bi-clock-history"></i> Último respaldo</span>
+                <span class="bkp-stat-value">{{ e.ultimoRespaldoHace }}</span>
+                <span class="bkp-stat-sub" *ngIf="e.ultimoRespaldo">{{ fecha(e.ultimoRespaldo.fechaCreacion) }}</span>
+                <span class="bkp-stat-sub" *ngIf="!e.ultimoRespaldo">Nunca se ha generado uno</span>
+            </div>
+            <div class="bkp-card-stat">
+                <span class="bkp-stat-label"><i class="bi bi-calendar-event"></i> Próximo automático</span>
+                <span class="bkp-stat-value" [class.bkp-muted]="!e.programacionActiva">
+                    {{ e.programacionActiva ? e.proximoAutomaticoTexto : 'pausado' }}
+                </span>
+                <span class="bkp-stat-sub" *ngIf="e.proximoAutomatico">{{ fecha(e.proximoAutomatico) }}</span>
+            </div>
+            <div class="bkp-card-stat">
+                <span class="bkp-stat-label"><i class="bi bi-shield-check"></i> RPO estimado</span>
+                <span class="bkp-stat-value bkp-stat-value-sm">{{ e.rpoEstimado }}</span>
+                <span class="bkp-stat-sub">pérdida máxima de datos ante un incidente</span>
+            </div>
+            <div class="bkp-card-stat">
+                <span class="bkp-stat-label"><i class="bi bi-hdd"></i> Almacenamiento</span>
+                <span class="bkp-stat-value bkp-stat-value-sm">{{ e.espacioUsadoLegible }} en {{ e.totalRespaldos }} copia(s)</span>
+                <span class="bkp-stat-sub">{{ e.espacioLibreLegible }} libres en disco</span>
+            </div>
+            <div class="bkp-card-stat">
+                <span class="bkp-stat-label"><i class="bi bi-clipboard2-check"></i> Última prueba de restauración</span>
+                <span class="bkp-stat-value bkp-stat-value-sm">{{ e.ultimaPruebaHace }}</span>
+                <span class="bkp-stat-sub">
+                    <span class="bkp-badge" [class.bkp-ok]="e.ultimaPruebaResultado==='EXITOSA'" [class.bkp-fail]="e.ultimaPruebaResultado==='FALLIDA'"
+                          *ngIf="e.ultimaPruebaResultado !== '—'">{{ e.ultimaPruebaResultado }}</span>
+                    <span *ngIf="e.ultimaPruebaResultado === '—'">sin registro</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- ── CRONOGRAMA ──────────────────────────────────────────────────── -->
+        <div class="bkp-panel">
+            <div class="bkp-panel-head">
+                <h3><i class="bi bi-calendar-week"></i> Cronograma</h3>
+                <label class="bkp-switch">
+                    <input type="checkbox" [(ngModel)]="cfg.activo" (ngModelChange)="guardarCfg()">
+                    <span class="bkp-slider"></span>
+                    <span class="bkp-switch-txt">{{ cfg.activo ? 'Programación activa' : 'Programación pausada' }}</span>
+                </label>
+            </div>
+
+            <div class="bkp-form" [class.bkp-form-off]="!cfg.activo">
+                <div class="bkp-field">
+                    <label>Respaldo FULL automático</label>
+                    <select [(ngModel)]="presetSel" (ngModelChange)="onPresetChange()">
+                        <option *ngFor="let p of presets" [value]="p.cron">{{ p.label }}</option>
+                    </select>
+                </div>
+                <div class="bkp-field" *ngIf="esCronPersonalizado">
+                    <label>Expresión cron (6 campos de Spring)</label>
+                    <input type="text" [(ngModel)]="cfg.cron" placeholder="0 0 23 * * SUN" spellcheck="false">
+                    <small class="bkp-hint">seg&nbsp;min&nbsp;hora&nbsp;día&nbsp;mes&nbsp;día-semana — ej. <code>0 30 2 * * MON-FRI</code></small>
+                </div>
+                <div class="bkp-field" *ngIf="cfg.cronDescripcion && !esCronPersonalizado">
+                    <label>&nbsp;</label>
+                    <span class="bkp-cron-desc"><i class="bi bi-info-circle"></i> {{ cfg.cronDescripcion }}</span>
+                </div>
+
+                <div class="bkp-retencion">
+                    <span class="bkp-retencion-title"><i class="bi bi-recycle"></i> Retención GFS de copias automáticas</span>
+                    <div class="bkp-retencion-grid">
+                        <div class="bkp-field bkp-field-sm">
+                            <label>Diarias</label>
+                            <input type="number" min="0" max="365" [(ngModel)]="cfg.retenerDiarios">
                         </div>
-                    </td>
-                </tr>
-                <tr *ngIf="respaldos.length === 0">
-                    <td colspan="4">
-                        <div class="bkp-empty">
-                            <i class="bi bi-database"></i>
-                            <p>Todavía no hay respaldos</p>
-                            <span>Usa «Generar respaldo ahora» para crear el primero.</span>
+                        <div class="bkp-field bkp-field-sm">
+                            <label>Semanales</label>
+                            <input type="number" min="0" max="104" [(ngModel)]="cfg.retenerSemanales">
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        <div class="bkp-field bkp-field-sm">
+                            <label>Mensuales</label>
+                            <input type="number" min="0" max="120" [(ngModel)]="cfg.retenerMensuales">
+                        </div>
+                    </div>
+                    <small class="bkp-hint">
+                        Se conservan las {{ cfg.retenerDiarios }} más recientes, luego 1 por semana ({{ cfg.retenerSemanales }})
+                        y 1 por mes ({{ cfg.retenerMensuales }}). Las copias <b>manuales</b> y por <b>evento</b> nunca se borran solas.
+                    </small>
+                </div>
+
+                <!-- Diferencial (Fase 2) -->
+                <div class="bkp-retencion">
+                    <span class="bkp-retencion-title">
+                        <i class="bi bi-layers-half"></i> Respaldo diferencial (filas cambiadas desde el último FULL)
+                    </span>
+                    <label class="bkp-switch bkp-switch-inline">
+                        <input type="checkbox" [(ngModel)]="cfg.diferencialActivo" (ngModelChange)="guardarCfg()">
+                        <span class="bkp-slider"></span>
+                        <span class="bkp-switch-txt">{{ cfg.diferencialActivo ? 'Diferencial automático activo' : 'Diferencial automático apagado' }}</span>
+                    </label>
+                    <div class="bkp-field" [class.bkp-form-off]="!cfg.diferencialActivo">
+                        <select [(ngModel)]="presetDifSel" (ngModelChange)="onPresetDifChange()">
+                            <option *ngFor="let p of presetsDif" [value]="p.cron">{{ p.label }}</option>
+                        </select>
+                    </div>
+                    <div class="bkp-field" *ngIf="esCronDifPersonalizado && cfg.diferencialActivo">
+                        <input type="text" [(ngModel)]="cfg.cronDiferencial" placeholder="0 30 2 * * WED,FRI" spellcheck="false">
+                    </div>
+                    <small class="bkp-hint" *ngIf="cfg.cronDiferencialDescripcion && !esCronDifPersonalizado">
+                        <i class="bi bi-info-circle"></i> {{ cfg.cronDiferencialDescripcion }}
+                    </small>
+                </div>
+
+                <!-- Retención de WAL (Fase 2) -->
+                <div class="bkp-retencion">
+                    <span class="bkp-retencion-title"><i class="bi bi-clock-history"></i> Retención de WAL archivado (PITR)</span>
+                    <div class="bkp-field bkp-field-sm">
+                        <label>Días a conservar</label>
+                        <input type="number" min="0" max="365" [(ngModel)]="cfg.retenerDiasWal">
+                    </div>
+                    <small class="bkp-hint">
+                        La limpieza de WAL respeta este valor y nunca borra segmentos que necesite la base física más antigua.
+                    </small>
+                </div>
+
+                <div class="bkp-form-actions">
+                    <button class="bkp-btn bkp-btn-primary" (click)="guardarCfg()" [disabled]="guardandoCfg">
+                        <span class="bkp-spinner bkp-spinner-sm" *ngIf="guardandoCfg"></span>
+                        {{ guardandoCfg ? 'Guardando…' : 'Guardar cronograma' }}
+                    </button>
+                    <button class="bkp-btn bkp-btn-ghost-line" (click)="aplicarRetencionAhora()" [disabled]="aplicandoRetencion">
+                        <i class="bi bi-recycle"></i> {{ aplicandoRetencion ? 'Aplicando…' : 'Aplicar retención ahora' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── WAL / PITR (Fase 2) ─────────────────────────────────────────── -->
+        <div class="bkp-panel" *ngIf="wal as w">
+            <div class="bkp-panel-head">
+                <h3><i class="bi bi-hourglass-split"></i> Incremental — archivado de WAL (PITR)</h3>
+                <span class="bkp-badge" [class.bkp-ok]="w.archivadoActivo" [class.bkp-fail]="!w.archivadoActivo">
+                    {{ w.archivadoActivo ? 'ARCHIVADO ACTIVO' : 'ARCHIVADO INACTIVO' }}
+                </span>
+            </div>
+
+            <div class="bkp-note" *ngIf="w.advertencia" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">
+                <i class="bi bi-exclamation-triangle"></i><span>{{ w.advertencia }}</span>
+            </div>
+
+            <div class="bkp-cards">
+                <div class="bkp-card-stat">
+                    <span class="bkp-stat-label"><i class="bi bi-layers"></i> Segmentos archivados</span>
+                    <span class="bkp-stat-value bkp-stat-value-sm">{{ w.segmentosEnDisco }} en disco · {{ w.tamanoArchivadoLegible }}</span>
+                    <span class="bkp-stat-sub">{{ w.segmentosArchivados }} archivados en total · {{ w.fallos }} fallos</span>
+                </div>
+                <div class="bkp-card-stat">
+                    <span class="bkp-stat-label"><i class="bi bi-arrow-down-circle"></i> Último segmento</span>
+                    <span class="bkp-stat-value bkp-stat-value-sm bkp-mono">{{ w.ultimoSegmento || '—' }}</span>
+                    <span class="bkp-stat-sub">{{ w.ultimoArchivado ? fecha(w.ultimoArchivado) : 'sin archivar aún' }}</span>
+                </div>
+                <div class="bkp-card-stat">
+                    <span class="bkp-stat-label"><i class="bi bi-rewind-circle"></i> PITR disponible desde</span>
+                    <span class="bkp-stat-value bkp-stat-value-sm">{{ w.pitrDisponibleDesde }}</span>
+                    <span class="bkp-stat-sub">wal_level = {{ w.walLevel || '—' }} · timeout {{ w.archiveTimeoutSegundos }}s</span>
+                </div>
+            </div>
+
+            <div class="bkp-form-actions">
+                <button class="bkp-btn bkp-btn-ghost-line" (click)="switchWal()" [disabled]="walOcupado==='switch' || !w.archivadoActivo">
+                    <span class="bkp-spinner bkp-spinner-sm" *ngIf="walOcupado==='switch'"></span>
+                    <i class="bi bi-fast-forward" *ngIf="walOcupado!=='switch'"></i> Forzar cierre de segmento
+                </button>
+                <button class="bkp-btn bkp-btn-ghost-line" (click)="limpiarWal()" [disabled]="walOcupado==='limpiar' || !w.archivadoActivo">
+                    <span class="bkp-spinner bkp-spinner-sm" *ngIf="walOcupado==='limpiar'"></span>
+                    <i class="bi bi-recycle" *ngIf="walOcupado!=='limpiar'"></i> Limpiar WAL viejo
+                </button>
+                <button class="bkp-btn bkp-btn-primary" (click)="crearBaseFisica()" [disabled]="walOcupado==='base'">
+                    <span class="bkp-spinner bkp-spinner-sm" *ngIf="walOcupado==='base'"></span>
+                    <i class="bi bi-hdd-stack" *ngIf="walOcupado!=='base'"></i> {{ walOcupado==='base' ? 'Creando base…' : 'Crear base física' }}
+                </button>
+            </div>
+
+            <div class="bkp-table-scroll" style="margin-top:14px;" *ngIf="w.basesFisicas.length">
+                <table class="bkp-table">
+                    <thead><tr><th>Base física</th><th class="bkp-num">Tamaño</th><th>Fecha</th><th class="bkp-center">Acciones</th></tr></thead>
+                    <tbody>
+                        <tr *ngFor="let b of w.basesFisicas">
+                            <td><span class="bkp-file"><i class="bi bi-hdd-stack"></i><span class="bkp-file-name">{{ b.nombre }}</span></span></td>
+                            <td class="bkp-num">{{ b.tamanoLegible }}</td>
+                            <td class="bkp-fecha">{{ fecha(b.fechaCreacion) }}</td>
+                            <td class="bkp-center">
+                                <button class="bkp-ico bkp-ico-danger" title="Eliminar" (click)="eliminarBase(b)"><i class="bi bi-trash3"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── TABLA DE RESPALDOS ──────────────────────────────────────────── -->
+        <div class="bkp-panel">
+            <div class="bkp-panel-head">
+                <h3><i class="bi bi-archive"></i> Copias existentes</h3>
+            </div>
+            <div class="bkp-note">
+                <i class="bi bi-info-circle"></i>
+                <span><b>Descarga</b> las copias para conservarlas fuera del servidor. <b>Restaurar</b> reemplaza
+                    todo el contenido actual de la base y no se puede deshacer.</span>
+            </div>
+            <div class="bkp-table-scroll">
+                <table class="bkp-table">
+                    <thead>
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Tipo</th>
+                            <th>Origen</th>
+                            <th class="bkp-num">Tamaño</th>
+                            <th>Fecha</th>
+                            <th class="bkp-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let r of respaldos" [class.bkp-row-busy]="ocupado === r.nombre">
+                            <td><span class="bkp-file"><i class="bi bi-file-earmark-zip"></i>
+                                <span class="bkp-file-name">{{ r.nombre }}</span></span></td>
+                            <td><span class="bkp-badge" [ngClass]="tipoClase(r.tipo)">{{ tipoTexto(r.tipo) }}</span></td>
+                            <td><span class="bkp-badge" [ngClass]="origenClase(r.origen)">{{ origenTexto(r.origen) }}</span></td>
+                            <td class="bkp-num">{{ r.tamanoLegible }}</td>
+                            <td class="bkp-fecha">{{ fecha(r.fechaCreacion) }}</td>
+                            <td class="bkp-center">
+                                <div class="bkp-actions">
+                                    <span class="bkp-spinner bkp-spinner-sm" *ngIf="ocupado === r.nombre"></span>
+                                    <button class="bkp-ico" title="Descargar" [disabled]="ocupado === r.nombre" (click)="descargar(r)">
+                                        <i class="bi bi-download"></i></button>
+                                    <button class="bkp-ico" title="Restaurar esta copia" [disabled]="ocupado === r.nombre" (click)="restaurar(r)">
+                                        <i class="bi bi-arrow-counterclockwise"></i></button>
+                                    <button class="bkp-ico bkp-ico-danger" title="Eliminar" [disabled]="ocupado === r.nombre" (click)="eliminar(r)">
+                                        <i class="bi bi-trash3"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="respaldos.length === 0">
+                            <td colspan="6"><div class="bkp-empty"><i class="bi bi-database"></i>
+                                <p>Todavía no hay respaldos</p>
+                                <span>Genera uno ahora o espera al respaldo automático programado.</span></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── BITÁCORA DE PRUEBAS ─────────────────────────────────────────── -->
+        <div class="bkp-panel">
+            <div class="bkp-panel-head">
+                <h3><i class="bi bi-clipboard2-pulse"></i> Pruebas de restauración</h3>
+                <button class="bkp-btn bkp-btn-ghost-line" (click)="abrirModalPrueba()" [disabled]="respaldos.length === 0">
+                    <i class="bi bi-plus-lg"></i> Registrar prueba
+                </button>
+            </div>
+            <div class="bkp-note">
+                <i class="bi bi-info-circle"></i>
+                <span>El plan exige probar la restauración <b>mensualmente</b>: restaurar la última copia en una
+                    instancia desechable y verificar los conteos. Registra aquí cada prueba.</span>
+            </div>
+            <div class="bkp-table-scroll">
+                <table class="bkp-table">
+                    <thead>
+                        <tr><th>Fecha</th><th>Respaldo</th><th>Resultado</th><th>Responsable</th><th>Notas</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of pruebas">
+                            <td class="bkp-fecha">{{ fecha(p.fecha) }}</td>
+                            <td><span class="bkp-file-name">{{ p.respaldoNombre }}</span></td>
+                            <td><span class="bkp-badge" [class.bkp-ok]="p.resultado==='EXITOSA'" [class.bkp-fail]="p.resultado==='FALLIDA'">{{ p.resultado }}</span></td>
+                            <td>{{ p.responsable || '—' }}</td>
+                            <td class="bkp-notas">{{ p.notas || '—' }}</td>
+                        </tr>
+                        <tr *ngIf="pruebas.length === 0">
+                            <td colspan="5"><div class="bkp-empty bkp-empty-sm">
+                                <p>Sin pruebas registradas</p>
+                                <span>Registra la primera con el botón de arriba.</span></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </ng-container>
+
+    <!-- ── MODAL: registrar prueba ────────────────────────────────────────── -->
+    <div class="bkp-modal-overlay" *ngIf="modalPrueba" (click)="cerrarModalPrueba()">
+        <div class="bkp-modal" (click)="$event.stopPropagation()">
+            <h3><i class="bi bi-clipboard2-check"></i> Registrar prueba de restauración</h3>
+            <div class="bkp-field">
+                <label>Respaldo probado</label>
+                <select [(ngModel)]="pruebaForm.respaldoNombre">
+                    <option *ngFor="let r of respaldos" [value]="r.nombre">{{ r.nombre }}</option>
+                </select>
+            </div>
+            <div class="bkp-field">
+                <label>Resultado</label>
+                <select [(ngModel)]="pruebaForm.resultado">
+                    <option value="EXITOSA">Exitosa</option>
+                    <option value="FALLIDA">Fallida</option>
+                </select>
+            </div>
+            <div class="bkp-field">
+                <label>Responsable <small>(opcional)</small></label>
+                <input type="text" [(ngModel)]="pruebaForm.responsable" placeholder="Tu nombre">
+            </div>
+            <div class="bkp-field">
+                <label>Notas <small>(opcional)</small></label>
+                <textarea rows="3" [(ngModel)]="pruebaForm.notas" placeholder="Conteos verificados, instancia usada, incidencias…"></textarea>
+            </div>
+            <div class="bkp-modal-actions">
+                <button class="bkp-btn bkp-btn-ghost-line" (click)="cerrarModalPrueba()">Cancelar</button>
+                <button class="bkp-btn bkp-btn-primary" (click)="guardarPrueba()" [disabled]="guardandoPrueba">
+                    {{ guardandoPrueba ? 'Guardando…' : 'Registrar' }}
+                </button>
+            </div>
+        </div>
     </div>
 </div>

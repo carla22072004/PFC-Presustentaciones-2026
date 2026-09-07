@@ -4,12 +4,37 @@ services:
     image: postgres:15-alpine@sha256:fe0737ba566a2c5b2a28f34433c0a423261900ec17b9bf7ad115e1aae7e57f1b
     container_name: amz-postgres
     restart: unless-stopped
+    # Fase 2 del plan de respaldos: archivado continuo de WAL para PITR (recuperación a un
+    # punto en el tiempo). El wrapper crea y da permisos al directorio de archivado (un
+    # volumen nombrado arranca root:root) antes de ceder el control al entrypoint oficial.
+    # archive_timeout=900 -> cierra un segmento cada 15 min aunque no se llene, para que la
+    # granularidad de PITR nunca supere los 15 min y el panel muestre actividad.
+    command:
+      - "sh"
+      - "-c"
+      - >
+        mkdir -p /var/lib/postgresql/wal_archive &&
+        chown postgres:postgres /var/lib/postgresql/wal_archive &&
+        chmod 777 /var/lib/postgresql/wal_archive &&
+        HBA=/var/lib/postgresql/data/pg_hba.conf;
+        if [ -f "$$HBA" ] && ! grep -q 'host.*replication.*all.*all' "$$HBA"; then
+          echo 'host replication all all scram-sha-256' >> "$$HBA";
+        fi &&
+        exec docker-entrypoint.sh postgres
+        -c wal_level=replica
+        -c archive_mode=on
+        -c "archive_command=test ! -f /var/lib/postgresql/wal_archive/%f && cp %p /var/lib/postgresql/wal_archive/%f"
+        -c archive_timeout=900
+        -c max_wal_senders=5
     environment:
       POSTGRES_DB: BdPresustentaciones
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgresAdmin}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_wal:/var/lib/postgresql/wal_archive
+      # Scripts que corren solo al inicializar un clúster nuevo (habilitar replicación para pg_basebackup).
+      - ./database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
       interval: 10s
@@ -50,6 +75,9 @@ services:
       # para que sobrevivan a `docker compose up --build` / reinicios (se borra solo con
       # `docker compose down -v`).
       - backend_uploads:/app/uploads
+      # Mismo volumen de WAL archivado que monta postgres: el panel PITR lo inspecciona
+      # (contar segmentos, tamano, fecha del mas antiguo) y aplica la limpieza de WAL.
+      - postgres_wal:/wal
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,3 +114,6 @@ services:
 volumes:
   postgres_data:
   backend_uploads:
+  # WAL archivado para PITR (Fase 2). Compartido entre postgres (escribe) y backend
+  # (inspecciona / limpia). Se borra con `docker compose down -v`.
+  postgres_wal:
