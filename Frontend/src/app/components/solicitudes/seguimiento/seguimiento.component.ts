@@ -39,8 +39,11 @@ export class SeguimientoComponent implements OnInit {
     
     this.solicitudService.obtenerSeguimiento(this.solicitudId).subscribe({
       next: (response) => {
-        if (response && response.data) {
-          this.seguimiento = response.data;
+        // El authInterceptor ya desempaqueta el ResponseWrapper: 'response' es el
+        // SeguimientoDTO directamente (no viene envuelto en { data: ... }).
+        const dto: SeguimientoDTO = response?.data ?? response;
+        if (dto && Array.isArray(dto.etapas)) {
+          this.seguimiento = dto;
         } else {
           this.error = 'Error al cargar los datos del seguimiento.';
         }
@@ -54,6 +57,6 @@ export class SeguimientoComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/solicitudes/listar']);
+    this.router.navigate(['/dashboard/solicitudes/mis-tramites']);
   }
 }

@@ -76,6 +76,23 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
         return { nombre: '', apellido: '', email: '', password: '', rol: 'ESTUDIANTE' };
     }
 
+    /**
+     * Extrae el motivo real de un error del backend. El ResponseWrapper de la API usa el
+     * campo `message` (y `errors` con el detalle campo a campo en fallos de validación);
+     * antes se leían `mensaje`/`error`, que no existen, así que siempre caía al texto genérico.
+     */
+    private mensajeError(err: any, fallback: string): string {
+        const body = err?.error;
+        // En fallos de validación (@Valid) el detalle útil está en `errors` campo a campo;
+        // `message` solo trae el genérico "Error de validación en los datos enviados".
+        if (body?.errors && typeof body.errors === 'object') {
+            const detalles = Object.values(body.errors).filter((v): v is string => typeof v === 'string');
+            if (detalles.length) return detalles.join(' ');
+        }
+        if (body?.message) return body.message;
+        return fallback;
+    }
+
     cargar(): void {
         this.cargando = true;
         this.usuarioService.listarPaginado(this.paginaActual, this.tamanioPagina, this.filtroTexto || undefined).subscribe({
@@ -146,8 +163,7 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.guardando = false;
-                const msg = err?.error?.mensaje || err?.error?.error || 'No se pudo crear el usuario.';
-                this.notification.error(msg, 'Error');
+                this.notification.error(this.mensajeError(err, 'No se pudo crear el usuario.'), 'Error');
                 this.cdr.markForCheck();
             }
         });
@@ -188,8 +204,7 @@ export class GestionUsuariosComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.guardandoEdicion = false;
-                const msg = err?.error?.mensaje || err?.error?.error || 'No se pudo actualizar el usuario.';
-                this.notification.error(msg, 'Error');
+                this.notification.error(this.mensajeError(err, 'No se pudo actualizar el usuario.'), 'Error');
                 this.cdr.markForCheck();
             }
         });
