@@ -21,10 +21,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     url = url.replace('http://127.0.0.1:8080', '');
   }
 
+  // Los endpoints de autenticación no deben llevar el header Authorization: si el token
+  // guardado está caducado, el backend respondía 401 "Token expirado" ANTES de procesar el
+  // login y el usuario quedaba bloqueado sin poder volver a entrar. Login/refresh/register
+  // no necesitan un token previo.
+  const esEndpointAuth = /\/auth\/(login|refresh|register)$/.test(url);
+
   // Clonar la petición con la nueva URL y el header de autenticación
   const clonedReq = req.clone({
     url,
-    setHeaders: token ? { Authorization: `Bearer ${token}` } : {}
+    setHeaders: token && !esEndpointAuth ? { Authorization: `Bearer ${token}` } : {}
   });
 
   return next(clonedReq).pipe(

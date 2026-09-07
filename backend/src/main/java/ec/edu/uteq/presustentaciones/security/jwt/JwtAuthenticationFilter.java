@@ -25,6 +25,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
 
+    /**
+     * Endpoints de autenticación que nunca deben pasar por el filtro JWT.
+     *
+     * El interceptor del frontend adjunta el header {@code Authorization: Bearer <token>} a
+     * TODAS las peticiones mientras exista un token en localStorage, incluida la de login. Si
+     * ese token está caducado, este filtro respondía 401 "Token expirado" y hacía {@code return}
+     * antes de que se ejecutara el handler de login: el usuario quedaba bloqueado sin poder
+     * volver a entrar (solo se recuperaba borrando el localStorage a mano). Estos endpoints no
+     * requieren autenticación previa, así que se saltan el filtro por completo.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.contains("/auth/login")
+                || path.contains("/auth/refresh")
+                || path.contains("/auth/register");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

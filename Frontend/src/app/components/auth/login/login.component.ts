@@ -40,7 +40,15 @@ export class LoginComponent implements OnInit {
     onSubmit(): void {
         if (this.loginForm.valid) {
             this.cargando = true;
-            this.authService.login(this.loginForm.value).subscribe({
+            // Recorta espacios accidentales (el error más común al pegar credenciales): un
+            // espacio al final del correo o de la contraseña hacía que BCrypt no coincidiera
+            // y el backend devolviera 401 "Correo o contraseña incorrectos".
+            const raw = this.loginForm.value;
+            const credenciales = {
+                email: (raw.email || '').trim(),
+                password: (raw.password || '').trim()
+            };
+            this.authService.login(credenciales).subscribe({
                 next: () => {
                     this.cargando = false;
                     this.cdr.markForCheck();
