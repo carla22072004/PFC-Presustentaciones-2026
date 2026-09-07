@@ -5,6 +5,7 @@ import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
 import ec.edu.uteq.presustentaciones.security.RateLimitingFilter;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,15 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
     private final RateLimitingFilter rateLimitingFilter;
+
+    // Hallazgo real (despliegue en Railway, 2026-09-06): la lista de origenes CORS estaba fija
+    // en codigo y solo incluia localhost -- el login fallaba con "Invalid CORS request" desde
+    // el dominio publico real del frontend, aunque la peticion es same-origin desde el
+    // navegador (Spring Security igual exige que el header Origin este en la lista). Se agrega
+    // via variable de entorno (coma-separado) en vez de hardcodear el dominio de Railway, para
+    // no tener que volver a compilar si el dominio cambia.
+    @Value("${cors.allowed-origins-extra:}")
+    private String corsAllowedOriginsExtra;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -102,13 +112,22 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(
+        java.util.List<String> origins = new java.util.ArrayList<>(Arrays.asList(
                 "http://localhost:4200",
                 "http://127.0.0.1:4200",
                 "http://localhost:3000",
                 "http://localhost",
                 "http://localhost:80"
         ));
+        if (corsAllowedOriginsExtra != null && !corsAllowedOriginsExtra.isBlank()) {
+            for (String origin : corsAllowedOriginsExtra.split(",")) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty()) {
+                    origins.add(trimmed);
+                }
+            }
+        }
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         config.setAllowCredentials(true);
