@@ -44,6 +44,12 @@ services:
       # vez de arrancar en silencio con un secreto de tutorial publico (ver application.properties).
       - "JWT_SECRET=${JWT_SECRET:?Falta JWT_SECRET -- copia .env.example a .env y genera uno real con openssl rand -hex 32}"
       - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
+    volumes:
+      # Archivos generados en tiempo de ejecucion: PDFs de actas y respaldos .dump que
+      # genera el apartado "Gestion de Respaldos" del administrador. Volumen con nombre
+      # para que sobrevivan a `docker compose up --build` / reinicios (se borra solo con
+      # `docker compose down -v`).
+      - backend_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,3 +85,4 @@ services:
 
 volumes:
   postgres_data:
+  backend_uploads:

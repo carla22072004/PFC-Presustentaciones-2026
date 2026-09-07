@@ -1,0 +1,86 @@
+<div class="bkp-wrapper">
+    <div class="bkp-header">
+        <div class="bkp-header-text">
+            <h2 class="bkp-title"><i class="bi bi-database-fill-down"></i> Gestión de Respaldos</h2>
+            <p class="bkp-subtitle">
+                Genera, descarga, restaura y elimina respaldos completos de la base de datos
+                (dumps <code>pg_dump</code> en formato custom comprimido).
+            </p>
+        </div>
+        <div class="bkp-header-actions">
+            <button class="bkp-btn bkp-btn-ghost" (click)="cargar()" [disabled]="cargando" title="Recargar lista">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button class="bkp-btn bkp-btn-primary" (click)="generar()" [disabled]="generando">
+                <span class="bkp-spinner bkp-spinner-sm" *ngIf="generando"></span>
+                <i class="bi bi-plus-circle" *ngIf="!generando"></i>
+                <span>{{ generando ? 'Generando respaldo…' : 'Generar respaldo ahora' }}</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="bkp-note">
+        <i class="bi bi-info-circle"></i>
+        <span>
+            Los respaldos se guardan en el servidor. <strong>Descárgalos</strong> para conservarlos
+            fuera de él. <strong>Restaurar</strong> reemplaza todo el contenido actual de la base y
+            no se puede deshacer.
+        </span>
+    </div>
+
+    <div class="bkp-loading" *ngIf="cargando">
+        <span class="bkp-spinner"></span>
+        <p>Cargando respaldos…</p>
+    </div>
+
+    <div class="bkp-card" *ngIf="!cargando">
+        <table class="bkp-table">
+            <thead>
+                <tr>
+                    <th>Archivo</th>
+                    <th class="bkp-num">Tamaño</th>
+                    <th>Fecha de creación</th>
+                    <th class="bkp-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let r of respaldos" [class.bkp-row-busy]="ocupado === r.nombre">
+                    <td>
+                        <span class="bkp-file">
+                            <i class="bi bi-file-earmark-zip"></i>
+                            <span class="bkp-file-name">{{ r.nombre }}</span>
+                        </span>
+                    </td>
+                    <td class="bkp-num">{{ r.tamanoLegible }}</td>
+                    <td class="bkp-fecha">{{ fecha(r.fechaCreacion) }}</td>
+                    <td class="bkp-center">
+                        <div class="bkp-actions">
+                            <span class="bkp-spinner bkp-spinner-sm" *ngIf="ocupado === r.nombre"></span>
+                            <button class="bkp-ico" title="Descargar" [disabled]="ocupado === r.nombre"
+                                    (click)="descargar(r)">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button class="bkp-ico" title="Restaurar esta copia" [disabled]="ocupado === r.nombre"
+                                    (click)="restaurar(r)">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                            <button class="bkp-ico bkp-ico-danger" title="Eliminar" [disabled]="ocupado === r.nombre"
+                                    (click)="eliminar(r)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr *ngIf="respaldos.length === 0">
+                    <td colspan="4">
+                        <div class="bkp-empty">
+                            <i class="bi bi-database"></i>
+                            <p>Todavía no hay respaldos</p>
+                            <span>Usa «Generar respaldo ahora» para crear el primero.</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
