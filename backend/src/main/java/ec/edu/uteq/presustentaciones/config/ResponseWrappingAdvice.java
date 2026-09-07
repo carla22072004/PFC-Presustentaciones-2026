@@ -31,6 +31,18 @@ public class ResponseWrappingAdvice implements ResponseBodyAdvice<Object> {
             return body;
         }
 
+        // Respuestas binarias (byte[] / Resource, p. ej. la descarga de un PDF de acta o de
+        // un .dump de respaldo): el converter las escribe crudas y hace (byte[]) body -- si
+        // aquí se envolvieran en un ResponseWrapper, ese cast revienta con ClassCastException
+        // y el cliente recibe un 400 genérico en vez del archivo o de un 404 limpio. También
+        // se deja pasar un body nulo (ResponseEntity ...build() sin cuerpo): no hay nada que
+        // envolver.
+        if (body == null
+                || body instanceof byte[]
+                || body instanceof org.springframework.core.io.Resource) {
+            return body;
+        }
+
         // Evitar envolver endpoints de documentación (Swagger), monitoreo (Actuator) y archivos binarios (PDF)
         String path = request.getURI().getPath();
         if (path.contains("/v3/api-docs") || 
