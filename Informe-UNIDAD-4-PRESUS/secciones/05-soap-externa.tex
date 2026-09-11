@@ -45,7 +45,7 @@ validación de docentes) se implementará \texttt{WebClient} con configuración 
 Las APIs externas imponen límites de \textit{rate limiting}; por ello sus respuestas deben cachearse para evitar
 superar cuotas y reducir la latencia. El patrón \textbf{cache-aside} consiste en consultar primero Redis; si hay
 \textit{hit}, se devuelve la respuesta cacheada; si hay \textit{miss}, se consulta el origen, se almacena en
-caché con un TTL y se responde. La configuración usará \texttt{@Cacheable("api_externa")} y un TTL por defecto en Redis.
+caché con un TTL y se responde. La configuración usará \texttt{@Cacheable("api\_externa")} y un TTL por defecto en Redis.
 
 \subsection{Tendencias: Jamstack y APIs en 2025}
 
