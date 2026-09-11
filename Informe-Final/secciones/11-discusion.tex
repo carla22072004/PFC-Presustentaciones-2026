@@ -2,13 +2,14 @@
 \label{sec:discusion}
 
 \subsection*{RQ1: ¿Puede automatizarse el flujo completo con trazabilidad verificable?}
-Sí, parcialmente verificado. Los 15 requisitos funcionales están implementados y el flujo completo
+Sí, parcialmente verificado. Los 90 requisitos (64 funcionales, 26 no funcionales; SRS v1.0.1) están
+implementados o planificados según su estado declarado, y el flujo completo
 (solicitud $\to$ anteproyecto $\to$ jurado $\to$ cronograma $\to$ evaluación $\to$
 acta) se verificó manualmente end-to-end contra la topología de producción. La trazabilidad
-\textbf{automatizada} cubre 12 de 15 requisitos con prueba dedicada --- 8 Must (100\,\%) más
-RF-07, RF-13, RF-14 y RF-15 (Sección~\ref{sec:requisitos}) --- quedando RF-08, RF-09 y RF-10 (Could/Should)
-sin prueba automatizada. La respuesta a RQ1 es ``sí, funcionalmente'' y ``80\,\%, en términos de verificación
-automatizada''.
+\textbf{automatizada} cubre 36 de 50 requisitos Must con prueba dedicada (72\,\%; Sección~\ref{sec:requisitos});
+los 14 Must restantes se enumeran uno por uno, con lo que falta en cada uno, en la matriz de trazabilidad
+(\texttt{docs/trazabilidad/matriz.csv}, Anexo~\ref{anexo:matriz}). La respuesta a RQ1 es ``sí, funcionalmente'' y
+``72\,\%, en términos de verificación automatizada de los requisitos Must''.
 
 \subsection*{RQ2: ¿Cuál es el efecto cuantificable de la caché sobre la latencia?}
 Respondida con evidencia estadística fuerte: reducción de latencia de 13.9$\times$ (109.62\,ms a
@@ -50,7 +51,7 @@ imágenes Docker por digest, y una afirmación falsa sobre custodia de formulari
 firmados. En cada caso, la corrección fue reemplazar el dato fabricado por una medición real o una
 declaración explícita de ausencia --- nunca por otro dato fabricado más plausible. Esto sugiere que sí es
 posible mantener honestidad bajo presión de plazos, al costo de reportar cifras menos favorables en su
-momento (63.17\,\% de cobertura de líneas, hoy 81.03\,\% tras cerrar la brecha de la capa de servicios, en
+momento (63.17\,\% de cobertura de líneas, hoy 69.83\,\% global y 70.38\,\% en controladores, en
 vez de un ``$>$60\,\%'' fabricado; SUS ``pendiente'' en vez de ``91.25/100''), lo cual es
 precisamente el trade-off que esta guía exige explícitamente priorizar.
 \newpage

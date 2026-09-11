@@ -3,9 +3,9 @@
 
 Este trabajo presentó el diseño, implementación y evaluación empírica del Sistema de Gestión de
 Pre-Sustentaciones UTEQ, siguiendo Design Science Research \cite{peffers2007} de forma instanciada y
-verificable. Los 15 requisitos funcionales están implementados (12 verificados con prueba automatizada
-real) y el flujo académico completo se verificó funcionando end-to-end contra una topología de
-producción real. La evaluación empírica combina
+verificable. Los 90 requisitos del SRS v1.0.1 (64 funcionales, 26 no funcionales) están implementados o planificados
+según su estado declarado (36 de 50 Must verificados con prueba automatizada real, 72\,\%) y el flujo
+académico completo se verificó funcionando end-to-end contra una topología de producción real. La evaluación empírica combina
 estadística descriptiva e inferencial genuina --- el hallazgo más sólido es la reducción de latencia de
 13.9$\times$ por efecto de caché Redis, con significancia estadística fuerte ($p < 10^{-10}$) y tamaño
 de efecto máximo --- y auditoría de seguridad multi-herramienta que confirma ausencia de inyección SQL en
@@ -23,7 +23,7 @@ anteriores (usabilidad, rendimiento web, evidencia de trazabilidad, integridad d
 despliegue, custodia de consentimientos informados) y su corrección sistemática, documentada de forma
 trazable en \texttt{docs/mediciones/DATA-PROVENANCE.md} y en la bitácora de cada fase del proyecto. Esa
 corrección no fue cosmética: implicó reportar una cobertura de código de 63.17\,\% de líneas en ese
-momento (hoy 81.03\,\%, ver Sección~\ref{sec:evaluacion}) en vez de un ``$>$60\,\%'' previamente afirmado
+momento (hoy 69.83\,\% global, ver Sección~\ref{sec:evaluacion}) en vez de un ``$>$60\,\%'' previamente afirmado
 sin evidencia, y declarar la usabilidad como ``sin datos'' en vez de mantener un 91.25/100 fabricado.
 
 Esa misma lógica de corrección continua se aplicó también a la evaluación del propio proyecto: una
@@ -32,7 +32,7 @@ sobre 10. En vez de tratar esa cifra como un resultado a superar en el reporte f
 como el punto de partida real, y las correcciones descritas en este informe (el cierre de los 6 fallos de
 autorización de la Sección~\ref{sec:seguridad-corregida}, la sincronización de las secuencias de
 PostgreSQL, los índices en columnas de alto tráfico, y el crecimiento de 109 a 559 pruebas automatizadas
-con la cobertura subiendo de 38.88\,\% a 81.03\,\% de líneas) como las acciones concretas y verificables
+con la cobertura subiendo de 38.88\,\% a 69.83\,\% de líneas) como las acciones concretas y verificables
 tomadas después de esa evaluación. Este informe no reporta ni infiere una nota final --- eso corresponde
 a una evaluación posterior por el docente-director, no a una autoevaluación del propio equipo.
 

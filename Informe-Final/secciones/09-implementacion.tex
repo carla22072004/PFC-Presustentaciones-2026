@@ -114,4 +114,24 @@ estudiante (fuente: \texttt{Frontend/public/img/MisTramites.png}).}
 (fuente: \texttt{Frontend/public/img/MiHorario.png}).}
 \label{fig:cap-horario}
 \end{figure}
+
+\subsection{Asistente virtual de ayuda (Chatbot)}
+\label{sec:chatbot}
+
+El sistema incluye un asistente de ayuda accesible desde cualquier pantalla autenticada
+(\texttt{ChatbotController}, endpoint \texttt{POST /api/v1/chatbot/ask}). No es un modelo de lenguaje:
+\texttt{ChatbotService} implementa un enrutador de intenciones por palabras clave sobre el mensaje del
+usuario (\texttt{solicitud}, \texttt{anteproyecto}, \texttt{notificación}, \texttt{perfil},
+\texttt{sustentación}, \texttt{contraseña}, \texttt{ayuda}), devolviendo una respuesta guía fija junto
+con una lista de opciones sugeridas para cada tema; si ningún patrón coincide, responde con un mensaje
+por defecto que remite a las preguntas frecuentes. La sesión se valida server-side
+(\texttt{SecurityContextHolder}) antes de procesar cualquier mensaje: un usuario no autenticado recibe
+una respuesta que le pide iniciar sesión, en vez de que la petición llegue a fallar sin explicación.
+
+Fue, hasta la auditoría del 2026-09-05, el único controlador del proyecto sin ninguna anotación de
+autorización (protegido solo por la regla global de \texttt{SecurityConfig}); se corrigió agregando
+\texttt{@PreAuthorize("isAuthenticated()")} a nivel de clase, el mismo nivel que otros controladores de
+consulta general cuya respuesta no depende del rol (Sección~\ref{sec:seguridad-corregida}). Tanto el
+controlador (\texttt{ChatbotControllerTest}) como el servicio (\texttt{ChatbotServiceTest}) tienen
+prueba automatizada dedicada, incluido el caso sin autenticar y la cobertura de cada rama de intención.
 \newpage

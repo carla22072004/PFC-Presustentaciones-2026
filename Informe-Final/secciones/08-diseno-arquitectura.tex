@@ -15,7 +15,7 @@ legibles/indexables de forma independiente del texto circundante en español:
     \item \textbf{Nivel 2 (Contenedores, Figura~\ref{fig:c4-contenedores}):} cuatro contenedores desplegables --- Frontend Angular (SPA),
     Backend Spring Boot (API REST), PostgreSQL 15 (persistencia), Redis 7 (caché), coordinados por nginx
     como proxy inverso.
-    \item \textbf{Nivel 3 (Componentes, Figura~\ref{fig:c4-componentes}):} 29 controladores REST, organizados por dominio (Auth,
+    \item \textbf{Nivel 3 (Componentes, Figura~\ref{fig:c4-componentes}):} 31 controladores REST, organizados por dominio (Auth,
     Solicitudes, Jurados, Cronograma, Evaluaciones, Actas, Notificaciones, Reportes, Salas, Usuarios,
     Anteproyectos, y otros de soporte), cada uno delegando a una capa de servicio y, para la lógica
     académica compleja, a procedimientos almacenados PL/pgSQL.
@@ -87,14 +87,14 @@ empírica) y a la Sección~\ref{sec:seguridad-corregida} (correcciones de seguri
 \toprule
 \textbf{Característica} & \textbf{Evidencia real en este proyecto} \\
 \midrule
-Adecuación funcional & 8/8 requisitos Must con prueba automatizada dedicada (100\,\%); 12/15 requisitos
-totales (80\,\%); matriz de trazabilidad de 15 filas validada contra el código real
-(Sección~\ref{sec:requisitos}). \\
+Adecuación funcional & 36/50 requisitos Must verificados (72\,\%); 90 requisitos totales (64
+funcionales + 26 no funcionales); matriz de trazabilidad de 90 filas validada contra el código real por
+\texttt{validate-traceability.sh} (Sección~\ref{sec:requisitos}). \\
 Eficiencia de desempeño & p95 de \texttt{http\_req\_duration} entre 6.17 y 8.53\,ms en caché caliente
 (5 corridas k6 independientes); prueba de Mann-Whitney U entre caché fría/caliente con
 $p = 3.02\times10^{-11}$ (Sección~\ref{sec:evaluacion}). \\
 Compatibilidad & API REST versionada (\texttt{/api/v1}) documentada con OpenAPI 3.0/Swagger UI; JSON como
-formato de intercambio estándar en los 29 controladores. \\
+formato de intercambio estándar en los 31 controladores. \\
 Usabilidad & Instrumento SUS \cite{brooke1996} construido y verificado por autotest, pero \textbf{sin
 datos reales todavía} ($N=0$) --- declarado explícitamente como brecha en vez de fabricado
 (Sección~\ref{sec:evaluacion}). \\
@@ -103,7 +103,7 @@ arranque, migraciones Flyway versionadas y reproducibles end-to-end. \\
 Seguridad & Auditoría OWASP ZAP (0 hallazgos High), SpotBugs/find-sec-bugs (0 SQL dinámico), 6 fallos
 reales de autorización (IDOR/mass-assignment) encontrados y corregidos por revisión manual dirigida
 (Sección~\ref{sec:seguridad-corregida}). \\
-Mantenibilidad & Arquitectura en capas (controlador/servicio/repositorio) con 29 controladores
+Mantenibilidad & Arquitectura en capas (controlador/servicio/repositorio) con 31 controladores
 organizados por dominio; 7 ADRs documentando decisiones y alternativas descartadas (Tabla~\ref{tab:adrs}). \\
 Portabilidad & Despliegue reproducible con Docker Compose y las tres imágenes base ancladas por digest
 SHA-256 (ADR-007); \textbf{sin despliegue público todavía} --- brecha declarada explícitamente

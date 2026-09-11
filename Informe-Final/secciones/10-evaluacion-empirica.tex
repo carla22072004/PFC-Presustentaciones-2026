@@ -186,23 +186,26 @@ fórmula de cálculo) se documenta en el Anexo B (Sección~\ref{anexo:sus}).
 
 \subsection{Cobertura de código}
 
-JaCoCo sobre 559 pruebas automatizadas reales (2026-09-06, \texttt{mvn clean verify} sobre Postgres/Redis
-reales en Docker, 0 fallos, ver \texttt{docs/mediciones/jacoco/2026-09-06-servicios/}): \textbf{81.03\,\%
-de líneas (3,148/3,885) y 64.39\,\% de ramas (1,016/1,578)} a nivel global. La cobertura de líneas supera
-con holgura el umbral RNF-04 de 60\,\%; la de ramas global sigue por debajo de 70\,\%, pero las dos capas
-de lógica de negocio del backend ya lo superan individualmente (ver más abajo), así que la brecha global
-restante se concentra en los componentes transversales de seguridad, declarada explícitamente en la
-Sección~\ref{sec:trabajo-futuro} en vez de omitirse.
+JaCoCo sobre 576 pruebas automatizadas reales (2026-09-11, \texttt{mvn clean verify} sobre Postgres/Redis
+reales en Docker, 6 fallos y 2 errores preexistentes en \texttt{SolicitudControllerTest} ajenos a esta
+corrida, ver \texttt{docs/mediciones/jacoco/2026-09-11-controllers-70/}): \textbf{69.83\,\% de líneas
+(3,203/4,587) y 54.40\,\% de ramas (1,026/1,886)} a nivel global. La cobertura de líneas supera el
+umbral RNF-04 de 60\,\%; la de ramas global sigue por debajo de 70\,\%. \textbf{Corrección de cifra
+(2026-09-11):} una corrida anterior (06-09) reportó 81.03\,\%/64.39\,\% global tras cerrar la capa de
+servicios; entre esa fecha y el cierre de esta entrega se agregó código de producción nuevo sin prueba
+proporcional, bajando la cifra global --- se declara la cifra real de la corrida de cierre, no la más
+favorable de las dos.
 
-El avance más relevante está en las dos capas que peor estaban: los controladores pasaron de
-8.75\,\%/0\,\% (líneas/ramas) el 30-08 a \textbf{72.00\,\% de líneas (833/1,157) y 77.41\,\% de ramas
-(257/332)}, y los servicios pasaron de 59.64\,\%/40.87\,\% el 05-09 a \textbf{87.57\,\% de líneas
-(2,176/2,485) y 70.04\,\% de ramas (706/1,008)} el 06-09 --- ambas capas superan ahora el umbral de
-70\,\% exigido en líneas \emph{y} en ramas a la vez. Los controladores se cerraron con 158 pruebas nuevas
-en 11 clases, priorizando los que exponen procedimientos almacenados (\texttt{Reporte}, \texttt{Solicitud},
-\texttt{Jurado}, \texttt{Tutoria}, \texttt{Evaluacion}, \texttt{Cronograma}, \texttt{Tutor}) y los dos
-mayores huecos de ramas (\texttt{Catalogo}, con 102 ramas sin ejercitar, y \texttt{Rol}/\texttt{Permiso},
-que concentran las salvaguardas de administración). Los servicios se cerraron con 164 pruebas nuevas en
+El foco de esta corrida fue el único paquete que había quedado bajo el umbral tras ese retroceso: los
+controladores, que habían llegado a 72.00\,\%/77.41\,\% (líneas/ramas) el 06-09, cayeron a 69.47\,\% de
+líneas para el 11-09 (0.53 puntos bajo el umbral, ramas sin cambio en 75.00\,\%) por el mismo efecto de
+denominador. Se cerró con 5 pruebas nuevas dirigidas a los dos controladores que seguían sin ninguna
+prueba (\texttt{MeController}, \texttt{ExternalApiController}) y a tres endpoints sin ejercitar en otros
+dos (\texttt{AuditoriaController\#/tablas}, \texttt{DocenteController\#/disponibles} y \texttt{\#/paginado}),
+llegando a \textbf{70.38\,\% de líneas (846/1,202) y 75.00\,\% de ramas (255/340)} --- cruza el umbral de
+70\,\% exigido en líneas \emph{y} en ramas. Los servicios quedan en 70.17\,\% de líneas (2,197/3,131) y
+54.38\,\% de ramas (708/1,302): superan el umbral en líneas pero no en ramas, a diferencia del estado del
+06-09. Los servicios se habían cerrado antes con 164 pruebas nuevas en
 8 clases (\texttt{EstudianteService}, \texttt{TutorServiceImpl}, \texttt{RubricaEvaluacionServiceImpl},
 \texttt{JuradoServiceImpl}, \texttt{SolicitudServiceImpl}, \texttt{TutoriaServiceImpl},
 \texttt{CronogramaServiceImpl}, \texttt{ActaServiceImpl}), priorizando las clases con más ramas sin

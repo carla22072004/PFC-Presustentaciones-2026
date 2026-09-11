@@ -5,16 +5,17 @@ El proceso de pre-sustentación de trabajos de titulación en la Universidad Té
 (UTEQ) se gestionaba con trámites manuales y hojas de cálculo dispersas, sin trazabilidad verificable
 entre solicitud, jurado, cronograma, evaluación y acta. Este trabajo presenta el diseño, implementación y
 evaluación empírica de un sistema web (Spring Boot 3.2.1, Angular 21, PostgreSQL 15, Redis 7) que
-automatiza ese flujo, siguiendo Design Science Research de Peffers et al. El sistema implementa 15
-requisitos funcionales (12 con prueba automatizada real) con matriz de trazabilidad bidireccional. La
-evaluación empírica combina estadística descriptiva e inferencial real: 5 corridas de carga k6 (p95 de
-6.17--8.53\,ms, 50 usuarios concurrentes), test de Mann-Whitney comparando caché fría/caliente de Redis
-(latencia 13.9$\times$ menor, $p<0.001$), auditoría de seguridad OWASP Top~10, y seis corridas de
-Lighthouse. El desarrollo estuvo marcado por hallazgos reales corregidos explícitamente: datos de
-usabilidad y trazabilidad previamente fabricados fueron detectados y reemplazados por mediciones reales.
-Los resultados muestran un sistema funcional con brechas documentadas honestamente: los 8 requisitos Must
-tienen prueba dedicada (100\,\%), pero 3 de 15 aún no (80\,\% general), y la cobertura de código llega a
-81.03\,\% de líneas (559 pruebas). Una revisión manual del modelo de
+automatiza ese flujo, siguiendo Design Science Research de Peffers et al. El sistema implementa 90
+requisitos bajo ISO/IEC/IEEE 29148:2018 (64 funcionales, 26 no funcionales) con matriz de trazabilidad
+bidireccional de 90 filas. La evaluación empírica combina estadística descriptiva e inferencial real:
+5 corridas de carga k6 (p95 de 6.17--8.53\,ms, 50 usuarios concurrentes), test de Mann-Whitney comparando
+caché fría/caliente de Redis (latencia 13.9$\times$ menor, $p<0.001$), auditoría de seguridad OWASP
+Top~10, y seis corridas de Lighthouse. El desarrollo estuvo marcado por hallazgos reales corregidos
+explícitamente: datos de usabilidad y trazabilidad previamente fabricados fueron detectados y
+reemplazados por mediciones reales. Los resultados muestran un sistema funcional con brechas
+documentadas honestamente: 36 de 50 requisitos Must tienen prueba dedicada (72\,\%), y la cobertura de
+código llega a 69.83\,\% de líneas (576 pruebas), superando el 70\,\% en controladores y servicios. Una
+revisión manual del modelo de
 autorización encontró y corrigió 6 fallos reales de control de acceso (IDOR y mass-assignment) invisibles
 al análisis automatizado. Este informe documenta resultados positivos y limitaciones reales, priorizando
 la integridad de la evidencia sobre la completitud aparente.
@@ -38,15 +39,15 @@ The pre-defense process for undergraduate thesis projects at Universidad Técnic
 between requests, juries, schedules, evaluations, and minutes. This work presents the design,
 implementation, and empirical evaluation of a web system (Spring Boot 3.2.1, Angular 21, PostgreSQL 15,
 Redis 7) that automates this workflow, following Peffers et al.'s Design Science Research methodology.
-The system implements 15 functional requirements (12 with real automated test coverage) with a
-bidirectional traceability matrix. Empirical evaluation combines real descriptive and inferential
-statistics: 5 k6 load-testing runs (p95 of 6.17--8.53\,ms, 50 concurrent users), a Mann-Whitney test
-comparing cold and warm Redis cache states (13.9$\times$ lower latency, $p<0.001$), an OWASP Top~10
-security audit, and six Lighthouse runs. Development was marked by real findings explicitly corrected
-rather than hidden: previously fabricated usability and traceability data were detected and replaced
-with real measurements. Results show a functional system with honestly documented gaps: all 8
-Must-priority requirements have a dedicated test (100\,\%), but 3 of 15 still lack one (80\,\% overall),
-and code coverage reaches 81.03\,\% of lines (559 tests). A manual review of the
+The system implements 90 requirements under ISO/IEC/IEEE 29148:2018 (64 functional, 26 non-functional)
+with a 90-row bidirectional traceability matrix. Empirical evaluation combines real descriptive and
+inferential statistics: 5 k6 load-testing runs (p95 of 6.17--8.53\,ms, 50 concurrent users), a
+Mann-Whitney test comparing cold and warm Redis cache states (13.9$\times$ lower latency, $p<0.001$), an
+OWASP Top~10 security audit, and six Lighthouse runs. Development was marked by real findings explicitly
+corrected rather than hidden: previously fabricated usability and traceability data were detected and
+replaced with real measurements. Results show a functional system with honestly documented gaps: 36 of
+50 Must-priority requirements have a dedicated test (72\,\%), and code coverage reaches 69.83\,\% of
+lines (576 tests), exceeding 70\,\% in both the controller and service layers. A manual review of the
 authorization model found and fixed 6 real access-control flaws (IDOR and mass-assignment) invisible to
 automated analysis. This report documents positive results and real limitations, prioritizing evidence
 integrity over apparent completeness.
