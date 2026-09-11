@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"admin123\"\n}"
+							"raw": "{\n  \"email\": \"admin@uteq.edu.ec\",\n  \"password\": \"{{adminPassword}}\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/auth/login",
@@ -35,7 +35,7 @@
 								"login"
 							]
 						},
-						"description": "Contraseña corregida en la Fase 10: la versión anterior usaba \"admin\", que en realidad devuelve 401 (la contraseña real sembrada por PreSustentacionesApplication.java es \"admin123\", documentada en README.md). Verificado devolviendo 200 contra el backend real."
+						"description": "La contraseña NO se versiona en esta colección: se toma de la variable {{adminPassword}}, que hay que rellenar en el entorno de Postman con la credencial sembrada por PreSustentacionesApplication.java. Ver RNF-15 del SRS y la observación docente OBS-11. Verificado devolviendo 200 contra el backend real."
 					}
 				},
 				{
@@ -1182,6 +1182,12 @@
 		}
 	],
 	"variable": [
+		{
+			"key": "adminPassword",
+			"value": "",
+			"type": "string",
+			"description": "Contraseña de la cuenta de administración de demostración. Se deja vacía a propósito: ninguna credencial se versiona en este repositorio público (RNF-15 del SRS, observación docente OBS-11). Rellénala en tu entorno de Postman antes de ejecutar la colección."
+		},
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:8080",

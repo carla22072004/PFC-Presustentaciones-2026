@@ -77,3 +77,150 @@ Se reportan ambas cifras porque una sola serían engañosa: reportar solo "100% 
 reescribió todo el texto; reportar solo "0% estable" sugeriría erróneamente que el alcance del sistema
 cambió, cuando en realidad no cambió — la funcionalidad de los 12 RF ya existía y funcionaba antes de
 esta fase, lo que cambió es que ahora está documentada como debía estarlo desde la Entrega 3.
+
+---
+
+## v1.0.0 (2026-09-08) — primera versión de esta especificación
+
+Especificación redactada y verificada contra el código real de la etiqueta `v1.0.1` (commit
+`9d7abbd`). **Entregada a revisión del docente-director; superada por la v1.0.1.** Archivada en
+`historico/SRS-v1.0.0-2026-09-08.{tex,pdf,docx}`.
+
+**Sustituye a los dos borradores anteriores**, que pasan a `historico/` y no deben citarse como
+especificación vigente:
+
+- `historico/SRS-v0.9.0-rc.md` (2026-07-30): 5 historias de usuario, sin casos de uso.
+- `historico/SRS-v1.0.0-2026-08-17.tex` / `.pdf`: 12 historias, 12 casos de uso y un resumen de 12
+  requisitos funcionales y 4 no funcionales. Se archiva con la fecha en el nombre para que su
+  identificador antiguo no se confunda con esta especificación.
+
+### Motivo
+
+El borrador del 2026-08-17 describía **16 requisitos** (12 RF + 4 RNF) de un sistema con **31 controladores
+y 207 rutas**. Un SRS que describe menos de una décima parte del sistema deja de servir como
+contrato y como base de verificación. Además arrastraba tres defectos de trazabilidad que el
+validador no detectaba.
+
+### Corpus
+
+| | Borrador 2026-08-17 | Esta especificación |
+|---|---|---|
+| Requisitos funcionales | 12 | **64** |
+| Requisitos no funcionales | 4 | **26** |
+| Total | 16 | **90** |
+| Filas de la matriz | 15 | **90** |
+| Must verificados | 8/8 declarado (100 %) | **36/50 (72 %)** real |
+
+**De los 74 requisitos añadidos, 69 documentan capacidades ya construidas** y sin requisito que
+las especificara; solo 5 describen algo que aún no existe o no puede verificarse (RF-05, RF-06,
+RNF-11, RNF-19, RNF-22). No es alcance nuevo: es la especificación alcanzando al código.
+
+**Estabilidad del corpus heredado: 93,8 %.** De los 16 requisitos del borrador, 15 se conservan con
+el mismo alcance (renumerados y completados con la plantilla) y 1 cambia de prioridad con
+justificación. Ninguno se retira.
+
+### Defectos de trazabilidad corregidos
+
+1. **10 de los 15 endpoints de la matriz no resolvían.** Todos llevaban el prefijo `/api/v1/` que
+   su controlador no tiene (RF-02, RF-03, RF-04, RF-05, RF-06, RF-09, RF-10, RF-11, RF-12 y RF-13
+   de la numeración del borrador). Causa raíz: solo 8 de los 31 controladores usan ese prefijo
+   (RNF-26).
+2. **3 historias de usuario citadas no existían:** HU-13, HU-14 y HU-15. El directorio contiene
+   HU-01 a HU-12.
+3. **El SRS y la matriz declaraban conjuntos distintos** en la misma versión: 12 requisitos
+   frente a 15 filas.
+4. **El validador no detectaba ninguno de los tres.** Comprobaba el endpoint quedándose con el
+   *primer segmento* de la ruta tras descartar el prefijo, de modo que una ruta versionada
+   inexistente coincidía con el controlador sin versionar. Sobre la matriz del borrador informaba
+   «15/15 filas consistentes» y «8/8 Must verificados (100 %)».
+
+### Cambios de estado por corrección de cifra
+
+- **Cobertura de pruebas (RNF-04 del borrador):** El borrador declaraba 38,88 % de líneas y «no cumplido». La
+  medición vigente al cierre es de **81,03 % de líneas y 64,39 % de ramas** con 559 pruebas
+  (2026-09-06). Aquí es **RNF-21**, con umbral elevado al 70 % de líneas y de ramas, en estado
+  Verificado, y con la fecha de medición dentro del propio requisito.
+- **Firma del acta (RF-07 del borrador → RF-37):** sube de *Should* a **Must**. Es la única transición que
+  lleva la solicitud a `COMPLETADA`; un requisito del que depende el cierre del proceso no puede
+  ser opcional.
+- **Usabilidad (RNF-03 del borrador):** el umbral pasa de «SUS > 75» a **SUS ≥ 68** (media poblacional de
+  referencia del instrumento) y se declara explícitamente la muestra exigida. Aquí es **RNF-22**,
+  en estado Planificado: el instrumento sigue sin aplicarse a personas reales.
+
+### Requisitos nuevos con estado No cumplido (deuda declarada, no oculta)
+
+`RNF-02` rendimiento del cliente (68/61 frente a umbral 80), `RNF-04` degradación ante caída de
+Redis (hoy *fail-open* en la revocación de tokens), `RNF-06` política de contraseñas (hoy 6
+caracteres y solo en el alta), `RNF-15` cuentas de demostración con contraseñas literales en el
+código, `RNF-25` siembra no determinista de los estados del dominio, `RNF-26` versionado parcial
+de la API.
+
+### Secciones estructurales incorporadas
+
+Interfaces externas (§4), catálogo de estados del dominio y transiciones (§5), matriz de permisos
+rol × operación (§6), correspondencia con el Anexo C de la norma (§11) y cláusula de verificación
+(§9.1).
+
+### Validador
+
+`scripts/validate-traceability.sh` pasa de 2 comprobaciones a **8** (V1–V8, especificadas en §9.1 del SRS): número de columnas, vocabulario cerrado de estado, correspondencia SRS ↔ matriz en
+ambos sentidos, resolución del endpoint por **ruta completa**, existencia de la clase de prueba,
+existencia de la historia o caso de uso citado, evidencia obligatoria para *Verificado*, y
+coherencia de *Planificado*. Las seis comprobaciones nuevas habrían detectado, antes de la
+entrega, los cuatro defectos listados arriba.
+
+---
+
+## v1.0.1 (2026-09-11) — respuesta a la revisión del docente-director
+
+El documento vigente es [`SRS-v1.0.1.tex`](SRS-v1.0.1.tex) / [`.pdf`](SRS-v1.0.1.pdf), con copia
+editable en [`SRS-v1.0.1.docx`](SRS-v1.0.1.docx). La v1.0.0 pasa a
+`historico/SRS-v1.0.0-2026-09-08.*`.
+
+**El corpus no cambia:** siguen siendo 64 requisitos funcionales y 26 no funcionales, con los
+mismos enunciados, prioridades y estados. Lo que cambia son las fuentes declaradas, la redacción
+de la cláusula de verificación, la portada y la trazabilidad de las cifras.
+
+### Causa raíz de cinco de las ocho observaciones
+
+M1 a M5 señalaban que la matriz cubría 15 de los 90 requisitos, con 9 columnas en vez de 11 y 2
+valores de estado en vez de 4, y que el validador no realizaba ninguna comprobación V1–V8. Las
+cinco eran correctas y las cinco tenían el mismo origen: **la matriz y el validador que el SRS
+describe nunca llegaron a `main`**. La revisión se hizo sobre lo publicado (los artefactos del
+borrador del 2026-08-17) mientras el documento revisado era el nuevo. No era una discrepancia
+entre lo escrito y lo construido: era una entrega incompleta.
+
+### Respuesta observación por observación
+
+| Obs. | Respuesta |
+|---|---|
+| **M1 / A1** | Aceptada. `matriz.csv` pasa de 15 a **90 filas**, una por requisito. |
+| **M2** | Aceptada. De 9 a **11 columnas**, con `Titulo`, `Fuente`, `Metodo_Verificacion` y `Observaciones`. |
+| **M3** | Aceptada. La columna `Estado` usa el **vocabulario cerrado de 4 valores**; V2 rechaza cualquier otro. |
+| **M4 / A2** | Aceptada. `validate-traceability.sh` pasa de 88 a 246 líneas e implementa **V1–V8**. La cláusula de §9.1 se reescribió para declarar qué garantiza, desde cuándo y **qué no garantiza**. |
+| **M5** | Aceptada. Las cifras son la **salida literal del validador** (§9.2), con el comando que las reproduce. |
+| **M6** | Aceptada en parte. Cierto en la matriz publicada, ya sustituida. **No** en el documento: la única mención a HU-13/14/15 estaba en §12 describiendo un defecto cerrado. Esa frase se reformuló. |
+| **M7 / A3** | Aceptada en el fondo, matizada en la forma. Ningún requisito tenía `Fuente` vacía, pero **27 decían «historia de usuario pendiente»**, que es una promesa y no una fuente. Los 27 declaran ahora su origen real: la migración que creó su tabla o su permiso, el ADR, el control OWASP, el reglamento de titulación o la observación docente. |
+| **M8** | Aceptada. La portada identifica al autor y su ORCID **y nada más**; la situación del equipo se explica como nota de alcance en §1.3. Se reconciliaron las menciones a «el equipo» del cuerpo y la página de aprobación. |
+| **A4** | Aceptada como refuerzo. **RNF-15 ya existía** (estado *No cumplido*), pero solo cubría el código fuente. Ampliado con dos criterios que alcanzan **todo artefacto versionado**, y con **OBS-11** declarada como fuente: la credencial sigue viva en 4 lugares del repositorio público. |
+
+### Precisión sobre una cifra de la revisión
+
+La revisión da por buena «207 rutas en 49 controladores». Las 207 rutas son correctas; los 49
+salen de contar los 31 de `src/main/java` **más** las 18 clases de prueba de controlador de
+`src/test`, que no exponen ninguna ruta. El par correcto es **31 controladores de producción y
+207 rutas**, aclarado ahora en §3.1.
+
+### Verificación
+
+```
+$ ./scripts/validate-traceability.sh
+Requisitos en el SRS ....... 90
+Filas en la matriz ......... 90
+Endpoints reales del backend 207
+Clases de prueba en disco .. 43
+Estados .................... Implementado: 19, No cumplido: 6, Planificado: 5, Verificado: 60
+Must verificados ........... 36/50 (72%)
+
+=== V1-V8: sin fallos. Trazabilidad consistente. ===
+```

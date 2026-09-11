@@ -1,0 +1,3388 @@
+% =============================================================================
+% SRS v1.0.1 -- Sistema de Gestion de Pre-Sustentaciones UTEQ
+% ISO/IEC/IEEE 29148:2018
+% Compilar con: latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.1.tex
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{letterpaper, margin=1in}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{seqsplit}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue,
+            pdftitle={SRS v1.0.1 - Sistema de Gestion de Pre-Sustentaciones UTEQ}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small SRS v1.0.1 --- Sistema de Gestión de Pre-Sustentaciones UTEQ}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---- Colores de estado -------------------------------------------------------
+\definecolor{verdeok}{RGB}{0,120,60}
+\definecolor{ambar}{RGB}{176,110,0}
+\definecolor{rojoko}{RGB}{178,34,34}
+\definecolor{grisln}{RGB}{120,120,120}
+\definecolor{filagris}{RGB}{242,242,242}
+
+% ---- Macros de requisito -----------------------------------------------------
+% Rutas y nombres de clase: \cd{} permite el quiebre de línea dentro del
+% fragmento monoespaciado. Sin esto, un endpoint largo produce un overfull hbox
+% que saca texto normativo fuera del margen derecho en el PDF.
+\DeclareRobustCommand{\cd}[1]{\texttt{\protect\seqsplit{#1}}}
+
+\newcommand{\estadoV}{\textcolor{verdeok}{\textbf{Verificado}}}
+\newcommand{\estadoI}{\textcolor{ambar}{\textbf{Implementado}}}
+\newcommand{\estadoP}{\textcolor{grisln}{\textbf{Planificado}}}
+\newcommand{\estadoN}{\textcolor{rojoko}{\textbf{No cumplido}}}
+
+% Encabezado de requisito. No se añade al índice: con 87 requisitos el índice
+% dejaría de ser navegable. El índice llega al nivel de subsección temática.
+\newcommand{\REQ}[2]{%
+  \par\vspace{3mm}%
+  \noindent\rule{\linewidth}{0.7pt}\par\nobreak\vspace{0.6mm}%
+  \noindent{\normalsize\textbf{#1\quad #2}}\par\nobreak\vspace{0.6mm}%
+  \noindent\rule{\linewidth}{0.3pt}\par\nobreak\vspace{1mm}}
+
+\newcommand{\campo}[2]{\noindent\textbf{#1:} #2\par\vspace{0.4mm}}
+
+\setlist[itemize]{nosep,leftmargin=1.4em,topsep=1mm}
+\setlist[enumerate]{nosep,leftmargin=1.8em,topsep=1mm}
+
+\title{}\date{}
+\begin{document}
+
+% ============================== CARÁTULA =====================================
+\begin{titlepage}
+\centering
+\vspace*{0.8cm}
+{\LARGE \textbf{UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO}}\\[0.3cm]
+{\large Facultad de Ciencias de la Ingeniería}\\[0.2cm]
+{\large Carrera de Ingeniería de Software (Rediseño)}\\[0.8cm]
+
+{\large \textbf{ASIGNATURA: Aplicaciones Web}}\\[0.3cm]
+{\large Quinto Nivel --- Período Académico 2026-2027 PPA}\\[1.0cm]
+
+{\Large \textbf{ESPECIFICACIÓN DE REQUISITOS DE SOFTWARE (SRS)}}\\[0.3cm]
+{\large Estándar ISO/IEC/IEEE 29148:2018}\\[0.6cm]
+{\LARGE \textbf{Sistema de Gestión de Pre-Sustentaciones UTEQ}}\\[0.6cm]
+{\Large \textbf{Versión 1.0.1}}\\[0.9cm]
+
+\small\begin{tabular}{ll}
+\textbf{Repositorio:} & \url{https://github.com/carla22072004/PFC-Presustentaciones-2026} \\
+\textbf{Punto del historial:} & etiqueta \texttt{v1.0.1}, \emph{commit} \texttt{9d7abbd} \\
+\textbf{Rama principal al cierre:} & \emph{commit} \texttt{3e7069c} (2026-09-09) \\
+\textbf{DOI del software:} & \href{https://doi.org/10.5281/zenodo.22445216}{10.5281/zenodo.22445216} \\
+\end{tabular}\normalsize\\[1.0cm]
+
+{\large \textbf{AUTOR:}}\\[0.3cm]
+{\large Álava Alvarado, Jean Pierre}\\[0.1cm]
+{\large \href{https://orcid.org/0009-0001-2878-2919}{ORCID: 0009-0001-2878-2919}}\\[0.8cm]
+
+{\large \textbf{DOCENTE-DIRECTOR:}}\\[0.3cm]
+{\large Ing. Guerrero Ulloa Gleiston Cíceron, Mg.}\\[0.8cm]
+
+{\large \textbf{FECHA DE EMISIÓN:} 11 de septiembre de 2026}\\[0.3cm]
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ====================== 1. IDENTIFICACIÓN DEL DOCUMENTO ======================
+\section{Identificación y control del documento}
+
+\subsection{Historial de versiones}
+
+\begin{longtable}{p{1.6cm} p{1.8cm} p{2.6cm} p{8.2cm}}
+\toprule
+\textbf{Versión} & \textbf{Fecha} & \textbf{Autor} & \textbf{Cambios} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Versión} & \textbf{Fecha} & \textbf{Autor} & \textbf{Cambios} \\
+\midrule
+\endhead
+1.0.0 & 2026-09-08 & J. P. Álava Alvarado &
+\textbf{Primera versión de esta especificación.} Corpus de 64 requisitos funcionales y 26 no
+funcionales, redactados y verificados contra el código real de la etiqueta \texttt{v1.0.1}.
+Incorpora la plantilla completa por requisito y las cinco secciones estructurales que la norma
+exige. Entregada a revisión del docente-director. \\
+\addlinespace
+1.0.1 & 2026-09-11 & J. P. Álava Alvarado &
+\textbf{Incorpora la revisión del docente-director sobre la v1.0.0} (8 observaciones de
+modificación y 4 de adición). El corpus no cambia: cambian las fuentes declaradas, la redacción
+de la cláusula de verificación, la portada y la trazabilidad de las cifras. La respuesta punto por
+punto está en la sección~\ref{sec:respuesta}. \\
+\bottomrule
+\caption{Historial de versiones del SRS. La bitácora completa de cambios de requisitos
+vive en \cd{docs/requisitos/CHANGELOG-REQ.md}.}
+\end{longtable}
+
+\noindent\textbf{Documentos a los que reemplaza.} Esta especificación sustituye a los dos
+borradores de requisitos anteriores del proyecto, que quedan archivados en
+\cd{docs/requisitos/historico/} y no deben citarse como especificación vigente: el borrador del
+2026-07-30 (5 historias de usuario, sin casos de uso) y el del 2026-08-17 (12 historias y 12 casos
+de uso, con un resumen de 12 requisitos funcionales y 4 no funcionales). Ninguno de los dos
+describía más de una novena parte de las rutas que el sistema expone hoy; las correcciones
+concretas que se les hicieron están en la sección~\ref{sec:cambios}.
+
+\subsection{Alcance de esta versión y punto de corte}
+
+\noindent\textbf{Nota de alcance sobre la autoría.} Esta especificación fue elaborada de forma
+individual por Jean Pierre Álava Alvarado. El sistema que describe se construyó en el marco de un
+trabajo de equipo y el repositorio mantiene el historial completo de todas las personas que
+contribuyeron código; lo que esta versión declara es la autoría del \emph{documento de
+requisitos}, no la del software. Se hace constar aquí, y no en la portada, porque la portada
+identifica a quien responde por el documento y nada más.
+
+
+
+Todo enunciado de estado, cifra y referencia a código de este documento se verificó
+\textbf{contra el árbol de archivos de la etiqueta \texttt{v1.0.1}} (\emph{commit}
+\texttt{9d7abbd}, 2026-09-05) y se contrastó con la rama principal al \emph{commit}
+\texttt{3e7069c} (2026-09-09), que es el punto sobre el que se emitió la revisión del
+docente-director. Las cifras que dependen de una medición traen la fecha de esa
+medición dentro del propio requisito: una cifra sin fecha envejece sola y deja de ser
+verificable.
+
+\subsection{Autoridad de cada artefacto}
+\label{sec:autoridad}
+
+Este documento y la matriz de trazabilidad no compiten: cada uno es fuente de verdad de algo
+distinto, y esa separación es lo que evita que se desincronicen sin que nadie lo note.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{4.2cm} p{10.5cm}}
+\toprule
+\textbf{Artefacto} & \textbf{Es fuente de verdad de} \\
+\midrule
+Este SRS & El enunciado normativo, el \emph{rationale}, la prioridad MoSCoW, el criterio de
+aceptación y el método de verificación de cada requisito. \\
+\cd{docs/trazabilidad/matriz.csv} & El estado de verificación, el endpoint, el módulo, la
+clase de prueba y la evidencia empírica de cada requisito. \\
+\cd{scripts/validate-traceability.sh} & La coherencia entre ambos y con el disco. Ninguna
+versión se publica si el validador no termina con código 0. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ========================== 2. INTRODUCCIÓN ==================================
+\section{Introducción}
+
+\subsection{Propósito}
+Este documento define los requisitos funcionales y no funcionales del Sistema de Gestión de
+Pre-Sustentaciones UTEQ conforme al estándar ISO/IEC/IEEE 29148:2018. Sirve como contrato
+técnico entre la coordinación académica, los docentes, los estudiantes y quien desarrolla el
+sistema, y como base de verificación: cada requisito declara cómo se comprueba y en qué
+estado está.
+
+\subsection{Alcance del sistema}
+El sistema automatiza el ciclo completo de pre-sustentación de trabajos de titulación:
+provisión de cuentas y control de acceso por permisos; registro y revisión de la solicitud;
+asignación de tutor y acompañamiento en tres fases de tutoría con entrega de correcciones;
+carga del anteproyecto en PDF con verificación de integridad SHA-256; conformación del
+tribunal; programación del cronograma de defensa con detección de conflictos de sala y de
+jurado; evaluación por rúbrica y cálculo de la nota final ponderada; emisión del acta en PDF
+y su firma digital multi-actor; notificaciones; reportes de gestión; un centro de orientación
+de titulación; una bitácora de auditoría; y la gestión de respaldos y recuperación de la base
+de datos.
+
+\textbf{Fuera de alcance declarado:} matrícula y expediente académico institucional, pago de
+aranceles, firma electrónica con validez jurídica ante entidad certificadora, y la sustentación
+final de grado (este sistema cubre la \emph{pre}-sustentación).
+
+\subsection{Definiciones, acrónimos y abreviaturas}
+\begin{itemize}
+    \item \textbf{SRS:} \emph{Software Requirements Specification} (ISO/IEC/IEEE 29148:2018).
+    \item \textbf{UTEQ:} Universidad Técnica Estatal de Quevedo.
+    \item \textbf{RF / RNF:} Requisito Funcional / Requisito No Funcional.
+    \item \textbf{HU / CU:} Historia de Usuario (Connextra) / Caso de Uso (plantilla Cockburn).
+    \item \textbf{MoSCoW:} priorización \emph{Must} / \emph{Should} / \emph{Could} / \emph{Won't}.
+    \item \textbf{JWT:} \emph{JSON Web Token}. \textbf{jti}: identificador único del token.
+    \item \textbf{SP:} procedimiento almacenado PL/pgSQL.
+    \item \textbf{IDOR:} \emph{Insecure Direct Object Reference}, acceso a un recurso ajeno por
+          manipulación de su identificador.
+    \item \textbf{RPO / RTO:} objetivo de punto de recuperación / objetivo de tiempo de
+          recuperación.
+    \item \textbf{Titular:} persona a la que pertenecen los datos personales tratados.
+    \item \textbf{Tribunal:} conjunto de tres docentes con roles \texttt{PRESIDENTE},
+          \cd{VOCAL\_1} y \cd{VOCAL\_2} asignados a una solicitud.
+\end{itemize}
+
+\subsection{Convención de redacción normativa}
+\label{sec:convencion}
+
+Esta convención es de aplicación obligatoria a todo requisito de este documento y a todo
+requisito que se agregue en el futuro.
+
+\begin{enumerate}
+    \item El verbo vinculante es \textbf{«debe»}. Todo enunciado que use «debe» expresa una
+          obligación exigible y verificable.
+    \item \textbf{No se usa «debería»} en el enunciado de ningún requisito. En la convención de
+          la norma «debería» expresa una recomendación no vinculante y, por lo tanto, no enuncia
+          un requisito. Una recomendación va en el \emph{rationale} o en una nota, nunca en el
+          enunciado.
+    \item \textbf{No se usa el presente indicativo descriptivo} («el sistema usa PostgreSQL»)
+          para enunciar un requisito: eso describe lo construido en vez de especificar lo
+          exigido. Las tecnologías impuestas se declaran como \textbf{restricciones de diseño}
+          (sección~\ref{sec:restricciones}), no como requisitos.
+    \item Todo requisito es \textbf{singular}: enuncia una sola capacidad. Cuando por cohesión
+          se agrupan varias capacidades bajo un mismo identificador, el requisito trae
+          \textbf{un criterio de aceptación por cada capacidad agrupada}; si sus estados pueden
+          diferir, el requisito se divide en sufijos (\texttt{a}, \texttt{b}, \texttt{c}).
+    \item El criterio de aceptación se expresa como \textbf{comportamiento observable por el
+          cliente} (código HTTP y contenido de la respuesta), nunca como detalle de
+          implementación interna. El nombre de la excepción o de la clase Java pertenece a la
+          matriz de trazabilidad, no al criterio.
+    \item El requisito \textbf{no cita rutas de archivo ni nombres de clase}: son lo primero que
+          envejece con un renombrado de paquetes. El requisito cita el \textbf{endpoint}, que es
+          estable; la ruta y la clase viven en la matriz, donde el validador las comprueba
+          contra el disco.
+\end{enumerate}
+
+\subsection{Vocabulario cerrado de estado del requisito}
+\label{sec:estados-req}
+
+El campo \textbf{Estado} de cada requisito admite exactamente estos cuatro valores y ningún
+otro. Cualquier matiz («implementado pero sin resolución ética», «medido el 18-08») va en el
+campo \textbf{Nota}, nunca en el campo Estado; de lo contrario la matriz deja de poder
+filtrarse y contarse, y el vocabulario se degrada en cada ampliación.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{3.2cm} p{11.5cm}}
+\toprule
+\textbf{Valor} & \textbf{Significado técnico} \\
+\midrule
+\estadoV & La capacidad está construida \textbf{y} existe una prueba automatizada o una
+evidencia empírica archivada y fechada que comprueba su criterio de aceptación. \\
+\estadoI & La capacidad está construida y responde en el endpoint declarado, pero su criterio
+de aceptación aún no tiene prueba ni evidencia archivada. \\
+\estadoP & La capacidad \textbf{no está construida}. Existe el requisito, no la funcionalidad. \\
+\estadoN & La capacidad está construida pero \textbf{no alcanza el umbral} que su propio
+criterio de aceptación exige. Es distinto de «pendiente de evidencia»: aquí sí se midió, y el
+resultado no cumple. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\fbox{\parbox{0.98\textwidth}{\textbf{Regla de lectura:} ningún requisito marcado
+\estadoP{} o \estadoN{} debe interpretarse como funcionalidad entregada y conforme. Un
+requisito \emph{Must} en estado \estadoP{} o \estadoN{} es deuda declarada, y aparece como tal
+en la sección~\ref{sec:cumplimiento}.}}
+
+\subsection{Métodos de verificación}
+\label{sec:metodos}
+
+Todo requisito declara su método de verificación con este vocabulario cerrado de cuatro
+valores. Declarar el método, y no solo decir «se probó», es lo que permite saber si un
+requisito que no se puede cubrir con una prueba unitaria está o no verificado.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.9cm} p{11.8cm}}
+\toprule
+\textbf{Método} & \textbf{Cuándo se usa y qué evidencia produce} \\
+\midrule
+\textbf{Prueba} & Prueba automatizada (unitaria o de integración) que se ejecuta en CI y falla
+si el criterio deja de cumplirse. Evidencia: la clase de prueba, declarada en la matriz. \\
+\textbf{Demostración} & Ejecución observada del sistema desplegado sobre la topología real.
+Evidencia: la transcripción o captura archivada en \cd{docs/mediciones/} o
+\cd{docs/evidencias/}, con fecha. \\
+\textbf{Análisis} & Medición instrumentada o cálculo sobre datos crudos archivados
+(k6, JaCoCo, Lighthouse, SUS, ZAP). Evidencia: el archivo crudo y el comando que lo generó,
+mapeados en \cd{docs/mediciones/DATA-PROVENANCE.md}. \\
+\textbf{Inspección} & Revisión de código, configuración o migración cuando el criterio es
+estructural y no se puede ejercitar en tiempo de ejecución. Evidencia: el artefacto inspeccionado
+y la fecha de la inspección. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Referencias}
+\begin{itemize}
+    \item ISO/IEC/IEEE 29148:2018 --- \emph{Systems and software engineering --- Life cycle
+          processes --- Requirements engineering}.
+    \item INCOSE \emph{Guide for Writing Requirements}, v4.
+    \item OWASP \emph{Top 10} (2021) --- referencia de los requisitos de seguridad.
+    \item WCAG 2.1 nivel AA --- referencia del requisito de accesibilidad.
+    \item Ley Orgánica de Protección de Datos Personales del Ecuador (LOPDP).
+    \item Brooke, J. (1996). \emph{SUS: A quick and dirty usability scale} --- instrumento de
+          RNF-22.
+    \item Decisiones de arquitectura del proyecto: \cd{docs/adr/ADR-001} a \cd{ADR-007}.
+\end{itemize}
+
+% ======================= 3. DESCRIPCIÓN GENERAL ==============================
+\section{Descripción general}
+
+\subsection{Perspectiva del producto}
+Solución web de arquitectura en N capas: cliente Angular (SPA) servido por nginx como proxy
+inverso, servicio de aplicación Spring Boot que expone una API REST, base de datos PostgreSQL
+con esquema \texttt{presus} versionado por migraciones Flyway y una parte de la lógica de
+negocio resuelta en procedimientos almacenados PL/pgSQL, y Redis como caché, almacén de
+\emph{refresh tokens}, lista de revocación de tokens de acceso y contador del límite de tasa.
+Todos los componentes se orquestan con Docker Compose.
+
+\textbf{Tamaño real del sistema en el punto de corte:} 31 controladores REST \emph{de
+producción} ---49 si se cuentan también las 18 clases de prueba de controlador, que no exponen
+ninguna ruta--- con 207 combinaciones de método y ruta, 10 rutinas SQL (8 procedimientos y 2 funciones de auditoría), 30 migraciones
+Flyway y 559 pruebas automatizadas. Estas cifras están contadas sobre la etiqueta
+\texttt{v1.0.1} y se recuentan en cada versión de este documento; no se dejan sin fecha.
+
+\subsection{Actores del sistema}
+\label{sec:actores}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.6cm} p{4.2cm} p{7.6cm}}
+\toprule
+\textbf{Actor} & \textbf{Descripción} & \textbf{Responsabilidad en el proceso} \\
+\midrule
+Estudiante & Postulante a titulación. & Registra su solicitud, entrega correcciones en las
+tres fases de tutoría, carga el anteproyecto, consulta su ruta de progreso y su acta. \\
+Docente & Personal académico. & Puede actuar como tutor, como miembro del tribunal, o ambos en
+solicitudes distintas. Nunca ambos en la misma solicitud. \\
+Tutor & Rol funcional de un Docente sobre una solicitud. & Abre y aprueba las fases de tutoría,
+revisa el anteproyecto y firma el acta con rol \texttt{TUTOR}. \\
+Miembro del tribunal & Rol funcional de un Docente sobre una solicitud
+(\texttt{PRESIDENTE}, \cd{VOCAL\_1}, \cd{VOCAL\_2}). & Registra su evaluación por
+criterio de rúbrica y firma el acta con su rol. \\
+Coordinador & Gestor académico de la carrera. & Revisa y aprueba solicitudes, asigna tutor y
+tribunal, programa el cronograma, gestiona salas y rúbricas, y consulta reportes. \\
+Administrador & Administrador del sistema. & Gestiona usuarios, roles y permisos, catálogos
+académicos, la bitácora de auditoría y los respaldos. \\
+\bottomrule
+\end{tabular}
+\caption{Actores. \emph{Tutor} y \emph{miembro del tribunal} no son roles de cuenta sino roles
+funcionales asignados por solicitud: un mismo Docente los ejerce o no según la solicitud. Esta
+distinción es la que explica por qué un permiso no basta para firmar un acta (ver RF-37).}
+\end{table}
+
+\subsection{Restricciones de diseño}
+\label{sec:restricciones}
+
+Estas son imposiciones sobre la solución, no requisitos del sistema. Se declaran aparte porque
+la norma distingue requisito de restricción, y porque enunciarlas como requisitos («el sistema
+usa PostgreSQL») describiría lo construido en vez de especificar lo exigido.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{1.5cm} p{13.2cm}}
+\toprule
+\textbf{ID} & \textbf{Restricción y origen} \\
+\midrule
+RD-01 & La persistencia debe ser PostgreSQL 15 o superior, con el esquema versionado por
+migraciones Flyway y \texttt{ddl-auto=validate}. Origen: ADR-006 (estrategia híbrida
+ORM + procedimientos almacenados). \\
+RD-02 & El cliente debe ser una SPA Angular servida por nginx; el navegador nunca consume
+servicios de terceros directamente. Origen: ADR-003. \\
+RD-03 & La autenticación debe ser sin estado de sesión en el servidor, basada en JWT.
+Origen: ADR-002. \\
+RD-04 & El despliegue debe ser reproducible con Docker Compose desde una clonación limpia.
+Origen: ADR-007 y criterio de reproducibilidad de la asignatura. \\
+RD-05 & La autorización debe resolverse contra un catálogo de permisos almacenado en base de
+datos, no contra roles fijos en código. Origen: ADR-005. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Supuestos y dependencias}
+
+\begin{enumerate}
+    \item Las cuentas las provisiona el Administrador. \textbf{No existe autorregistro público},
+          y esto es una decisión deliberada, no una omisión: el sistema trata expedientes
+          académicos nominales.
+    \item El correo institucional es el identificador único de la cuenta.
+    \item El sistema depende de PostgreSQL y de Redis. El comportamiento exigido ante la caída
+          de Redis se especifica en RNF-04 y \textbf{no} se deja como nota de riesgo: una
+          política de degradación es una decisión de seguridad y merece un requisito.
+    \item El único servicio externo consumido es el directorio de universidades descrito en la
+          sección~\ref{sec:iface-consumidas}. \textbf{No se envía ningún dato personal a
+          terceros}, y RNF-20 lo convierte en obligación exigible para que ninguna refactorización
+          futura pueda cambiarlo sin romper un requisito.
+    \item El envío de correo saliente está previsto pero desactivado por configuración
+          (\cd{app.mail.enabled}). Mientras esté desactivado, las notificaciones son
+          exclusivamente internas (RF-41).
+\end{enumerate}
+
+% ======================= 4. INTERFACES EXTERNAS ==============================
+\section{Interfaces externas}
+\label{sec:interfaces}
+
+La norma distingue la interfaz que el sistema \emph{expone} de la que \emph{consume}. Se
+separan aquí porque son contratos distintos: en la expuesta el sistema fija las reglas, y en la
+consumida las sufre, de modo que cada interfaz consumida necesita además un comportamiento
+declarado ante la indisponibilidad del otro extremo.
+
+\subsection{Interfaces expuestas}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.3cm} p{2.8cm} p{3.2cm} p{5.3cm}}
+\toprule
+\textbf{Interfaz} & \textbf{Protocolo / formato} & \textbf{Autenticación} & \textbf{Contrato} \\
+\midrule
+API REST & HTTP/1.1, JSON UTF-8, sobre estructura \texttt{ResponseWrapper} \{\texttt{success},
+\texttt{message}, \texttt{data}\} & \emph{Bearer} JWT en cabecera \texttt{Authorization}, o
+\emph{cookie} \texttt{jwtToken} \texttt{HttpOnly} & 207 combinaciones método+ruta bajo
+\cd{/api/} y \cd{/api/v1/}; contrato publicado en OpenAPI~3.0 en \cd{/v3/api-docs} y
+\cd{/swagger-ui/index.html}. \\
+\addlinespace
+Sonda de salud & HTTP, JSON & Ninguna (pública) & \cd{/actuator/health} con detalle por
+componente (\texttt{db}, \texttt{redis}, \texttt{diskSpace}); es lo que permite comprobar que
+las migraciones se aplicaron sin autenticarse. \\
+\addlinespace
+Proxy inverso & HTTP/HTTPS & N/A & nginx sirve la SPA y reenvía \cd{/api/} al servicio de
+aplicación, con las mismas cabeceras de seguridad que exige RNF-10. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interfaces consumidas}
+\label{sec:iface-consumidas}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.6cm} p{2.6cm} p{2.4cm} p{6.4cm}}
+\toprule
+\textbf{Proveedor} & \textbf{Protocolo} & \textbf{Auten\-ti\-ca\-ción} & \textbf{Comportamiento
+exigido ante indisponibilidad} \\
+\midrule
+Directorio de universidades (\emph{Hipo Labs}) & HTTP, JSON, \cd{GET /search?country=Ecuador} &
+Ninguna & Tiempo de espera de 5\,s en conexión, lectura y escritura; 3 reintentos con retroceso
+exponencial desde 1\,s; agotados, respuesta de reserva local. Nunca propaga el fallo al cliente
+(RF-45). \\
+\addlinespace
+PostgreSQL & TCP, JDBC & Usuario y contraseña por variable de entorno & Indisponibilidad
+total del servicio. La aplicación no debe arrancar si las migraciones no se aplican. \\
+\addlinespace
+Redis & TCP (RESP) & Contraseña opcional por variable de entorno & Degradación explícita y
+\textbf{fail-closed} en la verificación de revocación de tokens y en el límite de tasa
+(RNF-04). \\
+\addlinespace
+SMTP saliente & SMTP/TLS & Usuario y contraseña por variable de entorno & Desactivado por
+defecto (\cd{app.mail.enabled=false}). Con el envío activo, un fallo del proveedor no debe
+impedir que la notificación interna se registre (RF-41). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Nota deliberada sobre proveedores de inteligencia artificial:} el asistente
+virtual (RF-44) y la generación de ideas de tema (RF-47) se resuelven \textbf{íntegramente
+dentro del sistema}, sin consumir ningún proveedor externo de modelo de lenguaje. Ningún dato
+personal sale hacia un tercero. RNF-20 convierte esa propiedad en una obligación verificable,
+porque hoy vive solo en el código y nada impediría que una refactorización futura empezara a
+enviar datos.
+
+% ===================== 5. ESTADOS DEL DOMINIO ================================
+\section{Catálogo de estados del dominio y transiciones}
+\label{sec:estados}
+
+Los criterios de aceptación de la sección~\ref{sec:rf} usan nombres de estado. Esta sección
+declara, para cada entidad con ciclo de vida, el \textbf{conjunto cerrado} de sus valores
+admisibles y las transiciones válidas con el actor o evento que las dispara. Sin esta tabla los
+criterios de aceptación se apoyan en vocabulario no definido.
+
+\subsection{Solicitud de pre-sustentación}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.4cm} p{4.6cm} p{7.4cm}}
+\toprule
+\textbf{Estado} & \textbf{Significado} & \textbf{Transición de salida (disparador)} \\
+\midrule
+\texttt{CREADA} & Registrada, aún no enviada. & $\rightarrow$ \texttt{ENVIADA} (Estudiante
+envía). No es suspendible. \\
+\texttt{ENVIADA} & En revisión de la coordinación. & $\rightarrow$ \texttt{APROBADA} /
+\texttt{RECHAZADA} (Coordinador). \\
+\texttt{APROBADA} & Aceptada; habilita la asignación de tutor. & $\rightarrow$ \texttt{TUTORIA}
+(asignación de tutor). \\
+\texttt{TUTORIA} & Acompañamiento en curso. & $\rightarrow$ \texttt{EVALUACION} (asignación de
+tribunal, que exige tutoría completada). \\
+\texttt{EVALUACION} & Tribunal conformado y defensa programable. & $\rightarrow$
+\texttt{CALIFICADA} (registro de la nota final). \\
+\texttt{CALIFICADA} & Nota final registrada; habilita el acta. & $\rightarrow$
+\texttt{COMPLETADA} (última firma del acta). \\
+\texttt{COMPLETADA} & Proceso cerrado. & Terminal. \\
+\texttt{RECHAZADA} & Rechazada por la coordinación. & Terminal. No es suspendible. \\
+\texttt{SUSPENDIDA} & Detenida por decisión académica, con motivo obligatorio. & Terminal en
+esta versión. No es suspendible de nuevo. \\
+\bottomrule
+\end{tabular}
+\caption{Estados de la solicitud. Cualquier estado distinto de \texttt{CREADA},
+\texttt{RECHAZADA} y \texttt{SUSPENDIDA} admite la transición a \texttt{SUSPENDIDA} (RF-16).}
+\end{table}
+
+\subsection{Acta de pre-sustentación}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{2.4cm} p{5.0cm} p{7.0cm}}
+\toprule
+\textbf{Estado} & \textbf{Significado} & \textbf{Transiciones válidas de salida} \\
+\midrule
+\texttt{GENERADA} & Acta emitida en PDF. & \texttt{REVISADA}, \texttt{OBSERVADA},
+\texttt{ANULADA}. \\
+\texttt{REVISADA} & Revisada académicamente. & \texttt{FINALIZADA}, \texttt{OBSERVADA},
+\texttt{ANULADA}. \\
+\texttt{OBSERVADA} & Con observaciones; exige motivo. & \texttt{REVISADA}, \texttt{GENERADA},
+\texttt{ANULADA}. \\
+\texttt{FINALIZADA} & Cerrada. Se alcanza también de forma automática con la cuarta firma. &
+\texttt{ANULADA}. \\
+\texttt{ANULADA} & Anulada; exige motivo. & Terminal. \\
+\bottomrule
+\end{tabular}
+\caption{Estados del acta. \texttt{OBSERVADA} y \texttt{ANULADA} exigen motivo. La transición a
+\texttt{ANULADA} desde cualquier estado está reservada al Administrador (RF-39).}
+\end{table}
+
+\subsection{Tutoría, fase de tutoría y demás entidades}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{3.1cm} p{5.4cm} p{6.0cm}}
+\toprule
+\textbf{Entidad} & \textbf{Conjunto cerrado de estados} & \textbf{Disparador del cambio} \\
+\midrule
+Tutoría (\texttt{tutores}) & \texttt{ACTIVO}, \texttt{COMPLETADA} & \texttt{COMPLETADA} cuando
+las 3 fases quedan aprobadas (RF-26). \\
+Fase de tutoría & \cd{PENDIENTE\_TUTOR}, \cd{PENDIENTE\_ESTUDIANTE},
+\texttt{APROBADA} & El tutor abre y aprueba; el estudiante entrega. \\
+Mensaje de fase & \texttt{OBSERVACION}, \texttt{RESPUESTA}, \texttt{APROBACION} & Tipo fijado
+por el emisor y la acción. \\
+Anteproyecto (\cd{estados\_proceso}) & \texttt{PENDIENTE}, \cd{EN\_PROCESO},
+\texttt{APROBADO}, \texttt{OBSERVADO}, \texttt{RECHAZADO} & Revisión del tutor (RF-21). \\
+Cronograma & \texttt{PROGRAMADO} & Único estado en uso en esta versión. \\
+Resultado de evaluación & \texttt{APROBADO} ($\geq 7{,}0$), \texttt{REPROBADO} ($< 7{,}0$) &
+Calculado, no editable (RF-34). \\
+Estudiante (académico) & \texttt{ACTIVO}, \texttt{EGRESADO}, \texttt{GRADUADO},
+\texttt{RETIRADO}, \texttt{SUSPENDIDO} & Gestión de estudiantes (RF-54). \\
+Cuenta de usuario & \texttt{activo} verdadero / falso & Activación y desactivación (RF-09). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\fbox{\parbox{0.98\textwidth}{\textbf{Hallazgo declarado (2026-09-09).} Los nueve
+estados de la solicitud y el único estado del cronograma \textbf{no están sembrados por ninguna
+migración}: se crean bajo demanda la primera vez que el proceso los necesita. La consecuencia es
+que en una base recién migrada el catálogo está vacío, y tanto el identificador como el campo
+\texttt{orden} de cada estado dependen del orden en que se ejecuten los casos de uso. RF-13
+declara el conjunto cerrado y RNF-25 exige que la siembra sea determinista; hasta que esa
+siembra exista, el catálogo de estados no es reproducible entre dos despliegues. Se declara aquí
+en vez de presentar la tabla como si fuera un catálogo sembrado.}}
+
+% ================== 6. MATRIZ DE PERMISOS ROL x OPERACIÓN ====================
+\section{Matriz de permisos por rol y operación}
+\label{sec:permisos}
+
+Con 31 controladores y 207 rutas, los permisos ya no se pueden auditar leyendo requisito por
+requisito: hace falta una tabla normativa. Esta sección la fija. Es la única forma de decidir si
+una asimetría de acceso es una decisión de negocio o un defecto, y es lo que permite detectar un
+permiso que se otorgó sin querer.
+
+\subsection{Modelo de autorización}
+
+El sistema define \textbf{4 roles de cuenta} (\texttt{ADMIN}, \texttt{COORDINADOR},
+\texttt{DOCENTE}, \texttt{ESTUDIANTE}) y \textbf{29 permisos} en catálogo de base de datos. La
+autorización se resuelve por permiso, no por rol, y la asignación permiso\,$\rightarrow$\,rol es
+editable en caliente (RF-12). Sobre ese control se aplican, cuando corresponde, dos
+comprobaciones adicionales que el permiso por sí solo no cubre:
+
+\begin{itemize}
+    \item \textbf{Propiedad del recurso:} el titular solo accede a lo suyo (RNF-13).
+    \item \textbf{Rol funcional en la solicitud:} tener \cd{ACTA\_FIRMAR} no habilita a
+          firmar cualquier acta; hay que ser además el tutor o el miembro del tribunal de esa
+          solicitud (RF-37).
+\end{itemize}
+
+\subsection{Asignación normativa de permisos}
+
+\begin{longtable}{p{5.1cm} p{1.6cm} p{1.9cm} p{2.2cm} p{1.7cm}}
+\toprule
+\textbf{Permiso} & \textbf{ADMIN} & \textbf{COORD.} & \textbf{DOCENTE} & \textbf{ESTUD.} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Permiso} & \textbf{ADMIN} & \textbf{COORD.} & \textbf{DOCENTE} & \textbf{ESTUD.} \\
+\midrule
+\endhead
+\multicolumn{5}{l}{\textit{Administración}}\\
+\cd{USUARIOS\_GESTIONAR}            & Sí & --- & --- & --- \\
+\cd{ROLES\_PERMISOS\_GESTIONAR}     & Sí & --- & --- & --- \\
+\cd{AUDITORIA\_VER}                 & Sí & --- & --- & --- \\
+\cd{BACKUPS\_GESTIONAR}             & Sí & --- & --- & --- \\
+\cd{CARRERAS\_GESTIONAR}            & Sí & --- & --- & --- \\
+\cd{ESTUDIANTES\_GESTIONAR}         & Sí & Sí  & --- & --- \\
+\cd{NOTIFICACIONES\_GLOBAL\_VER}    & Sí & --- & --- & --- \\
+\cd{NOTIFICACIONES\_ENVIAR}         & Sí & Sí  & --- & --- \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Solicitudes y proceso}}\\
+\cd{SOLICITUDES\_REVISAR}           & Sí & Sí  & Sí  & --- \\
+\cd{SOLICITUDES\_SUSPENDER}         & Sí & Sí  & --- & --- \\
+\cd{TRIBUNAL\_TUTOR\_ASIGNAR}       & Sí & Sí  & --- & --- \\
+\cd{CRONOGRAMA\_GESTIONAR}          & Sí & Sí  & --- & --- \\
+\cd{SALA\_GESTIONAR}                & Sí & Sí  & --- & --- \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Tutoría y anteproyecto}}\\
+\cd{ANTEPROYECTO\_REVISAR}          & Sí & Sí  & Sí  & --- \\
+\cd{TUTORIA\_GESTIONAR}             & Sí & Sí  & Sí  & --- \\
+\cd{TUTORIA\_AVANCE\_ESTUDIANTE}    & Sí & Sí  & --- & Sí  \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Evaluación}}\\
+\cd{RUBRICA\_GESTIONAR}             & Sí & Sí  & --- & --- \\
+\cd{EVALUACION\_RUBRICA\_REGISTRAR} & Sí & Sí  & Sí  & --- \\
+\cd{EVALUACION\_CALIFICAR}          & Sí & Sí  & --- & --- \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Actas}}\\
+\cd{ACTA\_GENERAR}                  & Sí & Sí  & --- & --- \\
+\cd{ACTA\_FIRMAR}                   & Sí & Sí  & Sí  & --- \\
+\cd{ACTAS\_VER}                     & Sí & Sí  & --- & --- \\
+\cd{ACTAS\_VER\_PROPIAS}            & Sí & --- & Sí  & --- \\
+\cd{ACTA\_HISTORIAL\_VER}           & Sí & Sí  & Sí  & --- \\
+\cd{ACTA\_ESTADO\_CAMBIAR}          & Sí & Sí  & --- & --- \\
+\cd{ACTAS\_GESTIONAR}               & Sí & --- & --- & --- \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Reportes y orientación}}\\
+\cd{REPORTES\_VER}                  & Sí & Sí  & --- & --- \\
+\cd{ORIENTACION\_TEMAS\_VER}        & Sí & Sí  & Sí  & Sí  \\
+\cd{ORIENTACION\_CATALOGO\_GESTIONAR} & Sí & Sí & --- & --- \\
+\bottomrule
+\caption{Asignación normativa permiso\,$\times$\,rol. «Sí» significa que el rol posee el permiso
+en la configuración inicial sembrada; «---» que no lo posee. La asignación es editable en
+caliente por RF-12, de modo que esta tabla especifica el \textbf{estado inicial exigido}, no una
+constante inmutable.}
+\end{longtable}
+
+\subsection{Acceso que no depende del catálogo de permisos}
+
+Tres capacidades se autorizan por rol de cuenta o por simple autenticación, no por permiso. Se
+declaran aparte para que la tabla anterior no se lea como la superficie completa de
+autorización:
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{4.4cm} p{3.4cm} p{6.8cm}}
+\toprule
+\textbf{Capacidad} & \textbf{Control} & \textbf{Requisito} \\
+\midrule
+Ruta de progreso de titulación & Rol \texttt{ESTUDIANTE} & RF-51 \\
+Temas guardados & Rol \texttt{ESTUDIANTE} & RF-48 \\
+Consulta de catálogos de apoyo, docentes, asistente virtual, universidades, estado en tiempo
+real, notificaciones propias, perfil propio & Usuario autenticado & RF-53, RF-55, RF-44, RF-45,
+RF-43, RF-41, RF-10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Asimetrías declaradas}
+\label{sec:asimetrias}
+
+Tres asimetrías de la tabla anterior son intencionales y se explican aquí para que una revisión
+futura no las tome por defectos, y una cuarta es una desviación real que queda como deuda:
+
+\begin{enumerate}
+    \item \textbf{El Coordinador no gestiona catálogos académicos}
+          (\cd{CARRERAS\_GESTIONAR} es exclusivo del Administrador) aunque sí gestiona
+          estudiantes. Es deliberado: facultades, carreras, modalidades y períodos son datos
+          maestros institucionales.
+    \item \textbf{El Coordinador no accede a la bitácora de auditoría}
+          (\cd{AUDITORIA\_VER}) ni a los respaldos. La auditoría debe poder registrar
+          acciones del Coordinador sin que él pueda consultarlas.
+    \item \textbf{El Administrador posee \cd{ACTAS\_VER\_PROPIAS}} pese a no ser docente. Es
+          consecuencia de otorgarle el conjunto completo; carece de efecto porque el filtro por
+          propiedad no le devuelve actas.
+    \item \textbf{Deuda declarada:} el Coordinador posee \cd{TUTORIA\_AVANCE\_ESTUDIANTE},
+          \cd{ACTA\_FIRMAR}, \cd{ANTEPROYECTO\_REVISAR} y \cd{TUTORIA\_GESTIONAR}
+          por herencia de la regla «todos los permisos menos tres» con la que se sembró el
+          catálogo inicial, no por una decisión sobre cada uno. No hay riesgo de acceso indebido
+          porque las comprobaciones de rol funcional de RF-37, RF-21 y RF-23 rechazan a quien no
+          es el tutor o el jurado de esa solicitud; pero la asignación no refleja una decisión
+          y debe revisarse permiso por permiso.
+\end{enumerate}
+
+% ==================== 7. REQUISITOS FUNCIONALES ==============================
+\section{Requisitos funcionales}
+\label{sec:rf}
+
+Cada requisito se especifica con la plantilla completa que exige la
+sección~\ref{sec:convencion}: enunciado normativo, prioridad MoSCoW, fuente, endpoint,
+\emph{rationale}, criterio de aceptación observable, método de verificación
+(sección~\ref{sec:metodos}) y estado del vocabulario cerrado (sección~\ref{sec:estados-req}).
+Los endpoints se citan tal como los expone el servicio en la etiqueta \texttt{v1.0.1}; la ruta
+de archivo y la clase de prueba viven en la matriz de trazabilidad, no aquí.
+
+\subsection{Autenticación y gestión de la sesión}
+
+\REQ{RF-01}{Autenticación con credenciales institucionales}
+\campo{Enunciado}{El sistema debe autenticar a un usuario a partir de su correo institucional y
+su contraseña, y emitir un token de acceso y un token de renovación asociados a esa sesión.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-01, CU-01, ADR-002}
+\campo{Endpoint}{\cd{POST /api/v1/auth/login}}
+\campo{Rationale}{Es la puerta de entrada de todo el sistema: ningún otro requisito es
+alcanzable sin ella, y su diseño determina qué puede hacer un atacante que capture una
+credencial.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Con credenciales válidas responde \texttt{200} y devuelve el token de acceso, el
+          identificador, el correo, el nombre y el rol del usuario.
+    \item El token de acceso lleva los siete atributos \texttt{jti}, \texttt{iss}, \texttt{sub},
+          \texttt{aud}, \texttt{iat}, \texttt{nbf} y \texttt{exp}.
+    \item Con contraseña incorrecta responde \texttt{401}. Con un correo no registrado responde
+          \textbf{también \texttt{401}}, con el mismo cuerpo: la respuesta no debe permitir
+          distinguir un correo existente de uno inexistente.
+    \item Nunca devuelve la contraseña ni su representación almacenada en el cuerpo de la
+          respuesta.
+    \item Superado el límite de RNF-09 responde \texttt{429}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-05, RNF-07, RNF-09}
+
+\REQ{RF-02}{Renovación del token de acceso con rotación del token de renovación}
+\campo{Enunciado}{El sistema debe emitir un nuevo token de acceso a partir de un token de
+renovación válido, invalidando en el mismo acto el token de renovación empleado y emitiendo uno
+nuevo.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{ADR-002; OWASP A07 (fallos de identificación y autenticación)}
+\campo{Endpoint}{\cd{POST /api/v1/auth/refresh}}
+\campo{Rationale}{Sin rotación, un token de renovación robado sirve indefinidamente durante toda
+su vida útil. Con rotación, su reutilización se vuelve detectable, que es lo que convierte el
+robo en un evento observable en vez de silencioso.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Con un token de renovación vigente responde \texttt{200} con un token de acceso nuevo
+          y un token de renovación nuevo.
+    \item El token de renovación empleado deja de ser válido de inmediato: un segundo uso
+          responde \texttt{401}.
+    \item Si el token presentado es uno ya utilizado, el sistema debe tratarlo como
+          \textbf{reutilización} y responder \texttt{401} \textbf{revocando además todas las
+          sesiones activas de ese usuario}, no solo rechazando la petición.
+    \item Sin token de renovación en la petición responde \texttt{400}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+\campo{Nota}{La detección de reutilización está construida y es observable, pero no hay todavía
+una prueba automatizada que ejercite el escenario de reutilización de punta a punta. Se declara
+\estadoI{} y no \estadoV{} en vez de dar por verificado lo que la matriz no respalda.}
+
+\REQ{RF-03}{Cierre de sesión con revocación del token de acceso}
+\campo{Enunciado}{El sistema debe invalidar, al cerrar sesión, tanto el token de renovación de
+esa sesión como el token de acceso presentado, de modo que este último deje de aceptarse aunque
+no haya expirado.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{ADR-002}
+\campo{Endpoint}{\cd{POST /api/v1/auth/logout}}
+\campo{Rationale}{Un token de acceso sin estado es válido hasta su expiración por construcción.
+Sin una lista de revocación consultada en cada petición, «cerrar sesión» sería una acción
+puramente cosmética en el cliente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} y limpia las \emph{cookies} de sesión del cliente.
+    \item Una petición posterior a cualquier endpoint protegido con \textbf{ese mismo} token de
+          acceso responde \texttt{401}, aun estando dentro de su ventana de validez.
+    \item La entrada de revocación debe expirar por sí sola al vencer el token, sin crecimiento
+          ilimitado del almacén.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-04 (la revocación se apoya en Redis y su política de degradación es la
+que decide qué pasa si el almacén no responde)}
+
+\REQ{RF-04}{Provisión de cuentas por el Administrador}
+\campo{Enunciado}{El sistema debe permitir únicamente al Administrador crear cuentas de usuario,
+aceptando exclusivamente nombre, apellido, correo, contraseña y rol.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-11, CU-11; hallazgo de auditoría OWASP A01 del 2026-09-04}
+\campo{Endpoints}{\cd{POST /api/v1/auth/register}, \cd{POST /api/usuarios}}
+\campo{Rationale}{El sistema trata expedientes académicos nominales, así que el alta no puede
+ser pública. Además, aceptar la entidad completa del cliente permitiría fijar por asignación
+masiva campos que no le corresponden (identificador, estado activo, rol interno, fecha de
+creación).}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{USUARIOS\_GESTIONAR} responde \texttt{403}.
+    \item Ningún campo del cuerpo distinto de los cinco admitidos debe alterar el registro
+          creado, aunque se envíe.
+    \item Con un correo ya registrado responde \texttt{400} sin crear el usuario.
+    \item El rol declarado y el rol interno del usuario quedan siempre resueltos al mismo valor;
+          no es posible crear una cuenta con ambos desincronizados.
+    \item La contraseña se almacena conforme a RNF-05 y nunca se devuelve.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-06}
+
+\REQ{RF-05}{Recuperación de la contraseña olvidada}
+\campo{Enunciado}{El sistema debe permitir al titular de una cuenta solicitar la recuperación de
+su contraseña indicando su correo institucional, y restablecerla mediante un elemento de un solo
+uso con vigencia limitada enviado a ese correo.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{OWASP A07 (recuperación de credenciales). Carencia detectada al contrastar el asistente virtual (RF-44), que ya ofrece esta capacidad al usuario, con los endpoints realmente expuestos por el módulo de autenticación.}
+\campo{Endpoints}{Por definir. No existen en el punto de corte.}
+\campo{Rationale}{Es la única carencia del corpus que exige programar y no solo redactar. Como
+las cuentas las crea exclusivamente el Administrador (RF-04) y la actualización de usuario
+\textbf{no modifica la contraseña}, hoy un usuario que la olvida no tiene ninguna vía de
+recuperación dentro del sistema: ni propia, ni administrativa. La única salida es una
+intervención directa sobre la base de datos, que no está especificada, no deja traza de
+autorización y no es auditable.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La solicitud responde \texttt{200} con el mismo cuerpo tanto si el correo está
+          registrado como si no: la respuesta no debe permitir enumerar cuentas.
+    \item El elemento de un solo uso caduca a los 30 minutos y no puede emplearse dos veces.
+    \item Al restablecerse la contraseña se aplican las exigencias de RNF-06 y \textbf{se
+          revocan todas las sesiones activas} del titular.
+    \item El número de solicitudes por cuenta y por ventana de tiempo está limitado, para que el
+          endpoint no sea un vector de abuso de correo.
+\end{itemize}
+\campo{Método de verificación}{Prueba (cuando exista la funcionalidad)}
+\campo{Estado}{\estadoP}
+\campo{Nota}{Se especifica antes de construirse, y a propósito: sin requisito no hay criterio
+contra el cual construirlo. Alternativa admisible si se decide no implementarlo en esta
+entrega: declararlo explícitamente fuera de alcance y especificar en su lugar el restablecimiento
+administrativo, que hoy tampoco existe.}
+
+\REQ{RF-06}{Cambio de la contraseña propia}
+\campo{Enunciado}{El sistema debe permitir a un usuario autenticado cambiar su propia contraseña
+presentando la contraseña vigente.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{OWASP A07 y NIST SP 800-63B: el titular debe poder cambiar su propia credencial. Carencia detectada al contrastar RF-04 y RF-08 con los endpoints reales.}
+\campo{Endpoint}{Por definir. No existe en el punto de corte.}
+\campo{Rationale}{Las contraseñas iniciales las fija el Administrador (RF-04), de modo que sin
+esta capacidad el usuario nunca controla su propia credencial y una contraseña inicial conocida
+por un tercero permanece válida indefinidamente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Con la contraseña vigente correcta responde \texttt{200}; con la incorrecta,
+          \texttt{401}, sin cambiar nada.
+    \item La contraseña nueva cumple RNF-06 y no puede ser igual a la vigente.
+    \item El cambio revoca todas las sesiones activas del titular salvo aquella desde la que se
+          realiza.
+\end{itemize}
+\campo{Método de verificación}{Prueba (cuando exista la funcionalidad)}
+\campo{Estado}{\estadoP}
+
+\REQ{RF-07}{Consulta de los permisos efectivos propios}
+\campo{Enunciado}{El sistema debe devolver al usuario autenticado el conjunto de códigos de
+permiso que su rol tiene concedidos en ese momento.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{ADR-005}
+\campo{Endpoint}{\cd{GET /api/me/permisos}}
+\campo{Rationale}{Permite al cliente ocultar lo que el usuario no puede ejecutar sin duplicar el
+mapa de permisos en el frontend. La decisión de autorización sigue siendo del servidor
+(RNF-12): esto es presentación, no control de acceso.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} con la lista de códigos de permiso del usuario en sesión.
+    \item El resultado refleja los cambios de RF-12 sin necesidad de volver a iniciar sesión.
+    \item Sin autenticación responde \texttt{401}.
+    \item Devuelve exclusivamente los permisos del usuario en sesión, nunca los de otro.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\subsection{Identidades y autorización}
+
+\REQ{RF-08}{Gestión de usuarios}
+\campo{Enunciado}{El sistema debe permitir al Administrador consultar, crear, modificar y
+eliminar usuarios, y consultarlos de forma paginada, por correo y filtrados por estado activo.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-11, CU-11}
+\campo{Endpoints}{\cd{GET /api/usuarios}, \cd{GET /api/usuarios/paginado},
+\cd{GET /api/usuarios/\{id\}}, \cd{GET /api/usuarios/email/\{email\}},
+\cd{GET /api/usuarios/activos}, \cd{PUT /api/usuarios/\{id\}}, \cd{DELETE /api/usuarios/\{id\}}}
+\campo{Rationale}{Es el requisito que sostiene la identidad de todos los demás: sin gestión de
+usuarios no hay a quién asignar tutor, tribunal ni acta.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Toda operación de esta capacidad sin el permiso \cd{USUARIOS\_GESTIONAR} responde
+          \texttt{403}.
+    \item Ninguna respuesta incluye la contraseña almacenada, en ninguna de las operaciones.
+    \item El borrado de un usuario con historial académico asociado se rechaza con \texttt{400}
+          en vez de dejar registros huérfanos; la vía prevista para ese caso es RF-09.
+    \item La modificación de un usuario \textbf{no altera su contraseña}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Nota}{El último criterio documenta el comportamiento real y es también el que hace
+inevitable RF-05: hoy nadie, ni siquiera el Administrador, puede restablecer una contraseña
+desde el sistema.}
+
+\REQ{RF-09}{Activación y desactivación de cuentas}
+\campo{Enunciado}{El sistema debe permitir al Administrador desactivar y reactivar una cuenta
+sin eliminarla, y una cuenta desactivada no debe poder autenticarse.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-11}
+\campo{Endpoints}{\cd{PATCH /api/usuarios/\{id\}/activar},
+\cd{PATCH /api/usuarios/\{id\}/desactivar}}
+\campo{Rationale}{Es la baja correcta cuando el usuario ya tiene historial académico: preserva
+la trazabilidad de sus actas y evaluaciones, cosa que el borrado destruiría.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} y el estado activo del usuario queda en el valor solicitado.
+    \item Un intento de autenticación de una cuenta desactivada responde \texttt{401}.
+    \item Sin el permiso \cd{USUARIOS\_GESTIONAR} responde \texttt{403}.
+    \item El cambio queda registrado en la bitácora de auditoría con el actor que lo realizó
+          (RNF-18).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-10}{Actualización del perfil propio}
+\campo{Enunciado}{El sistema debe permitir a un usuario autenticado actualizar su correo de
+notificaciones y su teléfono, y solo los suyos.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{OWASP A01; hallazgo de control de acceso de la auditoría del 2026-08-11/12, que separó el correo institucional (identificador de cuenta) de los datos de contacto del titular.}
+\campo{Endpoint}{\cd{PATCH /api/usuarios/\{id\}/perfil}}
+\campo{Rationale}{El correo institucional identifica la cuenta y no debe poder cambiarlo el
+propio usuario; el correo de notificaciones y el teléfono son datos de contacto y sí le
+pertenecen.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Un intento de editar el perfil de otro usuario responde \texttt{403}, aunque quien lo
+          intente sea Administrador.
+    \item La operación no modifica el correo institucional, el rol ni el estado activo, aunque
+          se envíen en el cuerpo.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-13}
+
+\REQ{RF-11}{Gestión de roles}
+\campo{Enunciado}{El sistema debe permitir al Administrador consultar, crear, renombrar y
+eliminar roles de usuario, conservando invariable el código del rol.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{ADR-005}
+\campo{Endpoints}{\cd{GET /api/roles}, \cd{POST /api/roles}, \cd{PUT /api/roles/\{id\}},
+\cd{DELETE /api/roles/\{id\}}}
+\campo{Rationale}{El nombre del rol es una etiqueta de presentación; su código es la clave que
+usan las reglas de autorización. Permitir renombrar sin tocar el código deja adaptar el
+vocabulario institucional sin romper el control de acceso.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Renombrar un rol devuelve \texttt{200} y el código del rol permanece inalterado.
+    \item Eliminar un rol con usuarios asignados se rechaza con \texttt{400}.
+    \item Sin el permiso \cd{ROLES\_PERMISOS\_GESTIONAR} responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-12}{Asignación de permisos a un rol}
+\campo{Enunciado}{El sistema debe permitir al Administrador consultar el catálogo completo de
+permisos y sustituir el conjunto de permisos concedidos a un rol, con efecto inmediato sobre las
+sesiones activas.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{ADR-005}
+\campo{Endpoints}{\cd{GET /api/permisos}, \cd{PUT /api/permisos/rol/\{rolId\}}}
+\campo{Rationale}{Es lo que hace que la matriz de la sección~\ref{sec:permisos} sea configuración
+y no código: permite corregir una asignación indebida sin recompilar ni desplegar.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} y el conjunto de permisos del rol queda exactamente en el
+          enviado, sin residuos de la asignación anterior.
+    \item Tras el cambio, una petición de un usuario de ese rol a un endpoint cuyo permiso se
+          retiró responde \texttt{403} \textbf{sin necesidad de volver a iniciar sesión}.
+    \item Sin el permiso \cd{ROLES\_PERMISOS\_GESTIONAR} responde \texttt{403}.
+    \item El cambio queda registrado en la bitácora de auditoría (RNF-18).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Nota}{Este requisito puede dejar el sistema sin ningún usuario capaz de administrar
+permisos si se retira \cd{ROLES\_PERMISOS\_GESTIONAR} al rol \texttt{ADMIN}. Esa
+salvaguarda no está especificada ni construida, y queda como deuda declarada
+(\S\ref{sec:pendientes}).}
+
+\subsection{Solicitud de pre-sustentación}
+
+\REQ{RF-13}{Registro de la solicitud de pre-sustentación}
+\campo{Enunciado}{El sistema debe registrar la solicitud de pre-sustentación de un estudiante
+con el título del tema, la modalidad de titulación y la convocatoria, dejándola en estado
+\texttt{CREADA}.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-02, CU-02}
+\campo{Endpoints}{\cd{POST /api/solicitudes/crear-por-usuario/\{usuarioId\}},
+\cd{POST /api/solicitudes/crear/\{estudianteId\}}}
+\campo{Rationale}{Es el hecho que abre el expediente: todo el resto del proceso cuelga de esta
+solicitud. Registrarla como \texttt{CREADA} y no como \texttt{ENVIADA} separa la redacción del
+compromiso, y deja al estudiante corregir antes de someterla.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El título del tema es obligatorio y no excede 300 caracteres; en otro caso responde
+          \texttt{400} sin crear la solicitud.
+    \item La modalidad de titulación es obligatoria; sin ella responde \texttt{400}.
+    \item Si no se indica convocatoria, el sistema debe resolver la convocatoria activa; si no
+          hay ninguna activa responde \texttt{400}.
+    \item Si se indica un área temática que no pertenece a la línea de investigación declarada,
+          responde \texttt{400}.
+    \item La solicitud creada queda en estado \texttt{CREADA} conforme a la
+          sección~\ref{sec:estados}, y al perfil de estudiante se le genera su código de
+          expediente.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-14}{Envío de la solicitud a revisión}
+\campo{Enunciado}{El sistema debe permitir al estudiante propietario enviar su solicitud a
+revisión, pasándola de \texttt{CREADA} a \texttt{ENVIADA}.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-02, CU-02}
+\campo{Endpoint}{\cd{POST /api/solicitudes/enviar/\{id\}}}
+\campo{Rationale}{Es el acto por el cual el estudiante asume la solicitud como definitiva y la
+somete a la coordinación; sin él, la coordinación no puede distinguir un borrador de una
+postulación.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Enviar una solicitud ajena responde \texttt{403}.
+    \item La solicitud queda en estado \texttt{ENVIADA} y el cambio se registra en el historial
+          de estados con el usuario que lo realizó.
+    \item Enviar una solicitud que no esté en \texttt{CREADA} responde \texttt{400}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-13}
+
+\REQ{RF-15}{Aprobación o rechazo de la solicitud}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{SOLICITUDES\_REVISAR} aprobar o rechazar una solicitud enviada, y rechazarla dejando una
+observación dirigida al estudiante.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-02, CU-02}
+\campo{Endpoints}{\cd{POST /api/solicitudes/aprobar/\{id\}},
+\cd{POST /api/solicitudes/rechazar/\{id\}},
+\cd{POST /api/solicitudes/rechazar-con-observacion/\{id\}}}
+\campo{Rationale}{Un rechazo sin motivo obliga al estudiante a adivinar qué corregir. Separar el
+rechazo con observación del rechazo simple permite exigir el motivo donde importa sin bloquear
+el caso en que la solicitud es inadmisible de plano.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Aprobar deja la solicitud en \texttt{APROBADA}; rechazar, en \texttt{RECHAZADA}.
+    \item El rechazo con observación exige el texto de la observación; sin él responde
+          \texttt{400}.
+    \item Sin el permiso \cd{SOLICITUDES\_REVISAR} responde \texttt{403}.
+    \item Toda transición queda registrada en el historial de estados con usuario, estado
+          anterior, estado nuevo y fecha.
+    \item El estudiante recibe una notificación con el resultado (RF-41).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-16}{Suspensión de una solicitud}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{SOLICITUDES\_SUSPENDER} suspender una solicitud en curso indicando el motivo, y una
+solicitud suspendida no debe admitir cargas de archivo por parte del estudiante.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Reglamento de titulación: detención del proceso por decisión académica. Modelado en la migración \cd{V1\_\_schema\_inicial.sql} (campos \cd{motivo\_suspension} y \cd{suspendido\_en} de la solicitud) y permiso \cd{SOLICITUDES\_SUSPENDER} de \cd{V13\_\_permisos\_roles\_dinamicos.sql}.}
+\campo{Endpoint}{\cd{POST /api/solicitudes/suspender/\{id\}}}
+\campo{Rationale}{Detener un proceso sin motivo registrado deja al estudiante sin explicación y
+a la institución sin traza de la decisión. La suspensión es reversible en su intención y
+distinta del rechazo, que cierra el expediente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El motivo de suspensión es obligatorio; sin él responde \texttt{400}.
+    \item Solo son suspendibles las solicitudes en un estado distinto de \texttt{CREADA},
+          \texttt{RECHAZADA} y \texttt{SUSPENDIDA}; en otro caso responde \texttt{400}.
+    \item Tras la suspensión, la carga del anteproyecto (RF-19) responde \texttt{400} indicando
+          el motivo registrado.
+    \item Sin el permiso \cd{SOLICITUDES\_SUSPENDER} responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+\campo{Nota}{La reanudación de una solicitud suspendida no está especificada ni construida: hoy
+\cd{SUSPENDIDA} es terminal. Queda como deuda declarada (\S\ref{sec:pendientes}).}
+
+\REQ{RF-17}{Consulta y seguimiento de la solicitud propia}
+\campo{Enunciado}{El sistema debe permitir al estudiante consultar sus propias solicitudes y el
+seguimiento del avance de cada una, expresado como porcentaje y como etapa alcanzada.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-02, CU-02}
+\campo{Endpoints}{\cd{GET /api/solicitudes/mis-solicitudes},
+\cd{GET /api/solicitudes/\{id\}}, \cd{GET /api/solicitudes/\{id\}/seguimiento}}
+\campo{Rationale}{El estudiante es el actor con menos visibilidad del proceso y el más afectado
+por él; sin seguimiento propio, cada consulta de estado se convierte en un trámite presencial.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Devuelve exclusivamente las solicitudes del estudiante en sesión.
+    \item Consultar el detalle o el seguimiento de una solicitud ajena responde \texttt{403}.
+    \item El seguimiento devuelve la etapa alcanzada conforme a los estados de la
+          sección~\ref{sec:estados} y un porcentaje coherente con esa etapa.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-13}
+
+\REQ{RF-18}{Consulta administrativa de solicitudes}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{SOLICITUDES\_REVISAR} listar las solicitudes de forma completa y paginada, filtrarlas por
+estudiante, contarlas por estado y obtener el reporte de defensas.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-09, CU-09}
+\campo{Endpoints}{\cd{GET /api/solicitudes}, \cd{GET /api/solicitudes/paginado},
+\cd{GET /api/solicitudes/contar-por-estado},
+\cd{GET /api/solicitudes/estudiante/\{estudianteId\}},
+\cd{GET /api/solicitudes/reporte-defensas}}
+\campo{Rationale}{Es la vista de gestión de la coordinación. El conteo por estado alimenta los
+indicadores de RF-56 sin recalcularlos en el cliente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{SOLICITUDES\_REVISAR} responde \texttt{403} en las cinco
+          operaciones.
+    \item La consulta paginada acepta número de página y tamaño, y devuelve el total de
+          elementos junto con la página solicitada.
+    \item El conteo por estado usa exclusivamente los códigos de la sección~\ref{sec:estados}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\subsection{Anteproyecto y tutoría}
+
+\REQ{RF-19}{Carga del anteproyecto en PDF}
+\campo{Enunciado}{El sistema debe permitir al estudiante propietario de la solicitud cargar el
+anteproyecto en formato PDF, calculando y almacenando su resumen criptográfico SHA-256 en el
+momento de la carga.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-12, CU-12}
+\campo{Endpoint}{\cd{POST /api/anteproyectos/enviar/\{solicitudId\}}}
+\campo{Rationale}{El anteproyecto es el documento que el tribunal evalúa. Calcular el resumen en
+el momento de la carga, y no después, es lo que permite demostrar más tarde que el archivo
+entregado es el mismo que se evaluó.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Un archivo cuyo tipo de contenido no sea \texttt{application/pdf} se rechaza con
+          \texttt{400} y no se almacena.
+    \item Un archivo de más de \textbf{10\,MB} se rechaza con \texttt{400} y no se almacena.
+    \item Cargar el anteproyecto de una solicitud ajena responde \texttt{403}.
+    \item Si la solicitud está \texttt{SUSPENDIDA}, la carga responde \texttt{400} indicando el
+          motivo de suspensión.
+    \item Con un anteproyecto ya cargado y no rechazado, un segundo envío responde \texttt{400}:
+          el reemplazo exige que el revisor lo rechace primero (RF-21).
+    \item El registro almacena el resumen SHA-256 en 64 caracteres hexadecimales y el tamaño en
+          bytes.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-13, RF-16}
+
+\REQ{RF-20}{Verificación de integridad del anteproyecto}
+\campo{Enunciado}{El sistema debe permitir verificar que el archivo almacenado de un
+anteproyecto coincide con el resumen SHA-256 registrado en el momento de su carga, e informar el
+resultado de esa comparación.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-12, CU-12; hallazgo de análisis estático \cd{UNSAFE\_HASH\_EQUALS}
+corregido el 2026-08-29}
+\campo{Endpoints}{\cd{GET /api/anteproyectos/verificar/\{solicitudId\}},
+\cd{GET /api/anteproyectos/ver/\{solicitudId\}},
+\cd{GET /api/anteproyectos/solicitud/\{solicitudId\}}}
+\campo{Rationale}{Guardar un resumen que nadie comprueba no aporta integridad. La comparación
+debe hacerse en tiempo constante para que no filtre información sobre el valor esperado.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Con el archivo íntegro responde \texttt{200} declarando la coincidencia.
+    \item Si el archivo fue alterado o falta, responde \texttt{200} declarando explícitamente la
+          \textbf{no} coincidencia; no devuelve un error genérico que confunda «alterado» con
+          «no encontrado».
+    \item La comparación de resúmenes no se realiza con una comparación de cadenas que termine
+          en el primer byte distinto.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-21}{Revisión del anteproyecto}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{ANTEPROYECTO\_REVISAR} aprobar o rechazar el anteproyecto cargado, y el rechazo debe
+habilitar al estudiante a cargar una versión nueva.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-12, CU-12}
+\campo{Endpoints}{\cd{POST /api/anteproyectos/aprobar/\{id\}},
+\cd{POST /api/anteproyectos/rechazar/\{id\}}}
+\campo{Rationale}{Es la puerta que RF-19 cierra: el estudiante no puede sustituir el documento
+por su cuenta, así que el rechazo del revisor es el único mecanismo que reabre la carga. Sin
+este requisito, el bloqueo de RF-19 sería un callejón sin salida.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Aprobar deja el anteproyecto en \texttt{APROBADO}; rechazar, en \texttt{RECHAZADO}.
+    \item Tras el rechazo, una nueva carga por RF-19 responde \texttt{200}.
+    \item Sin el permiso \cd{ANTEPROYECTO\_REVISAR} responde \texttt{403}.
+    \item El estudiante recibe una notificación con el resultado (RF-41).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-22}{Asignación del tutor}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{TRIBUNAL\_TUTOR\_ASIGNAR} asignar un docente como tutor de una solicitud, y consultar y
+retirar esa asignación.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-03, CU-03}
+\campo{Endpoints}{\cd{POST /api/jurados/tutor/asignar}, \cd{POST /api/tutores/asignar},
+\cd{GET /api/tutores/solicitud/\{solicitudId\}}, \cd{GET /api/tutores/mis-estudiantes},
+\cd{DELETE /api/tutores/\{id\}}}
+\campo{Rationale}{El tutor es el primer rol funcional que se fija sobre la solicitud, y de él
+depende que puedan abrirse las fases de tutoría (RF-23) y, más adelante, el tribunal (RF-26).}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Una solicitud admite un único tutor; asignar un segundo responde \texttt{400}.
+    \item La asignación deja la tutoría en estado \texttt{ACTIVO} y la solicitud en
+          \texttt{TUTORIA}.
+    \item El docente asignado y el estudiante reciben notificación (RF-41).
+    \item Sin el permiso \cd{TRIBUNAL\_TUTOR\_ASIGNAR} responde \texttt{403}.
+    \item Un docente consulta sus propios estudiantes tutorados sin necesidad de ese permiso, y
+          solo los suyos.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-23}{Gestión de las tres fases de tutoría}
+\campo{Enunciado}{El sistema debe permitir al tutor abrir fases de revisión sobre una tutoría,
+hasta un máximo de tres, y consultar el resumen y el detalle de esas fases.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Reglamento de titulación: tres revisiones obligatorias antes de conformar el tribunal. Modelado en \cd{V1\_\_schema\_inicial.sql} (tabla \cd{tutoria\_fases}).}
+\campo{Endpoints}{\cd{POST /api/tutorias/\{tutorId\}/nueva-fase},
+\cd{GET /api/tutorias/\{tutorId\}/fases}, \cd{GET /api/tutorias/\{tutorId\}/resumen},
+\cd{GET /api/tutorias/estudiante/\{usuarioId\}}, \cd{GET /api/tutorias/docente/\{usuarioId\}}}
+\campo{Rationale}{Las tres revisiones son la condición que el reglamento impone antes de
+conformar el tribunal. El número está fijado en el sistema y hasta esta versión vivía únicamente
+en el código: una regla de negocio que solo existe en el código no es una regla especificada.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El máximo de fases por tutoría es \textbf{3}; crear una cuarta responde \texttt{400}.
+    \item Cada fase se numera consecutivamente de 1 a 3 y nace en estado
+          \cd{PENDIENTE\_ESTUDIANTE}.
+    \item Sin el permiso \cd{TUTORIA\_GESTIONAR} responde \texttt{403}.
+    \item Un docente que no es el tutor de esa solicitud responde \texttt{403} aunque posea el
+          permiso.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-24}{Entrega de correcciones del estudiante en una fase}
+\campo{Enunciado}{El sistema debe permitir al estudiante cargar un archivo PDF con sus
+correcciones en una fase de tutoría abierta, calculando y almacenando su resumen SHA-256.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Reglamento de titulación: entrega de correcciones por fase. Modelado en \cd{V1\_\_schema\_inicial.sql} (campos \cd{archivo\_pdf\_estudiante}, \cd{sha256\_pdf} y \cd{tamano\_pdf\_bytes} de la fase).}
+\campo{Endpoints}{\cd{POST /api/tutorias/fases/\{faseId\}/subir-pdf},
+\cd{GET /api/tutorias/fases/\{faseId\}/pdf}}
+\campo{Rationale}{Es la contraparte del estudiante en el ciclo de tutoría, y la que produce el
+documento que en la fase 3 se convierte en el anteproyecto definitivo (RF-26).}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Un archivo cuyo tipo de contenido no sea \texttt{application/pdf} se rechaza con
+          \texttt{400}.
+    \item Cargar en una fase que no esté esperando al estudiante responde \texttt{400}.
+    \item Cargar en una fase de otra tutoría responde \texttt{403}.
+    \item Sin el permiso \cd{TUTORIA\_AVANCE\_ESTUDIANTE} responde \texttt{403}.
+    \item La fase registra el resumen SHA-256 y el tamaño en bytes del archivo entregado.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-25}{Mensajería de la fase de tutoría}
+\campo{Enunciado}{El sistema debe permitir al tutor y al estudiante intercambiar mensajes dentro
+de una fase, clasificados como observación, respuesta o aprobación, y marcar los recibidos como
+leídos.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Migración \cd{V1\_\_schema\_inicial.sql}: tabla \cd{tutoria\_mensajes} y catálogo \cd{tipos\_mensaje}, que fijan el conjunto cerrado de tipos de mensaje.}
+\campo{Endpoints}{\cd{POST /api/tutorias/fases/\{faseId\}/mensaje},
+\cd{PUT /api/tutorias/fases/\{faseId\}/leer}}
+\campo{Rationale}{Las observaciones de tutoría deben quedar asociadas a la fase y al documento
+que las motivó; fuera del sistema se pierden y no son auditables.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El tipo de mensaje pertenece al conjunto cerrado \texttt{OBSERVACION},
+          \texttt{RESPUESTA}, \texttt{APROBACION}; cualquier otro responde \texttt{400}.
+    \item Publicar o leer mensajes de una fase ajena responde \texttt{403}.
+    \item Un mensaje del tutor de tipo \texttt{OBSERVACION} deja la fase en
+          \cd{PENDIENTE\_ESTUDIANTE}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-26}{Aprobación de la fase y cierre de la tutoría}
+\campo{Enunciado}{El sistema debe permitir al tutor aprobar una fase que tenga entrega del
+estudiante y, cuando las tres fases queden aprobadas, cerrar la tutoría promoviendo el documento
+de la fase 3 a anteproyecto definitivo con su resumen SHA-256.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Reglamento de titulación: el cierre de la tutoría es precondición de la conformación del tribunal (RF-27).}
+\campo{Endpoints}{\cd{POST /api/tutorias/fases/\{faseId\}/aprobar},
+\cd{POST /api/tutorias/\{tutorId\}/registrar-avance}}
+\campo{Rationale}{Este es el punto donde el acompañamiento se convierte en entregable, y la
+condición que RF-27 exige para conformar el tribunal. Promover el documento de la fase 3
+conservando su resumen evita que el anteproyecto evaluado difiera del último aprobado.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Aprobar una fase sin entrega del estudiante responde \texttt{400}.
+    \item Con las tres fases aprobadas, la tutoría queda en \texttt{COMPLETADA}.
+    \item Al cerrarse, el anteproyecto de la solicitud queda con el archivo, el resumen SHA-256
+          y el tamaño del documento de la fase 3.
+    \item Sin el permiso \cd{TUTORIA\_GESTIONAR} responde \texttt{403}; un docente que no es
+          el tutor de esa solicitud responde \texttt{403} aunque lo posea.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-23, RF-24}
+
+\subsection{Tribunal, cronograma y salas}
+
+\REQ{RF-27}{Conformación del tribunal}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{TRIBUNAL\_TUTOR\_ASIGNAR} asignar a una solicitud tres docentes con los roles
+\texttt{PRESIDENTE}, \cd{VOCAL\_1} y \cd{VOCAL\_2}, solo cuando la tutoría de esa
+solicitud esté completada.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-03, CU-03}
+\campo{Endpoints}{\cd{POST /api/jurados/asignar},
+\cd{POST /api/jurados/asignar-automatico/\{solicitudId\}},
+\cd{GET /api/jurados/solicitud/\{solicitudId\}}, \cd{GET /api/jurados},
+\cd{DELETE /api/jurados/\{juradoId\}}}
+\campo{Rationale}{Concentra las cuatro reglas que garantizan la validez del tribunal: momento
+del proceso, unicidad del docente, unicidad del rol y ausencia de conflicto de interés. Ninguna
+de ellas estaba especificada hasta esta versión.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Si la tutoría de la solicitud no está \texttt{COMPLETADA}, responde \texttt{400}
+          indicando que faltan las tres revisiones obligatorias.
+    \item El rol pertenece al conjunto cerrado \texttt{PRESIDENTE}, \cd{VOCAL\_1},
+          \cd{VOCAL\_2}; cualquier otro responde \texttt{400}.
+    \item Un docente ya asignado a esa solicitud no puede asignarse de nuevo: responde
+          \texttt{400}.
+    \item Un rol ya ocupado en esa solicitud no puede volver a asignarse: responde \texttt{400}.
+    \item \textbf{El tutor de la solicitud no puede ser además jurado de la misma solicitud};
+          el intento responde \texttt{400} por conflicto de interés.
+    \item Un docente marcado como no disponible no puede asignarse: responde \texttt{400}.
+    \item Conformado el tribunal, la solicitud pasa a \texttt{EVALUACION}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-26}
+
+\REQ{RF-28}{Asignación masiva de tribunales y sugerencia de jurados}
+\campo{Enunciado}{El sistema debe permitir conformar tribunales para varias solicitudes en una
+sola operación, y sugerir docentes candidatos para una solicitud dada.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-03, CU-03; ADR-006 (la asignación masiva se resuelve en procedimiento
+almacenado)}
+\campo{Endpoints}{\cd{POST /api/jurados/asignar-masivo},
+\cd{GET /api/jurados/sugerencias/\{solicitudId\}},
+\cd{GET /api/jurados/docente/\{docenteId\}},
+\cd{GET /api/jurados/tutor/docente/\{docenteId\}},
+\cd{GET /api/jurados/info/\{solicitudId\}/\{usuarioId\}}}
+\campo{Rationale}{En una convocatoria la coordinación conforma decenas de tribunales el mismo
+día; hacerlo de uno en uno es donde aparecen los errores de rol repetido y de conflicto de
+interés que RF-27 rechaza.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La operación masiva aplica a cada solicitud las mismas cinco reglas de RF-27, y
+          devuelve por cada una si se asignó o el motivo del rechazo, sin abortar el lote
+          completo por un fallo individual.
+    \item La sugerencia nunca propone al tutor de esa solicitud ni a un docente ya asignado.
+    \item Un docente puede consultar sus propias asignaciones como jurado o tutor sin el permiso
+          \cd{TRIBUNAL\_TUTOR\_ASIGNAR}, y solo las suyas.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-29}{Programación del cronograma de defensa}
+\campo{Enunciado}{El sistema debe programar la defensa de una solicitud en una sala, fecha y
+hora determinadas, con una duración de 45 minutos, rechazando la programación si la sala o
+alguno de los miembros del tribunal ya está ocupado en ese intervalo.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-04, CU-04; ADR-006 (la validación de conflicto de jurado es un procedimiento
+almacenado)}
+\campo{Endpoints}{\cd{POST /api/cronogramas/crear},
+\cd{POST /api/cronogramas/auto/\{solicitudId\}}, \cd{GET /api/cronogramas},
+\cd{GET /api/cronogramas/solicitud/\{id\}}, \cd{GET /api/cronogramas/estudiante/\{id\}},
+\cd{GET /api/cronogramas/usuario/\{id\}}, \cd{DELETE /api/cronogramas/\{id\}}}
+\campo{Rationale}{Un choque de agenda descubierto el día de la defensa cuesta una reprogramación
+completa. La duración fija de 45 minutos y la ventana de búsqueda automática de 30 días son
+reglas de negocio que hasta esta versión vivían solo en el código.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La duración de toda defensa programada es de \textbf{45 minutos}.
+    \item Si la sala tiene otra defensa que se solapa con ese intervalo, responde \texttt{400}
+          nombrando la sala.
+    \item Si algún miembro del tribunal tiene otra defensa que se solapa, responde \texttt{400}
+          nombrando al docente.
+    \item La programación automática busca la primera franja libre en los \textbf{próximos 30
+          días} sobre las salas disponibles; si no encuentra ninguna responde \texttt{400}
+          declarándolo, en vez de programar en una franja ocupada.
+    \item Sin el permiso \cd{CRONOGRAMA\_GESTIONAR} responde \texttt{403} en la creación y
+          en la eliminación.
+    \item El cronograma creado queda en estado \texttt{PROGRAMADO}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-27, RF-31}
+
+\REQ{RF-30}{Consulta de disponibilidad de salas y franjas}
+\campo{Enunciado}{El sistema debe informar las franjas horarias disponibles y verificar la
+disponibilidad de una sala en un instante dado, antes de intentar la programación.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-04, HU-10}
+\campo{Endpoints}{\cd{GET /api/cronogramas/disponibilidad},
+\cd{GET /api/cronogramas/verificar-disponibilidad}}
+\campo{Rationale}{Sin consulta previa, la única forma de saber si una franja está libre es
+intentar programar y recibir el rechazo de RF-29, lo que convierte una consulta en un intento
+fallido.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La disponibilidad devuelta es coherente con las reglas de conflicto de RF-29: una
+          franja informada como libre no puede ser rechazada por solapamiento de sala.
+    \item La verificación puntual responde \texttt{200} declarando disponible o no disponible,
+          sin crear ningún cronograma.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-31}{Gestión de salas de sustentación}
+\campo{Enunciado}{El sistema debe permitir consultar las salas y, a quien posea el permiso
+\cd{SALA\_GESTIONAR}, crearlas y eliminarlas, con código único, nombre, capacidad y
+disponibilidad.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-10, CU-10}
+\campo{Endpoints}{\cd{GET /api/salas}, \cd{GET /api/salas/paginado}, \cd{POST /api/salas},
+\cd{DELETE /api/salas/\{id\}}}
+\campo{Rationale}{Las salas son el recurso escaso que RF-29 reparte; sin catálogo, la
+programación automática no tiene sobre qué buscar.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Un código de sala duplicado responde \texttt{400}.
+    \item Eliminar una sala con defensas programadas responde \texttt{400} en vez de dejar
+          cronogramas huérfanos.
+    \item Sin el permiso \cd{SALA\_GESTIONAR} la creación y la eliminación responden
+          \texttt{403}; la consulta está abierta a cualquier usuario autenticado.
+    \item Una sala marcada como no disponible no es candidata de la programación automática de
+          RF-29.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+\campo{Nota}{Era el requisito RF-10 de la especificación anterior, declarado allí «no verificado» porque
+la clase de prueba que citaba no existía. Sigue sin prueba dedicada; el estado se declara
+\estadoI{} conforme al vocabulario de la sección~\ref{sec:estados-req}, que distingue construido
+de verificado.}
+
+\subsection{Evaluación por rúbrica}
+
+\REQ{RF-32}{Gestión de rúbricas y de sus criterios}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{RUBRICA\_GESTIONAR} crear y eliminar rúbricas, definir sus criterios y sembrar el
+conjunto de criterios por omisión de una rúbrica, y debe permitir a cualquier usuario
+autenticado consultarlas.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-05, CU-05}
+\campo{Endpoints}{\cd{GET /api/rubricas}, \cd{GET /api/rubricas/\{id\}},
+\cd{POST /api/rubricas}, \cd{DELETE /api/rubricas/\{id\}},
+\cd{POST /api/rubricas/\{rubricaId\}/criterios},
+\cd{GET /api/rubricas/\{rubricaId\}/criterios},
+\cd{POST /api/rubricas/\{rubricaId\}/inicializar-criterios}}
+\campo{Rationale}{La rúbrica es el instrumento que hace comparable la evaluación entre
+tribunales distintos. Sin criterios definidos, RF-33 no tiene sobre qué registrar.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{RUBRICA\_GESTIONAR}, crear, eliminar o definir criterios
+          responde \texttt{403}; la consulta está abierta a cualquier usuario autenticado.
+    \item Eliminar una rúbrica ya utilizada en una evaluación responde \texttt{400}.
+    \item La siembra de criterios por omisión es idempotente: repetirla no duplica criterios.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-33}{Registro de la evaluación por criterio de rúbrica}
+\campo{Enunciado}{El sistema debe permitir a un miembro del tribunal registrar su calificación
+para \textbf{todos} los criterios de la rúbrica de una solicitud, en una escala de 1 a 100 por
+criterio, y solo a nombre propio.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-05, CU-05; hallazgo de auditoría OWASP A01 (escritura a nombre de otro
+jurado)}
+\campo{Endpoints}{\cd{POST /api/rubrica-evaluacion/registrar},
+\cd{POST /api/evaluaciones-jurado/guardar},
+\cd{GET /api/rubrica-evaluacion/criterios/\{rubricaId\}},
+\cd{GET /api/rubrica-evaluacion/solicitud/\{solicitudId\}/jurado/\{juradoId\}}}
+\campo{Rationale}{Una evaluación parcial no es comparable ni promediable, y una evaluación
+registrada a nombre de otro jurado invalida el acta. Ambas condiciones tienen que rechazarse en
+el servidor, no confiarse al cliente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Una escala fuera del intervalo \textbf{1 a 100} responde \texttt{400} declarando el
+          valor recibido.
+    \item Una entrega que no cubra \textbf{todos} los criterios de la rúbrica responde
+          \texttt{400} indicando cuántos criterios exige la rúbrica.
+    \item Registrar la evaluación a nombre de otro jurado responde \texttt{403}, aunque quien lo
+          intente posea \cd{EVALUACION\_RUBRICA\_REGISTRAR}.
+    \item Registrar una evaluación en una solicitud en la que quien la envía no es jurado
+          responde \texttt{400}.
+    \item Si la rúbrica no tiene criterios definidos, responde \texttt{400}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-27, RF-32, RNF-13}
+
+\REQ{RF-34}{Cálculo de la nota final ponderada}
+\campo{Enunciado}{El sistema debe calcular la nota final de una solicitud como la ponderación de
+la nota del instructor y la nota promedio del tribunal, con pesos que sumen 100, y debe derivar
+de esa nota el resultado \texttt{APROBADO} o \texttt{REPROBADO}.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-05, CU-05; ADR-006 (el promedio se resuelve en procedimiento almacenado)}
+\campo{Endpoints}{\cd{POST /api/evaluaciones/evaluar-ponderado},
+\cd{POST /api/evaluaciones/evaluar},
+\cd{POST /api/evaluaciones/calcular-promedio/\{solicitudId\}}}
+\campo{Rationale}{Es la regla que decide si un estudiante aprueba. Sus tres constantes ---los
+pesos por omisión, el rango de nota y el umbral de aprobación--- vivían únicamente en el código
+hasta esta versión, de modo que ni el estudiante ni el tribunal podían conocerlas leyendo la
+especificación.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Los pesos por omisión son \textbf{60\,\% instructor} y \textbf{40\,\% tribunal}.
+    \item Si los pesos enviados no suman \textbf{100} (con tolerancia $0{,}01$), responde
+          \texttt{400} indicando la suma recibida y no calcula nada.
+    \item Toda nota debe estar en el intervalo \textbf{0 a 10}; fuera de él responde
+          \texttt{400}.
+    \item El resultado es \texttt{APROBADO} si la nota final es \textbf{mayor o igual a 7,0}, y
+          \texttt{REPROBADO} en otro caso. El resultado es calculado y no admite fijarse
+          directamente.
+    \item Registrada la nota final, la solicitud pasa a \texttt{CALIFICADA}.
+    \item Sin el permiso \cd{EVALUACION\_CALIFICAR} responde \texttt{403}.
+    \item El estudiante recibe notificación de su nota final (RF-41).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-33}
+
+\REQ{RF-35}{Consulta de resultados de evaluación}
+\campo{Enunciado}{El sistema debe permitir consultar la evaluación de una solicitud, la nota del
+tribunal, las evaluaciones de un estudiante y las observaciones registradas, restringiendo cada
+consulta a quien tenga derecho sobre ese expediente.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-05, CU-05}
+\campo{Endpoints}{\cd{GET /api/evaluaciones}, \cd{GET /api/evaluaciones/solicitud/\{solicitudId\}},
+\cd{GET /api/evaluaciones/estudiante/\{estudianteId\}},
+\cd{GET /api/evaluaciones/usuario/\{usuarioId\}},
+\cd{GET /api/rubrica-evaluacion/solicitud/\{solicitudId\}},
+\cd{GET /api/rubrica-evaluacion/nota-tribunal/\{solicitudId\}},
+\cd{GET /api/rubrica-evaluacion/observaciones/\{solicitudId\}},
+\cd{GET /api/evaluaciones-jurado/tribunal/\{solicitudId\}},
+\cd{GET /api/evaluaciones-jurado/\{solicitudId\}/\{juradoId\}}}
+\campo{Rationale}{La calificación es un dato personal sensible del estudiante; el acceso no
+puede depender de conocer el identificador del expediente.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Consultar las evaluaciones de otro estudiante o de otro usuario responde \texttt{403}.
+    \item El listado general de evaluaciones exige el permiso \cd{EVALUACION\_CALIFICAR};
+          sin él responde \texttt{403}.
+    \item La consulta de una solicitud sin evaluación registrada responde \texttt{404}, no una
+          nota vacía que pueda confundirse con un cero.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-13}
+
+\subsection{Acta de pre-sustentación}
+
+\REQ{RF-36}{Generación del acta}
+\campo{Enunciado}{El sistema debe generar el acta de pre-sustentación de una solicitud en
+formato PDF, con los datos del estudiante, la composición del tribunal, la evaluación y el
+resultado, y dejarla en estado \texttt{GENERADA}.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-06, CU-06}
+\campo{Endpoint}{\cd{POST /api/v1/actas/generar/\{solicitudId\}}}
+\campo{Rationale}{El acta es el documento con valor académico que sale del sistema. Exigir que
+exista evaluación final antes de emitirla impide producir un acta sin resultado, que sería un
+documento oficial vacío.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Generar el acta de una solicitud sin evaluación final registrada responde
+          \texttt{400}.
+    \item El acta generada queda en estado \texttt{GENERADA} y con su archivo PDF disponible.
+    \item El PDF contiene los datos del estudiante, la tabla del tribunal con el rol de cada
+          miembro y su confirmación, y la evaluación con el resultado.
+    \item Sin el permiso \cd{ACTA\_GENERAR} responde \texttt{403}.
+    \item La generación queda registrada en el historial de estados del acta (RF-40).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-34}
+
+\REQ{RF-37}{Firma digital multi-actor del acta}
+\campo{Enunciado}{El sistema debe permitir que el acta sea firmada por los cuatro roles
+\texttt{PRESIDENTE}, \cd{VOCAL\_1}, \cd{VOCAL\_2} y \texttt{TUTOR}, aceptando cada firma
+únicamente del docente que ejerce ese rol en esa solicitud, y debe cerrar el proceso cuando las
+cuatro firmas estén aplicadas.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{HU-07, CU-07; ADR-006 (la firma se persiste en procedimiento almacenado)}
+\campo{Endpoint}{\cd{POST /api/v1/actas/firmar/\{actaId\}}}
+\campo{Rationale}{Es el requisito que cierra todo el proceso, y el que mejor ilustra por qué un
+permiso no basta como control de acceso: poseer \cd{ACTA\_FIRMAR} habilita la funcionalidad,
+pero firmar como \texttt{PRESIDENTE} exige ser el presidente de \emph{ese} tribunal.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El rol de firma pertenece al conjunto cerrado \texttt{PRESIDENTE}, \cd{VOCAL\_1},
+          \cd{VOCAL\_2}, \texttt{TUTOR}; cualquier otro responde \texttt{400}.
+    \item Firmar con un rol que el firmante no ejerce en esa solicitud responde \texttt{403},
+          aunque posea \cd{ACTA\_FIRMAR}.
+    \item Cada firma registra el rol, la fecha y la observación asociada.
+    \item Aplicada la cuarta firma, el acta pasa a \texttt{FINALIZADA}, la solicitud pasa a
+          \texttt{COMPLETADA} y el PDF se regenera reflejando el estado final de las firmas.
+    \item El estudiante recibe notificación del cierre del proceso (RF-41).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RF-36, RF-27, RF-22}
+\campo{Nota}{Esta versión eleva el requisito de \emph{Should} a \textbf{Must}. La razón es que
+RF-37 es la única transición que lleva la solicitud a \texttt{COMPLETADA}: sin él, ningún
+expediente puede cerrarse, y un requisito del que depende el cierre del proceso no puede ser
+opcional. La especificación anterior lo declaraba \emph{Should} sin justificar esa
+prioridad.}
+
+\REQ{RF-38}{Consulta y descarga del acta}
+\campo{Enunciado}{El sistema debe permitir consultar y descargar el acta a los actores con
+derecho sobre ese expediente, y permitir a un docente listar exclusivamente las actas de las
+pre-sustentaciones en las que participa.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Migración \cd{V19\_\_historial\_actas\_y\_reportes.sql}, que introduce los permisos \cd{ACTAS\_VER} y \cd{ACTAS\_VER\_PROPIAS} precisamente para separar el listado completo del listado propio; OWASP A01.}
+\campo{Endpoints}{\cd{GET /api/v1/actas}, \cd{GET /api/v1/actas/mis-actas},
+\cd{GET /api/v1/actas/buscar}, \cd{GET /api/v1/actas/\{id\}},
+\cd{GET /api/v1/actas/solicitud/\{solicitudId\}},
+\cd{GET /api/v1/actas/ver/\{actaId\}}, \cd{GET /api/v1/actas/descargar/\{actaId\}},
+\cd{DELETE /api/v1/actas/\{id\}}}
+\campo{Rationale}{Separar el listado completo (\cd{ACTAS\_VER}) del listado propio
+(\cd{ACTAS\_VER\_PROPIAS}) es lo que permite dar acceso al docente sin exponerle el
+expediente de toda la facultad.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El listado propio devuelve únicamente las actas en las que quien consulta es tutor o
+          miembro del tribunal.
+    \item Consultar o descargar un acta sobre la que no se tiene derecho responde \texttt{403},
+          conociendo su identificador.
+    \item Descargar un acta cuyo PDF no se ha generado responde \texttt{400}.
+    \item La eliminación exige el permiso \cd{ACTAS\_GESTIONAR}; sin él responde
+          \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Demostración}
+\campo{Estado}{\estadoV}
+\campo{Depende de}{RNF-13}
+
+\REQ{RF-39}{Cambio de estado del acta}
+\campo{Enunciado}{El sistema debe permitir cambiar el estado de un acta únicamente por
+transiciones válidas conforme a la sección~\ref{sec:estados}, exigiendo motivo para
+\texttt{OBSERVADA} y \texttt{ANULADA}.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Migración \cd{V19\_\_historial\_actas\_y\_reportes.sql}: catálogo \cd{estados\_acta} con su campo \cd{orden}, que es lo que define la máquina de estados de la sección~\ref{sec:estados}.}
+\campo{Endpoint}{\cd{PATCH /api/v1/actas/\{id\}/estado}}
+\campo{Rationale}{Sin una máquina de estados aplicada en el servidor, un acta podría pasar de
+\texttt{FINALIZADA} a \texttt{REVISADA} y reabrir un expediente cerrado sin dejar rastro de por
+qué.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Una transición no permitida responde \texttt{400} nombrando el estado de origen, el de
+          destino y los estados válidos.
+    \item Pasar a \texttt{OBSERVADA} o a \texttt{ANULADA} sin motivo responde \texttt{400}.
+    \item Fijar el estado que el acta ya tiene responde \texttt{400}.
+    \item La transición a \texttt{ANULADA} desde cualquier estado está reservada al
+          Administrador; para el resto de actores rigen las transiciones de la tabla.
+    \item Sin el permiso \cd{ACTA\_ESTADO\_CAMBIAR} responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Demostración}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-40}{Historial de estados del acta}
+\campo{Enunciado}{El sistema debe registrar cada cambio de estado de un acta con el usuario, su
+rol, el estado anterior, el estado nuevo, el motivo y la fecha, y permitir consultar ese
+historial a quien tenga derecho sobre el acta.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Migración \cd{V19\_\_historial\_actas\_y\_reportes.sql}: tabla \cd{historial\_estados\_acta} y permiso \cd{ACTA\_HISTORIAL\_VER}.}
+\campo{Endpoint}{\cd{GET /api/v1/actas/\{id\}/historial}}
+\campo{Rationale}{El acta es el documento con efectos académicos; saber quién la observó o la
+anuló, y por qué, es parte del documento tanto como su contenido.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Cada cambio de estado de RF-39 y la generación de RF-36 producen exactamente una
+          entrada de historial.
+    \item Consultar el historial de un acta ajena responde \texttt{403}.
+    \item Sin el permiso \cd{ACTA\_HISTORIAL\_VER} responde \texttt{403}.
+    \item Las entradas del historial no son editables ni eliminables por la API.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoV}
+
+\subsection{Comunicación y apoyo al usuario}
+
+\REQ{RF-41}{Notificaciones al usuario}
+\campo{Enunciado}{El sistema debe registrar una notificación dirigida al usuario afectado en
+cada hito del proceso, y permitirle consultarlas, filtrar las no leídas, marcarlas como leídas
+individualmente o en bloque, y eliminarlas.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-08, CU-08}
+\campo{Endpoints}{\cd{GET /api/v1/notificaciones/usuario/\{usuarioId\}},
+\cd{GET /api/v1/notificaciones/usuario/\{usuarioId\}/no-leidas},
+\cd{PATCH /api/v1/notificaciones/\{id\}/marcar-leida},
+\cd{PATCH /api/v1/notificaciones/usuario/\{usuarioId\}/marcar-todas-leidas},
+\cd{DELETE /api/v1/notificaciones/\{id\}}}
+\campo{Rationale}{Los hitos del proceso ocurren sin que el afectado esté conectado. La
+notificación interna es lo que evita que el estudiante tenga que consultar su estado a diario
+para enterarse de una decisión.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Se registra notificación al menos en: aprobación o rechazo de la solicitud (RF-15),
+          resultado de la revisión del anteproyecto (RF-21), asignación de tutor (RF-22), carga
+          del anteproyecto, nota final (RF-34) y cierre del acta (RF-37).
+    \item Consultar, marcar o eliminar notificaciones de otro usuario responde \texttt{403}.
+    \item El listado global de notificaciones del sistema exige el permiso
+          \cd{NOTIFICACIONES\_GLOBAL\_VER}; sin él responde \texttt{403}.
+    \item Si el envío de correo saliente está desactivado o el proveedor falla, la notificación
+          interna \textbf{se registra igualmente}: la entrega por correo es un canal adicional,
+          no la notificación.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-42}{Envío manual de notificaciones}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{NOTIFICACIONES\_ENVIAR} crear una notificación dirigida a un usuario determinado.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{HU-08}
+\campo{Endpoints}{\cd{POST /api/v1/notificaciones/crear}, \cd{GET /api/v1/notificaciones}}
+\campo{Rationale}{Cubre las comunicaciones que no corresponden a un hito automatizado, sin
+obligar a la coordinación a salir del sistema.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{NOTIFICACIONES\_ENVIAR} responde \texttt{403}.
+    \item El destinatario debe existir; en otro caso responde \texttt{400}.
+    \item La notificación creada aparece en el listado del destinatario (RF-41).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-43}{Consulta del estado del proceso en tiempo real}
+\campo{Enunciado}{El sistema debe exponer, en una sola petición, el estado consolidado del
+proceso de una solicitud, y admitir la consulta consolidada de varias solicitudes en lote.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{ADR-001: la actualización de estado se resuelve por sondeo periódico y no por canal persistente, decisión que además determina la directiva \cd{connect-src} de RNF-10.}
+\campo{Endpoints}{\cd{GET /api/estado/solicitud/\{id\}},
+\cd{POST /api/estado/solicitudes/batch}}
+\campo{Rationale}{El cliente refresca el estado cada 15 segundos. Sin un endpoint consolidado
+tendría que encadenar cinco llamadas por solicitud, multiplicando por cinco la carga de un
+sondeo que ya es periódico. La actualización se resuelve por sondeo y \textbf{no} por
+\emph{WebSocket}; declararlo evita que la política de seguridad de contenido reserve permisos
+para un canal que no existe.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Devuelve en una respuesta el estado de la solicitud, la tutoría, el tribunal, el
+          cronograma y el acta.
+    \item La consulta en lote devuelve un elemento por identificador solicitado, sin fallar el
+          lote completo por una solicitud inexistente.
+    \item Consultar el estado de una solicitud ajena responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-44}{Asistente virtual de ayuda}
+\campo{Enunciado}{El sistema debe responder consultas de ayuda del usuario autenticado sobre los
+módulos del sistema, y ofrecer el conjunto de temas disponibles en cada respuesta.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{Observación docente OBS-17 (\cd{docs/observaciones/OBSERVACIONES.md}), que exigió someter el asistente al control de acceso del resto de la API.}
+\campo{Endpoint}{\cd{POST /api/v1/chatbot/ask}}
+\campo{Rationale}{Reduce las consultas de trámite a la coordinación. La resolución es interna y
+determinista, sin consumir ningún proveedor externo de modelo de lenguaje: eso mantiene el
+requisito dentro del alcance de RNF-20 y evita que el mensaje del usuario salga del sistema.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin autenticación responde indicando que se requiere iniciar sesión, sin procesar el
+          mensaje.
+    \item Ante un mensaje que no reconoce, responde declarando que no puede responderlo y
+          ofrece los temas disponibles, en vez de inventar una respuesta.
+    \item \textbf{El mensaje del usuario no se envía a ningún servicio externo}, y ninguna
+          respuesta incluye datos de otro usuario.
+    \item Toda respuesta incluye la lista de temas soportados.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoV}
+\campo{Nota}{El asistente ofrece hoy orientación sobre cambio y recuperación de contraseña,
+capacidades que no existen (RF-05, RF-06). Es una promesa que el sistema no puede cumplir, y se
+resuelve implementando esos requisitos o retirando ese tema del asistente; no dejando la
+contradicción en pie.}
+
+\REQ{RF-45}{Consulta del directorio de universidades}
+\campo{Enunciado}{El sistema debe ofrecer al usuario autenticado el listado de universidades del
+Ecuador obtenido del directorio externo, con resultado cacheado y con una respuesta de reserva
+cuando el proveedor no está disponible.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{Criterio de consumo de API externa de la asignatura}
+\campo{Endpoint}{\cd{GET /api/universidades}}
+\campo{Rationale}{Es la única dependencia externa de datos del sistema. La reserva local existe
+para que la indisponibilidad de un tercero no se convierta en un error de esta aplicación.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Con el proveedor disponible responde \texttt{200} con el listado.
+    \item El resultado se sirve desde caché durante \textbf{10 minutos} antes de volver a
+          consultar al proveedor.
+    \item Ante error o tiempo de espera del proveedor, tras \textbf{3 reintentos} con retroceso
+          exponencial desde 1\,s, responde \texttt{200} con la entrada de reserva local; nunca
+          propaga un \texttt{5xx} al cliente.
+    \item Los tiempos de espera de conexión, lectura y escritura son de \textbf{5 segundos}.
+    \item \textbf{Ninguna petición al proveedor incluye datos de un usuario del sistema.}
+\end{itemize}
+\campo{Método de verificación}{Prueba + Análisis}
+\campo{Estado}{\estadoV}
+\campo{Nota}{El análisis estadístico de caché fría contra caché caliente sobre este endpoint
+está archivado en \cd{k6/README.md} (30 muestras por escenario, prueba de Wilcoxon, IC 95\,\%).}
+
+\subsection{Centro de orientación de titulación}
+
+\REQ{RF-46}{Exploración del catálogo de temas propuestos}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{ORIENTACION\_TEMAS\_VER} explorar el catálogo de temas de titulación propuestos y
+consultar el detalle de un tema.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{\cd{docs/funcionalidades/CENTRO-ORIENTACION.md} y migraciones \cd{V20} a \cd{V23}, que crean el módulo y siembran su catálogo.}
+\campo{Endpoints}{\cd{GET /api/v1/orientacion/temas},
+\cd{GET /api/v1/orientacion/temas/\{temaId\}}}
+\campo{Rationale}{La elección del tema es el punto donde más estudiantes se detienen. El
+catálogo convierte esa decisión en una elección informada sobre líneas de investigación reales
+de la carrera.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Los cuatro roles poseen \cd{ORIENTACION\_TEMAS\_VER} en la asignación inicial
+          (sección~\ref{sec:permisos}); sin el permiso responde \texttt{403}.
+    \item El catálogo admite filtrado por línea de investigación y por área temática.
+    \item Un tema inexistente responde \texttt{404}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-47}{Generación de ideas de tema}
+\campo{Enunciado}{El sistema debe generar propuestas de tema a partir de la línea de
+investigación y el área temática indicadas por el usuario, sin persistirlas automáticamente.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{\cd{docs/funcionalidades/CENTRO-ORIENTACION.md}: el objetivo declarado del módulo es que el estudiante explore ideas \emph{antes} de registrar su solicitud.}
+\campo{Endpoint}{\cd{POST /api/v1/orientacion/temas/generar}}
+\campo{Rationale}{Una sugerencia es una recomendación, no un hecho: persistirla sola convertiría
+una propuesta que nadie eligió en parte del expediente. Solo el acto explícito de RF-48 la
+guarda. La generación es \textbf{interna}, sin proveedor externo, en coherencia con RNF-20.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Si el área temática indicada no pertenece a la línea de investigación declarada,
+          responde \texttt{400}.
+    \item Las propuestas devueltas \textbf{no se persisten} como temas del estudiante.
+    \item \textbf{Ningún dato del usuario se envía a un servicio externo} en esta operación.
+    \item Sin el permiso \cd{ORIENTACION\_TEMAS\_VER} responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-48}{Temas guardados por el estudiante}
+\campo{Enunciado}{El sistema debe permitir a un usuario con rol \texttt{ESTUDIANTE} guardar y
+retirar temas de su lista personal, y consultarla.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{\cd{docs/funcionalidades/CENTRO-ORIENTACION.md} y migración \cd{V21}, que siembra el catálogo de temas sobre el que se guarda.}
+\campo{Endpoints}{\cd{GET /api/v1/orientacion/temas/guardados},
+\cd{POST /api/v1/orientacion/temas/\{temaId\}/guardar},
+\cd{DELETE /api/v1/orientacion/temas/\{temaId\}/guardar}}
+\campo{Rationale}{Es lo que hace del catálogo una herramienta de decisión y no solo un listado:
+permite comparar candidatos antes de comprometerse en RF-13.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Guardar un tema ya guardado responde \texttt{400} sin duplicar la entrada.
+    \item Retirar un tema que no estaba guardado responde \texttt{400}.
+    \item La lista devuelta contiene exclusivamente los temas del estudiante en sesión.
+    \item Un usuario cuyo rol no es \texttt{ESTUDIANTE} responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-49}{Gestión del catálogo de orientación}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{ORIENTACION\_CATALOGO\_GESTIONAR} crear, editar y eliminar temas propuestos y recursos
+de titulación.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{Migración \cd{V21\_\_orientacion\_permisos\_y\_semilla\_temas.sql}, que crea el permiso \cd{ORIENTACION\_CATALOGO\_GESTIONAR} para curar el catálogo que RF-46 da por hecho.}
+\campo{Endpoints}{\cd{POST /api/v1/orientacion/temas},
+\cd{PUT /api/v1/orientacion/temas/\{temaId\}},
+\cd{DELETE /api/v1/orientacion/temas/\{temaId\}},
+\cd{POST /api/v1/orientacion/recursos},
+\cd{PUT /api/v1/orientacion/recursos/\{id\}},
+\cd{DELETE /api/v1/orientacion/recursos/\{id\}}}
+\campo{Rationale}{RF-46 da por hecho un catálogo curado; sin este requisito no existiría el
+mecanismo que lo mantiene, y el catálogo quedaría congelado en su siembra inicial.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{ORIENTACION\_CATALOGO\_GESTIONAR} las seis operaciones
+          responden \texttt{403}.
+    \item Un tema con el área temática incoherente con su línea de investigación responde
+          \texttt{400}.
+    \item Eliminar un tema guardado por algún estudiante lo retira también de esas listas
+          personales, sin dejar referencias colgantes.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-50}{Consulta de recursos de titulación}
+\campo{Enunciado}{El sistema debe ofrecer a cualquier usuario autenticado el catálogo de
+recursos de apoyo a la titulación.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{Migración \cd{V23\_\_orientacion\_semilla\_recursos\_titulacion.sql}.}
+\campo{Endpoint}{\cd{GET /api/v1/orientacion/recursos}}
+\campo{Rationale}{Los recursos son material de referencia; restringirlos por permiso no aportaría
+protección y sí fricción.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} con los recursos vigentes a cualquier usuario autenticado.
+    \item Sin autenticación responde \texttt{401}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-51}{Ruta de progreso de titulación}
+\campo{Enunciado}{El sistema debe presentar al estudiante los ocho pasos de la ruta de
+titulación, permitirle marcar los completados, y calcular el porcentaje de avance.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{\cd{docs/funcionalidades/CENTRO-ORIENTACION.md} y migración \cd{V20}, que define el catálogo de pasos de la ruta de titulación.}
+\campo{Endpoints}{\cd{GET /api/v1/orientacion/progreso},
+\cd{PUT /api/v1/orientacion/progreso}}
+\campo{Rationale}{Traduce un proceso administrativo largo en una lista concreta de pasos, que es
+lo que el estudiante necesita para saber qué le falta sin interpretar estados internos.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El catálogo de pasos es cerrado y ordenado: tema definido, tutor asignado,
+          anteproyecto elaborado, anteproyecto aprobado, solicitud registrada, correcciones
+          aplicadas, documento final y pre-sustentación programada.
+    \item El porcentaje es el número de pasos completados sobre el total, redondeado al entero
+          más próximo.
+    \item Un usuario cuyo rol no es \texttt{ESTUDIANTE} responde \texttt{403}.
+    \item La consulta y la actualización operan exclusivamente sobre el progreso del estudiante
+          en sesión.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Nota}{Los ocho pasos se marcan manualmente y no se derivan del estado real de la
+solicitud (sección~\ref{sec:estados}), de modo que la ruta y el expediente pueden discrepar. La
+sincronización automática queda como deuda declarada (\S\ref{sec:pendientes}).}
+
+\subsection{Catálogos académicos y directorio}
+
+\REQ{RF-52}{Gestión de catálogos académicos}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{CARRERAS\_GESTIONAR} crear, editar y eliminar facultades, carreras, modalidades de
+titulación y períodos académicos.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Migración \cd{V17\_\_gestion\_carreras.sql}, que crea el permiso \cd{CARRERAS\_GESTIONAR} y lo reserva al Administrador.}
+\campo{Endpoints}{\cd{POST|PUT|DELETE /api/catalogos/facultades},
+\cd{POST|PUT|DELETE /api/catalogos/carreras},
+\cd{POST|PUT|DELETE /api/catalogos/modalidades},
+\cd{POST|PUT|DELETE /api/catalogos/periodos-academicos}}
+\campo{Rationale}{Son los datos maestros de los que cuelgan la solicitud, el estudiante y la
+convocatoria. Sin ellos el sistema no puede recibir una sola solicitud.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{CARRERAS\_GESTIONAR} las doce operaciones responden
+          \texttt{403}. La consulta permanece abierta a cualquier usuario autenticado (RF-53).
+    \item Un código duplicado dentro del mismo catálogo responde \texttt{400}.
+    \item Eliminar un elemento referenciado por solicitudes, estudiantes o convocatorias
+          responde \texttt{400} en vez de dejar referencias huérfanas.
+    \item Toda alta, modificación y baja queda registrada en la bitácora de auditoría con su
+          actor (RNF-18).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+\campo{Nota}{El Coordinador \textbf{no} posee este permiso, pese a que la tabla de actores de la
+especificación anterior le atribuía la gestión de catálogos. La tabla de la sección~\ref{sec:actores}
+queda corregida en consecuencia: la gestión de datos maestros es exclusiva del Administrador
+(sección~\ref{sec:asimetrias}, punto 1).}
+
+\REQ{RF-53}{Consulta de catálogos de apoyo}
+\campo{Enunciado}{El sistema debe ofrecer a cualquier usuario autenticado la consulta de
+modalidades, líneas de investigación, áreas temáticas, convocatorias, la convocatoria activa,
+carreras, períodos académicos y facultades.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-02 (los catálogos alimentan el formulario de solicitud)}
+\campo{Endpoints}{\cd{GET /api/catalogos/modalidades},
+\cd{GET /api/catalogos/lineas-investigacion}, \cd{GET /api/catalogos/areas-tematicas},
+\cd{GET /api/catalogos/convocatorias}, \cd{GET /api/catalogos/convocatoria-activa},
+\cd{GET /api/catalogos/carreras}, \cd{GET /api/catalogos/periodos-academicos},
+\cd{GET /api/catalogos/facultades}}
+\campo{Rationale}{Son los valores admisibles que RF-13 valida. Exponerlos como consulta abierta
+al usuario autenticado evita que el cliente los duplique en código y se desincronicen.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Las ocho consultas responden \texttt{200} a cualquier usuario autenticado.
+    \item La consulta de convocatoria activa devuelve \texttt{404} si no hay ninguna activa, en
+          vez de una lista vacía que pueda confundirse con «no hay convocatorias».
+    \item Las áreas temáticas admiten filtrado por línea de investigación.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-54}{Gestión de estudiantes}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{ESTUDIANTES\_GESTIONAR} registrar y editar el perfil académico de un estudiante
+---carrera, semestre, período de ingreso y estado académico--- y consultarlo de forma paginada.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Migración \cd{V16\_\_gestion\_estudiantes.sql}, que crea el permiso \cd{ESTUDIANTES\_GESTIONAR} y el catálogo de estados académicos.}
+\campo{Endpoints}{\cd{GET /api/estudiantes/paginado}, \cd{GET /api/estudiantes/\{id\}},
+\cd{POST /api/estudiantes}, \cd{PUT /api/estudiantes/\{id\}},
+\cd{GET /api/estudiantes/estados-academicos}}
+\campo{Rationale}{El perfil de estudiante es distinto de la cuenta de usuario: una cuenta
+identifica a una persona, el perfil la sitúa en una carrera y un período, que es lo que la
+solicitud necesita.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{ESTUDIANTES\_GESTIONAR} las cinco operaciones responden
+          \texttt{403}.
+    \item El estado académico pertenece al conjunto cerrado \texttt{ACTIVO},
+          \texttt{EGRESADO}, \texttt{GRADUADO}, \texttt{RETIRADO}, \texttt{SUSPENDIDO};
+          cualquier otro responde \texttt{400}.
+    \item Un usuario solo puede tener un perfil de estudiante; un segundo registro responde
+          \texttt{400}.
+    \item El alta genera el código de expediente del estudiante, único en el sistema.
+    \item Toda alta y modificación queda registrada en la bitácora de auditoría (RNF-18).
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-55}{Consulta del directorio de docentes}
+\campo{Enunciado}{El sistema debe permitir a cualquier usuario autenticado consultar los
+docentes, de forma completa, paginada, por identificador, por usuario asociado y filtrando los
+disponibles para asignación.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-03 (la asignación de tutor y tribunal necesita el directorio)}
+\campo{Endpoints}{\cd{GET /api/docentes}, \cd{GET /api/docentes/paginado},
+\cd{GET /api/docentes/disponibles}, \cd{GET /api/docentes/\{id\}},
+\cd{GET /api/docentes/usuario/\{usuarioId\}}}
+\campo{Rationale}{El filtro de disponibles es el que hace utilizable la asignación de RF-22 y
+RF-27: sin él, la coordinación descubre la indisponibilidad al recibir el rechazo.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El listado de disponibles excluye a los docentes marcados como no disponibles, que son
+          exactamente los que RF-27 rechaza.
+    \item Ninguna respuesta incluye la contraseña almacenada del usuario asociado.
+    \item Sin autenticación responde \texttt{401}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
+
+\subsection{Reportes, observaciones y auditoría}
+
+\REQ{RF-56}{Reportes de gestión}
+\campo{Enunciado}{El sistema debe ofrecer a quien posea el permiso \cd{REPORTES\_VER} los
+indicadores de resumen, solicitudes por estado, sustentaciones por período, actas, actividad
+docente, resultados por carrera, defensas programadas y estadísticas generales.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-09, CU-09}
+\campo{Endpoints}{\cd{GET /api/reportes/resumen},
+\cd{GET /api/reportes/solicitudes-por-estado},
+\cd{GET /api/reportes/sustentaciones-por-periodo}, \cd{GET /api/reportes/actas},
+\cd{GET /api/reportes/actividad-docente}, \cd{GET /api/reportes/por-carrera},
+\cd{GET /api/reportes/defensas}, \cd{GET /api/reportes/estadisticas/json}}
+\campo{Rationale}{Es la vista agregada con la que la coordinación decide. Los reportes cruzan
+calificaciones y actividad docente nominal, así que su control de acceso importa tanto como su
+contenido.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Las ocho consultas responden \texttt{200} para \texttt{ADMIN} y \texttt{COORDINADOR},
+          y \texttt{403} para \texttt{DOCENTE} y \texttt{ESTUDIANTE}.
+    \item Las cifras agregadas coinciden con el conteo por estado de RF-18 sobre los mismos
+          datos.
+    \item Los estados usados en los agregados son exclusivamente los de la
+          sección~\ref{sec:estados}.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Demostración}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-57}{Emisión de reportes en PDF}
+\campo{Enunciado}{El sistema debe emitir en formato PDF el reporte de cronograma y el reporte de
+estadísticas, a quien posea el permiso \cd{REPORTES\_VER}.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{HU-09, CU-09}
+\campo{Endpoints}{\cd{GET /api/reportes/cronograma/pdf},
+\cd{GET /api/reportes/estadisticas/pdf}}
+\campo{Rationale}{Los reportes se archivan y se firman fuera del sistema; un PDF es el formato
+que la coordinación puede adjuntar a un expediente físico.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} con tipo de contenido \texttt{application/pdf} y el nombre de
+          archivo en la cabecera de disposición de contenido.
+    \item Sin el permiso \cd{REPORTES\_VER} responde \texttt{403}.
+    \item El PDF refleja los mismos datos que el reporte equivalente de RF-56 en el mismo
+          instante.
+\end{itemize}
+\campo{Método de verificación}{Prueba + Demostración}
+\campo{Estado}{\estadoV}
+
+\REQ{RF-58}{Estadísticas de acompañamiento por tutor}
+\campo{Enunciado}{El sistema debe ofrecer las estadísticas de acompañamiento de los tutores
+---estudiantes asignados y estado de sus tutorías--- a quien esté habilitado para ello.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{ADR-006 y \cd{docs/basedatos/CATALOGO-SP.md}: el procedimiento almacenado \cd{sp\_obtener\_estadisticas\_tutores} existe para resolver esta consulta en la base de datos.}
+\campo{Endpoint}{\cd{GET /api/tutores/estadisticas}}
+\campo{Rationale}{Permite a la coordinación detectar tutorías detenidas antes de que bloqueen la
+conformación del tribunal, que es donde el retraso se vuelve visible y ya es tarde.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Responde \texttt{200} con el número de estudiantes asignados y el estado de las
+          tutorías por tutor.
+    \item Sin el permiso exigido responde \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+\campo{Nota}{Este endpoint se protege hoy con \cd{EVALUACION\_RUBRICA\_REGISTRAR}, un
+permiso de la categoría Evaluación que no describe esta capacidad y que además poseen los
+docentes. La asimetría es real y queda como deuda declarada: el permiso adecuado sería
+\cd{REPORTES\_VER} o uno propio de tutoría (\S\ref{sec:pendientes}).}
+
+\REQ{RF-59}{Consulta de observaciones de la solicitud}
+\campo{Enunciado}{El sistema debe permitir consultar las observaciones registradas sobre una
+solicitud a los actores con derecho sobre ese expediente.}
+\campo{Prioridad}{Could}
+\campo{Fuente}{HU-02 y migración \cd{V1\_\_schema\_inicial.sql} (campo \cd{observaciones} de la solicitud), que es donde se acumulan las observaciones que RF-15, RF-21 y RF-25 producen en momentos distintos.}
+\campo{Endpoint}{\cd{GET /api/observaciones/solicitud/\{solicitudId\}}}
+\campo{Rationale}{Reúne en un solo lugar las observaciones que RF-15, RF-21 y RF-25 producen en
+momentos distintos del proceso.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Consultar las observaciones de una solicitud ajena responde \texttt{403}.
+    \item Una solicitud sin observaciones responde \texttt{200} con una colección vacía.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RF-60}{Consulta de la bitácora de auditoría}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso \cd{AUDITORIA\_VER}
+consultar de forma paginada la bitácora de acciones registradas y la lista de tablas auditadas.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{Criterio de auditoría de la asignatura; OWASP A09}
+\campo{Endpoints}{\cd{GET /api/auditoria/paginado}, \cd{GET /api/auditoria/tablas}}
+\campo{Rationale}{Registrar acciones y poder consultarlas son capacidades distintas con controles
+de acceso distintos. RNF-18 obliga a registrar; este requisito obliga a que exista una vía de
+consulta y a que esté restringida, porque la bitácora contiene datos personales de todos los
+usuarios.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{AUDITORIA\_VER} responde \texttt{403}; el permiso es exclusivo
+          del Administrador (sección~\ref{sec:asimetrias}, punto 2).
+    \item La consulta paginada acepta filtro por tabla y por rango de fechas.
+    \item Ninguna entrada devuelta expone la contraseña almacenada de un usuario, ni siquiera en
+          el registro de cambios de la tabla de usuarios.
+    \item La bitácora no ofrece ninguna operación de modificación ni de borrado por API.
+\end{itemize}
+\campo{Método de verificación}{Inspección}
+\campo{Estado}{\estadoI}
+\campo{Depende de}{RNF-18, RNF-19}
+\campo{Nota}{No existe clase de prueba dedicada al módulo de auditoría. Los cuatro criterios se
+comprobaron por inspección de la migración que crea la bitácora y su disparador; se declara
+\estadoI{} y no \estadoV{} porque la matriz no respalda una prueba automatizada.}
+
+\subsection{Continuidad: respaldo y recuperación}
+
+\REQ{RF-61}{Respaldo de la base de datos bajo demanda y programado}
+\campo{Enunciado}{El sistema debe permitir a quien posea el permiso
+\cd{BACKUPS\_GESTIONAR} generar respaldos completos bajo demanda, generar respaldos
+diferenciales, ejecutarlos automáticamente según un cronograma configurable, y listarlos y
+descargarlos.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{\cd{docs/despliegue/BACKUP.md}, criterio de continuidad de la asignatura, y migración \cd{V27\_\_permiso\_gestion\_respaldos.sql}.}
+\campo{Endpoints}{\cd{GET /api/backups}, \cd{POST /api/backups},
+\cd{POST /api/backups/diferencial}, \cd{GET /api/backups/\{nombre\}/descargar},
+\cd{DELETE /api/backups/\{nombre\}}, \cd{GET /api/backups/estado},
+\cd{POST /api/backups/bases}, \cd{DELETE /api/backups/bases/\{nombre\}}}
+\campo{Rationale}{Un respaldo que nadie puede generar ni descargar no protege nada. El respaldo
+es además el único mecanismo del sistema capaz de recuperar un expediente académico perdido, de
+modo que su prioridad no es negociable.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Sin el permiso \cd{BACKUPS\_GESTIONAR} las ocho operaciones responden
+          \texttt{403}; el permiso es exclusivo del Administrador.
+    \item Si el respaldo termina sin error pero produce un archivo vacío, la operación responde
+          \texttt{500} declarándolo; \textbf{nunca se registra como respaldo válido}.
+    \item Un nombre de respaldo que no corresponda al formato esperado responde \texttt{400}, y
+          en ningún caso permite acceder a una ruta fuera del directorio de respaldos.
+    \item El listado informa por cada respaldo su tipo, su origen, su fecha y su tamaño.
+\end{itemize}
+\campo{Método de verificación}{Demostración + Inspección}
+\campo{Estado}{\estadoI}
+\campo{Depende de}{RNF-24}
+
+\REQ{RF-62}{Configuración del cronograma y de la retención de respaldos}
+\campo{Enunciado}{El sistema debe permitir consultar y modificar el cronograma de respaldos, su
+activación y su política de retención, y aplicar la retención bajo demanda.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{\cd{docs/despliegue/BACKUP.md} y migración \cd{V28\_\_gestion\_respaldos\_cronograma.sql}, que persiste el cronograma y la política de retención como configuración.}
+\campo{Endpoints}{\cd{GET /api/backups/config}, \cd{PUT /api/backups/config},
+\cd{POST /api/backups/retencion}}
+\campo{Rationale}{La retención es lo que separa un directorio que crece sin límite de una
+política de continuidad. Fijarla como configuración, y no en código, permite ajustarla al
+crecimiento real sin desplegar.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La configuración por omisión es: respaldo completo los domingos a las 23:00; retención
+          de \textbf{7} diarios, \textbf{5} semanales y \textbf{12} mensuales; \textbf{14} días
+          de archivado WAL; diferencial desactivado.
+    \item Una expresión de cronograma inválida responde \texttt{400} nombrando el valor recibido
+          y el formato esperado, y \textbf{no} se guarda ninguna parte del cambio.
+    \item La consulta de configuración informa el próximo disparo calculado y el objetivo de
+          punto de recuperación que ese cronograma implica.
+    \item Todo cambio de configuración registra qué usuario lo realizó y cuándo.
+\end{itemize}
+\campo{Método de verificación}{Demostración + Inspección}
+\campo{Estado}{\estadoI}
+\campo{Depende de}{RNF-24}
+
+\REQ{RF-63}{Restauración y prueba de restauración}
+\campo{Enunciado}{El sistema debe permitir restaurar un respaldo y ejecutar una prueba de
+restauración que verifique que el respaldo es recuperable, registrando su resultado.}
+\campo{Prioridad}{Must}
+\campo{Fuente}{\cd{docs/despliegue/BACKUP.md} y migración \cd{V29\_\_respaldos\_fase2\_wal\_diferencial.sql}, que registra el resultado de cada prueba de restauración.}
+\campo{Endpoints}{\cd{POST /api/backups/\{nombre\}/restaurar},
+\cd{GET /api/backups/pruebas}, \cd{POST /api/backups/pruebas}}
+\campo{Rationale}{Un respaldo no probado es una suposición. La prueba periódica es la única
+forma de saber que el respaldo servirá el día que haga falta, y su registro es la evidencia de
+que se hizo.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La prueba de restauración registra su resultado como \texttt{EXITOSA} o
+          \texttt{FALLIDA}, con fecha, y ese registro es consultable.
+    \item La prueba de restauración \textbf{no} altera la base de datos en servicio.
+    \item Sin el permiso \cd{BACKUPS\_GESTIONAR} las tres operaciones responden
+          \texttt{403}.
+    \item Una restauración fallida deja el sistema en un estado consistente y declara el motivo,
+          en vez de dejar la base parcialmente sobrescrita.
+\end{itemize}
+\campo{Método de verificación}{Demostración}
+\campo{Estado}{\estadoI}
+\campo{Depende de}{RNF-24}
+
+\REQ{RF-64}{Archivado WAL y recuperación a un punto en el tiempo}
+\campo{Enunciado}{El sistema debe permitir consultar el estado del archivado del registro de
+escritura anticipada, forzar su rotación y depurar los segmentos que superen el período de
+retención configurado.}
+\campo{Prioridad}{Should}
+\campo{Fuente}{\cd{docs/despliegue/BACKUP.md} y migración \cd{V29\_\_respaldos\_fase2\_wal\_diferencial.sql}.}
+\campo{Endpoints}{\cd{GET /api/backups/wal}, \cd{POST /api/backups/wal/switch},
+\cd{POST /api/backups/wal/limpiar}}
+\campo{Rationale}{Es lo que hace posible recuperar a un instante distinto del último respaldo
+completo, y por tanto lo que determina el objetivo de punto de recuperación real de RNF-24. Sin
+depuración, el archivado crece hasta agotar el disco.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La consulta informa el número de segmentos archivados, su tamaño total y el segmento
+          más antiguo disponible.
+    \item La depuración elimina exclusivamente los segmentos anteriores al período de retención
+          configurado en RF-62, y nunca los necesarios para recuperar el respaldo completo más
+          reciente.
+    \item Sin el permiso \cd{BACKUPS\_GESTIONAR} las tres operaciones responden
+          \texttt{403}.
+\end{itemize}
+\campo{Método de verificación}{Demostración}
+\campo{Estado}{\estadoI}
+\campo{Depende de}{RNF-24}
+
+% ================== 8. REQUISITOS NO FUNCIONALES =============================
+\section{Requisitos no funcionales}
+\label{sec:rnf}
+
+Los requisitos de esta sección usan la misma plantilla que los funcionales. Su fuente es, en la
+mayoría de los casos, una decisión de arquitectura o una norma externa y no una historia de
+usuario; se declara explícitamente cuál en vez de dejar el campo vacío.
+
+\subsection{Rendimiento y eficiencia}
+
+\REQ{RNF-01}{Tiempo de respuesta de la API}
+\campo{Enunciado}{El sistema debe responder las peticiones REST con un percentil 95 de latencia
+inferior a 500\,ms bajo una carga de 50 usuarios concurrentes.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{Criterio de rendimiento de la asignatura}
+\campo{Rationale}{Fija un umbral exigible y no una aspiración: sin umbral, ningún requisito se
+incumpliría aunque la latencia subiera un orden de magnitud.}
+\campo{Criterio de aceptación}{El percentil 95 de \cd{http\_req\_duration} debe ser inferior
+a 500\,ms en cada una de al menos 5 corridas independientes de carga con 50 usuarios virtuales
+concurrentes, con los resúmenes crudos archivados en el repositorio.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{5 corridas válidas con p95 de 7,70 / 7,39 / 7,47 / 8,53 / 6,17\,ms; media
+\textbf{7,45\,ms} (\cd{k6/README.md}, corridas 3 a 7; las dos últimas del 2026-08-29). Dos
+corridas anteriores se conservan versionadas y \textbf{marcadas como inválidas}, y no entran en
+la estadística.}
+
+\REQ{RNF-02}{Rendimiento percibido del cliente web}
+\campo{Enunciado}{El sistema debe alcanzar una puntuación de rendimiento igual o superior a 80
+sobre 100 en la auditoría automatizada del cliente web, en perfil de escritorio y de móvil.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{Criterio de calidad de frontend de la asignatura}
+\campo{Rationale}{RNF-01 mide el servicio, no lo que el usuario percibe. Un servicio de 7\,ms
+puede seguir sintiéndose lento si el cliente tarda seis segundos en pintar.}
+\campo{Criterio de aceptación}{Puntuación de rendimiento $\geq 80$ en las corridas de escritorio
+y de móvil sobre el build de producción, con los informes archivados y fechados.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoN}
+\campo{Evidencia}{Medición del 2026-09-06, 6 corridas: escritorio \textbf{68--69}, móvil
+\textbf{61}. Causa raíz identificada y verificada: tiempo de ejecución de JavaScript bajo la
+limitación de CPU $4\times$ del perfil móvil, no peso de recursos.}
+\campo{Nota}{Se declara \estadoN{} y no «pendiente de evidencia»: la medición existe y el
+resultado no alcanza el umbral. Bajar el umbral para que cuadre sería falsear el requisito. El
+plan de cierre está en \S\ref{sec:pendientes}.}
+
+\REQ{RNF-03}{Caché de lectura con vigencia acotada}
+\campo{Enunciado}{El sistema debe cachear en memoria distribuida las lecturas de alto tráfico y
+la respuesta del proveedor externo, con un tiempo de vigencia declarado por cada conjunto de
+datos.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{ADR-001}
+\campo{Rationale}{La diferencia medida entre caché fría y caliente en el endpoint externo es de
+dos órdenes de magnitud; la vigencia acotada es lo que impide servir datos obsoletos a cambio de
+esa ganancia.}
+\campo{Criterio de aceptación}{Vigencia por omisión de \textbf{5 minutos}; \textbf{10 minutos}
+para el directorio externo de RF-45 y \textbf{5 minutos} para el listado de solicitudes.
+Vencida la vigencia, la siguiente lectura debe consultar el origen.}
+\campo{Método de verificación}{Análisis + Inspección}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Caché fría $n=30$: media 109,62\,ms, IC 95\,\% [102,57; 116,67]. Caché
+caliente $n=30$: IC 95\,\% [7,58; 8,14]. Prueba de Wilcoxon con $U=0$ sobre 900 comparaciones
+posibles: separación total (\cd{k6/README.md}).}
+
+\REQ{RNF-04}{Degradación explícita ante indisponibilidad de la caché distribuida}
+\campo{Enunciado}{Cuando el almacén de sesión distribuido no esté disponible, el sistema debe
+degradar de forma explícita y documentada en cada servicio que depende de él, y en particular
+debe \textbf{rechazar} toda petición cuya verificación de revocación de token no pueda
+realizarse.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{ADR-002; OWASP A07}
+\campo{Rationale}{La verificación de revocación (RF-03) y el límite de tasa (RNF-09) se apoyan
+en ese almacén. Si su caída se resuelve dejando pasar la petición, cerrar sesión deja de
+revocar nada y el límite de tasa desaparece exactamente cuando la infraestructura está
+degradada, que es el peor momento posible. La política es una decisión de seguridad, no un
+detalle de infraestructura, y por eso es un requisito y no una nota de riesgo.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item \textbf{Revocación de tokens:} con el almacén caído, una petición autenticada responde
+          \texttt{401}, no \texttt{200}.
+    \item \textbf{Límite de tasa de autenticación:} con el almacén caído, el intento de
+          autenticación responde \texttt{503} declarando la degradación, no \texttt{500} ni
+          acceso sin límite.
+    \item \textbf{Caché de lectura:} con el almacén caído, la lectura se resuelve contra el
+          origen y la respuesta se sirve igualmente; es el único servicio donde se admite seguir
+          adelante.
+    \item Cada degradación deja una entrada de registro que la identifica.
+\end{itemize}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoN}
+\campo{Nota}{Verificado por inspección el 2026-09-09: la comprobación de revocación captura
+cualquier excepción del almacén y devuelve «no revocado», es decir, hoy la política real es
+\textbf{fail-open} y un token revocado vuelve a aceptarse mientras el almacén esté caído. El
+límite de tasa, en cambio, propaga la excepción y produce \texttt{500}. Ninguno de los dos
+comportamientos estaba especificado. Este requisito fija el comportamiento exigido y declara
+que hoy no se cumple, en vez de describir lo construido.}
+
+\subsection{Seguridad}
+
+\REQ{RNF-05}{Almacenamiento de contraseñas}
+\campo{Enunciado}{El sistema debe almacenar las contraseñas mediante una función de derivación
+de clave con salto aleatorio y factor de coste igual o superior a 10, y no debe devolver nunca
+la contraseña almacenada en ninguna respuesta.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A02; ADR-004}
+\campo{Rationale}{Es la única defensa que queda en pie si la base de datos se filtra.}
+\campo{Criterio de aceptación}{Ningún registro de usuario contiene la contraseña en claro; dos
+usuarios con la misma contraseña producen representaciones almacenadas distintas; ningún cuerpo
+de respuesta de RF-01, RF-04, RF-08 ni RF-55 incluye ese campo.}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoV}
+
+\REQ{RNF-06}{Política de contraseñas}
+\campo{Enunciado}{El sistema debe exigir a toda contraseña una longitud mínima de 8 caracteres y
+rechazar las que figuren en una lista de contraseñas comunes, aplicando la misma exigencia en el
+alta, en el cambio y en el restablecimiento.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A07; NIST SP 800-63B}
+\campo{Rationale}{RNF-05 especifica cómo se guarda la contraseña, no qué se exige de ella.
+Almacenar impecablemente una contraseña de seis caracteres no protege la cuenta.}
+\campo{Criterio de aceptación}{Una contraseña de menos de 8 caracteres responde \texttt{400} en
+el alta (RF-04), en el cambio (RF-06) y en el restablecimiento (RF-05); la respuesta declara la
+regla incumplida sin revelar la contraseña.}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoN}
+\campo{Nota}{La exigencia real vigente es de \textbf{6} caracteres y se aplica \textbf{solo en
+el alta}: la actualización de usuario no toca la contraseña y no existen el cambio propio ni el
+restablecimiento. Se declara el umbral exigido y el incumplimiento, no el valor actual como si
+fuera el requisito.}
+
+\REQ{RNF-07}{Vigencia de los tokens de sesión}
+\campo{Enunciado}{El token de acceso debe tener una vigencia de 1 hora y el token de renovación
+una vigencia de 7 días, ambas configurables por variable de entorno sin recompilar.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{ADR-002}
+\campo{Rationale}{Estos dos valores son normativos: acotan la ventana de uso de una credencial
+robada. Hasta esta versión estaban únicamente en un archivo de configuración, es decir, eran
+valores normativos escondidos fuera de la especificación.}
+\campo{Criterio de aceptación}{El token de acceso expira a los \textbf{3\,600\,000\,ms} y el de
+renovación a los \textbf{604\,800\,000\,ms}; un token de acceso expirado responde \texttt{401}
+con un mensaje que el cliente pueda distinguir de «sin permiso».}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoI}
+\campo{Nota}{La vigencia del token de acceso es configurable por entorno; la del token de
+renovación está fijada en el archivo de configuración y no se puede ajustar por entorno. El
+requisito exige que ambas lo sean.}
+
+\REQ{RNF-08}{Rotación del token de renovación y detección de reutilización}
+\campo{Enunciado}{Cada uso de un token de renovación debe invalidarlo y emitir uno nuevo, y la
+presentación de un token ya utilizado debe revocar todas las sesiones activas de ese usuario.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{ADR-002; OWASP A07}
+\campo{Rationale}{Es lo que convierte el robo de un token de renovación en un evento detectable
+en vez de un acceso silencioso durante siete días.}
+\campo{Criterio de aceptación}{El criterio observable es el de RF-02; adicionalmente, la
+revocación masiva debe dejar sin efecto \textbf{todos} los tokens de renovación del usuario, no
+solo el reutilizado, y registrar una alerta identificando al usuario afectado.}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+
+\REQ{RNF-09}{Límite de tasa en la autenticación}
+\campo{Enunciado}{El sistema debe limitar los intentos de autenticación a un máximo de 6 por
+minuto y por dirección de origen, respondiendo \texttt{429} al superarlo.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A07; ADR-004}
+\campo{Rationale}{Sin límite, la política de contraseñas de RNF-06 se puede vencer por fuerza
+bruta en línea con independencia de su robustez.}
+\campo{Criterio de aceptación}{El séptimo intento dentro de una ventana de \textbf{60 segundos}
+desde la misma dirección responde \texttt{429}; el contador expira solo al cerrarse la ventana;
+detrás de un proxy inverso se considera la dirección de origen real declarada por el proxy y no
+la del proxy.}
+\campo{Método de verificación}{Prueba + Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Corrida dedicada archivada en \cd{k6/rate-limiter-evidence-run.json}.}
+\campo{Depende de}{RNF-04}
+
+\REQ{RNF-10}{Cabeceras de seguridad HTTP}
+\campo{Enunciado}{Toda respuesta del sistema debe incluir las cabeceras de seguridad que
+restringen el origen de los recursos ejecutables, prohíben el enmarcado de la aplicación,
+impiden la interpretación especulativa del tipo de contenido y exigen transporte cifrado.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A05; ADR-004}
+\campo{Rationale}{Son la defensa en profundidad que sigue actuando cuando falla una validación
+de entrada.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item \texttt{Strict-Transport-Security} con vigencia de \textbf{31\,536\,000\,s} e
+          inclusión de subdominios.
+    \item \texttt{Content-Security-Policy} con \texttt{script-src 'self'}, \textbf{sin}
+          \texttt{'unsafe-inline'} ni \texttt{'unsafe-eval'}, \texttt{connect-src 'self'} y
+          \texttt{frame-ancestors 'none'}.
+    \item \texttt{X-Frame-Options: DENY} y \texttt{X-Content-Type-Options: nosniff}.
+    \item Las mismas cabeceras se emiten en las \textbf{dos} capas que responden al navegador:
+          el proxy inverso y el servicio de aplicación.
+\end{itemize}
+\campo{Método de verificación}{Análisis + Inspección}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Escaneo dinámico del 2026-08-29: \texttt{FAIL-NEW: 0}, \texttt{WARN-NEW: 3},
+\texttt{PASS: 58}, \textbf{0 alertas de riesgo alto}. Verificación con petición de cabeceras
+transcrita en \cd{docs/mediciones/sec/owasp/OWASP-AUDIT.md}.}
+
+\REQ{RNF-11}{Transporte cifrado}
+\campo{Enunciado}{En despliegue accesible desde fuera de la red local, todo tráfico debe viajar
+sobre TLS 1.2 o superior, con certificado válido emitido por una autoridad reconocida, y las
+peticiones en claro deben redirigirse a su equivalente cifrada.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A02; ADR-007}
+\campo{Rationale}{La cabecera de transporte estricto de RNF-10 solo tiene efecto si existe
+realmente un extremo cifrado; declararla sin TLS es una promesa vacía.}
+\campo{Criterio de aceptación}{Sobre el despliegue público: la conexión negocia TLS 1.2 o
+superior, el certificado valida contra la cadena pública, una petición en claro responde con
+redirección permanente a la versión cifrada, y la cabecera de transporte estricto se emite en la
+respuesta cifrada.}
+\campo{Método de verificación}{Demostración sobre el despliegue público}
+\campo{Estado}{\estadoP}
+\campo{Nota}{El sistema \textbf{no está desplegado públicamente} en el punto de corte, de modo
+que este requisito no puede verificarse todavía. El proveedor elegido y el procedimiento están
+en \cd{docs/despliegue/DEPLOYMENT.md}. La terminación TLS ocurrirá en el borde del proveedor, no
+en el proxy inverso del sistema; ese reparto debe quedar declarado aquí cuando el despliegue
+exista. No se declara una URL ni un certificado que no se hayan verificado funcionando.}
+
+\REQ{RNF-12}{Autorización resuelta en el servidor}
+\campo{Enunciado}{Toda decisión de autorización debe resolverse en el servidor contra el
+catálogo de permisos del rol del usuario en sesión, y \textbf{nunca} a partir de un rol,
+permiso o identificador enviado por el cliente.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A01; ADR-005}
+\campo{Rationale}{Es la propiedad que sostiene toda la matriz de la sección~\ref{sec:permisos}.
+Si el rol pudiera llegar en el cuerpo de la petición, esa matriz sería decorativa.}
+\campo{Criterio de aceptación}{Una petición que declare en su cuerpo o en sus cabeceras un rol o
+un permiso distinto del que el usuario en sesión posee obtiene exactamente la misma respuesta
+que si no lo declarara; una petición sin autenticación a un endpoint protegido responde
+\texttt{401} y una autenticada sin permiso responde \texttt{403}, y ambos casos son
+distinguibles por el cliente.}
+\campo{Método de verificación}{Prueba + Inspección}
+\campo{Estado}{\estadoV}
+
+\REQ{RNF-13}{Aislamiento de los datos por titular}
+\campo{Enunciado}{El sistema debe rechazar todo acceso a un recurso que no pertenezca al usuario
+en sesión ni corresponda a un rol funcional que este ejerza sobre ese recurso, aunque se conozca
+su identificador.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A01; 3 hallazgos reales de la auditoría del
+2026-08-11/12}
+\campo{Rationale}{Es el control que impide que conocer un número de expediente equivalga a poder
+leerlo. Se especifica una vez y se referencia desde cada requisito afectado, en vez de repetir la
+regla en veinte criterios de aceptación.}
+\campo{Criterio de aceptación}{Para cada uno de los recursos solicitud, anteproyecto, fase de
+tutoría, evaluación, acta, historial de acta, notificación y perfil, una petición de un usuario
+sin derecho sobre ese recurso responde \texttt{403} conociendo su identificador, y la respuesta
+no revela si el recurso existe.}
+\campo{Método de verificación}{Prueba + Demostración}
+\campo{Estado}{\estadoV}
+
+\REQ{RNF-14}{Ausencia de secretos por omisión}
+\campo{Enunciado}{El sistema no debe arrancar si el secreto de firma de tokens no está
+provisto por el entorno, y no debe existir ningún valor por omisión para ese secreto.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A02; hallazgo real de la auditoría del
+2026-08-29}
+\campo{Rationale}{Un valor por omisión convierte el secreto en público: la auditoría encontró
+que el anterior era un secreto de ejemplo que circula en tutoriales. Fallar al arrancar es
+preferible a arrancar con una firma que cualquiera puede reproducir.}
+\campo{Criterio de aceptación}{Sin la variable de entorno del secreto, el arranque falla con un
+error explícito y el servicio no queda a la escucha; el secreto no aparece en ningún registro ni
+en ninguna respuesta.}
+\campo{Método de verificación}{Inspección + Demostración}
+\campo{Estado}{\estadoV}
+
+\REQ{RNF-15}{Ausencia de cuentas de demostración en despliegue no local}
+\campo{Enunciado}{El sistema no debe sembrar cuentas con contraseña predefinida fuera del perfil
+de desarrollo local, y ninguna contraseña debe figurar literalmente en el código fuente.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A05 y A07; \textbf{observación docente
+OBS-11} (\cd{docs/observaciones/OBSERVACIONES.md}), registrada como \emph{parcialmente resuelta}:
+la credencial se retiró del \cd{README.md} pero sigue expuesta en otros artefactos del
+repositorio.}
+\campo{Rationale}{Una cuenta de administración con contraseña conocida es equivalente a no tener
+autenticación. El repositorio es público, de modo que cualquier contraseña escrita en cualquier
+archivo versionado está publicada, y el historial de Git conserva lo que se retire hoy. OBS-11 ya
+identificó el problema y la retirada se hizo solo en uno de los cuatro lugares donde la credencial
+aparece: convertirlo en requisito con criterio verificable es lo que le pone condición de cierre a
+una observación que hoy lleva meses en estado parcial.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La siembra de datos de demostración se ejecuta \textbf{únicamente} bajo un perfil de
+          desarrollo declarado, y no en el arranque por omisión.
+    \item Ninguna contraseña aparece literalmente en el código fuente; las cuentas iniciales de
+          un despliegue real toman su contraseña del entorno.
+    \item Un despliegue no local sin cuenta de administración provista falla al arrancar en vez
+          de crear una con contraseña conocida.
+    \item \textbf{Ninguna credencial de ejemplo aparece en ningún artefacto versionado.} Una
+          búsqueda de la contraseña sembrada sobre el árbol completo del repositorio ---código,
+          documentación, historias de usuario, colección de peticiones y ficheros de
+          configuración--- devuelve cero coincidencias.
+    \item Los artefactos que necesitan una credencial para ser ejecutables (la colección de
+          peticiones de la API, los ejemplos de las historias de usuario) la toman de una
+          variable de entorno o de un marcador de posición, nunca de un valor literal.
+\end{itemize}
+\campo{Método de verificación}{Inspección}
+\campo{Estado}{\estadoN}
+\campo{Nota}{Verificado por inspección el 2026-09-09: la siembra se ejecuta en \textbf{todo}
+arranque, sin condición de perfil, y crea cuentas de Administrador, Coordinador, Docente y
+Estudiante con contraseñas escritas literalmente en el código fuente de un repositorio público.
+El archivo \cd{README.md} declara que las credenciales de demostración no se publican «para
+evitar dejarlas expuestas en el historial público»; esa afirmación no se sostiene mientras las
+contraseñas estén en el código.
+
+\textbf{Inventario completo, verificado el 2026-09-11.} La credencial sembrada aparecía en seis
+artefactos versionados del repositorio público, no solo en el \cd{README.md} que OBS-11 dio por
+corregido: el código que siembra los datos de demostración, la colección de peticiones de
+\cd{docs/postman/}, el escenario de ejemplo de \cd{docs/requisitos/historias/HU-01.md}, el
+procedimiento de medición de \cd{k6/README.md}, la evidencia reproducible de
+\cd{docs/mediciones/sec/owasp/OWASP-AUDIT.md} y el propio registro de OBS-11. \textbf{Los cinco
+artefactos de documentación quedan corregidos en esta versión}: toman la credencial de una
+variable de entorno o de una variable de colección, y ninguno la reproduce.
+
+\textbf{Lo que sigue abierto, y por qué.} Primero, la siembra en código: retirarla de ahí cambia
+el comportamiento del arranque de la aplicación y merece un cambio propio, revisado por separado,
+no un retoque de documentación. Segundo, la migración \cd{V11\_\_roles\_y\_privilegios.sql}
+crea dos roles de base de datos con contraseña literal; están declaradas como credenciales de
+desarrollo, pero una migración ya aplicada no se puede editar sin romper la suma de verificación
+de Flyway, así que cerrarlas exige una migración nueva que las rote, no una corrección en su
+sitio. Tercero, y esto no lo arregla ningún cambio futuro: \textbf{el historial de Git conserva
+todo lo retirado hoy}, de modo que estas credenciales deben considerarse comprometidas y rotarse
+en cualquier despliegue real.
+
+Es el hallazgo de seguridad más serio del punto de corte y encabeza el plan de cierre
+(\S\ref{sec:pendientes}).}
+
+\REQ{RNF-16}{Ausencia de construcción dinámica de consultas}
+\campo{Enunciado}{El sistema no debe construir sentencias SQL por concatenación de valores
+provenientes de la entrada del usuario.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A03; ADR-006}
+\campo{Rationale}{La estrategia híbrida de ADR-006 reparte la lógica entre el mapeador
+objeto-relacional y procedimientos almacenados, y ninguno de los dos caminos admite concatenar
+entrada del usuario. Verificarlo con una herramienta en cada integración, y no por revisión
+manual, es lo que impide que una consulta construida a mano se cuele en una entrega futura.}
+\campo{Criterio de aceptación}{El análisis estático del backend, con la regla de detección de
+SQL dinámico habilitada, reporta \textbf{0} hallazgos de esa categoría en cada corrida
+archivada.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Análisis estático del 2026-08-29: 233 hallazgos totales, \textbf{0} de SQL
+dinámico (\cd{docs/mediciones/sec/static-analysis/STATIC-ANALYSIS.md}).}
+
+\REQ{RNF-17}{Gestión de componentes de terceros vulnerables}
+\campo{Enunciado}{El sistema no debe entregar al navegador ningún componente de terceros con
+vulnerabilidad conocida de severidad alta o crítica, y debe auditar sus dependencias en cada
+integración continua.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{OWASP A06}
+\campo{Rationale}{Distingue lo que llega al navegador de lo que solo se usa para construir el
+proyecto: son superficies de ataque distintas y confundirlas lleva a inflar o a minimizar el
+riesgo.}
+\campo{Criterio de aceptación}{Cero vulnerabilidades altas o críticas en dependencias
+\textbf{enviadas al navegador}; las que residan exclusivamente en herramientas de construcción
+se declaran, con su recuento y su justificación, en el informe de auditoría.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Auditoría del 2026-08-29: la biblioteca de cliente vulnerable se actualizó y
+la alerta de riesgo alto pasó a conforme; quedan \textbf{14} vulnerabilidades (desde 41), todas
+en herramientas de construcción de iconos. El backend no está auditado contra base de datos de
+vulnerabilidades, y así se declara.}
+
+\subsection{Trazabilidad y protección de datos}
+
+\REQ{RNF-18}{Registro de auditoría de las acciones}
+\campo{Enunciado}{El sistema debe registrar, para cada alta, modificación y baja sobre las
+entidades auditadas, la tabla, el registro afectado, la acción, el usuario que la realizó y el
+instante, y ese registro no debe ser modificable ni eliminable desde la aplicación.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A09; criterio de auditoría de la asignatura}
+\campo{Rationale}{Una bitácora que la aplicación puede editar no es evidencia. Que la escriba el
+motor de base de datos, y no la capa de aplicación, es lo que la hace resistente a un fallo o a
+un atajo del código.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Cada operación auditada produce exactamente una entrada con actor identificado.
+    \item Cuando la operación no proviene de una sesión de usuario, la entrada se registra
+          igualmente con el actor sin identificar, en vez de omitirse.
+    \item La entrada correspondiente a la tabla de usuarios \textbf{excluye} el campo de
+          contraseña, tanto en los datos anteriores como en los nuevos.
+    \item No existe ninguna operación de la API que permita modificar o borrar una entrada.
+\end{itemize}
+\campo{Método de verificación}{Inspección + Prueba}
+\campo{Estado}{\estadoV}
+
+\REQ{RNF-19}{Retención y supresión de datos personales}
+\campo{Enunciado}{El sistema debe declarar el período de conservación de cada categoría de dato
+personal que trata, depurar automáticamente lo que exceda ese período, y ofrecer un mecanismo de
+supresión a solicitud del titular compatible con la conservación del expediente académico.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{Ley Orgánica de Protección de Datos Personales del
+Ecuador; \cd{docs/etica/ETHICS.md}}
+\campo{Rationale}{El sistema trata nombre, correo institucional, teléfono, expediente académico
+nominal, calificaciones y una bitácora de acciones por usuario. Hoy nada de eso tiene plazo de
+conservación ni vía de supresión: la bitácora crece indefinidamente y el titular no tiene forma
+de ejercer sus derechos. Un hallazgo ético sin requisito no tiene fecha de cierre.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item Existe una tabla publicada que declara, por categoría de dato, su finalidad, su base
+          legal y su período de conservación.
+    \item Las entradas de bitácora anteriores al período declarado se depuran de forma
+          automática y verificable.
+    \item Existe un procedimiento de supresión a solicitud del titular que distingue el dato
+          suprimible del que la normativa académica obliga a conservar, y deja constancia de la
+          solicitud y de su resolución.
+    \item Los formularios de consentimiento firmados se conservan al menos 2 años, conforme al
+          protocolo ético del proyecto.
+\end{itemize}
+\campo{Método de verificación}{Inspección + Demostración}
+\campo{Estado}{\estadoP}
+\campo{Nota}{Ninguno de los cuatro criterios está construido. El protocolo ético y la plantilla
+de consentimiento existen y son una base sólida; lo que falta es convertirlos en obligación con
+criterio verificable y fecha de cierre.}
+
+\REQ{RNF-20}{Minimización de datos hacia terceros}
+\campo{Enunciado}{El sistema no debe transmitir ningún dato personal de sus usuarios a servicios
+externos, incluidos proveedores de modelos de lenguaje.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{Ley Orgánica de Protección de Datos Personales;
+\cd{docs/etica/ETHICS.md}}
+\campo{Rationale}{Hoy esta propiedad se cumple porque el asistente virtual (RF-44) y la
+generación de ideas (RF-47) se resuelven dentro del sistema, y porque el único proveedor externo
+(RF-45) recibe una consulta fija sin parámetros del usuario. Pero eso vive solo en el código:
+sin requisito, cualquier refactorización futura podría empezar a enviar mensajes de usuarios a
+un tercero sin que nada lo impida.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La única petición saliente a un tercero es la consulta del directorio de universidades
+          de RF-45, y su contenido no depende de ningún dato del usuario.
+    \item El mensaje que el usuario envía al asistente virtual no sale del sistema.
+    \item Incorporar un proveedor externo nuevo exige declararlo previamente en la
+          sección~\ref{sec:iface-consumidas} y especificar qué datos concretos viajan.
+\end{itemize}
+\campo{Método de verificación}{Inspección}
+\campo{Estado}{\estadoV}
+
+\subsection{Mantenibilidad, usabilidad y operación}
+
+\REQ{RNF-21}{Cobertura de pruebas automatizadas}
+\campo{Enunciado}{El sistema debe mantener una cobertura de pruebas igual o superior al 70\,\%
+de líneas y de ramas sobre los paquetes de controladores, servicios y seguridad.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{Criterio de mantenibilidad de la asignatura}
+\campo{Rationale}{El umbral se declara sobre los paquetes donde vive la lógica, y se excluyen
+configuración, entidades y objetos de transferencia: incluirlos inflaría la cifra sin mejorar la
+garantía.}
+\campo{Criterio de aceptación}{Cobertura $\geq 70$\,\% de líneas y $\geq 70$\,\% de ramas en los
+paquetes medidos, con el informe crudo archivado y fechado, regenerado en cada integración
+continua.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Medición del \textbf{2026-09-06}: \textbf{81,03\,\%} de líneas
+(3\,148/3\,885) y \textbf{64,39\,\%} de ramas (1\,016/1\,578) en el conjunto; controladores
+72,00\,\%/77,41\,\% y servicios 87,57\,\%/70,04\,\%; 559 pruebas en 48 clases.}
+\campo{Nota}{La cobertura de ramas del conjunto (64,39\,\%) queda por debajo del 70\,\% aunque
+cada uno de los dos paquetes principales lo supere; la diferencia proviene de los paquetes de
+seguridad y enumeraciones. Se declara en vez de reportar solo la cifra de líneas. La versión
+1.0.0 de este documento declaraba 38,88\,\% y «no cumplido»: esa cifra era de una medición del
+2026-08-30 que ya estaba obsoleta cuando se publicó.}
+
+\REQ{RNF-22}{Usabilidad medida}
+\campo{Enunciado}{El sistema debe alcanzar una puntuación media igual o superior a 68 sobre 100
+en la escala estándar de usabilidad, aplicada a una muestra declarada de usuarios reales de los
+cuatro roles.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{Brooke (1996); \cd{docs/etica/ETHICS.md}}
+\campo{Rationale}{68 es la media poblacional de referencia del instrumento, de modo que el
+umbral significa «al menos tan usable como un sistema medio» y no un número elegido para que
+cuadre.}
+\campo{Criterio de aceptación}{Media $\geq 68$ sobre una muestra de al menos 10 participantes
+reales, con el tamaño de muestra, la composición por rol y los datos crudos anonimizados
+archivados, y consentimiento informado firmado por cada participante.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoP}
+\campo{Nota}{El instrumento está listo y no se ha aplicado a personas reales. Una versión
+anterior del proyecto publicó una media de 91,25 con diez participantes que \textbf{nunca
+existieron}; esos datos fueron retirados y el hecho queda declarado aquí y en
+\cd{docs/mediciones/sus/SUS-RESULTS.md}. Se prefiere un requisito sin verificar a una cifra
+fabricada.}
+
+\REQ{RNF-23}{Accesibilidad}
+\campo{Enunciado}{El cliente web debe alcanzar una puntuación de accesibilidad igual o superior
+a 90 sobre 100 en la auditoría automatizada, en perfil de escritorio y de móvil, tomando como
+referencia el nivel AA de las pautas WCAG 2.1.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{WCAG 2.1 AA; criterio de calidad de la asignatura}
+\campo{Rationale}{El sistema lo usa toda la comunidad universitaria de la carrera; la
+accesibilidad no es opcional. La auditoría automatizada no agota WCAG, y por eso el nivel de
+referencia se declara además del umbral numérico.}
+\campo{Criterio de aceptación}{Puntuación de accesibilidad $\geq 90$ en las corridas de
+escritorio y de móvil sobre el build de producción, con los informes archivados y fechados.}
+\campo{Método de verificación}{Análisis}
+\campo{Estado}{\estadoV}
+\campo{Evidencia}{Medición del 2026-09-06, 6 corridas: \textbf{100/100} en escritorio y en
+móvil. La corrida del 2026-08-17 daba 89, por debajo del umbral, y se corrigió.}
+
+\REQ{RNF-24}{Objetivos de respaldo y recuperación}
+\campo{Enunciado}{El sistema debe garantizar un objetivo de punto de recuperación no superior a
+24 horas y un objetivo de tiempo de recuperación no superior a 4 horas, y debe verificar la
+recuperabilidad de sus respaldos con una prueba de restauración al menos mensual.}
+\campo{Prioridad}{Must} \quad \campo{Fuente}{\cd{docs/despliegue/BACKUP.md}; criterio de
+continuidad de la asignatura}
+\campo{Rationale}{Sin objetivos declarados, la funcionalidad de respaldo de RF-61 a RF-64 no
+tiene contra qué medirse: no se puede saber si una configuración es suficiente. El archivado del
+registro de escritura anticipada es lo que permite bajar el objetivo de punto de recuperación
+por debajo del intervalo entre respaldos completos.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item El cronograma configurado en RF-62 arroja un objetivo de punto de recuperación
+          declarado y no superior a \textbf{24 horas}.
+    \item Existe al menos una prueba de restauración con resultado \texttt{EXITOSA} en los
+          últimos 30 días, registrada conforme a RF-63.
+    \item El tiempo medido de una restauración completa sobre datos de tamaño representativo es
+          inferior a \textbf{4 horas}, con la medición archivada y fechada.
+    \item El período de retención del archivado de escritura anticipada cubre al menos el
+          intervalo entre dos respaldos completos consecutivos.
+\end{itemize}
+\campo{Método de verificación}{Demostración + Análisis}
+\campo{Estado}{\estadoI}
+\campo{Nota}{La configuración por omisión (respaldo completo semanal) implica un objetivo de
+punto de recuperación de hasta 7 días, incompatible con el criterio de 24 horas salvo que el
+archivado de escritura anticipada de RF-64 esté activo y verificado. Ese vínculo debe
+comprobarse y medirse antes de declarar el requisito verificado.}
+
+\REQ{RNF-25}{Reproducibilidad del entorno y determinismo de la siembra}
+\campo{Enunciado}{Desde una clonación limpia del repositorio, el sistema debe poder construirse,
+desplegarse, migrarse, probarse y auditarse con una sola orden que termine con código de salida
+0, y el estado inicial de los catálogos del dominio debe ser idéntico en dos despliegues
+independientes.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{ADR-007; criterio de reproducibilidad de la
+asignatura}
+\campo{Rationale}{La primera mitad está resuelta y verificada; la segunda no. Los estados de la
+solicitud y del cronograma se crean bajo demanda (nota de la sección~\ref{sec:estados}), de modo
+que dos despliegues que ejecuten los casos de uso en orden distinto obtienen catálogos con
+identificadores distintos. Un sistema que se construye igual pero arranca distinto no es
+reproducible.}
+\campo{Criterio de aceptación}{}
+\begin{itemize}
+    \item La orden única de reproducibilidad termina con código 0 desde una clonación limpia.
+    \item Las imágenes de contenedor están ancladas por resumen criptográfico, no por etiqueta
+          móvil.
+    \item Los nueve estados de la solicitud y el estado del cronograma se \textbf{siembran por
+          migración}, con identificador y orden fijos; ninguno se crea bajo demanda.
+\end{itemize}
+\campo{Método de verificación}{Demostración + Inspección}
+\campo{Estado}{\estadoN}
+\campo{Evidencia}{La orden única está verificada de punta a punta con código de salida 0
+(construcción, contenedores, migraciones, 559 pruebas, carga, auditoría, reportes y compilación
+del informe), y las imágenes están ancladas por resumen. El tercer criterio no se cumple.}
+
+\REQ{RNF-26}{Versionado uniforme de la API}
+\campo{Enunciado}{Todos los endpoints de la API deben exponerse bajo un prefijo de versión
+único y explícito.}
+\campo{Prioridad}{Should} \quad \campo{Fuente}{ADR-001}
+\campo{Rationale}{Un prefijo aplicado a una parte de la API no versiona nada y además induce
+error en la documentación: 10 de los 15 endpoints que citaba la matriz anterior no
+resolvían precisamente porque se les había añadido un prefijo de versión que su controlador no
+tiene.}
+\campo{Criterio de aceptación}{El 100\,\% de las rutas de la API responde bajo el prefijo de
+versión declarado; una petición a la ruta sin versionar responde \texttt{404} o redirige de
+forma permanente a la versionada.}
+\campo{Método de verificación}{Inspección}
+\campo{Estado}{\estadoN}
+\campo{Nota}{En el punto de corte, \textbf{8 de 31} controladores exponen sus rutas bajo el
+prefijo de versión y los \textbf{23} restantes no, pese a que el archivo \cd{README.md} declara
+la API como versionada. Es la causa directa del defecto de trazabilidad más extendido de la
+especificación anterior (\S\ref{sec:cambios}).}
+
+% ================= 9. TRAZABILIDAD Y VERIFICACIÓN ============================
+\section{Trazabilidad y verificación}
+\label{sec:trazabilidad}
+
+\subsection{Cláusula de verificación}
+
+Ninguna versión de este documento se publica si el validador de trazabilidad
+(\cd{scripts/validate-traceability.sh}) no termina con código de salida 0. El validador es la
+garantía automática de que este SRS, la matriz y el árbol de archivos describen el mismo sistema;
+la revisión manual no puede sostener esa coherencia sobre 90 requisitos y 207 rutas.
+
+\textbf{Qué garantiza hoy, y desde cuándo.} Las ocho comprobaciones de la tabla siguiente están
+\textbf{implementadas y activas desde el 2026-09-11}, y son las que el script ejecuta. Conviene
+ser explícito sobre el punto de partida: en la versión 1.0.0 de este documento la tabla enunciaba
+las ocho comprobaciones como especificación de lo que el validador \emph{debía} hacer, mientras
+que el script publicado en el repositorio solo comprobaba que los archivos citados por cada fila
+existieran, y nunca abría el SRS. La revisión del docente-director señaló con razón esa distancia
+entre lo enunciado y lo construido (M4). Esta versión la cierra: el validador lee el SRS, lo
+contrasta con la matriz en ambos sentidos y falla si discrepan.
+
+\textbf{Lo que el validador no garantiza.} Que el enunciado de un requisito sea correcto, que su
+criterio de aceptación sea el adecuado o que la evidencia citada demuestre lo que dice demostrar.
+Eso es revisión humana y ninguna comprobación automática lo sustituye. El validador garantiza
+coherencia entre artefactos, no verdad de su contenido.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{0.8cm} p{13.9cm}}
+\toprule
+\textbf{\#} & \textbf{Comprobación que el validador realiza} \\
+\midrule
+V1 & Toda fila de la matriz tiene exactamente el número de columnas de la cabecera, con los
+campos que contienen comas correctamente entrecomillados. \\
+V2 & La columna de estado contiene únicamente los cuatro valores del vocabulario cerrado de la
+sección~\ref{sec:estados-req}; cualquier otro texto falla. \\
+V3 & Todo identificador de requisito de este SRS existe en la matriz, y todo identificador de la
+matriz existe en este SRS. El conteo debe coincidir. \\
+V4 & Todo endpoint citado en la matriz resuelve contra un controlador real: se comprueba la
+\textbf{ruta completa}, método y camino, no solo su primer segmento. \\
+V5 & Toda clase de prueba citada existe como archivo en disco. \\
+V6 & Todo archivo de historia de usuario o de caso de uso citado existe como archivo en disco. \\
+V7 & Ningún requisito declarado \emph{Verificado} carece de prueba automatizada o de evidencia
+archivada. \\
+V8 & Ningún requisito declarado \emph{Planificado} cita un endpoint existente: si el endpoint
+existe, el requisito está al menos implementado. \\
+\bottomrule
+\end{tabular}
+\caption{Las ocho comprobaciones, implementadas y activas desde el 2026-09-11. V1 a V6 son las
+que habrían detectado, antes de la entrega, los defectos que la sección~\ref{sec:cambios}
+documenta, y V3 es la que convierte una matriz incompleta en un error de construcción en vez de
+en un hallazgo de auditoría.}
+\end{table}
+
+\subsection{Salida del validador sobre este árbol}
+\label{sec:salida-validador}
+
+Reproducible con \cd{./scripts/validate-traceability.sh} desde la raíz del repositorio:
+
+\begin{quote}\ttfamily\small\noindent
+Requisitos en el SRS \dotfill{} 90\\
+Filas en la matriz \dotfill{} 90\\
+Endpoints reales del backend \dotfill{} 207\\
+Clases de prueba en disco \dotfill{} 43\\
+Estados: Implementado 19, No cumplido 6, Planificado 5, Verificado 60\\
+Must verificados \dotfill{} 36/50 (72\,\%)\\
+=== V1--V8: sin fallos. Trazabilidad consistente. ===
+\end{quote}
+
+\noindent Todas las cifras de la sección~\ref{sec:cumplimiento} son \textbf{esta} salida, no un
+conteo manual sobre el documento. Si el documento y la matriz dejan de coincidir, el validador
+falla y la cifra no llega a publicarse.
+
+\subsection{Estructura de la matriz de trazabilidad}
+
+La matriz (\cd{docs/trazabilidad/matriz.csv}) conecta cada requisito con su origen y su
+evidencia. Sus columnas son:
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{4.0cm} p{10.7cm}}
+\toprule
+\textbf{Columna} & \textbf{Contenido} \\
+\midrule
+\cd{ID\_Requisito} & Identificador \texttt{RF-nn} o \texttt{RNF-nn} de este documento. \\
+\texttt{Titulo} & Título del requisito, idéntico al de este documento. \\
+\texttt{Fuente} & Historia de usuario, caso de uso, decisión de arquitectura o norma. \\
+\texttt{Modulo} & Módulo funcional del sistema. \\
+\cd{Endpoint\_REST} & Método y ruta completa, tal como responde el servicio. \\
+\cd{Prioridad\_MoSCoW} & \emph{Must}, \emph{Should} o \emph{Could}. \\
+\cd{Metodo\_Verificacion} & Prueba, Demostración, Análisis o Inspección. \\
+\cd{Caso\_Prueba} & Clase o clases de prueba, o \texttt{ninguna}. \\
+\texttt{Estado} & Uno de los cuatro valores del vocabulario cerrado, y ningún otro. \\
+\texttt{Evidencia} & Ruta del artefacto de evidencia con su fecha. \\
+\texttt{Observaciones} & Todo matiz que no cabe en el vocabulario cerrado de estado. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent La columna \texttt{Observaciones} es nueva y existe por una razón concreta: es donde
+va el matiz que antes se colaba dentro de la columna de estado y rompía el vocabulario.
+
+% ================= 10. ESTADO DE CUMPLIMIENTO ================================
+\section{Estado de cumplimiento del corpus}
+\label{sec:cumplimiento}
+
+\subsection{Distribución por estado y prioridad}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrrr}
+\toprule
+& \textbf{Verificado} & \textbf{Implementado} & \textbf{Planificado} & \textbf{No cumplido} &
+\textbf{Total} \\
+\midrule
+Requisitos funcionales     & 46 & 16 & 2 & 0 & \textbf{64} \\
+Requisitos no funcionales  & 14 &  3 & 3 & 6 & \textbf{26} \\
+\midrule
+\textbf{Total}             & \textbf{60} & \textbf{19} & \textbf{5} & \textbf{6} &
+\textbf{90} \\
+\bottomrule
+\end{tabular}
+\caption{Distribución por estado. Cifras producidas por el validador sobre la matriz completa
+(sección~\ref{sec:salida-validador}), no contadas a mano sobre el documento.}
+\end{table}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+& \textbf{Must} & \textbf{Should} & \textbf{Could} & \textbf{Total} \\
+\midrule
+Requisitos funcionales    & 30 & 26 & 8 & \textbf{64} \\
+Requisitos no funcionales & 20 &  6 & 0 & \textbf{26} \\
+\midrule
+\textbf{Total}            & \textbf{50} & \textbf{32} & \textbf{8} & \textbf{90} \\
+\bottomrule
+\end{tabular}
+\caption{Distribución por prioridad MoSCoW. No hay requisitos \emph{Won't}: una capacidad
+descartada se retira del alcance, no se conserva como requisito con etiqueta de descarte.}
+\end{table}
+
+\subsection{Requisitos \emph{Must} que no están verificados}
+
+De los \textbf{50} requisitos de prioridad \emph{Must}, \textbf{36 están verificados
+(72,0\,\%)}. Los \textbf{14} restantes se enumeran aquí de forma completa, porque un porcentaje
+sin el detalle de lo que falta no es información accionable.
+
+\begin{longtable}{p{1.6cm} p{5.3cm} p{2.9cm} p{4.6cm}}
+\toprule
+\textbf{ID} & \textbf{Requisito} & \textbf{Estado} & \textbf{Qué falta} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Requisito} & \textbf{Estado} & \textbf{Qué falta} \\
+\midrule
+\endhead
+RNF-15 & Ausencia de cuentas de demostración & \estadoN & Retirar del código las contraseñas
+literales y condicionar la siembra a un perfil de desarrollo. \\
+RNF-04 & Degradación ante caída de la caché & \estadoN & Cambiar la verificación de revocación a
+\emph{fail-closed} y dar respuesta declarada al límite de tasa. \\
+RNF-06 & Política de contraseñas & \estadoN & Subir el mínimo a 8 caracteres y aplicarlo en las
+tres vías de alta y cambio. \\
+RF-05 & Recuperación de contraseña & \estadoP & Construir la funcionalidad completa. \\
+RF-06 & Cambio de contraseña propia & \estadoP & Construir la funcionalidad completa. \\
+RNF-19 & Retención y supresión de datos & \estadoP & Tabla de retención, depuración automática y
+procedimiento de supresión. \\
+RNF-11 & Transporte cifrado & \estadoP & Depende del despliegue público, aún no realizado. \\
+RNF-07 & Vigencia de tokens & \estadoI & Hacer configurable por entorno la vigencia del token de
+renovación. \\
+RNF-08 & Rotación y detección de reutilización & \estadoI & Prueba automatizada del escenario de
+reutilización. \\
+RF-02 & Renovación con rotación & \estadoI & Prueba automatizada del escenario de reutilización. \\
+RNF-24 & Objetivos de respaldo y recuperación & \estadoI & Medir el tiempo de restauración y
+verificar el vínculo con el archivado de escritura anticipada. \\
+RF-61 & Respaldo bajo demanda y programado & \estadoI & Evidencia archivada de una corrida
+completa. \\
+RF-63 & Restauración y prueba de restauración & \estadoI & Evidencia archivada de una prueba de
+restauración exitosa. \\
+RF-60 & Consulta de la bitácora de auditoría & \estadoI & Clase de prueba dedicada al módulo de
+auditoría. \\
+\bottomrule
+\caption{Los 14 requisitos \emph{Must} no verificados, con lo que falta en cada uno.}
+\end{longtable}
+
+\noindent Ocho de los catorce se cierran con evidencia o con una prueba; seis exigen cambiar
+código. Los seis con implicación de seguridad o legal encabezan el plan de la
+sección~\ref{sec:pendientes}.
+
+\subsection{Nota metodológica sobre el crecimiento del corpus}
+
+El corpus pasó de los 16 requisitos de la especificación anterior a los 90 de esta. Conviene ser preciso sobre
+qué significa esa cifra, porque se presta a dos lecturas opuestas y solo una es correcta.
+
+\textbf{No es alcance nuevo.} De los 74 requisitos añadidos, \textbf{69 documentan capacidades o
+propiedades que ya estaban construidas} en el repositorio y que sencillamente no tenían requisito
+que las especificara. Solo \textbf{5} describen algo que aún no existe o no puede verificarse
+todavía: RF-05 y RF-06 (credenciales del usuario), RNF-19 (retención y supresión), RNF-22
+(usabilidad medida) y RNF-11 (transporte cifrado, a la espera del despliegue público). La tasa de
+adición no mide crecimiento del producto: mide cuánto le faltaba a la especificación para
+alcanzar al código.
+
+\textbf{Es, sin embargo, una señal sobre el proceso.} Que un SRS describiera 16 requisitos de un
+sistema con 207 rutas significa que durante la mayor parte del desarrollo el documento dejó de
+funcionar como contrato y como base de verificación. En un proyecto con interesados externos,
+una desviación de esta magnitud detectada al cierre de una entrega sería una señal de alarma
+sobre la especificación continua, no un logro de la revisión final. Se declara aquí y se remite
+al capítulo de amenazas a la validez del informe.
+
+\textbf{Estabilidad del corpus heredado.} De los 16 requisitos de la especificación anterior, 15 se
+conservan con el mismo alcance (renumerados y completados con la plantilla) y 1 cambia de
+prioridad con justificación (RF-37, de \emph{Should} a \emph{Must}). Ninguno se retira. La
+estabilidad del corpus heredado es del \textbf{93,8\,\%}; no debe sumarse ni compararse con la
+tasa de adición, porque miden cosas distintas.
+
+% =============== 11. CORRESPONDENCIA CON EL ANEXO C ==========================
+\section{Correspondencia con el Anexo C de ISO/IEC/IEEE 29148:2018}
+\label{sec:anexoc}
+
+Este documento declara conformidad con la norma, de modo que debe poder contrastarse con el
+esquema que la norma propone. La estructura elegida no es idéntica a la del Anexo C; esta tabla
+mapea cada elemento del esquema normativo a la sección donde vive, y justifica cada desviación
+en vez de dejarla implícita.
+
+\begin{longtable}{p{5.1cm} p{4.1cm} p{5.2cm}}
+\toprule
+\textbf{Elemento del Anexo C} & \textbf{Sección de este SRS} & \textbf{Desviación y
+justificación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Elemento del Anexo C} & \textbf{Sección de este SRS} & \textbf{Desviación y
+justificación} \\
+\midrule
+\endhead
+Propósito & \S2.1 & Sin desviación. \\
+Alcance & \S2.2 & Sin desviación. Se añade el alcance excluido de forma explícita. \\
+Definiciones y acrónimos & \S2.3 & Sin desviación. \\
+Referencias & \S2.7 & Sin desviación. \\
+Perspectiva del producto & \S3.1 & Sin desviación. \\
+Funciones del producto & \S7 & Se antepone el catálogo de estados (\S5) y la matriz de permisos
+(\S6) porque los criterios de aceptación de \S7 los usan como vocabulario. \\
+Características de los usuarios & \S3.2 & Se distingue rol de cuenta de rol funcional, distinción
+que la norma no exige pero sin la cual el control de acceso de RF-37 no es especificable. \\
+Restricciones & \S3.3 & Separadas de los requisitos, conforme a la norma. \\
+Supuestos y dependencias & \S3.4 & Sin desviación. \\
+Interfaces externas & \S4 & Se separa interfaz expuesta de interfaz consumida, y se exige a cada
+consumida un comportamiento declarado ante indisponibilidad. \\
+Requisitos funcionales & \S7 & Sin desviación. \\
+Requisitos de rendimiento & \S8.1 & Agrupados como no funcionales, con umbral y condición de
+carga. \\
+Requisitos lógicos de base de datos & \S5 & \textbf{Desviación:} no hay una sección de modelo
+lógico. El ciclo de vida de los datos se especifica como máquinas de estado, que es lo que los
+criterios de aceptación necesitan; el modelo físico vive en las migraciones versionadas y su
+catálogo de rutinas, referenciados en \S2.7. \\
+Restricciones de diseño & \S3.3 & Sin desviación. \\
+Atributos del sistema: fiabilidad y disponibilidad & \S8.1 (RNF-04), \S8.4 (RNF-24, RNF-25) &
+Sin desviación. \\
+Atributos del sistema: seguridad & \S8.2 & Sin desviación. Se mapea cada requisito a su control
+de referencia externo. \\
+Atributos del sistema: mantenibilidad y portabilidad & \S8.4 & Portabilidad cubierta por RD-04 y
+RNF-25 en vez de por requisitos propios. \\
+Usabilidad & \S8.4 (RNF-22, RNF-23) & \textbf{Desviación:} usabilidad y accesibilidad se
+especifican como requisitos con umbral medible en vez de como sección propia, para que estén
+sujetas al mismo vocabulario de estado que el resto. \\
+Verificación & \S9.1 & Se declara como cláusula ejecutable (validador con código de salida 0), no
+solo como enunciado de intención. \\
+Trazabilidad & \S9.2 y \cd{matriz.csv} & Sin desviación. \\
+Información de soporte & \S14, \S15 & Anexos de INCOSE y elicitación por referencia, para que las
+dos copias no puedan divergir. \\
+\bottomrule
+\caption{Correspondencia con el esquema del Anexo C. Cuatro desviaciones declaradas, cada una
+con su justificación.}
+\end{longtable}
+
+% ================ 12. CAMBIOS RESPECTO A LA VERSIÓN 1.0.0 ====================
+\section{Correcciones}
+\label{sec:cambios}
+
+Esta sección documenta qué se corrigió y por qué, para que la bitácora de cambios no sea la única
+constancia. Cubre dos ciclos distintos: la respuesta a la revisión del docente-director sobre la
+versión 1.0.0 (\S\ref{sec:respuesta}) y las correcciones que la propia 1.0.0 hizo sobre los
+borradores que la precedieron (\S12.2 en adelante). El detalle por requisito está en
+\cd{docs/requisitos/CHANGELOG-REQ.md}.
+
+\subsection{Respuesta a la revisión del docente-director sobre la versión 1.0.0}
+\label{sec:respuesta}
+
+La versión 1.0.0 fue revisada por el docente-director, que emitió ocho observaciones de
+modificación y cuatro de adición. Esta subsección responde a cada una: qué señalaba, qué se hizo y
+dónde queda la constancia. Cuando la observación era inexacta se dice también eso, con el dato
+que la corrige, porque aceptar en silencio una observación que no corresponde deja el documento
+peor de lo que estaba.
+
+\textbf{Causa raíz de cinco de las ocho observaciones.} M1 a M5 señalaban que la matriz de
+trazabilidad cubría 15 de los 90 requisitos, con nueve columnas en vez de once y dos valores de
+estado en vez de cuatro, y que el validador no realizaba ninguna de las comprobaciones V1 a V8.
+Las cinco eran correctas, y las cinco tenían el mismo origen: \textbf{la matriz y el validador que
+esta especificación describe nunca llegaron a la rama principal del repositorio}. La revisión se
+hizo, con toda razón, sobre lo que había publicado ---los artefactos del borrador del
+2026-08-17---, mientras el documento revisado era el nuevo. No era una discrepancia entre lo
+escrito y lo construido: era una entrega incompleta. Los artefactos se publican con esta versión,
+y la comprobación V3 convierte esa clase de desfase en un error de construcción.
+
+\begin{longtable}{p{1.1cm} p{5.3cm} p{8.1cm}}
+\toprule
+\textbf{Obs.} & \textbf{Qué señalaba} & \textbf{Qué se hizo} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Obs.} & \textbf{Qué señalaba} & \textbf{Qué se hizo} \\
+\midrule
+\endhead
+M1 / A1 & La matriz cubre 15 de 90 requisitos. & \textbf{Aceptada.} Se publica la matriz completa:
+90 filas, una por requisito, con método de verificación y evidencia. \\
+M2 & La matriz descrita (11 columnas) no es la que existe (9 columnas con otros nombres). &
+\textbf{Aceptada.} El archivo publicado tiene exactamente las once columnas que describe
+\S\ref{sec:trazabilidad}, incluida \texttt{Observaciones}. \\
+M3 & El vocabulario cerrado de cuatro estados no existe en la matriz, que solo usa dos. &
+\textbf{Aceptada.} La columna \texttt{Estado} usa los cuatro valores de
+\S\ref{sec:estados-req}, y la comprobación V2 rechaza cualquier otro. \\
+M4 / A2 & El validador no realiza ninguna de las comprobaciones V1 a V8; nunca abre el SRS. &
+\textbf{Aceptada.} Las ocho están implementadas y activas. La cláusula de
+\S\ref{sec:trazabilidad} se reescribió para declarar qué garantiza el validador, desde cuándo y
+qué no garantiza. \\
+M5 & La distribución de estados no es reproducible desde el repositorio. &
+\textbf{Aceptada.} Las cifras son ahora la salida literal del validador
+(\S\ref{sec:salida-validador}), con el comando que las reproduce. \\
+\addlinespace
+M6 & Se citan HU-13, HU-14 y HU-15, que no existen. &
+\textbf{Aceptada en parte.} Era cierto en la matriz publicada, ya sustituida. \textbf{No} lo era
+en el documento: la única mención a esas tres historias estaba en \S12.2, describiendo un defecto
+ya corregido. Esa frase se reformuló para que no pueda leerse como cita viva. \\
+M7 / A3 & Con 64 requisitos y 12 historias, la mayoría del corpus no tiene origen declarado. &
+\textbf{Aceptada en el fondo, matizada en la forma.} Ningún requisito tenía el campo Fuente
+vacío, pero 27 declaraban «historia de usuario pendiente», que es una promesa y no una fuente.
+Los 27 declaran ahora su origen real y verificable: la migración que creó su tabla o su permiso,
+la decisión de arquitectura, el control OWASP, el reglamento de titulación o la observación
+docente que lo motivó. Ver \S\ref{sec:pendientes}. \\
+\addlinespace
+M8 & La autoría del documento no está reconciliada con el historial del repositorio, y la frase de
+la portada no debería estar ahí. & \textbf{Aceptada.} La portada identifica al autor y su ORCID,
+sin ninguna otra declaración. La situación del equipo se explica como nota de alcance en
+\S1.3, y las menciones a «el equipo» que quedaban en el cuerpo se reconciliaron. \\
+\addlinespace
+A4 & Falta un requisito que fije qué ocurre con las credenciales de ejemplo. &
+\textbf{Aceptada como refuerzo.} El requisito ya existía ---RNF-15, en estado \estadoN{}--- pero
+solo cubría el código fuente. Se amplió con dos criterios que alcanzan todo artefacto versionado,
+y se le declaró como fuente la observación docente OBS-11, que sigue abierta en parte desde la
+Entrega 3. \\
+\bottomrule
+\caption{Respuesta a las doce observaciones de la revisión de la versión 1.0.0.}
+\end{longtable}
+
+\noindent\textbf{Una precisión sobre una cifra de la revisión.} La revisión da por buena la cifra
+de «207 rutas en 49 controladores». Las 207 rutas son correctas; los 49 controladores salen de
+contar los 31 de \cd{src/main/java} más las 18 clases de prueba de controlador de
+\cd{src/test}, que no exponen ninguna ruta. El par que este documento sostiene es \textbf{31
+controladores de producción y 207 rutas}, y así queda aclarado en \S3.1 para que la diferencia no
+vuelva a aparecer.
+
+\subsection{Defectos de trazabilidad corregidos en la versión 1.0.0}
+
+\begin{enumerate}
+    \item \textbf{Diez de los quince endpoints citados en la matriz no resolvían.} Todos
+          llevaban un prefijo de versión que su controlador no tiene: la matriz citaba, por
+          ejemplo, la ruta versionada de la creación de solicitud, del cronograma, de la
+          evaluación, del acta, de los reportes, de las salas, de los usuarios y del
+          anteproyecto, y ninguna de ellas existe. La causa raíz es RNF-26. Corregido: los 207
+          endpoints de este documento se citan con la ruta real.
+    \item \textbf{Tres historias de usuario citadas no existían como archivo.} La matriz de la
+          especificación anterior referenciaba HU-13, HU-14 y HU-15, y el directorio contiene
+          únicamente HU-01 a HU-12. \textbf{Ya corregido: ni este documento ni la matriz que lo
+          acompaña citan hoy ninguna de las tres}, y la mención que se hace de ellas en este
+          párrafo describe un defecto cerrado, no una referencia viva. La comprobación V6 del
+          validador lo impide en adelante.
+    \item \textbf{El SRS y la matriz declaraban conjuntos distintos.} El documento hablaba de 12
+          requisitos y la matriz contenía 15 filas, en la misma versión. Corregido: los dos
+          artefactos contienen los mismos 90 identificadores, y la comprobación V3 lo verifica en
+          integración continua.
+    \item \textbf{El validador no detectaba ninguno de los tres problemas anteriores.}
+          Comprobaba el endpoint quedándose con el \textbf{primer segmento} de la ruta tras
+          descartar el prefijo, de modo que una ruta versionada inexistente coincidía con el
+          controlador sin versionar y pasaba sin protestar. Ese era el único punto ciego de un
+          mecanismo que por lo demás funcionaba. Corregido con las comprobaciones V1 a V6 y V8
+          de la sección~\ref{sec:trazabilidad}.
+\end{enumerate}
+
+\subsection{Estados declarados que ya no correspondían}
+
+\begin{enumerate}
+    \item \textbf{La cobertura de pruebas.} La especificación anterior declaraba 38,88\,\% de líneas y
+          «no cumplido» contra un umbral de 60\,\%. La medición vigente en ese mismo momento ya
+          era otra, y la del punto de corte es de \textbf{81,03\,\%} de líneas con 559 pruebas.
+          El requisito pasa a \estadoV{} con umbral elevado al 70\,\% de líneas y de ramas
+          (RNF-21). La cifra ahora va fechada dentro del propio requisito.
+    \item \textbf{La accesibilidad.} No existía requisito que la exigiera pese a medirse. Se
+          especifica con umbral y nivel de referencia (RNF-23), y se declara verificada con
+          100/100.
+    \item \textbf{El rendimiento del cliente web.} Tampoco existía requisito. Se especifica
+          (RNF-02) y se declara \estadoN{} con la cifra real, en vez de omitir la medición que
+          no alcanza el umbral.
+\end{enumerate}
+
+\subsection{Cobertura: de 16 requisitos a 90}
+
+La especificación anterior describía 16 requisitos de un sistema con 31 controladores y 207 rutas.
+Módulos completos no tenían ninguna línea que los describiera: respaldo y recuperación, bitácora
+de auditoría, catálogos académicos, gestión de estudiantes, centro de orientación, tutoría por
+fases, asistente virtual, estado en tiempo real, roles y permisos, y buena parte del ciclo de
+vida de la solicitud y del acta. Esta versión los especifica. Ninguno exigió programar: solo
+especificar lo que ya estaba programado.
+
+\subsection{Secciones estructurales incorporadas}
+
+Cinco secciones que la norma espera y el documento no tenía: interfaces externas (\S4), catálogo
+de estados del dominio (\S5), matriz de permisos rol\,$\times$\,operación (\S6), correspondencia
+con el Anexo C (\S\ref{sec:anexoc}) y cláusula de verificación (\S9.1). Las dos que más falta
+hacían son \S5 y \S6: los criterios de aceptación usaban nombres de estado nunca definidos, y
+con 29 permisos repartidos entre 207 rutas la autorización ya no se podía auditar leyendo
+requisito por requisito.
+
+\subsection{Lenguaje y forma}
+
+Se fija la convención de redacción normativa (\S2.4), se cierra el vocabulario de estado
+(\S2.5) y de método de verificación (\S2.6), se expresan los criterios de aceptación como
+respuesta observable en vez de como excepción interna, y se retiran del enunciado las rutas de
+archivo y los nombres de clase, que pasan a la matriz donde el validador los comprueba contra el
+disco.
+
+% ==================== 13. DEUDA DECLARADA Y PLAN =============================
+\section{Deuda declarada y plan de cierre}
+\label{sec:pendientes}
+
+Nada de lo que sigue está resuelto. Se enumera de forma completa porque un hallazgo sin registro
+no tiene fecha de cierre, y porque declararlo es preferible a que aparezca en una revisión
+externa.
+
+\subsection{Orden de trabajo propuesto}
+
+\begin{enumerate}
+    \item \textbf{Seguridad inmediata.} RNF-15 (contraseñas literales en el código de un
+          repositorio público y siembra de cuentas en todo arranque) y RNF-04 (la revocación de
+          tokens es hoy \emph{fail-open}). Son los dos únicos hallazgos que degradan la seguridad
+          del sistema desplegado, y ambos se cierran con un cambio acotado.
+    \item \textbf{Credenciales del usuario.} RF-05, RF-06 y RNF-06: recuperación, cambio y
+          política de contraseñas. Hoy no existe ninguna vía, ni propia ni administrativa, para
+          cambiar una contraseña, y el asistente virtual anuncia una capacidad que el sistema no
+          tiene.
+    \item \textbf{Protección de datos personales.} RNF-19: tabla de retención por categoría,
+          depuración automática de la bitácora y procedimiento de supresión a solicitud del
+          titular. El protocolo ético del proyecto es una base sólida; falta convertirlo en
+          requisito con criterio y fecha.
+    \item \textbf{Comprobaciones del validador.} Implementar V1 a V6 y V8
+          (\S\ref{sec:trazabilidad}). Son pocas líneas y son lo que impide que esta revisión se
+          repita: las seis habrían detectado solas los cuatro defectos de \S\ref{sec:cambios}.
+    \item \textbf{Continuidad.} RNF-24, RF-61 y RF-63: medir el tiempo de restauración, archivar
+          la evidencia de una prueba exitosa y verificar que el archivado de escritura anticipada
+          sostiene el objetivo de punto de recuperación declarado.
+    \item \textbf{Despliegue y transporte.} RNF-11, que hoy no puede verificarse porque el
+          sistema no está desplegado públicamente, y RNF-02, cuyo plan de cierre es la
+          fragmentación del paquete de JavaScript del cliente.
+    \item \textbf{Coherencia interna.} RNF-25 (sembrar por migración los estados de la solicitud
+          y del cronograma), RNF-26 (unificar el prefijo de versión de la API) y la revisión
+          permiso a permiso de la asignación del Coordinador
+          (\S\ref{sec:asimetrias}, punto 4).
+\end{enumerate}
+
+\subsection{Origen de los requisitos sin historia de usuario}
+
+Treinta y uno de los 64 requisitos funcionales tienen una historia de usuario formal (HU-01 a
+HU-12); los otros 33, más los 26 no funcionales, no la tienen. Eso \textbf{no} significa que
+carezcan de origen: en la versión 1.0.0 declaraban «auditoría de cobertura, historia de usuario
+pendiente», que es una promesa y no una fuente, y esta versión sustituye esa fórmula por el
+\textbf{origen real y verificable} de cada uno ---la migración que creó su tabla o su permiso, la
+decisión de arquitectura que lo impuso, el control OWASP, el reglamento de titulación, la
+observación docente o el criterio de la asignatura---. Ninguno queda sin origen demostrable.
+
+Escribir además la historia de usuario de esos 33 sigue siendo trabajo deseable, y por eso
+permanece en esta sección: una historia añade el «para qué» desde la voz del actor, que una
+migración no expresa. Pero es una mejora de la elicitación, no un hueco de trazabilidad: hoy todo
+requisito puede demostrar de dónde viene, y la comprobación V6 del validador impide citar una
+historia que no exista en disco.
+
+\subsection{Defectos funcionales menores declarados}
+
+\begin{enumerate}
+    \item \textbf{Ruta de la \emph{cookie} de renovación.} La \emph{cookie} del token de
+          renovación se emite con un ámbito de ruta que no coincide con el del endpoint que la
+          consume, de modo que el navegador no la envía en la petición de renovación. Afecta a
+          RF-02.
+    \item \textbf{Estado \texttt{SUSPENDIDA} sin retorno.} No existe la reanudación de una
+          solicitud suspendida (RF-16), de modo que una suspensión es hoy tan definitiva como un
+          rechazo.
+    \item \textbf{Ruta de progreso desacoplada del expediente.} Los ocho pasos de RF-51 se marcan
+          manualmente y pueden contradecir el estado real de la solicitud.
+    \item \textbf{Permiso inadecuado en las estadísticas de tutoría.} RF-58 se protege con un
+          permiso de la categoría Evaluación.
+    \item \textbf{Colisión de identificadores en el catálogo de permisos.} Dos migraciones
+          asignaron el mismo identificador a permisos distintos; la inserción posterior se
+          descartó en silencio y hubo que repararla con una migración adicional. No hay efecto
+          vigente, pero el catálogo no es reproducible por simple lectura de las migraciones en
+          orden.
+    \item \textbf{Salvaguarda de administración.} RF-12 permite retirar al rol de Administrador
+          el permiso de gestionar permisos, dejando el sistema sin ningún usuario capaz de
+          revertirlo.
+\end{enumerate}
+
+% ======================== 14. ANEXOS =========================================
+\section{Anexo: \emph{checklist} INCOSE}
+
+Las 9 características de calidad individuales de INCOSE (Necesario, Apropiado, No ambiguo,
+Completo, Singular, Factible, Verificable, Correcto, Conforme) y las 6 del conjunto se aplican al
+corpus completo. El \emph{checklist} vive en \cd{docs/checklists/INCOSE-REQUIREMENTS.md} y se
+anexa por referencia, no verbatim, para que las dos copias no puedan divergir.
+
+\textbf{Brechas conocidas del corpus de esta versión:} la característica \emph{Correcto} no puede
+afirmarse para los 5 requisitos en estado \estadoP{}, que describen comportamiento aún no
+construido; y \emph{Verificable como conjunto} está limitada por los 19 requisitos en estado
+\estadoI{}, cuyo criterio no tiene todavía prueba ni evidencia archivada. La característica
+\emph{Conforme}, que era la brecha más consistente de la especificación anterior por usar formato de
+historia de usuario en vez de lenguaje normativo, queda cerrada con la convención de \S2.4.
+
+\section{Anexo: técnicas de elicitación aplicadas}
+
+Detalle completo en \cd{docs/requisitos/elicitacion/README.md}. De las cinco técnicas esperadas,
+\textbf{dos tienen evidencia real y verificable} en el repositorio (análisis de documentos, con
+observaciones docentes trazadas a \emph{commits} reales, y evaluación cruzada de pares),
+\textbf{una es parcial} (prototipado iterativo evidenciado por el historial de control de
+versiones, sin sesiones formales documentadas) y \textbf{dos no tienen evidencia documentada}
+(entrevistas y observación directa). Se declara explícitamente en vez de fabricar transcripciones
+o actas que no existieron.
+
+A estas se suma, en esta versión, una técnica que sí produjo la mayor parte del corpus nuevo: la
+\textbf{ingeniería inversa de requisitos} sobre el código, las migraciones y la configuración del
+sistema construido. Es una técnica legítima de elicitación cuando la implementación precede a la
+especificación, y declararla es más honesto que atribuir a entrevistas inexistentes unos
+requisitos que se obtuvieron leyendo el repositorio.
+
+% ==================== 15. PÁGINA DE APROBACIÓN ===============================
+\section{Página de aprobación}
+
+\begin{center}
+\begin{tabular}{p{7cm} p{7cm}}
+\toprule
+\textbf{Elaborado por} & \textbf{Revisado y aprobado por (Docente-Director)} \\
+\midrule
+& \\[1.6cm]
+\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
+Álava Alvarado, Jean Pierre & Ing. Guerrero Ulloa Gleiston Cíceron, Mg. \\
+\href{https://orcid.org/0009-0001-2878-2919}{ORCID: 0009-0001-2878-2919} & \\
+\vspace{0.5cm} & \\
+Fecha: \rule{4cm}{0.4pt} & Fecha de aprobación: \rule{4cm}{0.4pt} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.4cm}
+\noindent\fbox{\parbox{0.98\textwidth}{\textbf{Estado real de la firma (2026-09-11):} la firma
+del docente-director \textbf{no se ha obtenido todavía} para esta versión. La v1.0.0 sí fue
+revisada por el docente-director, y esta v1.0.1 es la respuesta a esa revisión
+(sección~\ref{sec:respuesta}); la aprobación formal queda pendiente de su nueva lectura. No se
+fabrica una firma ni se marca esta sección como completa hasta que ocurra realmente, siguiendo la
+misma política de integridad aplicada al resto del documento: donde no hay evidencia, se declara
+que no la hay.}}
+
+\end{document}

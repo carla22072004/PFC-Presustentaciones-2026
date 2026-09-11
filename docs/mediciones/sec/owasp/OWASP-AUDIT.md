@@ -28,9 +28,12 @@ Requisito previo (obtener un token de un usuario sin privilegios administrativos
 
 ```bash
 API=http://localhost:4200/api/v1
+# La contraseña se toma del entorno: ninguna credencial de demostración se versiona
+# en este repositorio público (RNF-15 del SRS, observación docente OBS-11).
+ESTUDIANTE_PASSWORD=${ESTUDIANTE_PASSWORD:?exporta ESTUDIANTE_PASSWORD antes de ejecutar}
 TOKEN=$(curl -s -X POST $API/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"estudiante@uteq.edu.ec","password":"estudiante123"}' \
+  -d "{\"email\":\"estudiante@uteq.edu.ec\",\"password\":\"$ESTUDIANTE_PASSWORD\"}" \
   | python -c "import sys,json; print(json.load(sys.stdin)['data']['auth']['token'])")
 ```
 
@@ -66,7 +69,7 @@ que era justamente el defecto corregido en `GlobalExceptionHandler` (ver A01 má
 
 ```bash
 curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
-  -d '{"email":"estudiante@uteq.edu.ec","password":"estudiante123"}' \
+  -d "{\"email\":\"estudiante@uteq.edu.ec\",\"password\":\"$ESTUDIANTE_PASSWORD\"}" \
   | python -c "
 import sys,json,base64
 d = json.load(sys.stdin)

@@ -107,9 +107,12 @@ Requisito: comparar los escenarios de caché fría (sin entrada en Redis, dispar
 ### Cómo se reprodujo
 
 ```bash
+# La contraseña se toma del entorno: ninguna credencial de demostración se versiona
+# en este repositorio público (RNF-15 del SRS, observación docente OBS-11).
+ADMIN_PASSWORD=${ADMIN_PASSWORD:?exporta ADMIN_PASSWORD antes de ejecutar}
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@uteq.edu.ec","password":"admin123"}' \
+  -d "{\"email\":\"admin@uteq.edu.ec\",\"password\":\"$ADMIN_PASSWORD\"}" \
   | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).data.auth.token))")
 
 # Frio: flush + request, 30 veces
