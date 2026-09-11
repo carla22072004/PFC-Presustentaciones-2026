@@ -123,7 +123,7 @@ La siguiente matriz documenta la resolución técnica formal de cada una de las 
 \section{Resultados del Cuestionario de Usabilidad SUS (System Usability Scale)}
 
 \begin{tcolorbox}[colframe=boxred,colback=boxredbg,arc=1mm,boxrule=1pt,title={\bfseries Nota de integridad --- dato retirado}]
-Los 10 evaluadores y las respuestas de la tabla que aparece a continuación en esta sección son \textbf{fabricados}: nunca existieron los participantes ni se aplicó el cuestionario. El puntaje 91.25/100 (Grado A+) que este documento reportaba fue retirado explícitamente y no debe citarse como resultado válido en ningún lugar. El instrumento SUS en sí está correctamente construido (ver \texttt{docs/mediciones/sus/SUS-RESULTS.md} y \texttt{scripts/sus-analysis.ipynb}), pero no existe todavía ninguna medición real que reportar ($N=0$). La tabla se conserva sin editar por trazabilidad de lo que se corrigió, no como evidencia.
+Una versión anterior de esta sección presentaba una tabla con 10 evaluadores \textbf{fabricados} (E1--E10) y sus puntajes individuales inventados: nunca existieron esos participantes ni se aplicó el cuestionario. El puntaje 91.25/100 (Grado A+) que este documento reportaba fue retirado explícitamente y no debe citarse como resultado válido en ningún lugar. Esa tabla fue \textbf{eliminada por completo} (2026-09-11), no solo anotada. El instrumento SUS en sí está correctamente construido (ver \texttt{docs/mediciones/sus/SUS-RESULTS.md} y \texttt{scripts/sus-analysis.ipynb}), pero no existe todavía ninguna medición real que reportar ($N=0$).
 \end{tcolorbox}
 
 Para garantizar la usabilidad del sistema, \textbf{se había afirmado} una evaluación formal aplicando la metodología estandarizada de Brooke (1996) con 10 participantes independientes (estudiantes, docentes y profesionales IT); esa afirmación era falsa, ver nota de integridad arriba.
@@ -142,36 +142,18 @@ Para garantizar la usabilidad del sistema, \textbf{se había afirmado} una evalu
     \item \textit{P10:} Necesité aprender muchas cosas antes de poder empezar a usar el sistema.
 \end{enumerate}
 
-\subsection{Respuestas Consolidadas y Cálculo de Score Individual}
+\subsection{Cálculo de Score Individual}
 
-El puntaje individual se obtiene mediante la fórmula:
+El puntaje individual se calcularía, cuando existan respuestas reales, mediante la fórmula estándar de Brooke (1996):
 \begin{equation}
 \text{Score} = \left[ \sum_{i \in \text{impares}} (V_i - 1) + \sum_{j \in \text{pares}} (5 - V_j) \right] \times 2.5
 \end{equation}
 
 \vspace{0.2cm}
-\begin{table}[h!]
-\centering
-\small
-\begin{tabular}{|c|p{4.2cm}|c|c|c|c|c|c|c|c|c|c|c|}
-\hline
-\rowcolor{headergray}
-\textbf{Eval.} & \textbf{Rol / Perfil} & \textbf{P1} & \textbf{P2} & \textbf{P3} & \textbf{P4} & \textbf{P5} & \textbf{P6} & \textbf{P7} & \textbf{P8} & \textbf{P9} & \textbf{P10} & \textbf{SUS Score} \\ \hline
-\textbf{E1} & Estudiante Software UTEQ & 5 & 1 & 5 & 1 & 4 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
-\textbf{E2} & Estudiante Telemática & 4 & 2 & 4 & 1 & 5 & 1 & 4 & 1 & 4 & 2 & \textbf{85.0} \\ \hline
-\textbf{E3} & Docente Investigador & 5 & 1 & 4 & 2 & 4 & 1 & 5 & 1 & 5 & 1 & \textbf{92.5} \\ \hline
-\textbf{E4} & Profesional Frontend & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
-\textbf{E5} & Estudiante Industrial & 4 & 2 & 4 & 2 & 4 & 2 & 4 & 1 & 4 & 2 & \textbf{77.5} \\ \hline
-\textbf{E6} & Docente Agronomía & 4 & 1 & 5 & 1 & 4 & 1 & 4 & 2 & 4 & 1 & \textbf{87.5} \\ \hline
-\textbf{E7} & QA Engineer Externo & 5 & 1 & 4 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{97.5} \\ \hline
-\textbf{E8} & Estudiante Software & 5 & 1 & 5 & 1 & 4 & 1 & 5 & 1 & 4 & 1 & \textbf{95.0} \\ \hline
-\textbf{E9} & Coordinador Externo & 4 & 2 & 4 & 2 & 4 & 1 & 4 & 2 & 4 & 2 & \textbf{77.5} \\ \hline
-\textbf{E10} & Estudiante Sistemas & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & 5 & 1 & \textbf{100.0} \\ \hline
-\end{tabular}
-\end{table}
+\noindent \textbf{Tabla de respuestas:} retirada por completo (2026-09-11). La versión anterior de esta sección contenía una tabla con 10 evaluadores ficticios (E1--E10) y sus puntajes individuales inventados; esos datos nunca existieron y fueron eliminados en su totalidad, no solo anotados. No hay ninguna respuesta real que tabular todavía ($N=0$); cuando se aplique el instrumento a personas reales, esta sección se completará con esos datos.
 
 \vspace{0.2cm}
-\noindent \textbf{Puntaje SUS Promedio Global:} dato fabricado y retirado (ver nota de integridad al inicio de esta sección). No hay puntaje real que reportar; $N=0$.
+\noindent \textbf{Puntaje SUS Promedio Global:} no hay puntaje real que reportar; $N=0$.
 
 \vspace{0.3cm}
 

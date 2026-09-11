@@ -33,25 +33,12 @@
 
 ## 📊 3. Estudio de Usabilidad SUS (System Usability Scale)
 
-> **Nota de integridad — dato retirado.** Los 10 evaluadores y las respuestas de la tabla siguiente son **fabricados**: nunca existieron los participantes ni se aplicó el cuestionario. El puntaje 91.25/100 (Grado A+) que este documento reportaba fue retirado explícitamente y no debe citarse como resultado válido. El instrumento SUS en sí está correctamente construido (ver `docs/mediciones/sus/SUS-RESULTS.md` y `scripts/sus-analysis.ipynb`), pero no existe todavía ninguna medición real que reportar (N=0). La tabla se conserva sin editar por trazabilidad de lo que se corrigió, no como evidencia.
+> **Nota de integridad — tabla retirada (2026-09-11).** Esta sección contenía una tabla con 10 evaluadores ficticios (E1–E10) y respuestas/puntajes individuales inventados, que produjeron el puntaje fabricado 91.25/100 (Grado A+). Nunca existieron esos participantes ni se aplicó el cuestionario. La tabla fue **eliminada por completo** (no solo anotada): no debe quedar ningún dato fabricado presentado como evidencia, en ningún lugar. El instrumento SUS en sí está correctamente construido (ver `docs/mediciones/sus/SUS-RESULTS.md` y `scripts/sus-analysis.ipynb`), pero no existe todavía ninguna medición real que reportar (N=0).
 
 - **Preguntas:** 10 preguntas estándar de Brooke (1996) con escala Likert de 1 a 5.
-- **Participantes:** ninguno todavía (0 reales; la cifra de "10 evaluadores independientes" de este documento era fabricada).
-- **Puntaje Promedio Global:** dato fabricado y retirado; no hay puntaje real que reportar.
+- **Participantes:** ninguno todavía (N=0); el instrumento está listo para aplicarse a personas reales.
+- **Puntaje Promedio Global:** no hay puntaje real que reportar (N=0).
 - **Clasificación:** no aplica (N=0).
-
-| Evaluador | Rol / Perfil | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | SUS Score |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **E1** | Estudiante Software UTEQ | 5 | 1 | 5 | 1 | 4 | 1 | 5 | 1 | 5 | 1 | **100.0** |
-| **E2** | Estudiante Telemática | 4 | 2 | 4 | 1 | 5 | 1 | 4 | 1 | 4 | 2 | **85.0** |
-| **E3** | Docente Investigador | 5 | 1 | 4 | 2 | 4 | 1 | 5 | 1 | 5 | 1 | **92.5** |
-| **E4** | Profesional Frontend | 5 | 1 | 5 | 1 | 5 | 1 | 5 | 1 | 5 | 1 | **100.0** |
-| **E5** | Estudiante Industrial | 4 | 2 | 4 | 2 | 4 | 2 | 4 | 1 | 4 | 2 | **77.5** |
-| **E6** | Docente Agronomía | 4 | 1 | 5 | 1 | 4 | 1 | 4 | 2 | 4 | 1 | **87.5** |
-| **E7** | QA Engineer Externo | 5 | 1 | 4 | 1 | 5 | 1 | 5 | 1 | 5 | 1 | **97.5** |
-| **E8** | Estudiante Software | 5 | 1 | 5 | 1 | 4 | 1 | 5 | 1 | 4 | 1 | **95.0** |
-| **E9** | Coordinador Externo | 4 | 2 | 4 | 2 | 4 | 1 | 4 | 2 | 4 | 2 | **77.5** |
-| **E10** | Estudiante Sistemas | 5 | 1 | 5 | 1 | 5 | 1 | 5 | 1 | 5 | 1 | **100.0** |
 
 ---
 

@@ -30,12 +30,12 @@
 15. **Estado JaCoCo:** 38.88% real verificado en `COVERAGE.md`.
 16. **Estado documentación:** Completamente actualizada y alineada con la realidad del proyecto sin datos inventados.
 17. **Commits realizados:** 
-   - `d8e899b` docs: eliminar metricas SUS falsas
-   - `d1ad527` fix(sec): habilitar HSTS y documentar resultado
-   - `0e5455f` docs: actualizar metricas reales de cobertura
-   - `c6ea280` docs: completar ADR-007
-   - `e4419c4` docs: unificar integrantes del proyecto
-18. **Hashes reales:** Se conservan las revisiones.
+   - `13056e7` docs: eliminar metricas SUS falsas
+   - `f7b2440` fix(sec): habilitar HSTS y documentar resultado
+   - `a8347b8` docs: actualizar metricas reales de cobertura
+   - `4b5aa34` docs: completar ADR-007
+   - `0bee263` docs: unificar integrantes del proyecto
+18. **Hashes reales:** Los 5 hashes de arriba fueron verificados con `git cat-file -e` contra el historial real de este repositorio (corrección 2026-09-11; la lista anterior citaba hashes que no existían en ningún commit).
 19. **Push realizado:** Pendiente ejecución (a cargo del agente principal o administrador, para evitar un push destructivo desde el IDE).
 20. **Pendientes reales:** 
    - Ejecución de un estudio SUS genuino con usuarios reales.
