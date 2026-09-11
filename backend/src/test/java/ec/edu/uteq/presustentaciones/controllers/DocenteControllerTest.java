@@ -176,4 +176,37 @@ class DocenteControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void disponiblesListaSoloDocentesConDisponibleTrue() throws Exception {
+        autenticarComo("docente@uteq.edu.ec", "DOCENTE");
+        when(docenteRepository.findByDisponibleTrue()).thenReturn(List.of(docente));
+
+        mockMvc.perform(get("/api/v1/docentes/disponibles")
+                        .header("Authorization", "Bearer token-docente@uteq.edu.ec")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listarPaginadoDelegaEnElRepositorioConElFiltroDeTexto() throws Exception {
+        autenticarComo("docente@uteq.edu.ec", "DOCENTE");
+        org.springframework.data.domain.Page<Docente> pagina =
+                new org.springframework.data.domain.PageImpl<>(List.of(docente));
+        when(docenteRepository.buscarPaginado(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any())).thenReturn(pagina);
+
+        // No se valida el body: Page<Docente> no serializa limpio en este @WebMvcTest (el
+        // docente de prueba trae la relacion completa con Usuario). Lo que importa aqui es
+        // que el controlador llega a invocar el repositorio con el filtro de texto.
+        mockMvc.perform(get("/api/v1/docentes/paginado")
+                        .param("q", "torres")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", "Bearer token-docente@uteq.edu.ec")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        org.mockito.Mockito.verify(docenteRepository)
+                .buscarPaginado(org.mockito.ArgumentMatchers.eq("torres"), org.mockito.ArgumentMatchers.any());
+    }
 }

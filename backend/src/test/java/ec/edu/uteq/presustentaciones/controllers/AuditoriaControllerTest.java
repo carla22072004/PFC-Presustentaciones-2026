@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -129,6 +130,14 @@ class AuditoriaControllerTest {
             JsonNode datosAnteriores = objectMapper.readTree(filaDelCambio.get("datosAnteriores").asText());
             assertFalse(datosAnteriores.has("password"), "fn_auditoria_generica debe haber quitado 'password' de datos_anteriores");
         }
+    }
+
+    @Test
+    @WithMockUser(username = ADMIN)
+    void tablasAuditadasDevuelveElCatalogoFijoDeTablas() throws Exception {
+        mockMvc.perform(get("/api/v1/auditoria/tablas"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("usuarios")));
     }
 
     private JsonNode buscarPorRegistroId(JsonNode contenido, Long registroId) {
