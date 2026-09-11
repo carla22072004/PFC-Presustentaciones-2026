@@ -80,12 +80,11 @@ esta fase, lo que cambió es que ahora está documentada como debía estarlo des
 
 ---
 
-## v1.0.0 (2026-09-09) — primera versión de la especificación vigente
+## v1.0.0 (2026-09-08) — primera versión de esta especificación
 
 Especificación redactada y verificada contra el código real de la etiqueta `v1.0.1` (commit
-`9d7abbd`), contrastada con la rama principal en el commit `73c8902`. El documento vigente es
-[`SRS-v1.0.0.tex`](SRS-v1.0.0.tex) / [`.pdf`](SRS-v1.0.0.pdf), con copia editable en
-[`SRS-v1.0.0.docx`](SRS-v1.0.0.docx).
+`9d7abbd`). **Entregada a revisión del docente-director; superada por la v1.0.1.** Archivada en
+`historico/SRS-v1.0.0-2026-09-08.{tex,pdf,docx}`.
 
 **Sustituye a los dos borradores anteriores**, que pasan a `historico/` y no deben citarse como
 especificación vigente:
@@ -169,3 +168,59 @@ ambos sentidos, resolución del endpoint por **ruta completa**, existencia de la
 existencia de la historia o caso de uso citado, evidencia obligatoria para *Verificado*, y
 coherencia de *Planificado*. Las seis comprobaciones nuevas habrían detectado, antes de la
 entrega, los cuatro defectos listados arriba.
+
+---
+
+## v1.0.1 (2026-09-11) — respuesta a la revisión del docente-director
+
+El documento vigente es [`SRS-v1.0.1.tex`](SRS-v1.0.1.tex) / [`.pdf`](SRS-v1.0.1.pdf), con copia
+editable en [`SRS-v1.0.1.docx`](SRS-v1.0.1.docx). La v1.0.0 pasa a
+`historico/SRS-v1.0.0-2026-09-08.*`.
+
+**El corpus no cambia:** siguen siendo 64 requisitos funcionales y 26 no funcionales, con los
+mismos enunciados, prioridades y estados. Lo que cambia son las fuentes declaradas, la redacción
+de la cláusula de verificación, la portada y la trazabilidad de las cifras.
+
+### Causa raíz de cinco de las ocho observaciones
+
+M1 a M5 señalaban que la matriz cubría 15 de los 90 requisitos, con 9 columnas en vez de 11 y 2
+valores de estado en vez de 4, y que el validador no realizaba ninguna comprobación V1–V8. Las
+cinco eran correctas y las cinco tenían el mismo origen: **la matriz y el validador que el SRS
+describe nunca llegaron a `main`**. La revisión se hizo sobre lo publicado (los artefactos del
+borrador del 2026-08-17) mientras el documento revisado era el nuevo. No era una discrepancia
+entre lo escrito y lo construido: era una entrega incompleta.
+
+### Respuesta observación por observación
+
+| Obs. | Respuesta |
+|---|---|
+| **M1 / A1** | Aceptada. `matriz.csv` pasa de 15 a **90 filas**, una por requisito. |
+| **M2** | Aceptada. De 9 a **11 columnas**, con `Titulo`, `Fuente`, `Metodo_Verificacion` y `Observaciones`. |
+| **M3** | Aceptada. La columna `Estado` usa el **vocabulario cerrado de 4 valores**; V2 rechaza cualquier otro. |
+| **M4 / A2** | Aceptada. `validate-traceability.sh` pasa de 88 a 246 líneas e implementa **V1–V8**. La cláusula de §9.1 se reescribió para declarar qué garantiza, desde cuándo y **qué no garantiza**. |
+| **M5** | Aceptada. Las cifras son la **salida literal del validador** (§9.2), con el comando que las reproduce. |
+| **M6** | Aceptada en parte. Cierto en la matriz publicada, ya sustituida. **No** en el documento: la única mención a HU-13/14/15 estaba en §12 describiendo un defecto cerrado. Esa frase se reformuló. |
+| **M7 / A3** | Aceptada en el fondo, matizada en la forma. Ningún requisito tenía `Fuente` vacía, pero **27 decían «historia de usuario pendiente»**, que es una promesa y no una fuente. Los 27 declaran ahora su origen real: la migración que creó su tabla o su permiso, el ADR, el control OWASP, el reglamento de titulación o la observación docente. |
+| **M8** | Aceptada. La portada identifica al autor y su ORCID **y nada más**; la situación del equipo se explica como nota de alcance en §1.3. Se reconciliaron las menciones a «el equipo» del cuerpo y la página de aprobación. |
+| **A4** | Aceptada como refuerzo. **RNF-15 ya existía** (estado *No cumplido*), pero solo cubría el código fuente. Ampliado con dos criterios que alcanzan **todo artefacto versionado**, y con **OBS-11** declarada como fuente: la credencial sigue viva en 4 lugares del repositorio público. |
+
+### Precisión sobre una cifra de la revisión
+
+La revisión da por buena «207 rutas en 49 controladores». Las 207 rutas son correctas; los 49
+salen de contar los 31 de `src/main/java` **más** las 18 clases de prueba de controlador de
+`src/test`, que no exponen ninguna ruta. El par correcto es **31 controladores de producción y
+207 rutas**, aclarado ahora en §3.1.
+
+### Verificación
+
+```
+$ ./scripts/validate-traceability.sh
+Requisitos en el SRS ....... 90
+Filas en la matriz ......... 90
+Endpoints reales del backend 207
+Clases de prueba en disco .. 43
+Estados .................... Implementado: 19, No cumplido: 6, Planificado: 5, Verificado: 60
+Must verificados ........... 36/50 (72%)
+
+=== V1-V8: sin fallos. Trazabilidad consistente. ===
+```

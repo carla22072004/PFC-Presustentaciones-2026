@@ -2,7 +2,7 @@
 # =============================================================================
 # validate-traceability.sh -- Validador de trazabilidad del SRS v2.0.0
 #
-# Comprueba que el SRS (docs/requisitos/SRS-v1.0.0.tex), la matriz
+# Comprueba que el SRS (docs/requisitos/SRS-v1.0.1.tex), la matriz
 # (docs/trazabilidad/matriz.csv) y el arbol de archivos del repositorio
 # describen EL MISMO sistema. No infiere nada: todo lo busca literalmente en
 # disco.
@@ -38,7 +38,7 @@ import csv, os, re, sys, glob
 
 ROOT = os.environ["REPO_ROOT"]
 MATRIZ = os.path.join(ROOT, "docs/trazabilidad/matriz.csv")
-SRS    = os.path.join(ROOT, "docs/requisitos/SRS-v1.0.0.tex")
+SRS    = os.path.join(ROOT, "docs/requisitos/SRS-v1.0.1.tex")
 CTRL   = os.path.join(ROOT, "backend/src/main/java")
 TESTS  = os.path.join(ROOT, "backend/src/test")
 
@@ -47,7 +47,7 @@ fallos, avisos = [], []
 def fallo(v, msg): fallos.append(f"[FALLO] {v}: {msg}")
 def aviso(v, msg): avisos.append(f"[AVISO] {v}: {msg}")
 
-for p, nombre in ((MATRIZ, "matriz.csv"), (SRS, "SRS-v1.0.0.tex")):
+for p, nombre in ((MATRIZ, "matriz.csv"), (SRS, "SRS-v1.0.1.tex")):
     if not os.path.isfile(p):
         print(f"ERROR: no se encontro {nombre} en {p}"); sys.exit(1)
 
