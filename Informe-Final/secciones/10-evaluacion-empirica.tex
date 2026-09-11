@@ -187,23 +187,25 @@ fórmula de cálculo) se documenta en el Anexo B (Sección~\ref{anexo:sus}).
 \subsection{Cobertura de código}
 
 JaCoCo sobre 576 pruebas automatizadas reales (2026-09-11, \texttt{mvn clean verify} sobre Postgres/Redis
-reales en Docker, 6 fallos y 2 errores preexistentes en \texttt{SolicitudControllerTest} ajenos a esta
-corrida, ver \texttt{docs/mediciones/jacoco/2026-09-11-controllers-70/}): \textbf{69.83\,\% de líneas
-(3,203/4,587) y 54.40\,\% de ramas (1,026/1,886)} a nivel global. La cobertura de líneas supera el
-umbral RNF-04 de 60\,\%; la de ramas global sigue por debajo de 70\,\%. \textbf{Corrección de cifra
-(2026-09-11):} una corrida anterior (06-09) reportó 81.03\,\%/64.39\,\% global tras cerrar la capa de
-servicios; entre esa fecha y el cierre de esta entrega se agregó código de producción nuevo sin prueba
-proporcional, bajando la cifra global --- se declara la cifra real de la corrida de cierre, no la más
-favorable de las dos.
+reales en Docker, \textbf{0 fallos, 0 errores}, ver \texttt{docs/mediciones/jacoco/2026-09-11-cierre-limpio/}):
+\textbf{70.00\,\% de líneas (3,211/4,587) y 54.67\,\% de ramas (1,031/1,886)} a nivel global. La
+cobertura de líneas supera el umbral RNF-04 de 60\,\%; la de ramas global sigue por debajo de 70\,\%.
+\textbf{Corrección de cifra (2026-09-11):} una corrida anterior (06-09) reportó 81.03\,\%/64.39\,\%
+global tras cerrar la capa de servicios; entre esa fecha y el cierre de esta entrega se agregó código de
+producción nuevo sin prueba proporcional, bajando la cifra global --- se declara la cifra real de la
+corrida de cierre, no la más favorable de las dos.
 
 El foco de esta corrida fue el único paquete que había quedado bajo el umbral tras ese retroceso: los
 controladores, que habían llegado a 72.00\,\%/77.41\,\% (líneas/ramas) el 06-09, cayeron a 69.47\,\% de
 líneas para el 11-09 (0.53 puntos bajo el umbral, ramas sin cambio en 75.00\,\%) por el mismo efecto de
 denominador. Se cerró con 5 pruebas nuevas dirigidas a los dos controladores que seguían sin ninguna
 prueba (\texttt{MeController}, \texttt{ExternalApiController}) y a tres endpoints sin ejercitar en otros
-dos (\texttt{AuditoriaController\#/tablas}, \texttt{DocenteController\#/disponibles} y \texttt{\#/paginado}),
-llegando a \textbf{70.38\,\% de líneas (846/1,202) y 75.00\,\% de ramas (255/340)} --- cruza el umbral de
-70\,\% exigido en líneas \emph{y} en ramas. Los servicios quedan en 70.17\,\% de líneas (2,197/3,131) y
+dos (\texttt{AuditoriaController\#/tablas}, \texttt{DocenteController\#/disponibles} y \texttt{\#/paginado}).
+Al mismo tiempo se corrigieron 8 fallos preexistentes de \texttt{SolicitudControllerTest} --- un
+\texttt{NullPointerException} real por un mock de \texttt{PermisoService} faltante en el propio test, no
+un problema de entorno --- lo que ejercitó ese controlador con más profundidad, llegando en conjunto a
+\textbf{71.05\,\% de líneas (854/1,202) y 76.47\,\% de ramas (260/340)} --- cruza el umbral de 70\,\%
+exigido en líneas \emph{y} en ramas. Los servicios quedan en 70.17\,\% de líneas (2,197/3,131) y
 54.38\,\% de ramas (708/1,302): superan el umbral en líneas pero no en ramas, a diferencia del estado del
 06-09. Los servicios se habían cerrado antes con 164 pruebas nuevas en
 8 clases (\texttt{EstudianteService}, \texttt{TutorServiceImpl}, \texttt{RubricaEvaluacionServiceImpl},

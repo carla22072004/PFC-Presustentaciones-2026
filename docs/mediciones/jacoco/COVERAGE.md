@@ -1,10 +1,10 @@
 # Cobertura de pruebas (JaCoCo) — datos reales
 
 **Cómo se generó:** `cd backend && ./mvnw clean verify` (JaCoCo corre en la fase `test` vía `jacoco-maven-plugin`, ver `backend/pom.xml`).
-**Reporte crudo archivado (XML + CSV):** [`docs/mediciones/jacoco/2026-09-11-controllers-70/`](2026-09-11-controllers-70/) — **cifra de cierre vigente**, corrida sobre Postgres/Redis reales en Docker (`cd backend && ./mvnw clean verify -Dmaven.test.failure.ignore=true`, 576 tests / 47 clases). [`2026-09-11-fase1-must/`](2026-09-11-fase1-must/), [`2026-09-06-servicios/`](2026-09-06-servicios/), [`2026-09-05-cierre/`](2026-09-05-cierre/) y `2026-09-05/` son corridas previas; `2026-08-30/`, `2026-08-29/` y `2026-08-17/` se conservan como snapshots históricos. El reporte también se regenera y publica como artefacto en el job `backend` de [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) en cada push.
-**Última actualización:** 2026-09-11 — 4 clases de prueba nuevas/ampliadas (`MeControllerTest`, `ExternalApiControllerTest`, más pruebas en `AuditoriaControllerTest` y `DocenteControllerTest`), cerrando el hueco de cobertura de los dos únicos controladores sin ninguna prueba (`MeController`, `ExternalApiController`) y los endpoints `/tablas`, `/disponibles` y `/paginado` que quedaban sin ejercitar en otros dos. Cifras de esta corrida: 69.83 % líneas (3203/4587) y 54.40 % ramas (1026/1886) sobre el total medido; **`controllers` 70.38 % / 75.00 % — cruza el umbral del 70 % en líneas y ramas exigido por la guía** (antes 69.47 % / 75.00 %, quedaba 0.53 puntos bajo el umbral en líneas); `services` 70.17 % / 54.38 %; `security` (incluye `security.jwt`, donde vive `JwtTokenProvider`) 68.97 % / 57.14 %.
+**Reporte crudo archivado (XML + CSV):** [`docs/mediciones/jacoco/2026-09-11-cierre-limpio/`](2026-09-11-cierre-limpio/) — **cifra de cierre vigente**, corrida sobre Postgres/Redis reales en Docker (`cd backend && ./mvnw clean verify -Dmaven.test.failure.ignore=true`, **576 tests / 0 fallos / 0 errores**, 47 clases). [`2026-09-11-controllers-70/`](2026-09-11-controllers-70/), [`2026-09-11-fase1-must/`](2026-09-11-fase1-must/), [`2026-09-06-servicios/`](2026-09-06-servicios/), [`2026-09-05-cierre/`](2026-09-05-cierre/) y `2026-09-05/` son corridas previas; `2026-08-30/`, `2026-08-29/` y `2026-08-17/` se conservan como snapshots históricos. El reporte también se regenera y publica como artefacto en el job `backend` de [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) en cada push.
+**Última actualización:** 2026-09-11 — se corrigió `SolicitudControllerTest`, que llevaba 8 fallos preexistentes (6 `Failures` + 2 `Errors`) por un `NullPointerException` real: la clase nunca mockeaba `PermisoService`, dependencia que `SolicitudController` usa tanto en `@PreAuthorize` como directamente en `validarAccesoSolicitud()`. No era un problema de configuración de CI/Docker (los mismos 8 fallaban igual en aislamiento, con Postgres/Redis reales arriba) — era un mock faltante en el propio test. Se agregó el `@Mock private PermisoService permisoService` y el stub correspondiente (`true`/`false` según si el escenario simula un revisor) en cada uno de los 8 casos afectados; los 2 `UnnecessaryStubbingException` se resolvieron solos, porque antes el flujo nunca llegaba a usar esos stubs.
 
-**Nota honesta sobre fallos preexistentes (2026-09-11):** de los 576 tests, 8 fallan en `SolicitudControllerTest` (6 `Failures` + 2 `Errors` de `UnnecessaryStubbing`) — confirmados preexistentes y ajenos a este cambio: fallan igual en aislamiento (`-Dtest=SolicitudControllerTest`) sin tocar ningún archivo de esta rama. No se investigaron a fondo ni se corrigieron aquí porque `SolicitudController` está fuera del alcance de los 4 controladores tocados en esta corrida; quedan anotados para que no se lean como una regresión.
+Cifras de esta corrida (576/576 tests, 0 fallos): **70.00 % líneas (3211/4587) y 54.67 % ramas (1031/1886)** sobre el total medido; `controllers` **71.05 % / 76.47 %** (supera el umbral del 70 % en ambas métricas); `services` 70.17 % / 54.38 %; `security` (incluye `security.jwt`, donde vive `JwtTokenProvider`) 68.97 % / 57.14 %.
 
 ## Alcance de la medición
 
@@ -47,7 +47,7 @@ arriba), así que la comparación más honesta es paquete por paquete tal como e
 
 | Paquete | Líneas | Ramas |
 |---|---|---|
-| `controllers` | **70.38 %** (846/1202) | **75.00 %** (255/340) |
+| `controllers` | **71.05 %** (854/1202) | **76.47 %** (260/340) |
 | `services` | **70.17 %** (2197/3131) | 54.38 % (708/1302) |
 | `security` | 68.97 % (20/29) | 57.14 % (8/14) |
 | `security.jwt` | 70.90 % (95/134) | 61.54 % (32/52) |
@@ -60,7 +60,9 @@ arriba), así que la comparación más honesta es paquete por paquete tal como e
 septiembre — la corrida `2026-09-11-fase1-must` ya la medía en 69.47 % de líneas, 0.53 puntos bajo el
 umbral. Se cerró agregando prueba a los dos únicos controladores sin ninguna (`MeController`,
 `ExternalApiController`) y a tres endpoints sin ejercitar en otros dos (`AuditoriaController#/tablas`,
-`DocenteController#/disponibles` y `#/paginado`); ver [`2026-09-11-controllers-70/`](2026-09-11-controllers-70/).
+`DocenteController#/disponibles` y `#/paginado`). Al corregir después los 8 fallos preexistentes de
+`SolicitudControllerTest` (ver nota de cabecera), ese controlador quedó ejercitado con más profundidad y
+la cifra subió otro poco, a la vigente de arriba; ver [`2026-09-11-cierre-limpio/`](2026-09-11-cierre-limpio/).
 
 **Lectura honesta:** `controllers` y `services` — las dos capas más grandes y las que concentran la lógica
 de negocio real — superan 70 % en líneas. `controllers` también supera 70 % en ramas; `services` queda en

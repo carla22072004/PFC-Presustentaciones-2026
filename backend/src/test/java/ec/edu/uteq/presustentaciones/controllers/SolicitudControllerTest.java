@@ -6,6 +6,7 @@ import ec.edu.uteq.presustentaciones.entities.Estudiante;
 import ec.edu.uteq.presustentaciones.entities.Solicitud;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.services.PermisoService;
 import ec.edu.uteq.presustentaciones.services.SolicitudService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,7 @@ class SolicitudControllerTest {
 
     @Mock private SolicitudService solicitudService;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private PermisoService permisoService;
 
     @InjectMocks
     private SolicitudController controller;
@@ -173,6 +175,7 @@ class SolicitudControllerTest {
     @Test
     void unEstudianteNoPuedeAbrirLaSolicitudDeOtro() {
         autenticar("otro@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(solicitudDe("dueno@uteq.edu.ec")));
 
         ResponseEntity<?> response = controller.obtener(1L);
@@ -185,6 +188,7 @@ class SolicitudControllerTest {
     @Test
     void elPropietarioSiPuedeAbrirSuSolicitud() {
         autenticar("dueno@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         Solicitud propia = solicitudDe("dueno@uteq.edu.ec");
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(propia));
 
@@ -197,6 +201,7 @@ class SolicitudControllerTest {
     @Test
     void unRevisorPuedeAbrirCualquierSolicitudSinComprobarPropiedad() {
         autenticar("coord@uteq.edu.ec", "SOLICITUDES_REVISAR");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(true);
         Solicitud ajena = solicitudDe("dueno@uteq.edu.ec");
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(ajena));
 
@@ -217,6 +222,7 @@ class SolicitudControllerTest {
     @Test
     void obtenerDevuelve404CuandoElRevisorPideUnaSolicitudInexistente() {
         autenticar("coord@uteq.edu.ec", "SOLICITUDES_REVISAR");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(true);
         when(solicitudService.obtenerPorId(99L)).thenReturn(Optional.empty());
 
         ResponseEntity<?> response = controller.obtener(99L);
@@ -228,6 +234,7 @@ class SolicitudControllerTest {
     @Test
     void enviarExigeSerPropietarioAntesDeEnviarARevision() {
         autenticar("otro@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(solicitudDe("dueno@uteq.edu.ec")));
 
         ResponseEntity<?> response = controller.enviar(1L);
@@ -239,6 +246,7 @@ class SolicitudControllerTest {
     @Test
     void enviarFuncionaParaElPropietario() {
         autenticar("dueno@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         Solicitud enviada = Solicitud.builder().id(1L).build();
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(solicitudDe("dueno@uteq.edu.ec")));
         when(solicitudService.enviarSolicitud(1L)).thenReturn(enviada);
@@ -252,6 +260,7 @@ class SolicitudControllerTest {
     @Test
     void obtenerSeguimientoExigeLaMismaComprobacionDePropiedad() {
         autenticar("otro@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(solicitudDe("dueno@uteq.edu.ec")));
 
         assertEquals(HttpStatus.FORBIDDEN, controller.obtenerSeguimiento(1L).getStatusCode());
@@ -261,6 +270,7 @@ class SolicitudControllerTest {
     @Test
     void obtenerSeguimientoDevuelveElHistorialAlPropietario() {
         autenticar("dueno@uteq.edu.ec");
+        when(permisoService.tienePermiso(any(), any())).thenReturn(false);
         SeguimientoDTO seguimiento = mock(SeguimientoDTO.class);
         when(solicitudService.obtenerPorId(1L)).thenReturn(Optional.of(solicitudDe("dueno@uteq.edu.ec")));
         when(solicitudService.obtenerSeguimiento(1L)).thenReturn(seguimiento);
