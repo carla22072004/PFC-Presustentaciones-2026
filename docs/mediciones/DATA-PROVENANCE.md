@@ -19,6 +19,7 @@
 | 29 controladores REST (actualizado 2026-09-05, antes 25), 12 HU, 12 CU (SRS v1.0.0) | `README.md` | `docs/requisitos/SRS-v1.0.0.pdf`, `docs/requisitos/historias/`, `docs/requisitos/casos-de-uso/`, conteo de archivos en `backend/src/main/java/.../controllers/` | `find backend/src/main/java -iname "*Controller.java" \| wc -l` (usar el nombre de archivo, no `grep @RestController`: `GlobalExceptionHandler.java` usa `@RestControllerAdvice`, que un grep ingenuo cuenta como falso positivo). Nota: versiones anteriores del proyecto afirmaban "15 HUs, 15 CUs" sin que existieran — corregido en la Fase 7 a la cifra real (12), ver `docs/requisitos/CHANGELOG-REQ.md` |
 | Versiones exactas del entorno (Docker, JDK, Node, Angular CLI, k6) | Este documento, informes | [`../entorno/versions.txt`](../entorno/versions.txt) | `docker --version`, `java -version`, `node --version`, `npx ng version`, `k6 version` (comandos documentados en `versions.txt`) |
 | Volumen de datos (1,003,344 registros, 41 tablas) | [`../basedatos/VOLUMEN-DATOS.md`](../basedatos/VOLUMEN-DATOS.md) | [`../../scripts/generar-volumen-datos.sql`](../../scripts/generar-volumen-datos.sql) | `docker exec -i amz-postgres psql -U postgres -d BdPresustentaciones -v ON_ERROR_STOP=1 -f - < scripts/generar-volumen-datos.sql` sobre una BD recién migrada (solo catálogos base + usuarios demo). La versión anterior (1,010,242 filas) no tenía script versionado y no era reproducible — se perdió el 22 ago 2026 al recrear el volumen de Docker (ver `docs/observaciones/INFORME-ERRORES-2026-08-22.md`) |
+| RF-61/RF-63/RNF-24 (respaldos): comandos y salidas reales de `pg_dump`/`pg_restore`/`pg_basebackup`, panel de estado/config/WAL, y el tiempo medido de una restauración completa sobre ~1,025,204 filas representativas (2026-09-11) | [`backup/RESPALDO-EVIDENCIA.md`](backup/RESPALDO-EVIDENCIA.md), [`backup/RESTAURACION-EVIDENCIA.md`](backup/RESTAURACION-EVIDENCIA.md), [`backup/RPO-RTO.md`](backup/RPO-RTO.md) | [`../../database/esquema.sql`](../../database/esquema.sql), [`../../database/datos_masivos.sql`](../../database/datos_masivos.sql) (commit `73c8902`, generador del dataset de ~1M usado para medir el RTO); respaldos reales generados vía la API durante la corrida (no versionados: dumps y bases físicas viven en el volumen `backend_uploads`/`postgres_wal`, no en git) | `docker compose up -d --build` + `curl` contra `POST/GET /api/v1/backups*` como ADMIN (comandos completos en los tres archivos de arriba); el dataset de 1M se generó y restauró en bases **aisladas** (`BdPresustentaciones_1M`, `..._restore`, `presusDb_prueba_restauracion`), nunca sobre `BdPresustentaciones`, y se eliminaron al terminar |
 
 ## Nota sobre reproducibilidad
 
@@ -28,10 +29,15 @@ Los archivos JSON/CSV/XML de este documento que están versionados en el reposit
 
 - **Parámetros:** cada fila de la tabla ya declara el comando completo con sus flags reales (p. ej.
   `--preset=desktop`, `--summary-export=runN-summary.json`) — no hay parámetros ocultos no documentados.
-- **Semilla (seed):** ningún script de este pipeline usa generación aleatoria que necesite semilla fija
+- **Semilla (seed):** la mayoría de este pipeline no usa generación aleatoria que necesite semilla fija
   para ser reproducible — `scripts/generar-volumen-datos.sql` usa `generate_series()` determinista (sin
   `random()`), y las muestras de k6/Lighthouse/cache fría-caliente son mediciones empíricas reales, no
-  simulaciones muestreadas. No aplica, no es una omisión.
+  simulaciones muestreadas. Excepción honesta: `database/datos_masivos.sql` (usado para la evidencia de
+  RNF-24 de arriba) sí llama `random()` dos veces (líneas de generación de hashes md5 de archivos
+  ficticios), sin `setseed()`; no es determinista fila por fila, pero tampoco importa para lo que mide esa
+  evidencia — el volumen total de filas por tabla es fijo (`generate_series` con límites fijos en la
+  sección `_cfg`), y el tiempo de `pg_dump`/`pg_restore` depende del volumen y del esquema, no del
+  contenido aleatorio de esas dos columnas de texto.
 - **Versión / commit:** las versiones exactas de las herramientas usadas están en
   [`../entorno/versions.txt`](../entorno/versions.txt) (regenerable con `scripts/gen-versions.sh`). El
   commit exacto del código que generó cada snapshot archivado corresponde al `HEAD` de `main` en la fecha

@@ -2193,7 +2193,7 @@ modo que su prioridad no es negociable.}
     \item El listado informa por cada respaldo su tipo, su origen, su fecha y su tamaño.
 \end{itemize}
 \campo{Método de verificación}{Demostración + Inspección}
-\campo{Estado}{\estadoI}
+\campo{Estado}{\estadoV}
 \campo{Depende de}{RNF-24}
 
 \REQ{RF-62}{Configuración del cronograma y de la retención de respaldos}
@@ -2242,7 +2242,7 @@ que se hizo.}
           en vez de dejar la base parcialmente sobrescrita.
 \end{itemize}
 \campo{Método de verificación}{Demostración}
-\campo{Estado}{\estadoI}
+\campo{Estado}{\estadoV}
 \campo{Depende de}{RNF-24}
 
 \REQ{RF-64}{Archivado WAL y recuperación a un punto en el tiempo}
@@ -2768,11 +2768,7 @@ por debajo del intervalo entre respaldos completos.}
           intervalo entre dos respaldos completos consecutivos.
 \end{itemize}
 \campo{Método de verificación}{Demostración + Análisis}
-\campo{Estado}{\estadoI}
-\campo{Nota}{La configuración por omisión (respaldo completo semanal) implica un objetivo de
-punto de recuperación de hasta 7 días, incompatible con el criterio de 24 horas salvo que el
-archivado de escritura anticipada de RF-64 esté activo y verificado. Ese vínculo debe
-comprobarse y medirse antes de declarar el requisito verificado.}
+\campo{Estado}{\estadoV}
 
 \REQ{RNF-25}{Reproducibilidad del entorno y determinismo de la siembra}
 \campo{Enunciado}{Desde una clonación limpia del repositorio, el sistema debe poder construirse,
@@ -2880,8 +2876,8 @@ Requisitos en el SRS \dotfill{} 90\\
 Filas en la matriz \dotfill{} 90\\
 Endpoints reales del backend \dotfill{} 207\\
 Clases de prueba en disco \dotfill{} 45\\
-Estados: Implementado 16, No cumplido 6, Planificado 5, Verificado 63\\
-Must verificados \dotfill{} 39/50 (78\,\%)\\
+Estados: Implementado 13, No cumplido 6, Planificado 5, Verificado 66\\
+Must verificados \dotfill{} 42/50 (84\,\%)\\
 === V1--V8: sin fallos. Trazabilidad consistente. ===
 \end{quote}
 
@@ -2929,10 +2925,10 @@ va el matiz que antes se colaba dentro de la columna de estado y rompía el voca
 & \textbf{Verificado} & \textbf{Implementado} & \textbf{Planificado} & \textbf{No cumplido} &
 \textbf{Total} \\
 \midrule
-Requisitos funcionales     & 48 & 14 & 2 & 0 & \textbf{64} \\
-Requisitos no funcionales  & 15 &  2 & 3 & 6 & \textbf{26} \\
+Requisitos funcionales     & 50 & 12 & 2 & 0 & \textbf{64} \\
+Requisitos no funcionales  & 16 &  1 & 3 & 6 & \textbf{26} \\
 \midrule
-\textbf{Total}             & \textbf{63} & \textbf{16} & \textbf{5} & \textbf{6} &
+\textbf{Total}             & \textbf{66} & \textbf{13} & \textbf{5} & \textbf{6} &
 \textbf{90} \\
 \bottomrule
 \end{tabular}
@@ -2957,8 +2953,8 @@ descartada se retira del alcance, no se conserva como requisito con etiqueta de 
 
 \subsection{Requisitos \emph{Must} que no están verificados}
 
-De los \textbf{50} requisitos de prioridad \emph{Must}, \textbf{39 están verificados
-(78,0\,\%)}. Los \textbf{11} restantes se enumeran aquí de forma completa, porque un porcentaje
+De los \textbf{50} requisitos de prioridad \emph{Must}, \textbf{42 están verificados
+(84,0\,\%)}. Los \textbf{8} restantes se enumeran aquí de forma completa, porque un porcentaje
 sin el detalle de lo que falta no es información accionable.
 
 \begin{longtable}{p{1.6cm} p{5.3cm} p{2.9cm} p{4.6cm}}
@@ -2983,17 +2979,11 @@ procedimiento de supresión. \\
 RNF-11 & Transporte cifrado & \estadoP & Depende del despliegue público, aún no realizado. \\
 RNF-07 & Vigencia de tokens & \estadoI & Hacer configurable por entorno la vigencia del token de
 renovación. \\
-RNF-24 & Objetivos de respaldo y recuperación & \estadoI & Medir el tiempo de restauración y
-verificar el vínculo con el archivado de escritura anticipada. \\
-RF-61 & Respaldo bajo demanda y programado & \estadoI & Evidencia archivada de una corrida
-completa. \\
-RF-63 & Restauración y prueba de restauración & \estadoI & Evidencia archivada de una prueba de
-restauración exitosa. \\
 \bottomrule
-\caption{Los 11 requisitos \emph{Must} no verificados, con lo que falta en cada uno.}
+\caption{Los 8 requisitos \emph{Must} no verificados, con lo que falta en cada uno.}
 \end{longtable}
 
-\noindent Cinco de los once se cierran con evidencia o con una prueba; seis exigen cambiar
+\noindent Dos de los ocho se cierran con evidencia o con una prueba; seis exigen cambiar
 código. Los seis con implicación de seguridad o legal encabezan el plan de la
 sección~\ref{sec:pendientes}.
 
