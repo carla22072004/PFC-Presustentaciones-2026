@@ -2568,12 +2568,26 @@ El archivo \cd{README.md} declara que las credenciales de demostración no se pu
 evitar dejarlas expuestas en el historial público»; esa afirmación no se sostiene mientras las
 contraseñas estén en el código.
 
-La misma credencial aparece hoy, verificado el 2026-09-11, en \textbf{cuatro} lugares del
-repositorio público: el código que siembra los datos de demostración, la colección de peticiones
-de \cd{docs/postman/}, el escenario de ejemplo de \cd{docs/requisitos/historias/HU-01.md} y la
-propia documentación de despliegue. OBS-11 dio por retirada la del \cd{README.md} y dejó las
-otras tres declaradas como pendientes; este requisito es el que fija cuándo puede considerarse
-cerrada. Es el hallazgo de seguridad más serio del punto de corte y encabeza el plan de cierre
+\textbf{Inventario completo, verificado el 2026-09-11.} La credencial sembrada aparecía en seis
+artefactos versionados del repositorio público, no solo en el \cd{README.md} que OBS-11 dio por
+corregido: el código que siembra los datos de demostración, la colección de peticiones de
+\cd{docs/postman/}, el escenario de ejemplo de \cd{docs/requisitos/historias/HU-01.md}, el
+procedimiento de medición de \cd{k6/README.md}, la evidencia reproducible de
+\cd{docs/mediciones/sec/owasp/OWASP-AUDIT.md} y el propio registro de OBS-11. \textbf{Los cinco
+artefactos de documentación quedan corregidos en esta versión}: toman la credencial de una
+variable de entorno o de una variable de colección, y ninguno la reproduce.
+
+\textbf{Lo que sigue abierto, y por qué.} Primero, la siembra en código: retirarla de ahí cambia
+el comportamiento del arranque de la aplicación y merece un cambio propio, revisado por separado,
+no un retoque de documentación. Segundo, la migración \cd{V11\_\_roles\_y\_privilegios.sql}
+crea dos roles de base de datos con contraseña literal; están declaradas como credenciales de
+desarrollo, pero una migración ya aplicada no se puede editar sin romper la suma de verificación
+de Flyway, así que cerrarlas exige una migración nueva que las rote, no una corrección en su
+sitio. Tercero, y esto no lo arregla ningún cambio futuro: \textbf{el historial de Git conserva
+todo lo retirado hoy}, de modo que estas credenciales deben considerarse comprometidas y rotarse
+en cualquier despliegue real.
+
+Es el hallazgo de seguridad más serio del punto de corte y encabeza el plan de cierre
 (\S\ref{sec:pendientes}).}
 
 \REQ{RNF-16}{Ausencia de construcción dinámica de consultas}

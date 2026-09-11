@@ -87,6 +87,9 @@ pdf:
 	@echo "Compilando el PDF del informe final (Informe-Final/informe-final.tex)..."
 	cd Informe-Final && latexmk -pdf -interaction=nonstopmode -halt-on-error informe-final.tex
 	@echo "PDF generado: Informe-Final/informe-final.pdf"
+	@echo "Compilando el PDF del SRS (docs/requisitos/SRS-v1.0.1.tex)..."
+	cd docs/requisitos && latexmk -pdf -interaction=nonstopmode -halt-on-error SRS-v1.0.1.tex
+	@echo "PDF generado: docs/requisitos/SRS-v1.0.1.pdf"
 
 ## --- Objetivo de reproducibilidad end-to-end (Fase 10, Criterio R1) ---
 
