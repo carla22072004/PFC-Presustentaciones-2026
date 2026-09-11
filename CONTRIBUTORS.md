@@ -34,8 +34,10 @@ revisión de código y documentación que aplica a los cuatro):
 
 - **Alava Alvarado, Jean Pierre** ([ORCID: 0009-0001-2878-2919](https://orcid.org/0009-0001-2878-2919)): Conceptualización del sistema, seguridad backend (JWT/Spring
   Security), administración del proyecto.
-- **Moncayo Loor, Xavier Alejandro:** Desarrollo frontend (Angular), diseño de interfaz.
-- **Zamora Arias, Carla Esthefania:** Diseño de base de datos, curación de datos de prueba,
+- **Moncayo Loor, Xavier Alejandro:** Desarrollo frontend (Angular), diseño de interfaz. Se retiró de
+  la carrera durante el desarrollo del proyecto; no registró ORCID por esa misma razón, no por un
+  trámite pendiente.
+- **Zamora Arias, Carla Esthefania** ([ORCID: 0009-0000-7556-0457](https://orcid.org/0009-0000-7556-0457)): Diseño de base de datos, curación de datos de prueba,
   documentación técnica, redacción del primer borrador de varios documentos.
 - **Barreto Rosado, Heider Dominick** ([ORCID: 0009-0004-5561-1391](https://orcid.org/0009-0004-5561-1391)): Pruebas, infraestructura Docker, análisis formal de resultados
   empíricos.
