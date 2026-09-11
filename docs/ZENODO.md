@@ -15,14 +15,29 @@ siguiendo el principio de citación independiente entre software y datos — ver
 
 ## 📌 Versiones archivadas
 
-Zenodo trata cada tag como una versión distinta bajo el mismo DOI de concepto. El tag Git `v1.0.0`
-se conserva intacto en el repositorio precisamente porque esta primera versión ya lo archivó — no se
-mueve un tag que un DOI publicado ya usa como referencia.
+Zenodo trata cada tag como una versión distinta bajo el mismo DOI de concepto.
+
+**⚠️ Corrección de criterio (2026-09-11):** hasta esta fecha, este documento afirmaba que el tag
+Git `v1.0.0` se conservaba intacto porque un DOI publicado ya lo usaba como referencia, y que por
+eso el equipo creó `v1.0.1` en su lugar en vez de mover `v1.0.0`. Ese razonamiento es correcto desde
+el punto de vista de citación académica, pero choca con un requisito operativo más importante: la
+rúbrica del examen final del docente-director evalúa **literalmente el commit al que apunte el tag
+`v1.0.0`** ("si lo dejan donde está hoy, reviso el commit viejo y todo lo que hicieron después no
+cuenta"). Dejar `v1.0.0` en el commit de agosto significaba que ninguna de las correcciones de esta
+entrega —incluidas las de esta misma sesión— contaba para la evaluación.
+
+Se decidió mover `v1.0.0` al commit de cierre real, aceptando la consecuencia declarada
+explícitamente: **el DOI `10.5281/zenodo.21988564` sigue siendo válido y sigue archivando el
+contenido exacto de la versión de agosto** (Zenodo archiva un snapshot fijo, no una referencia viva
+al tag), pero ese snapshot ya no coincide con lo que el tag Git `v1.0.0` apunta hoy. El commit
+original queda preservado bajo el tag `v1.0.0-zenodo-archive`, para que la correspondencia con ese
+DOI siga siendo verificable sin depender de que nadie recuerde el hash de memoria.
 
 | Versión | Tag Git | DOI de la versión | Publicado | Notas |
 |---|---|---|---|---|
-| **v1.0.1** (actual) | `v1.0.1` | [10.5281/zenodo.22445216](https://doi.org/10.5281/zenodo.22445216) | 6 sep 2026 | Cierre real de la Entrega Final: correcciones de las Entregas 1A/1B/3 aplicadas (cobertura 63,17 %, CSP endurecida, catálogo de SP completo, evidencia OWASP real) — ver `docs/observaciones/OBSERVACIONES.md`. |
-| v1.0.0 | `v1.0.0` | [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) | 18 ago 2026 | Release Final original, archivado vía la integración Zenodo↔GitHub sobre el release de esa fecha. |
+| **v1.0.1** (informe/portada) | `v1.0.1` | [10.5281/zenodo.22445216](https://doi.org/10.5281/zenodo.22445216) | 6 sep 2026 | Cierre real de la Entrega Final: correcciones de las Entregas 1A/1B/3 aplicadas (cobertura 63,17 %, CSP endurecida, catálogo de SP completo, evidencia OWASP real) — ver `docs/observaciones/OBSERVACIONES.md`. |
+| **v1.0.0** (movido, examen final) | `v1.0.0` | — (no vuelve a archivarse; ver `v1.0.0-zenodo-archive`) | movido 11 sep 2026 | Apunta hoy al commit de cierre real que se defiende en el examen final, no al release de agosto. |
+| v1.0.0 (original) | `v1.0.0-zenodo-archive` | [10.5281/zenodo.21988564](https://doi.org/10.5281/zenodo.21988564) | 18 ago 2026 | El commit exacto que el DOI de agosto archivó, preservado bajo este nombre tras mover `v1.0.0`. |
 
 - **Enlace permanente a la última versión:** [`https://doi.org/10.5281/zenodo.21988563`](https://doi.org/10.5281/zenodo.21988563) (DOI de concepto — usar este enlace cuando se quiera citar "el software" en general, no una corrida específica).
 - **Registro de la versión actual:** `https://zenodo.org/records/22445216`
