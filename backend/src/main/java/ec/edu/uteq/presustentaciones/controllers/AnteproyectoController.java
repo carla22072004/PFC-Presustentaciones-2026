@@ -39,6 +39,7 @@ public class AnteproyectoController {
      * @return 200 con el anteproyecto registrado
      */
     @PostMapping(value = "/enviar/{solicitudId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Anteproyecto> enviar(@PathVariable Long solicitudId,
             @RequestParam("archivo") MultipartFile archivo) {
         return ResponseEntity.ok(anteproyectoService.enviarAnteproyecto(solicitudId, archivo));

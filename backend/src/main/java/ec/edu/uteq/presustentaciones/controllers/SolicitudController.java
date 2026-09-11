@@ -60,6 +60,7 @@ public class SolicitudController {
      *         servicio rechaza la creación
      */
     @PostMapping("/crear-por-usuario/{usuarioId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> crearPorUsuario(@PathVariable Long usuarioId, @RequestBody Solicitud datos) {
         try {
             // Obtener email desde el JWT (más seguro que el id del path)
@@ -122,6 +123,7 @@ public class SolicitudController {
      *         de estado no es válida
      */
     @PostMapping("/enviar/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> enviar(@PathVariable Long id) {
         try {
             // Verificar propiedad o permiso

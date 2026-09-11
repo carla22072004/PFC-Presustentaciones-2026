@@ -144,6 +144,7 @@ public class TutoriaController {
      * @return 200 con la fase actualizada, o 400 si el archivo no es válido
      */
     @PostMapping(value = "/fases/{faseId}/subir-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> subirPdfCorregido(@PathVariable Long faseId,
                                                @RequestParam("archivo") MultipartFile archivo,
                                                @RequestParam(required = false) Long estudianteUsuarioId) {
@@ -187,6 +188,7 @@ public class TutoriaController {
      * @return 200 con el mensaje creado, o 400 con el motivo del rechazo
      */
     @PostMapping("/fases/{faseId}/mensaje")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> enviarMensaje(@PathVariable Long faseId,
                                            @RequestParam(required = false) Long remitenteId,
                                            @RequestBody NuevoMensajeRequest request) {
@@ -208,6 +210,7 @@ public class TutoriaController {
      * @return 200 sin datos, o 400 con el motivo del rechazo
      */
     @PutMapping("/fases/{faseId}/leer")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> marcarMensajesLeidos(@PathVariable Long faseId,
                                                   @RequestParam(required = false) Long usuarioId) {
         try {

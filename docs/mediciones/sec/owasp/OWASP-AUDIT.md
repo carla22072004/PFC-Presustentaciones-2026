@@ -207,6 +207,20 @@ Una sola `Content-Security-Policy` (no dos, como antes de la corrección del 29-
 
 **Hallado y corregido (2026-09-05):** `ChatbotController` era el **único** controlador del proyecto sin ninguna anotación de autorización, ni de clase ni de método — quedaba protegido sólo por la regla global de autenticación de `SecurityConfig`, que no distingue rol. Se hizo explícita con `@PreAuthorize("isAuthenticated()")` a nivel de clase, el mismo nivel que usan los demás controladores de consulta general, porque el asistente sólo devuelve texto de ayuda sobre cómo usar los módulos: no consulta la base de datos ni expone datos personales. La comprobación equivalente que el servicio hacía por su cuenta queda como defensa en profundidad, no como única barrera. (El `@CrossOrigin(origins = "*")` que la auditoría anterior también señalaba en este controlador ya no existía al revisarlo.)
 
+**Hallado y corregido (2026-09-11):** recorriendo todos los controladores sin `@PreAuthorize` a nivel de
+clase y contando sus endpoints `POST`/`PUT`/`PATCH`/`DELETE` sin anotación de método, quedaban 7 sin
+ninguna forma de autorización declarativa (los 3 endpoints públicos de `AuthController` --- `login`,
+`refresh`, `logout` --- se excluyen deliberadamente: son el propio mecanismo de autenticación y no deben
+requerir sesión previa): `AnteproyectoController#enviar`, `SolicitudController#crearPorUsuario` y
+`#enviar`, `TutoriaController#subirPdfCorregido`, `#enviarMensaje` y `#marcarMensajesLeidos`, y
+`UsuarioController#actualizarPerfil`. Los 7 ya resolvían la identidad real desde el JWT (ignorando
+cualquier id de usuario en el path/query) o comprobaban la propiedad del recurso en el cuerpo del método
+(mismo patrón defensivo que `DocenteController`/`ChatbotController`); les faltaba solo la anotación
+declarativa. Se agregó `@PreAuthorize("isAuthenticated()")` a los 7, mismo nivel que ya usan
+`ChatbotController` y los demás controladores de auto-servicio, sin cambiar su comportamiento (la regla
+global de `SecurityConfig` ya exigía sesión) pero haciendo explícito en el propio endpoint lo que antes
+solo garantizaba la configuración global.
+
 **Verificado:** CORS restringido explícitamente a `http://localhost:4200` y `http://localhost:3000` (`SecurityConfig` + `WebConfig`, más `@CrossOrigin` por controlador) — configurado en 3 lugares distintos que hay que mantener sincronizados si se agrega un origen nuevo (riesgo de mantenimiento, no de seguridad activa). CSRF deshabilitado deliberadamente (correcto para una API JWT stateless sin cookies de sesión). Sesión configurada como `STATELESS`.
 
 **Hallado y corregido (2026-08-29):** `nginx.conf` declaraba `X-Frame-Options`/`X-Content-Type-Options`/`Content-Security-Policy`/`Permissions-Policy` a nivel `server{}`, lo que hacía que nginx los añadiera también a las respuestas proxied de `/api/v1/` y `/actuator/` — **encima** de los que Spring Security ya agrega para esas mismas rutas, verificado real con `curl -D -` (headers duplicados en la respuesta). Por la especificación de CSP, cuando el navegador recibe dos cabeceras `Content-Security-Policy`, aplica la **intersección** de ambas: la política más laxa del backend (`connect-src` con `localhost:4200`/websockets, necesaria para el frontend en dev) quedaba silenciosamente recortada por la más estricta de nginx (`connect-src 'self'`). Corregido moviendo esas cabeceras exclusivamente a `location /` (la única ruta que nginx sirve directamente, sin backend detrás) — verificado real: tras el fix, `curl -D -` contra `/api/v1/auth/login` muestra un único `Content-Security-Policy`, el del backend con su `connect-src` completo.

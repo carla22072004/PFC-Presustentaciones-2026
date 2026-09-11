@@ -242,6 +242,7 @@ public class UsuarioController {
      * @return 200 con el perfil actualizado, o 403 si se intenta editar el de otra persona
      */
     @PatchMapping("/{id}/perfil")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Actualizar correo de notificaciones y teléfono del perfil propio")
     public ResponseEntity<?> actualizarPerfil(
             @PathVariable Long id,
