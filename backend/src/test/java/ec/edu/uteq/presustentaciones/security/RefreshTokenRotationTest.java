@@ -95,7 +95,10 @@ class RefreshTokenRotationTest {
                 usuarioRepository,
                 mock(PasswordEncoder.class),
                 jwtTokenProvider,
-                mock(IUsuarioService.class));
+                mock(IUsuarioService.class),
+                mock(ec.edu.uteq.presustentaciones.security.PasswordPolicyValidator.class),
+                mock(ec.edu.uteq.presustentaciones.security.PasswordRecoveryService.class),
+                mock(ec.edu.uteq.presustentaciones.security.RateLimiterService.class));
     }
 
     /** Respuestas de ValueOperations respaldadas por {@code valores}, igual que refresh_token:/used_refresh_token: en Redis real. */

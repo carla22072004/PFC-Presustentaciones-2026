@@ -47,6 +47,12 @@ jobs:
       DB_PASSWORD: postgres
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      # RNF-15: sin esto, AdminBootstrap (activo fuera del perfil "dev") exige
+      # ADMIN_BOOTSTRAP_EMAIL/PASSWORD sobre la base fresca que Flyway migra en cada corrida
+      # de CI y el contexto de Spring Boot falla al levantar -- "dev" mantiene aqui el mismo
+      # comportamiento de siempre (cuentas admin@/docente@/estudiante@ sembradas) del que ya
+      # dependen los tests de integracion existentes.
+      SPRING_PROFILES_ACTIVE: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4

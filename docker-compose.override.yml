@@ -1,4 +1,11 @@
 services:
+  backend:
+    environment:
+      # RNF-15: sin esto, DemoDataSeeder (perfil "dev") no corre y AdminBootstrap (activo en
+      # cualquier OTRO perfil) exige ADMIN_BOOTSTRAP_EMAIL/PASSWORD y falla al arrancar -- este
+      # override es justamente lo que mantiene el stack de desarrollo local sembrando las
+      # cuentas de siempre sin tocar nada del entorno de un despliegue real.
+      - SPRING_PROFILES_ACTIVE=dev
   postgres:
     ports:
       - "5434:5432"

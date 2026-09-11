@@ -31,9 +31,12 @@ a todo `@RestController`, aunque el `@RequestMapping` del controlador declare so
 
 ```
 $ curl -s -X POST http://localhost:4200/api/v1/auth/login -H "Content-Type: application/json" \
-    -d '{"email":"admin@uteq.edu.ec","password":"admin123"}'
+    -d '{"email":"admin@uteq.edu.ec","password":"<contraseña admin del entorno dev>"}'
 ```
-→ `200`, `rol: "ADMIN"`, token JWT capturado para las peticiones siguientes.
+→ `200`, `rol: "ADMIN"`, token JWT capturado para las peticiones siguientes. (Nota añadida en la
+fase 4/RNF-15: la contraseña real de esta ejecución era la sembrada por `initDemoData()` en ese
+momento; la fase 4 la rotó y movió la siembra detrás del perfil `dev` -- no se deja el valor
+literal aquí para no reintroducir el mismo hallazgo que esa fase cierra.)
 
 ## 2. `GET /api/v1/backups` — listado antes de generar nada en esta corrida
 

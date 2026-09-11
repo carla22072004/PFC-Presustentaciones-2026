@@ -116,6 +116,29 @@ public class JwtTokenProvider {
         log.warn("Todos los refresh tokens han sido revocados para el usuario: {}", username);
     }
 
+    /**
+     * RF-06: igual que {@link #revokeAllUserTokens(String)}, pero preserva un token -- la
+     * sesión desde la que se hizo el cambio de contraseña. Revocar también esa dejaría al
+     * usuario fuera justo después de un cambio legítimo, obligándolo a iniciar sesión de
+     * nuevo sin necesidad.
+     *
+     * @param username     titular cuyas sesiones se revocan
+     * @param tokenAConservar refresh token de la sesión actual, que NO se revoca
+     */
+    public void revokeAllUserTokensExcept(String username, String tokenAConservar) {
+        if (redisTemplate == null) return;
+        String userSetKey = "user_refresh_tokens:" + username;
+        java.util.Set<String> activeTokens = redisTemplate.opsForSet().members(userSetKey);
+        if (activeTokens != null) {
+            for (String t : activeTokens) {
+                if (t.equals(tokenAConservar)) continue;
+                redisTemplate.delete("refresh_token:" + t);
+                redisTemplate.opsForSet().remove(userSetKey, t);
+            }
+        }
+        log.warn("Todos los refresh tokens salvo el de la sesión actual han sido revocados para el usuario: {}", username);
+    }
+
     public void deleteRefreshToken(String token) {
         if (redisTemplate == null) return;
         String username = getUsernameFromRefreshToken(token);
@@ -147,19 +170,36 @@ public class JwtTokenProvider {
         }
     }
 
+    /**
+     * RNF-04: si Redis no responde, este metodo debe fallar CERRADO (tratar el token como
+     * revocado) en vez de silenciarse como "no revocado" -- lo contrario deja que un token
+     * cerrado por logout vuelva a aceptarse justo cuando la infraestructura esta degradada.
+     * Por eso el parseo del token (un problema del TOKEN) y la consulta a Redis (un problema
+     * de DISPONIBILIDAD DEL ALMACEN) estan en bloques try/catch separados: solo la segunda
+     * excepcion dispara el fail-closed. Un token malformado/invalido sigue sin bloquear nada
+     * aqui -- lo rechaza el parseo real de {@code validateToken()}, con su propio motivo.
+     */
     public boolean isTokenBlacklisted(String token) {
         if (redisTemplate == null) {
             return false;
         }
+        String jti;
         try {
             Claims claims = getClaimsFromToken(token);
-            String jti = claims.getId();
+            jti = claims.getId();
             if (jti == null) {
                 return false;
             }
-            return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:token:" + jti));
         } catch (Exception e) {
             return false;
+        }
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:token:" + jti));
+        } catch (org.springframework.dao.DataAccessException e) {
+            log.error("DEGRADACION (RNF-04): no se pudo consultar la blacklist de tokens en Redis; "
+                    + "se trata el token como revocado (fail-closed), no como valido. jti={} causa={}",
+                    jti, e.getMessage());
+            return true;
         }
     }
 

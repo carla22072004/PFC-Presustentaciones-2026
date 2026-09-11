@@ -60,6 +60,39 @@ public class EmailService {
         enviarNotificacion(destinatario, mensaje, "Sistema de Pre-Sustentaciones", smtpUsername);
     }
 
+    /**
+     * RF-05: correo de recuperación de contraseña, con el enlace de un solo uso. Con
+     * {@code app.mail.enabled=false} (valor por omisión hoy) el envío no se verifica de
+     * verdad -- ver la nota del requisito en el SRS -- pero el flujo completo (generación,
+     * caducidad a 30 min, un solo uso) es real independientemente de si el correo sale o no.
+     *
+     * @param destinatario correo del titular de la cuenta
+     * @param tokenPlano   token de un solo uso, en texto plano (solo existe fuera de Redis aquí
+     *                     y en la respuesta al enlace del correo; el almacén guarda su hash)
+     */
+    @Async
+    public void enviarRecuperacionPassword(String destinatario, String tokenPlano) {
+        String enlace = "http://localhost:4200/restablecer-password?token=" + tokenPlano;
+        if (!enabled || mailSender == null) {
+            log.info("[EMAIL DESHABILITADO] Recuperación de contraseña para: {} | enlace: {}", destinatario, enlace);
+            return;
+        }
+        try {
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true, "UTF-8");
+            helper.setFrom(smtpUsername, "Sistema de Pre-Sustentaciones UTEQ");
+            helper.setTo(destinatario);
+            helper.setSubject("Restablecimiento de contraseña — Sistema de Pre-Sustentaciones UTEQ");
+            helper.setText("<p>Se solicitó restablecer la contraseña de esta cuenta. El enlace vence en "
+                    + "30 minutos y solo puede usarse una vez:</p><p><a href=\"" + enlace + "\">" + enlace
+                    + "</a></p><p>Si no fuiste tú, ignora este correo.</p>", true);
+            mailSender.send(mail);
+            log.info("Correo de recuperación de contraseña enviado a: {}", destinatario);
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.error("Error al enviar correo de recuperación a {}: {}", destinatario, e.getMessage());
+        }
+    }
+
     private String buildHtml(String mensaje, String remitenteNombre, String remitenteEmail) {
         return """
             <!DOCTYPE html>

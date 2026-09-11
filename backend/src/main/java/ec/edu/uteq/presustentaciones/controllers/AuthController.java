@@ -4,7 +4,14 @@ import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.security.dto.LoginRequest;
 import ec.edu.uteq.presustentaciones.security.dto.LoginResponse;
+import ec.edu.uteq.presustentaciones.security.dto.CambiarPasswordRequest;
+import ec.edu.uteq.presustentaciones.security.dto.RecuperarPasswordRequest;
 import ec.edu.uteq.presustentaciones.security.dto.RegisterRequest;
+import ec.edu.uteq.presustentaciones.security.dto.RestablecerPasswordRequest;
+import ec.edu.uteq.presustentaciones.security.PasswordPolicyValidator;
+import ec.edu.uteq.presustentaciones.security.PasswordRecoveryService;
+import ec.edu.uteq.presustentaciones.security.RateLimiterService;
+import ec.edu.uteq.presustentaciones.security.RateLimiterUnavailableException;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtTokenProvider;
 import ec.edu.uteq.presustentaciones.services.IUsuarioService;
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
@@ -23,6 +30,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +51,9 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final IUsuarioService usuarioService;
+    private final PasswordPolicyValidator passwordPolicyValidator;
+    private final PasswordRecoveryService passwordRecoveryService;
+    private final RateLimiterService rateLimiterService;
 
     /**
      * Autentica al usuario y emite el par de tokens. El access token viaja en el cuerpo y el
@@ -246,6 +257,11 @@ public class AuthController {
     @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
     @Operation(summary = "Registrar nuevo usuario", description = "Permite a un administrador crear nuevos usuarios en el sistema.")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        // RNF-06: @Size en el DTO ya cubre la longitud minima; la lista de contrasenas
+        // comunes no se puede expresar como anotacion de Bean Validation sin un
+        // ConstraintValidator dedicado, asi que se aplica aqui explicitamente.
+        passwordPolicyValidator.validar(request.getPassword());
+
         Usuario usuario = new Usuario();
         usuario.setNombre(request.getNombre());
         usuario.setApellido(request.getApellido());
@@ -258,5 +274,113 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseWrapper.success(null, "Usuario registrado exitosamente"));
+    }
+
+    /**
+     * RF-06: cambio de contraseña propia. Antes de esta fase no existía ninguna vía, propia ni
+     * administrativa, para cambiar una contraseña una vez creada la cuenta.
+     *
+     * @param id      usuario cuya contraseña se cambia -- debe ser el mismo que el autenticado
+     * @param request contraseña vigente y nueva contraseña
+     * @param http    para leer la cookie {@code refreshToken} de la sesión actual y preservarla
+     * @return 200 si el cambio se aplicó, 401 si la contraseña vigente no coincide (sin tocar
+     *         nada), 403 si {@code id} no es el propio usuario autenticado
+     */
+    @PatchMapping("/usuarios/{id}/password")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Cambiar la contraseña propia", description = "Solo el titular puede cambiar su propia contraseña, incluso si quien lo intenta es Administrador.")
+    public ResponseEntity<?> cambiarPassword(@PathVariable Long id,
+                                              @Valid @RequestBody CambiarPasswordRequest request,
+                                              HttpServletRequest http) {
+        // Mismo patrón que UsuarioController#actualizarPerfil (RF-10): la identidad se resuelve
+        // por el email del JWT, nunca por el id de la ruta -- ni siquiera un Administrador puede
+        // cambiar la contraseña de otra cuenta por aquí.
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Usuario titular = usuarioRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+        if (!titular.getId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseWrapper.error("No puedes cambiar la contraseña de otro usuario"));
+        }
+
+        if (!passwordEncoder.matches(request.getPasswordActual(), titular.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ResponseWrapper.error("La contraseña actual no es correcta"));
+        }
+        if (request.getPasswordActual().equals(request.getPasswordNueva())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseWrapper.error("La nueva contraseña no puede ser igual a la actual"));
+        }
+        // RNF-06, mismo validador que RF-04 (alta): longitud minima y lista de comunes.
+        passwordPolicyValidator.validar(request.getPasswordNueva());
+
+        titular.setPassword(passwordEncoder.encode(request.getPasswordNueva()));
+        usuarioRepository.save(titular);
+
+        // Revoca todas las sesiones activas SALVO la actual -- revocar tambien esa dejaria al
+        // usuario fuera justo despues de un cambio legitimo.
+        String refreshActual = null;
+        if (http.getCookies() != null) {
+            for (Cookie cookie : http.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshActual = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        jwtTokenProvider.revokeAllUserTokensExcept(titular.getEmail(), refreshActual);
+
+        return ResponseEntity.ok(ResponseWrapper.success(null, "Contraseña actualizada correctamente"));
+    }
+
+    /**
+     * RF-05: solicitud de recuperación de contraseña, sin sesión activa. Endpoint público (ver
+     * {@code SecurityConfig}/{@code JwtAuthenticationFilter.shouldNotFilter}, igual que
+     * {@code /login} y {@code /refresh}).
+     *
+     * <p>Responde exactamente el mismo cuerpo, con el mismo código, exista o no una cuenta con
+     * ese correo -- de lo contrario el propio endpoint sería una forma de enumerar cuentas
+     * registradas. La diferencia de trabajo interno (enviar el correo o no) vive en
+     * {@link PasswordRecoveryService#solicitarRecuperacion}, que iguala también el costo para
+     * no filtrar la respuesta por el tiempo.
+     *
+     * @param request correo de la cuenta a recuperar
+     * @return 200 siempre (salvo límite de tasa: 429, o 503 si el almacén de límite de tasa
+     *         está caído -- RNF-04)
+     */
+    @PostMapping("/recuperar")
+    @Operation(summary = "Solicitar recuperación de contraseña", description = "Responde igual exista o no la cuenta, para no permitir enumerarlas.")
+    public ResponseEntity<?> recuperar(@Valid @RequestBody RecuperarPasswordRequest request) {
+        String correo = request.getEmail().trim().toLowerCase();
+        try {
+            if (!rateLimiterService.isAllowed("ratelimit:recuperar:" + correo, 3, 3600)) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                        .body(ResponseWrapper.error("Demasiadas solicitudes de recuperación para esta cuenta. Intenta de nuevo más tarde."));
+            }
+        } catch (RateLimiterUnavailableException e) {
+            // RNF-04: mismo fail-closed que RateLimitingFilter -- 503, no acceso sin límite.
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ResponseWrapper.error("Servicio de recuperación no disponible temporalmente. Intenta de nuevo en un momento."));
+        }
+
+        passwordRecoveryService.solicitarRecuperacion(correo);
+
+        return ResponseEntity.ok(ResponseWrapper.success(null,
+                "Si existe una cuenta con ese correo, recibirás un enlace de recuperación en unos minutos."));
+    }
+
+    /**
+     * RF-05: aplica el restablecimiento con el token de un solo uso recibido por correo.
+     * Endpoint público, mismo motivo que {@link #recuperar}.
+     *
+     * @param request token y nueva contraseña
+     * @return 200 si el restablecimiento se aplicó; 400 si el token es inválido/expirado/ya
+     *         usado, o si la nueva contraseña incumple RNF-06
+     */
+    @PostMapping("/restablecer")
+    @Operation(summary = "Restablecer contraseña con el token de recuperación")
+    public ResponseEntity<?> restablecer(@Valid @RequestBody RestablecerPasswordRequest request) {
+        passwordRecoveryService.restablecer(request.getToken(), request.getPasswordNueva());
+        return ResponseEntity.ok(ResponseWrapper.success(null, "Contraseña restablecida correctamente"));
     }
 }

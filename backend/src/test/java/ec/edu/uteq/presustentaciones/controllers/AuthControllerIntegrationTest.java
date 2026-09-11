@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ec.edu.uteq.presustentaciones.config.SecurityConfig;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
+import ec.edu.uteq.presustentaciones.security.PasswordPolicyValidator;
 import ec.edu.uteq.presustentaciones.security.RateLimiterService;
 import ec.edu.uteq.presustentaciones.security.dto.LoginRequest;
 import ec.edu.uteq.presustentaciones.security.jwt.JwtAuthenticationFilter;
@@ -33,12 +34,18 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -71,7 +78,20 @@ class AuthControllerIntegrationTest {
     private RateLimiterService rateLimiterService;
 
     @MockBean
+    private ec.edu.uteq.presustentaciones.security.PasswordRecoveryService passwordRecoveryService;
+
+    @MockBean
+    private ec.edu.uteq.presustentaciones.services.SupresionDatosService supresionDatosService;
+
+    @MockBean
     private IUsuarioService usuarioService;
+
+    // Mock, no la implementacion real: un mock sin stub no hace nada en un metodo void
+    // (validar()), asi que los tests existentes de /register siguen pasando sin tocar sus
+    // fixtures de password. La politica real (longitud, lista de comunes) se prueba en
+    // PasswordPolicyValidatorTest, incluido su caso de integracion contra este mismo endpoint.
+    @MockBean
+    private PasswordPolicyValidator passwordPolicyValidator;
 
     @MockBean
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
@@ -386,6 +406,191 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isForbidden());
 
         verify(usuarioService, never()).crear(any());
+    }
+
+    // ── PATCH /api/v1/auth/usuarios/{id}/password (RF-06: cambio de contraseña propia) ─────
+
+    private void autenticarComoTitular() {
+        String token = "selfToken";
+        UserDetails userDetails = new User(dummyUsuario.getEmail(), dummyUsuario.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromToken(token)).thenReturn(dummyUsuario.getEmail());
+        when(userDetailsService.loadUserByUsername(dummyUsuario.getEmail())).thenReturn(userDetails);
+        when(usuarioRepository.findByEmail(dummyUsuario.getEmail())).thenReturn(Optional.of(dummyUsuario));
+    }
+
+    @Test
+    void cambiarPasswordConLaActualCorrectaDevuelve200YRevocaSesionesSalvoLaActual() throws Exception {
+        autenticarComoTitular();
+        when(passwordEncoder.matches("actualCorrecta", dummyUsuario.getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("NuevaClave#2026")).thenReturn("hashNuevo");
+
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", "refresh-de-esta-sesion");
+
+        mockMvc.perform(patch("/api/v1/auth/usuarios/1/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .cookie(refreshCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"actualCorrecta\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(passwordPolicyValidator).validar("NuevaClave#2026");
+        verify(usuarioRepository).save(dummyUsuario);
+        assertEquals("hashNuevo", dummyUsuario.getPassword());
+        verify(jwtTokenProvider).revokeAllUserTokensExcept(dummyUsuario.getEmail(), "refresh-de-esta-sesion");
+    }
+
+    @Test
+    void cambiarPasswordConLaActualIncorrectaDevuelve401YNoCambiaNada() throws Exception {
+        autenticarComoTitular();
+        when(passwordEncoder.matches("incorrecta", dummyUsuario.getPassword())).thenReturn(false);
+
+        mockMvc.perform(patch("/api/v1/auth/usuarios/1/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"incorrecta\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(usuarioRepository, never()).save(any());
+        verify(jwtTokenProvider, never()).revokeAllUserTokensExcept(any(), any());
+    }
+
+    @Test
+    void cambiarPasswordIgualALaVigenteDevuelve400() throws Exception {
+        autenticarComoTitular();
+        when(passwordEncoder.matches("igual", dummyUsuario.getPassword())).thenReturn(true);
+
+        mockMvc.perform(patch("/api/v1/auth/usuarios/1/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"igual\",\"passwordNueva\":\"igual\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cambiarPasswordQueIncumpleLaPoliticaDevuelve400() throws Exception {
+        autenticarComoTitular();
+        when(passwordEncoder.matches("actualCorrecta", dummyUsuario.getPassword())).thenReturn(true);
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Esa contraseña es demasiado común. Elige una diferente."))
+                .when(passwordPolicyValidator).validar("comun123");
+
+        mockMvc.perform(patch("/api/v1/auth/usuarios/1/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"actualCorrecta\",\"passwordNueva\":\"comun123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Esa contraseña es demasiado común. Elige una diferente."));
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cambiarPasswordDeOtroUsuarioDevuelve403AunqueQuienLoIntentaSeaAdmin() throws Exception {
+        // dummyUsuario (id=1, ROLE_ADMIN) intenta cambiar la contraseña del usuario id=2.
+        autenticarComoTitular();
+
+        mockMvc.perform(patch("/api/v1/auth/usuarios/2/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"cualquiera\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("No puedes cambiar la contraseña de otro usuario"));
+
+        verify(usuarioRepository, never()).save(any());
+        org.mockito.Mockito.verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void cambiarPasswordNuncaDevuelveLaContrasenaEnLaRespuesta() throws Exception {
+        autenticarComoTitular();
+        when(passwordEncoder.matches("actualCorrecta", dummyUsuario.getPassword())).thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("hashNuevo");
+
+        String cuerpo = mockMvc.perform(patch("/api/v1/auth/usuarios/1/password")
+                        .header("Authorization", "Bearer selfToken")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"actualCorrecta\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertFalse(cuerpo.contains("NuevaClave#2026"));
+        assertFalse(cuerpo.contains("hashNuevo"));
+        assertFalse(cuerpo.toLowerCase().contains("password"));
+    }
+
+    // ── POST /api/v1/auth/recuperar y /restablecer (RF-05: recuperación sin sesión) ────────
+
+    @Test
+    void recuperarDevuelveElMismoCuerpoYCodigoExistaONoLaCuenta() throws Exception {
+        when(rateLimiterService.isAllowed(anyString(), anyInt(), anyLong())).thenReturn(true);
+
+        String cuerpoExiste = mockMvc.perform(post("/api/v1/auth/recuperar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"estudiante@uteq.edu.ec\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String cuerpoNoExiste = mockMvc.perform(post("/api/v1/auth/recuperar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"nadie-registrado@uteq.edu.ec\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(cuerpoExiste, cuerpoNoExiste, "el cuerpo debe ser identico para no permitir enumerar cuentas");
+        verify(passwordRecoveryService, times(2)).solicitarRecuperacion(anyString());
+    }
+
+    @Test
+    void recuperarSuperandoElLimiteDeTasaDevuelve429() throws Exception {
+        when(rateLimiterService.isAllowed(anyString(), anyInt(), anyLong())).thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/auth/recuperar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"estudiante@uteq.edu.ec\"}"))
+                .andExpect(status().isTooManyRequests());
+
+        verify(passwordRecoveryService, never()).solicitarRecuperacion(anyString());
+    }
+
+    @Test
+    void recuperarConElLimitadorDeTasaCaidoDevuelve503() throws Exception {
+        when(rateLimiterService.isAllowed(anyString(), anyInt(), anyLong()))
+                .thenThrow(new ec.edu.uteq.presustentaciones.security.RateLimiterUnavailableException("caido", new RuntimeException()));
+
+        mockMvc.perform(post("/api/v1/auth/recuperar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"estudiante@uteq.edu.ec\"}"))
+                .andExpect(status().isServiceUnavailable());
+
+        verify(passwordRecoveryService, never()).solicitarRecuperacion(anyString());
+    }
+
+    @Test
+    void restablecerConTokenValidoDevuelve200() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/restablecer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"un-token-cualquiera\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(passwordRecoveryService).restablecer("un-token-cualquiera", "NuevaClave#2026");
+    }
+
+    @Test
+    void restablecerConTokenInvalidoOExpiradoDevuelve400() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("El enlace de recuperación es inválido o ya expiró."))
+                .when(passwordRecoveryService).restablecer("token-vencido", "NuevaClave#2026");
+
+        mockMvc.perform(post("/api/v1/auth/restablecer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"token-vencido\",\"passwordNueva\":\"NuevaClave#2026\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("El enlace de recuperación es inválido o ya expiró."));
     }
 
     // ── POST /api/v1/usuarios (UsuarioController.crear): mismo hallazgo que /register ──────

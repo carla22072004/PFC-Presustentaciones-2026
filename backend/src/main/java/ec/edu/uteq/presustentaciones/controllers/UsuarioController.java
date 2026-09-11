@@ -1,11 +1,14 @@
 package ec.edu.uteq.presustentaciones.controllers;
 
 import ec.edu.uteq.presustentaciones.dto.PerfilRequest;
+import ec.edu.uteq.presustentaciones.dto.ResolverSupresionRequest;
 import ec.edu.uteq.presustentaciones.dto.ResponseWrapper;
+import ec.edu.uteq.presustentaciones.entities.SolicitudSupresion;
 import ec.edu.uteq.presustentaciones.entities.Usuario;
 import ec.edu.uteq.presustentaciones.repositories.UsuarioRepository;
 import ec.edu.uteq.presustentaciones.security.dto.RegisterRequest;
 import ec.edu.uteq.presustentaciones.services.IUsuarioService;
+import ec.edu.uteq.presustentaciones.services.SupresionDatosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,6 +37,7 @@ public class UsuarioController {
 
     private final IUsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
+    private final SupresionDatosService supresionDatosService;
 
     /**
      * Listado completo de usuarios, sin paginar. Se conserva para usos puntuales; el panel de
@@ -275,6 +279,64 @@ public class UsuarioController {
         try {
             usuarioService.eliminar(id);
             return ResponseEntity.ok(ResponseWrapper.success(null, "Usuario eliminado exitosamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    // ── RNF-19: supresión de datos personales a solicitud del titular ──────────────────────
+
+    /**
+     * El titular solicita la supresión de sus propios datos. Mismo patrón de auto-comprobación
+     * que {@link #actualizarPerfil}: no se puede solicitar en nombre de otra cuenta.
+     *
+     * @param id usuario que solicita -- debe ser el autenticado
+     * @return 200 con la solicitud creada (estado PENDIENTE), o 403 si no es el propio usuario
+     */
+    @PostMapping("/{id}/solicitar-supresion")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Solicitar la supresión de los propios datos personales (RNF-19)")
+    public ResponseEntity<?> solicitarSupresion(@PathVariable Long id) {
+        if (!esUsuarioActual(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ResponseWrapper.error("No puedes solicitar la supresión de datos de otro usuario"));
+        }
+        try {
+            SolicitudSupresion solicitud = supresionDatosService.solicitar(id);
+            return ResponseEntity.ok(ResponseWrapper.success(solicitud, "Solicitud de supresión registrada"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
+        }
+    }
+
+    /** @return 200 con todas las solicitudes de supresión, más recientes primero (solo ADMIN) */
+    @GetMapping("/solicitudes-supresion")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
+    @Operation(summary = "Listar solicitudes de supresión de datos personales (RNF-19, solo ADMIN)")
+    public ResponseEntity<?> listarSolicitudesSupresion() {
+        return ResponseEntity.ok(ResponseWrapper.success(supresionDatosService.listar()));
+    }
+
+    /**
+     * Resuelve una solicitud de supresión: la acepta (seudonimiza la cuenta, conservando el
+     * expediente académico) o la rechaza con motivo. Solo ADMIN -- es una decisión que pesa el
+     * derecho del titular contra la obligación legal de conservar el expediente.
+     *
+     * @param solicitudId solicitud a resolver
+     * @param request     {@code aceptar} + notas de la resolución
+     * @return 200 con la solicitud resuelta, o 400 si ya estaba resuelta o no existe
+     */
+    @PostMapping("/solicitudes-supresion/{solicitudId}/resolver")
+    @PreAuthorize("@permisoService.tienePermiso(authentication, 'USUARIOS_GESTIONAR')")
+    @Operation(summary = "Resolver una solicitud de supresión (RNF-19, solo ADMIN)")
+    public ResponseEntity<?> resolverSupresion(@PathVariable Long solicitudId,
+                                                @RequestBody ResolverSupresionRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long resueltoPorId = usuarioRepository.findByEmail(auth.getName()).map(Usuario::getId).orElse(null);
+        try {
+            SolicitudSupresion resuelta = supresionDatosService.resolver(
+                    solicitudId, request.isAceptar(), resueltoPorId, request.getNotas());
+            return ResponseEntity.ok(ResponseWrapper.success(resuelta, "Solicitud de supresión resuelta"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ResponseWrapper.error(e.getMessage()));
         }

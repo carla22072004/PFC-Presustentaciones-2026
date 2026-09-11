@@ -40,7 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.contains("/auth/login")
                 || path.contains("/auth/refresh")
-                || path.contains("/auth/register");
+                || path.contains("/auth/register")
+                // RF-05 (fase 6): mismo motivo que login -- quien pide recuperar o restablecer
+                // su contraseña puede tener un token vencido (o ninguno) en localStorage, y el
+                // interceptor del frontend lo adjunta igual a esta peticion.
+                || path.contains("/auth/recuperar")
+                || path.contains("/auth/restablecer");
     }
 
     @Override

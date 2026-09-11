@@ -30,11 +30,24 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Aplica únicamente a la ruta de autenticación de login (POST /api/v1/auth/login)
         if (path.equals("/api/v1/auth/login") && request.getMethod().equalsIgnoreCase("POST")) {
             String ip = getClientIp(request);
-            if (!rateLimiterService.isAllowed(ip)) {
+            boolean permitido;
+            try {
+                permitido = rateLimiterService.isAllowed(ip);
+            } catch (RateLimiterUnavailableException e) {
+                // RNF-04: ni 500 (excepcion sin manejar) ni dejar pasar sin limite -- 503
+                // declarando la degradacion explicitamente.
+                response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(objectMapper.writeValueAsString(ResponseWrapper.error(
+                        "Servicio de límite de intentos no disponible temporalmente. Intenta de nuevo en un momento.")));
+                return;
+            }
+            if (!permitido) {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                 response.setCharacterEncoding("UTF-8");
-                
+
                 ResponseWrapper<Object> errorResponse = ResponseWrapper.error(
                         "Límite de intentos excedido. Por favor, intente de nuevo en un minuto."
                 );

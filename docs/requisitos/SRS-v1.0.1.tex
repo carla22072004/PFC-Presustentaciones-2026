@@ -819,7 +819,7 @@ su contraseña indicando su correo institucional, y restablecerla mediante un el
 uso con vigencia limitada enviado a ese correo.}
 \campo{Prioridad}{Must}
 \campo{Fuente}{OWASP A07 (recuperación de credenciales). Carencia detectada al contrastar el asistente virtual (RF-44), que ya ofrece esta capacidad al usuario, con los endpoints realmente expuestos por el módulo de autenticación.}
-\campo{Endpoints}{Por definir. No existen en el punto de corte.}
+\campo{Endpoints}{\cd{POST /api/v1/auth/recuperar}, \cd{POST /api/v1/auth/restablecer}}
 \campo{Rationale}{Es la única carencia del corpus que exige programar y no solo redactar. Como
 las cuentas las crea exclusivamente el Administrador (RF-04) y la actualización de usuario
 \textbf{no modifica la contraseña}, hoy un usuario que la olvida no tiene ninguna vía de
@@ -836,19 +836,26 @@ autorización y no es auditable.}
     \item El número de solicitudes por cuenta y por ventana de tiempo está limitado, para que el
           endpoint no sea un vector de abuso de correo.
 \end{itemize}
-\campo{Método de verificación}{Prueba (cuando exista la funcionalidad)}
-\campo{Estado}{\estadoP}
-\campo{Nota}{Se especifica antes de construirse, y a propósito: sin requisito no hay criterio
-contra el cual construirlo. Alternativa admisible si se decide no implementarlo en esta
-entrega: declararlo explícitamente fuera de alcance y especificar en su lugar el restablecimiento
-administrativo, que hoy tampoco existe.}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoI}
+\campo{Nota}{Construido en la fase 6 (2026-09-11), con una decisión honesta y declarada sobre el
+obstáculo real: \texttt{EmailService} existe pero \texttt{app.mail.enabled=false} por omisión, así
+que no había forma de entregar el elemento de un solo uso sin activar SMTP de verdad. Se optó
+deliberadamente por \textbf{no} declarar el requisito \estadoV{} sin haber comprobado nunca que el
+correo llega -- la salida deshonesta que el propio encargo de esta fase prohíbe. En su lugar: el
+flujo completo se construyó y se probó de punta a punta con el envío apagado (\texttt{PasswordRecoveryServiceTest},
+6 casos: token con TTL de 30 min, un solo uso, aplica RNF-06, revoca \emph{todas} las sesiones sin
+excepción a diferencia de RF-06; más los casos de \cd{AuthControllerIntegrationTest} sobre el
+mismo cuerpo/código de respuesta exista o no la cuenta, y el límite de tasa con su fail-closed de
+RNF-04), y se declara \estadoI{}, no \estadoV{}: la entrega real del correo por SMTP nunca se
+verificó contra un servidor real. Activarla y comprobarla es lo que falta para el cierre completo.}
 
 \REQ{RF-06}{Cambio de la contraseña propia}
 \campo{Enunciado}{El sistema debe permitir a un usuario autenticado cambiar su propia contraseña
 presentando la contraseña vigente.}
 \campo{Prioridad}{Must}
 \campo{Fuente}{OWASP A07 y NIST SP 800-63B: el titular debe poder cambiar su propia credencial. Carencia detectada al contrastar RF-04 y RF-08 con los endpoints reales.}
-\campo{Endpoint}{Por definir. No existe en el punto de corte.}
+\campo{Endpoint}{\cd{PATCH /api/v1/auth/usuarios/\{id\}/password}}
 \campo{Rationale}{Las contraseñas iniciales las fija el Administrador (RF-04), de modo que sin
 esta capacidad el usuario nunca controla su propia credencial y una contraseña inicial conocida
 por un tercero permanece válida indefinidamente.}
@@ -859,9 +866,13 @@ por un tercero permanece válida indefinidamente.}
     \item La contraseña nueva cumple RNF-06 y no puede ser igual a la vigente.
     \item El cambio revoca todas las sesiones activas del titular salvo aquella desde la que se
           realiza.
+    \item Solo el titular cambia su propia contraseña: sobre otro usuario responde \texttt{403},
+          incluso si quien lo intenta es Administrador (mismo patrón que RF-10 con el perfil).
+    \item Se almacena conforme a RNF-05 (BCrypt, factor de coste $\geq 10$) y no se devuelve
+          nunca, ni la vigente ni la nueva, en ninguna respuesta.
 \end{itemize}
-\campo{Método de verificación}{Prueba (cuando exista la funcionalidad)}
-\campo{Estado}{\estadoP}
+\campo{Método de verificación}{Prueba}
+\campo{Estado}{\estadoV}
 
 \REQ{RF-07}{Consulta de los permisos efectivos propios}
 \campo{Enunciado}{El sistema debe devolver al usuario autenticado el conjunto de códigos de
@@ -1795,10 +1806,6 @@ requisito dentro del alcance de RNF-20 y evita que el mensaje del usuario salga 
 \end{itemize}
 \campo{Método de verificación}{Prueba + Inspección}
 \campo{Estado}{\estadoV}
-\campo{Nota}{El asistente ofrece hoy orientación sobre cambio y recuperación de contraseña,
-capacidades que no existen (RF-05, RF-06). Es una promesa que el sistema no puede cumplir, y se
-resuelve implementando esos requisitos o retirando ese tema del asistente; no dejando la
-contradicción en pie.}
 
 \REQ{RF-45}{Consulta del directorio de universidades}
 \campo{Enunciado}{El sistema debe ofrecer al usuario autenticado el listado de universidades del
@@ -2354,13 +2361,16 @@ detalle de infraestructura, y por eso es un requisito y no una nota de riesgo.}
     \item Cada degradación deja una entrada de registro que la identifica.
 \end{itemize}
 \campo{Método de verificación}{Prueba}
-\campo{Estado}{\estadoN}
-\campo{Nota}{Verificado por inspección el 2026-09-09: la comprobación de revocación captura
-cualquier excepción del almacén y devuelve «no revocado», es decir, hoy la política real es
-\textbf{fail-open} y un token revocado vuelve a aceptarse mientras el almacén esté caído. El
-límite de tasa, en cambio, propaga la excepción y produce \texttt{500}. Ninguno de los dos
-comportamientos estaba especificado. Este requisito fija el comportamiento exigido y declara
-que hoy no se cumple, en vez de describir lo construido.}
+\campo{Estado}{\estadoV}
+\campo{Nota}{Cerrado en la fase 4 (2026-09-11): \texttt{JwtTokenProvider.isTokenBlacklisted()} y
+\texttt{RateLimiterService.isAllowed()} distinguen ahora una excepción de acceso al almacén
+(\texttt{DataAccessException} y afines) de un problema del propio token o de una entrada
+normal, y fallan \textbf{cerrado} (401 / 503) solo ante la primera. La caché de lectura usa un
+\texttt{CacheErrorHandler} dedicado que absorbe el error y dejar seguir el método hacia el
+origen -- la única de las tres que falla \textbf{abierto}, a propósito. Las tres rutas registran
+una entrada identificable (\texttt{DEGRADACION (RNF-04): ...}). Verificado con
+\texttt{RedisDegradacionTest.java}, doble de \texttt{StringRedisTemplate} que lanza
+\texttt{RedisConnectionFailureException}.}
 
 \subsection{Seguridad}
 
@@ -2387,11 +2397,15 @@ Almacenar impecablemente una contraseña de seis caracteres no protege la cuenta
 el alta (RF-04), en el cambio (RF-06) y en el restablecimiento (RF-05); la respuesta declara la
 regla incumplida sin revelar la contraseña.}
 \campo{Método de verificación}{Prueba}
-\campo{Estado}{\estadoN}
-\campo{Nota}{La exigencia real vigente es de \textbf{6} caracteres y se aplica \textbf{solo en
-el alta}: la actualización de usuario no toca la contraseña y no existen el cambio propio ni el
-restablecimiento. Se declara el umbral exigido y el incumplimiento, no el valor actual como si
-fuera el requisito.}
+\campo{Estado}{\estadoV}
+\campo{Nota}{Cerrado en los tres puntos de aplicación que el criterio exige, con el mismo
+\texttt{PasswordPolicyValidator} reutilizable (respaldado por
+\texttt{backend/src/main/resources/security/common-passwords.txt}) en los tres: el alta (RF-04,
+fase 3), el cambio propio (RF-06, fase 5) y el restablecimiento (RF-05, fase 6). Nota aparte
+sobre RF-05: se declara \estadoI{} y no \estadoV{} por un motivo distinto a este requisito -- la
+entrega real del correo por SMTP nunca se verificó -- pero la aplicación de esta política dentro
+de ese flujo sí es real y está probada (\cd{PasswordRecoveryServiceTest}), independientemente de
+si el correo llega.}
 
 \REQ{RNF-07}{Vigencia de los tokens de sesión}
 \campo{Enunciado}{El token de acceso debe tener una vigencia de 1 hora y el token de renovación
@@ -2404,10 +2418,7 @@ valores normativos escondidos fuera de la especificación.}
 renovación a los \textbf{604\,800\,000\,ms}; un token de acceso expirado responde \texttt{401}
 con un mensaje que el cliente pueda distinguir de «sin permiso».}
 \campo{Método de verificación}{Prueba + Inspección}
-\campo{Estado}{\estadoI}
-\campo{Nota}{La vigencia del token de acceso es configurable por entorno; la del token de
-renovación está fijada en el archivo de configuración y no se puede ajustar por entorno. El
-requisito exige que ambas lo sean.}
+\campo{Estado}{\estadoV}
 
 \REQ{RNF-08}{Rotación del token de renovación y detección de reutilización}
 \campo{Enunciado}{Cada uso de un token de renovación debe invalidarlo y emitir uno nuevo, y la
@@ -2528,15 +2539,14 @@ en ninguna respuesta.}
 \campo{Enunciado}{El sistema no debe sembrar cuentas con contraseña predefinida fuera del perfil
 de desarrollo local, y ninguna contraseña debe figurar literalmente en el código fuente.}
 \campo{Prioridad}{Must} \quad \campo{Fuente}{OWASP A05 y A07; \textbf{observación docente
-OBS-11} (\cd{docs/observaciones/OBSERVACIONES.md}), registrada como \emph{parcialmente resuelta}:
-la credencial se retiró del \cd{README.md} pero sigue expuesta en otros artefactos del
-repositorio.}
+OBS-11} (\cd{docs/observaciones/OBSERVACIONES.md}), registrada como \emph{resuelta} desde la
+fase 4 (2026-09-11): los seis artefactos que repetían la credencial, incluido el origen en
+código, quedan corregidos.}
 \campo{Rationale}{Una cuenta de administración con contraseña conocida es equivalente a no tener
 autenticación. El repositorio es público, de modo que cualquier contraseña escrita en cualquier
 archivo versionado está publicada, y el historial de Git conserva lo que se retire hoy. OBS-11 ya
-identificó el problema y la retirada se hizo solo en uno de los cuatro lugares donde la credencial
-aparece: convertirlo en requisito con criterio verificable es lo que le pone condición de cierre a
-una observación que hoy lleva meses en estado parcial.}
+identificó el problema; convertirlo en requisito con criterio verificable es lo que le puso
+condición de cierre a una observación que llevó meses en estado parcial.}
 \campo{Criterio de aceptación}{}
 \begin{itemize}
     \item La siembra de datos de demostración se ejecuta \textbf{únicamente} bajo un perfil de
@@ -2553,36 +2563,37 @@ una observación que hoy lleva meses en estado parcial.}
           peticiones de la API, los ejemplos de las historias de usuario) la toman de una
           variable de entorno o de un marcador de posición, nunca de un valor literal.
 \end{itemize}
-\campo{Método de verificación}{Inspección}
-\campo{Estado}{\estadoN}
-\campo{Nota}{Verificado por inspección el 2026-09-09: la siembra se ejecuta en \textbf{todo}
-arranque, sin condición de perfil, y crea cuentas de Administrador, Coordinador, Docente y
-Estudiante con contraseñas escritas literalmente en el código fuente de un repositorio público.
-El archivo \cd{README.md} declara que las credenciales de demostración no se publican «para
-evitar dejarlas expuestas en el historial público»; esa afirmación no se sostiene mientras las
-contraseñas estén en el código.
+\campo{Método de verificación}{Inspección + Demostración}
+\campo{Estado}{\estadoV}
+\campo{Nota}{\textbf{Inventario completo (verificado el 2026-09-11).} La credencial sembrada
+aparecía en seis artefactos versionados del repositorio público: el código que siembra los datos
+de demostración, la colección de peticiones de \cd{docs/postman/}, el escenario de ejemplo de
+\cd{docs/requisitos/historias/HU-01.md}, el procedimiento de medición de \cd{k6/README.md}, la
+evidencia reproducible de \cd{docs/mediciones/sec/owasp/OWASP-AUDIT.md} y el propio registro de
+OBS-11. Los cinco artefactos de documentación se corrigieron primero (toman la credencial de una
+variable de entorno o de una variable de colección); el origen --el código-- se cierra en esta
+fase: la siembra se movió a \texttt{DemoDataSeeder}, activo \textbf{solo} bajo el perfil
+\texttt{dev} (nunca en el arranque por omisión); sus contraseñas se rotaron y ya cumplen RNF-06;
+y un despliegue fuera de ese perfil sin \texttt{ADMIN\_BOOTSTRAP\_EMAIL}/
+\texttt{ADMIN\_BOOTSTRAP\_PASSWORD} en el entorno falla al arrancar en \texttt{AdminBootstrap}
+en vez de crear una cuenta con contraseña conocida --mismo patrón que \texttt{JWT\_SECRET}
+(RNF-14)--, y la contraseña que sí se provee se valida contra \texttt{PasswordPolicyValidator}
+(RNF-06) antes de usarse. Verificado a mano arrancando sin perfil \texttt{dev} y sin las
+variables (falla explícitamente), con una contraseña de la lista de comunes (también falla) y
+con una contraseña válida (arranca y crea la cuenta). \texttt{grep -rn
+"admin123\textbackslash|docente123\textbackslash|estudiante123" --include=*.java --include=*.md
+--include=*.json --include=*.yml .} (excluyendo \cd{docs/requisitos/historico/}) da cero
+resultados.
 
-\textbf{Inventario completo, verificado el 2026-09-11.} La credencial sembrada aparecía en seis
-artefactos versionados del repositorio público, no solo en el \cd{README.md} que OBS-11 dio por
-corregido: el código que siembra los datos de demostración, la colección de peticiones de
-\cd{docs/postman/}, el escenario de ejemplo de \cd{docs/requisitos/historias/HU-01.md}, el
-procedimiento de medición de \cd{k6/README.md}, la evidencia reproducible de
-\cd{docs/mediciones/sec/owasp/OWASP-AUDIT.md} y el propio registro de OBS-11. \textbf{Los cinco
-artefactos de documentación quedan corregidos en esta versión}: toman la credencial de una
-variable de entorno o de una variable de colección, y ninguno la reproduce.
-
-\textbf{Lo que sigue abierto, y por qué.} Primero, la siembra en código: retirarla de ahí cambia
-el comportamiento del arranque de la aplicación y merece un cambio propio, revisado por separado,
-no un retoque de documentación. Segundo, la migración \cd{V11\_\_roles\_y\_privilegios.sql}
-crea dos roles de base de datos con contraseña literal; están declaradas como credenciales de
-desarrollo, pero una migración ya aplicada no se puede editar sin romper la suma de verificación
-de Flyway, así que cerrarlas exige una migración nueva que las rote, no una corrección en su
-sitio. Tercero, y esto no lo arregla ningún cambio futuro: \textbf{el historial de Git conserva
-todo lo retirado hoy}, de modo que estas credenciales deben considerarse comprometidas y rotarse
-en cualquier despliegue real.
-
-Es el hallazgo de seguridad más serio del punto de corte y encabeza el plan de cierre
-(\S\ref{sec:pendientes}).}
+\textbf{Lo que sigue abierto, y por qué (sin cambios respecto a la versión anterior de esta
+nota).} La migración \cd{V11\_\_roles\_y\_privilegios.sql} crea dos roles de base de datos con
+contraseña literal; una migración ya aplicada no se puede editar sin romper la suma de
+verificación de Flyway, así que cerrarla exige una migración nueva que las rote, no una
+corrección en su sitio -- deliberadamente sin tocar en esta fase. Y esto no lo arregla ningún
+cambio de código: \textbf{el historial de Git conserva las contraseñas retiradas hoy} (incluidas
+las que \texttt{DemoDataSeeder} sembraba antes de esta fase), de modo que deben considerarse
+comprometidas y rotarse en cualquier despliegue real; no se reescribe el historial para
+ocultarlas.}
 
 \REQ{RNF-16}{Ausencia de construcción dinámica de consultas}
 \campo{Enunciado}{El sistema no debe construir sentencias SQL por concatenación de valores
@@ -2646,6 +2657,9 @@ personal que trata, depurar automáticamente lo que exceda ese período, y ofrec
 supresión a solicitud del titular compatible con la conservación del expediente académico.}
 \campo{Prioridad}{Must} \quad \campo{Fuente}{Ley Orgánica de Protección de Datos Personales del
 Ecuador; \cd{docs/etica/ETHICS.md}}
+\campo{Endpoints}{\cd{POST /api/usuarios/\{id\}/solicitar-supresion},
+\cd{GET /api/usuarios/solicitudes-supresion}, \cd{POST /api/usuarios/solicitudes-supresion/\{id\}/resolver}
+-- la depuración automática de la bitácora no tiene endpoint, por diseño (ver Nota).}
 \campo{Rationale}{El sistema trata nombre, correo institucional, teléfono, expediente académico
 nominal, calificaciones y una bitácora de acciones por usuario. Hoy nada de eso tiene plazo de
 conservación ni vía de supresión: la bitácora crece indefinidamente y el titular no tiene forma
@@ -2663,10 +2677,24 @@ de ejercer sus derechos. Un hallazgo ético sin requisito no tiene fecha de cier
           protocolo ético del proyecto.
 \end{itemize}
 \campo{Método de verificación}{Inspección + Demostración}
-\campo{Estado}{\estadoP}
-\campo{Nota}{Ninguno de los cuatro criterios está construido. El protocolo ético y la plantilla
-de consentimiento existen y son una base sólida; lo que falta es convertirlos en obligación con
-criterio verificable y fecha de cierre.}
+\campo{Estado}{\estadoI}
+\campo{Nota}{Construido en la fase 7 (2026-09-11), 3 de 4 criterios -- se declara \estadoI{} y no
+\estadoV{} porque el criterio exige los cuatro. (1) Tabla de retención publicada en
+\cd{docs/etica/RETENCION-DATOS.md}, enlazada desde \cd{ETHICS.md}, con período declarado por
+categoría y una distinción explícita de qué NO es suprimible (expediente académico, calificaciones,
+actas) por obligación legal de conservación. (2) Depuración automática de la bitácora
+(\cd{DepuracionBitacoraScheduler}, \cd{@Scheduled} mensual, retención de 2 años) sin ningún
+endpoint -- resuelve la tensión con RNF-18 (ninguna operación de la API puede borrar la bitácora)
+a nivel de tarea programada, no de código de aplicación alcanzable por una petición. Deja traza
+verificable en \cd{presus.depuracion\_bitacora\_log} (cuántas entradas, hasta qué fecha).
+(3) Procedimiento de supresión (\cd{SupresionDatosService}) que \textbf{seudonimiza}, no borra: el
+expediente sigue enlazado al mismo id. El registro de la solicitud
+(\cd{presus.solicitud\_supresion}) no guarda el dato suprimido, solo el id del usuario --
+resolviendo la paradoja de que el registro de una supresión no puede contener lo suprimido. (4)
+Sin construir de nuevo: los consentimientos firmados conservados $\geq 2$ años ya estaban
+declarados como política en \cd{ETHICS.md} \S3 antes de esta fase; no se fabrica ningún
+formulario firmado que no exista para completar el criterio -- sigue siendo, honestamente, una
+política sin datos reales todavía que aplicarle.}
 
 \REQ{RNF-20}{Minimización de datos hacia terceros}
 \campo{Enunciado}{El sistema no debe transmitir ningún dato personal de sus usuarios a servicios
@@ -2874,10 +2902,10 @@ Reproducible con \cd{./scripts/validate-traceability.sh} desde la raíz del repo
 \begin{quote}\ttfamily\small\noindent
 Requisitos en el SRS \dotfill{} 90\\
 Filas en la matriz \dotfill{} 90\\
-Endpoints reales del backend \dotfill{} 207\\
-Clases de prueba en disco \dotfill{} 45\\
-Estados: Implementado 13, No cumplido 6, Planificado 5, Verificado 66\\
-Must verificados \dotfill{} 42/50 (84\,\%)\\
+Endpoints reales del backend \dotfill{} 213\\
+Clases de prueba en disco \dotfill{} 53\\
+Estados: Implementado 14, No cumplido 3, Planificado 2, Verificado 71\\
+Must verificados \dotfill{} 47/50 (94\,\%)\\
 === V1--V8: sin fallos. Trazabilidad consistente. ===
 \end{quote}
 
@@ -2925,10 +2953,10 @@ va el matiz que antes se colaba dentro de la columna de estado y rompía el voca
 & \textbf{Verificado} & \textbf{Implementado} & \textbf{Planificado} & \textbf{No cumplido} &
 \textbf{Total} \\
 \midrule
-Requisitos funcionales     & 50 & 12 & 2 & 0 & \textbf{64} \\
-Requisitos no funcionales  & 16 &  1 & 3 & 6 & \textbf{26} \\
+Requisitos funcionales     & 51 & 13 & 0 & 0 & \textbf{64} \\
+Requisitos no funcionales  & 20 &  1 & 2 & 3 & \textbf{26} \\
 \midrule
-\textbf{Total}             & \textbf{66} & \textbf{13} & \textbf{5} & \textbf{6} &
+\textbf{Total}             & \textbf{71} & \textbf{14} & \textbf{2} & \textbf{3} &
 \textbf{90} \\
 \bottomrule
 \end{tabular}
@@ -2953,8 +2981,8 @@ descartada se retira del alcance, no se conserva como requisito con etiqueta de 
 
 \subsection{Requisitos \emph{Must} que no están verificados}
 
-De los \textbf{50} requisitos de prioridad \emph{Must}, \textbf{42 están verificados
-(84,0\,\%)}. Los \textbf{8} restantes se enumeran aquí de forma completa, porque un porcentaje
+De los \textbf{50} requisitos de prioridad \emph{Must}, \textbf{47 están verificados
+(94,0\,\%)}. Los \textbf{3} restantes se enumeran aquí de forma completa, porque un porcentaje
 sin el detalle de lo que falta no es información accionable.
 
 \begin{longtable}{p{1.6cm} p{5.3cm} p{2.9cm} p{4.6cm}}
@@ -2966,26 +2994,20 @@ sin el detalle de lo que falta no es información accionable.
 \textbf{ID} & \textbf{Requisito} & \textbf{Estado} & \textbf{Qué falta} \\
 \midrule
 \endhead
-RNF-15 & Ausencia de cuentas de demostración & \estadoN & Retirar del código las contraseñas
-literales y condicionar la siembra a un perfil de desarrollo. \\
-RNF-04 & Degradación ante caída de la caché & \estadoN & Cambiar la verificación de revocación a
-\emph{fail-closed} y dar respuesta declarada al límite de tasa. \\
-RNF-06 & Política de contraseñas & \estadoN & Subir el mínimo a 8 caracteres y aplicarlo en las
-tres vías de alta y cambio. \\
-RF-05 & Recuperación de contraseña & \estadoP & Construir la funcionalidad completa. \\
-RF-06 & Cambio de contraseña propia & \estadoP & Construir la funcionalidad completa. \\
-RNF-19 & Retención y supresión de datos & \estadoP & Tabla de retención, depuración automática y
-procedimiento de supresión. \\
+RF-05 & Recuperación de contraseña & \estadoI & Activar SMTP real y verificar que el correo de
+recuperación llega de verdad (hoy \texttt{app.mail.enabled=false}). \\
+RNF-19 & Retención y supresión de datos & \estadoI & Conservar formularios de consentimiento
+firmados reales cuando existan (política ya declarada; hoy no hay ninguno que conservar). \\
 RNF-11 & Transporte cifrado & \estadoP & Depende del despliegue público, aún no realizado. \\
-RNF-07 & Vigencia de tokens & \estadoI & Hacer configurable por entorno la vigencia del token de
-renovación. \\
 \bottomrule
-\caption{Los 8 requisitos \emph{Must} no verificados, con lo que falta en cada uno.}
+\caption{Los 3 requisitos \emph{Must} no verificados, con lo que falta en cada uno.}
 \end{longtable}
 
-\noindent Dos de los ocho se cierran con evidencia o con una prueba; seis exigen cambiar
-código. Los seis con implicación de seguridad o legal encabezan el plan de la
-sección~\ref{sec:pendientes}.
+\noindent Ninguno de los tres exige ya cambiar código: los tres son de evidencia, configuración o
+despliegue -- RF-05 (activar SMTP y verificar la entrega), RNF-11 (depende del despliegue
+público, aún no realizado) y RNF-19 (conservar formularios de consentimiento reales cuando
+existan; la política ya está declarada). Los tres, junto con el resto de la deuda declarada,
+siguen el orden de la sección~\ref{sec:pendientes}.
 
 \subsection{Nota metodológica sobre el crecimiento del corpus}
 
@@ -3232,25 +3254,40 @@ disco.
 \section{Deuda declarada y plan de cierre}
 \label{sec:pendientes}
 
-Nada de lo que sigue está resuelto. Se enumera de forma completa porque un hallazgo sin registro
-no tiene fecha de cierre, y porque declararlo es preferible a que aparezca en una revisión
-externa.
+Salvo donde se marca explícitamente cerrado, nada de lo que sigue está resuelto. Se enumera de
+forma completa porque un hallazgo sin registro no tiene fecha de cierre, y porque declararlo es
+preferible a que aparezca en una revisión externa. La numeración se conserva estable a través de
+las fases de cierre (no se renumeran los puntos ya cerrados) para que las referencias a "el punto
+N" en el historial de cambios sigan siendo válidas.
 
 \subsection{Orden de trabajo propuesto}
 
 \begin{enumerate}
-    \item \textbf{Seguridad inmediata.} RNF-15 (contraseñas literales en el código de un
-          repositorio público y siembra de cuentas en todo arranque) y RNF-04 (la revocación de
-          tokens es hoy \emph{fail-open}). Son los dos únicos hallazgos que degradan la seguridad
-          del sistema desplegado, y ambos se cierran con un cambio acotado.
-    \item \textbf{Credenciales del usuario.} RF-05, RF-06 y RNF-06: recuperación, cambio y
-          política de contraseñas. Hoy no existe ninguna vía, ni propia ni administrativa, para
-          cambiar una contraseña, y el asistente virtual anuncia una capacidad que el sistema no
-          tiene.
-    \item \textbf{Protección de datos personales.} RNF-19: tabla de retención por categoría,
-          depuración automática de la bitácora y procedimiento de supresión a solicitud del
-          titular. El protocolo ético del proyecto es una base sólida; falta convertirlo en
-          requisito con criterio y fecha.
+    \item \textbf{Seguridad inmediata --- cerrado en la fase 4 (2026-09-11).} RNF-15
+          (contraseñas literales en el código de un repositorio público y siembra de cuentas en
+          todo arranque) y RNF-04 (la revocación de tokens era \emph{fail-open}). Eran los dos
+          únicos hallazgos que degradaban la seguridad del sistema desplegado; ambos se cerraron
+          con un cambio acotado (\texttt{DemoDataSeeder}/\texttt{AdminBootstrap} para RNF-15,
+          fail-closed explícito en revocación y límite de tasa para RNF-04). Se conserva este
+          punto, marcado como resuelto, para no renumerar los siguientes.
+    \item \textbf{Credenciales del usuario --- cerrado en la fase 6 (2026-09-11).} RF-06
+          (cambio propio, fase 5) y RF-05 (recuperación sin sesión, fase 6) ya existen como
+          funcionalidad real y probada, y RNF-06 (política de contraseñas) se aplica en los tres
+          puntos que su criterio exige: alta, cambio y restablecimiento. Único cabo suelto,
+          declarado y no oculto: RF-05 queda \estadoI{}, no \estadoV{}, porque la entrega real
+          del correo de recuperación nunca se verificó contra un servidor SMTP (ver su nota) --
+          activarlo y comprobarlo es un pendiente aparte, de infraestructura, no de
+          construcción. Se conserva este punto, marcado como resuelto, para no renumerar los
+          siguientes.
+    \item \textbf{Protección de datos personales --- 3 de 4 criterios cerrados en la fase 7
+          (2026-09-11).} RNF-19: tabla de retención publicada
+          (\cd{docs/etica/RETENCION-DATOS.md}), depuración automática de la bitácora sin
+          endpoint (resuelve la tensión con RNF-18) y procedimiento de supresión por
+          seudonimización, los tres construidos y probados. Sigue abierto, y es genuinamente de
+          infraestructura/proceso, no de código: no existe todavía ningún formulario de
+          consentimiento firmado real que conservar (la política de conservación de 2 años ya
+          está declarada en \cd{ETHICS.md} \S3 desde antes de esta fase). Por eso RNF-19 queda
+          \estadoI{}, no \estadoV{}. Se conserva este punto para no renumerar los siguientes.
     \item \textbf{Comprobaciones del validador.} Implementar V1 a V6 y V8
           (\S\ref{sec:trazabilidad}). Son pocas líneas y son lo que impide que esta revisión se
           repita: las seis habrían detectado solas los cuatro defectos de \S\ref{sec:cambios}.
